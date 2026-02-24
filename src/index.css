@@ -1,0 +1,23 @@
+@import "tailwindcss";
+
+/* Autone Design System 2.0 – https://www.figma.com/design/V9kSoKdOVw6dmxJjIEuwal */
+@theme {
+  /* Typeface: Neue Montreal (fallback Inter for web) */
+  --font-sans: "Neue Montreal", Inter, system-ui, sans-serif;
+
+  /* Colors – semantic */
+  --color-surface-dark: #12171e;
+  --color-ink: #00050a;
+  --color-neutral-900: #101c2d;
+  --color-neutral-700: #2f3a4c;
+  --color-base-900: #212b36;
+  --color-base-800: #4b535c;
+  --color-base-400: #bbb;
+  --color-base-300: #dfe0e2;
+  --color-neutral-200: #dde4ee;
+  --color-neutral-100: #f1f4f9;
+  --color-base-100: #f8f8f8;
+
+  /* Radius */
+  --radius-s: 4px;
+}

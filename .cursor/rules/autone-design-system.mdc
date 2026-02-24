@@ -1,0 +1,29 @@
+---
+description: Use Autone Design System 2.0 for all UI components (typography, colors, spacing, radius)
+globs: "**/*.jsx,**/*.tsx,**/*.css"
+alwaysApply: true
+---
+
+# Autone Design System
+
+When building or editing UI components in this project, follow the **Autone Design System 2.0**.
+
+**Source:** [Figma – NEW Autone Design System 2.0](https://www.figma.com/design/V9kSoKdOVw6dmxJjIEuwal/NEW-Autone---Design-System-2.0?node-id=12025-33585)
+
+## Rules
+
+1. **Typography**
+   - Use font stack: `font-sans` (Neue Montreal → Inter fallback), defined in `src/index.css`.
+   - Headings: H1 48px, H2 40px, H3 32px, H4 28px, H5 24px bold, H6 18px.
+   - Body: B1 16px, B2 14px, B3 12px. Labels: L1 16px, L2 14px, L3 12px Medium.
+
+2. **Colors**
+   - Use design tokens from theme: `text-neutral-900`, `text-base-800`, `text-neutral-700`, `bg-neutral-100`, `bg-base-100`, `border-neutral-200`, `bg-surface-dark` for dark UI. Avoid arbitrary hex unless the token is missing.
+
+3. **Spacing & radius**
+   - Use consistent spacing (4, 8, 12, 16, 24, 32, 40px). Small radius: `rounded-[4px]` or `rounded-s` if configured.
+
+4. **Reference**
+   - Full scale and tokens: `docs/DESIGN-SYSTEM.md`. Theme variables: `src/index.css` (`@theme` block).
+
+Apply this system to every new or modified component so the UI stays consistent with the design system.
