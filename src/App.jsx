@@ -114,33 +114,48 @@ const IconGrid = () => (
   </svg>
 )
 const IconReplenishment = () => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="shrink-0">
-    <path d="M4 10v9a2 2 0 002 2h12a2 2 0 002-2V10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-    <path d="M4 10l8-6 8 6M12 4v6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-    <rect x="9" y="14" width="6" height="4" rx="1" stroke="currentColor" strokeWidth="1.5" />
+  <svg xmlns="http://www.w3.org/2000/svg" width="17" height="16" viewBox="0 0 17 16" fill="none" className="shrink-0" aria-hidden>
+    <path d="M1.75 6.33301V11.4997C1.75 11.9642 1.75 12.1964 1.77886 12.391C1.95121 13.5529 2.8635 14.4652 4.02539 14.6375C4.21996 14.6664 4.4522 14.6664 4.91667 14.6664L6.21121 14.6663M0.75 7.33301L5.06634 3.01667C6.12239 1.96062 6.65041 1.4326 7.25929 1.23476C7.79487 1.06074 8.3718 1.06074 8.90738 1.23476C9.51625 1.4326 10.0443 1.96062 11.1003 3.01667L15.4167 7.33301" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M12.7628 7.76938L11.7518 7.16279L11.7518 7.16279C11.2657 6.87108 11.0226 6.72523 10.7631 6.66824C10.5335 6.61783 10.2958 6.61783 10.0662 6.66824C9.80673 6.72523 9.56364 6.87108 9.07746 7.16279L8.06647 7.76938C7.60633 8.04547 7.37626 8.18351 7.20915 8.37356C7.06126 8.54175 6.94975 8.7387 6.88162 8.95204C6.80463 9.19313 6.80463 9.46143 6.80463 9.99804V10.7332C6.80463 11.2032 6.80463 11.4382 6.86387 11.6515C6.93501 11.9077 7.06795 12.1425 7.25102 12.3353C7.40345 12.4958 7.60496 12.6167 8.00797 12.8585L9.03561 13.4751C9.53618 13.7754 9.78646 13.9256 10.0531 13.9819C10.289 14.0316 10.5329 14.0283 10.7673 13.9721C11.0323 13.9086 11.2784 13.7516 11.7705 13.4377L13.1372 12.5659C13.4613 12.3591 13.6234 12.2558 13.7409 12.1169C13.8449 11.9939 13.923 11.8513 13.9708 11.6976C14.0247 11.5238 14.0247 11.3316 14.0247 10.9472V9.99804C14.0247 9.46143 14.0247 9.19313 13.9477 8.95204C13.8796 8.7387 13.768 8.54175 13.6202 8.37356C13.453 8.18351 13.223 8.04546 12.7628 7.76938Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M8.78998 9.42942L10.8582 8.16553" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M10.4146 10.512L13.6636 8.52649M10.4146 10.512L7.16559 8.52649M10.4146 10.512V14.122" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
   </svg>
 )
+/* Icon=new reorder – segment control (Figma 202:3165) – box with circular arrow */
+/* Icon=reorder – Figma 2:1218 */
 const IconReorder = () => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="shrink-0">
-    <rect x="5" y="4" width="14" height="16" rx="2" stroke="currentColor" strokeWidth="1.5" />
-    <path d="M9 9h6M9 13h6M9 17h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+  <svg xmlns="http://www.w3.org/2000/svg" width="17" height="16" viewBox="0 0 17 16" fill="none" className="shrink-0" data-name="Icon=reorder" data-node-id="2:1218" aria-hidden>
+    <path d="M14.0834 6.66687C14.0834 6.37443 14.0834 6.22821 14.0709 6.09155C13.9923 5.2347 13.5496 4.45283 12.8553 3.94462C12.7446 3.86357 12.6192 3.78834 12.3684 3.63788L9.88631 2.14862C8.98841 1.60988 8.53946 1.34051 8.06019 1.23526C7.63627 1.14217 7.19719 1.14217 6.77326 1.23526C6.294 1.34051 5.84505 1.60988 4.94715 2.14862L3.08048 3.26862C2.23068 3.7785 1.80578 4.03344 1.49715 4.38444C1.22402 4.69505 1.01808 5.05879 0.89225 5.4528C0.750061 5.89804 0.750061 6.39356 0.750061 7.38458V8.61582C0.750061 9.60685 0.750061 10.1024 0.89225 10.5476C1.01808 10.9416 1.22402 11.3054 1.49715 11.616C1.80578 11.967 2.23068 12.2219 3.08048 12.7318L5.1945 14.0002L6.18194 14.5927C6.63089 14.862 6.85536 14.9967 7.09499 15.0493C7.30696 15.0959 7.5265 15.0959 7.73846 15.0493C7.97809 14.9967 8.20257 14.862 8.65152 14.5927L9.36117 14.1669" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M4.41681 6.33358L8.23503 4.00024" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M7.41681 8.33354L13.4168 4.66687M7.41681 8.33354L1.41681 4.66687M7.41681 8.33354V15.0002" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M10.4151 10.1948V9.22255M10.4151 10.1948C10.4151 10.1948 11.341 8.66699 13.1929 8.66699C13.7002 8.66699 14.1741 8.80137 14.5818 9.03628M10.4151 10.1948H11.3873M15.0262 12.0281C15.0262 12.0281 14.0603 13.5559 12.5262 13.5559C12.0203 13.5559 11.5459 13.4206 11.1373 13.1843M15.0262 12.0281H14.054M15.0262 12.0281V13.0003" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
   </svg>
 )
 const IconRebalancing = () => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="shrink-0">
-    <path d="M21 12a9 9 0 11-9-9c2.5 0 4.5 1 6 2.5L21 8M21 3v5h-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" className="shrink-0" aria-hidden>
+    <rect x="1.33337" y="1.33337" width="13.3333" height="13.3333" rx="5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M4 8C4 10.2091 5.79086 12 8 12C10.2091 12 11.6667 10 11.6667 10M12 8C12 5.79086 10.2222 4 8 4C5.33333 4 4.33333 6 4.33333 6M4.33333 6V4.33333M4.33333 6H6M11.6667 10H10M11.6667 10V11.6667" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
   </svg>
 )
 const IconBuy = () => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="shrink-0">
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" className="shrink-0">
     <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
     <path d="M3 6h18M16 10a4 4 0 11-8 0" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
   </svg>
 )
-const IconLightbulb = () => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="shrink-0">
-    <path d="M9 21h6M12 3a6 6 0 014 10.5v.5a2 2 0 01-2 2h-4a2 2 0 01-2-2v-.5A6 6 0 0112 3z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-    <path d="M10 18h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+/* Icon=bars – Insights nav (Figma 13111:40 / 14404:7252) – three vertical bars, increasing height L→R */
+const IconBars = () => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="shrink-0" data-name="Icon=bars" data-node-id="I14404:7252;12203:35386" aria-hidden>
+    <path d="M6 18v-5M12 18v-9M18 18v-13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+)
+/* Icon=new reorder – Optimiser nav (Figma 12205:40449 / 14404:7825) */
+const IconOptimiser = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 20 20" fill="none" className="shrink-0" aria-hidden data-name="Icon=new reorder" data-node-id="12205:40449">
+    <path d="M17.5006 8.3335C17.5006 7.55493 17.5006 7.16564 17.4124 6.80999C17.2806 6.27849 17.0058 5.7932 16.6179 5.40672C16.3583 5.14811 16.0245 4.94783 15.3569 4.54726L11.6368 2.31524C10.7389 1.7765 10.29 1.50713 9.81072 1.40189C9.38679 1.30879 8.94772 1.30879 8.52379 1.40189C8.04453 1.50713 7.59558 1.7765 6.69768 2.31524L3.16434 4.43524C2.31455 4.94512 1.88965 5.20006 1.58101 5.55106C1.30788 5.86168 1.10194 6.22541 0.976112 6.61943C0.833923 7.06467 0.833923 7.56018 0.833923 8.55121V11.4491C0.833923 12.4401 0.833923 12.9357 0.976112 13.3809C1.10194 13.7749 1.30788 14.1386 1.58101 14.4493C1.88965 14.8003 2.31455 15.0552 3.16434 15.5651L6.38948 17.5002L7.93247 18.426C8.38142 18.6953 8.60589 18.83 8.84552 18.8826C9.05749 18.9292 9.27703 18.9292 9.48899 18.8826C9.72862 18.83 9.9531 18.6953 10.402 18.426L11.5978 17.7085" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M5.41736 7.91667L10.1901 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M9.16736 10.4168L16.6674 5.8335M9.16736 10.4168L1.66736 5.8335M9.16736 10.4168V18.7502" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M12.9152 12.7432V11.5279M12.9152 12.7432C12.9152 12.7432 14.0726 10.8335 16.3874 10.8335C17.0215 10.8335 17.6139 11.0015 18.1236 11.2951M12.9152 12.7432H14.1305M18.6791 15.0349C18.6791 15.0349 17.4718 16.9446 15.5541 16.9446C14.9217 16.9446 14.3287 16.7755 13.818 16.4801M18.6791 15.0349H17.4638M18.6791 15.0349V16.2502" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
   </svg>
 )
 const IconGridDots = () => (
@@ -150,10 +165,61 @@ const IconGridDots = () => (
     )))}
   </svg>
 )
+/* Icon=calendar-dates – Figma 202:3228 Event Date button (2:261) */
 const IconCalendarSidebar = () => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="shrink-0">
-    <rect x="3" y="5" width="18" height="16" rx="2" stroke="currentColor" strokeWidth="1.5" />
-    <path d="M3 10h18M8 3v4M16 3v4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 18 18" fill="none" className="shrink-0" data-name="Icon=calendar-dates" data-node-id="2:261" aria-hidden>
+    <defs>
+      <clipPath id="clip0_IconCalendarSidebar">
+        <rect width="18" height="18" fill="white" />
+      </clipPath>
+    </defs>
+    <g clipPath="url(#clip0_IconCalendarSidebar)">
+      <rect x="1.5" y="1.5" width="15" height="15" rx="6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M6 0.75L6 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M12 0.75L12 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M12.75 6H5.25" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="6" cy="9.75" r="0.75" fill="currentColor" />
+      <circle cx="6" cy="12.75" r="0.75" fill="currentColor" />
+      <circle cx="9" cy="12.75" r="0.75" fill="currentColor" />
+      <circle cx="12" cy="12.75" r="0.75" fill="currentColor" />
+      <circle cx="9" cy="9.75" r="0.75" fill="currentColor" />
+      <circle cx="12" cy="9.75" r="0.75" fill="currentColor" />
+    </g>
+  </svg>
+)
+/* Icon=list – list view (Figma 2:571) */
+const IconList = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 16 16" fill="none" className="shrink-0">
+    <defs>
+      <clipPath id="clip0_IconList">
+        <rect width="16" height="16" fill="white" />
+      </clipPath>
+    </defs>
+    <g clipPath="url(#clip0_IconList)">
+      <path d="M7.33337 13.3334L14.6667 13.3334" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M7.33337 8L14.6667 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M7.33337 2.66663L14.6667 2.66662" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="2.66671" cy="2.66671" r="1.33333" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M4.00004 7.99996C4.00004 8.73634 3.40309 9.33329 2.66671 9.33329C1.93033 9.33329 1.33337 8.73634 1.33337 7.99996C1.33337 7.26358 1.93033 6.66663 2.66671 6.66663C3.40309 6.66663 4.00004 7.26358 4.00004 7.99996Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="2.66671" cy="13.3333" r="1.33333" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </g>
+  </svg>
+)
+/* Icon=calendar-note – week view (Figma 2:452) */
+/* Icon=calendar-note – week view (Figma 2:452 / 203:1343 segment) */
+const IconCalendarNote = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="19" height="19" viewBox="0 0 16 16" fill="none" className="shrink-0" aria-hidden>
+    <defs>
+      <clipPath id="clip0_IconCalendarNote">
+        <rect width="16" height="16" fill="white" />
+      </clipPath>
+    </defs>
+    <g clipPath="url(#clip0_IconCalendarNote)">
+      <rect x="1.33337" y="1.33337" width="13.3333" height="13.3333" rx="6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M5.33337 0.666626L5.33337 2.66663" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M10.6666 0.666626L10.6666 2.66663" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M11.3333 5.33337H4.66663" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </g>
   </svg>
 )
 const IconGears = () => (
@@ -315,73 +381,213 @@ function EventCard({ route, units, time, category, priority }) {
   )
 }
 
+/* Optimiser page – Figma 174:2696 (Optimiser-Concepts) */
+function OptimiserPage() {
+  const [activeTypeFilter, setActiveTypeFilter] = useState('all')
+  const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+  const typeFilters = [
+    { id: 'all', label: 'All', icon: null },
+    { id: 'replenishment', label: 'Replenishment', icon: 'replenishment' },
+    { id: 'reorder', label: 'Reorder', icon: 'reorder' },
+    { id: 'rebalancing', label: 'Rebalancing', icon: 'rebalancing' },
+  ]
+  const [activeViewOption, setActiveViewOption] = useState('month')
+  const viewOptions = [
+    { id: 'list', label: 'List', icon: 'list' },
+    { id: 'week', label: 'Week', icon: 'week' },
+    { id: 'month', label: 'Month', icon: 'month' },
+  ]
+  const feb2026 = (() => {
+    const weeks = []
+    let d = new Date(2026, 0, 26)
+    for (let w = 0; w < 5; w++) {
+      const row = []
+      for (let i = 0; i < 7; i++) {
+        row.push(d.getDate())
+        d.setDate(d.getDate() + 1)
+      }
+      weeks.push(row)
+    }
+    return weeks
+  })()
+
+  return (
+    <div className="flex flex-col gap-6" data-name="Optimiser" data-node-id="174:2696">
+      <div className="bg-white border border-[#ebf3ff] rounded-[14px] p-6 flex flex-col gap-5" data-name="Calendar container" data-node-id="174:2767">
+        <div className="flex items-center justify-between gap-4 flex-wrap">
+          <div className="flex items-center gap-2">
+            <IconCalendarSidebar className="text-[#22272f] size-6 shrink-0" />
+            <div>
+              <p className="text-[16px] font-medium text-[#0a0a0a] leading-tight">Optimiser schedule</p>
+              <p className="text-[14px] font-normal text-[#4b535c]">Perform all job and schedule actions for all your upcoming inventory</p>
+            </div>
+          </div>
+          <button type="button" className="h-10 px-4 rounded-[4px] bg-[#0267ff] text-white text-[16px] font-medium flex items-center gap-2 shrink-0">
+            <IconPlus />
+            Add Schedule
+          </button>
+        </div>
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="bg-white border border-[#e9eaeb] flex gap-[var(--spacing-s,8px)] items-center p-[var(--spacing-xxs,4px)] rounded-[var(--border-radius-s,4px)] shrink-0 h-12" data-name="segment-control" data-node-id="202:3165">
+            {typeFilters.map((f) => {
+              const isActive = activeTypeFilter === f.id
+              return (
+                <button
+                  key={f.id}
+                  type="button"
+                  onClick={() => setActiveTypeFilter(f.id)}
+                  className={`flex gap-[var(--spacing-xs,6px)] items-center justify-center max-h-[32px] p-[var(--spacing-s,8px)] rounded-[2px] shrink-0 text-[14px] text-center whitespace-nowrap ${isActive ? 'bg-[#f8f8f8] font-medium text-[#0a0a0a]' : 'font-normal text-[#4b535c]'}`}
+                  data-name="Segment element"
+                >
+                  {f.icon === 'replenishment' && <IconReplenishment className="text-[#22272f] size-4 shrink-0" aria-hidden />}
+                  {f.icon === 'reorder' && <IconReorder className="text-[#22272f] size-4 shrink-0" aria-hidden />}
+                  {f.icon === 'rebalancing' && <IconRebalancing className="text-[#22272f] size-4 shrink-0" aria-hidden />}
+                  <span>{f.label}</span>
+                </button>
+              )
+            })}
+          </div>
+          <div className="flex items-center gap-2">
+            <button type="button" className="flex items-center gap-[var(--spacing-s,8px)] h-12 px-[var(--spacing-l,16px)] py-[var(--spacing-m,12px)] rounded-[var(--border-radius-s,4px)] bg-white border border-[#e9eaeb] text-[16px] font-medium text-[#0a0a0a] shrink-0" data-name="Button" data-node-id="202:3228">
+              <IconCalendarSidebar className="text-[#22272f] size-4 shrink-0" aria-hidden data-name="icon" data-node-id="I202:3228;12027:34152" />
+              <span data-node-id="I202:3228;12027:34153">Event Date</span>
+            </button>
+            <div className="bg-white border border-[#e9eaeb] flex gap-[var(--spacing-s,8px)] items-center p-[var(--spacing-xxs,4px)] rounded-[var(--border-radius-s,4px)] shrink-0 h-12" data-name="segment-control" data-node-id="203:1343">
+              {viewOptions.map((v) => {
+                const isActive = activeViewOption === v.id
+                return (
+                  <button
+                    key={v.id}
+                    type="button"
+                    onClick={() => setActiveViewOption(v.id)}
+                    className={`flex gap-[var(--spacing-xs,6px)] items-center justify-center max-h-[32px] p-[var(--spacing-s,8px)] rounded-[2px] shrink-0 text-[14px] text-center whitespace-nowrap ${isActive ? 'bg-[#f8f8f8] font-medium text-[#0a0a0a]' : 'font-normal text-[#4b535c]'}`}
+                    data-name="Segment element"
+                  >
+                    {v.icon === 'list' && <IconList className="text-[#22272f] size-4 shrink-0" aria-hidden />}
+                    {v.icon === 'week' && <IconCalendarNote className="text-[#22272f] size-4 shrink-0" aria-hidden />}
+                    {v.icon === 'month' && <IconCalendarSidebar className="text-[#22272f] size-4 shrink-0" aria-hidden />}
+                    <span>{v.label}</span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        </div>
+        <div className="flex flex-col gap-6">
+          <div className="flex items-center gap-4 h-7">
+            <button type="button" className="rounded size-7 flex items-center justify-center text-[#0a0a0a] hover:bg-[#f3f4f6]" aria-label="Previous month">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M12 4l-6 6 6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+            </button>
+            <h2 className="text-[20px] font-semibold text-[#0a0a0a] tracking-tight">February 2026</h2>
+            <button type="button" className="rounded size-7 flex items-center justify-center text-[#0a0a0a] hover:bg-[#f3f4f6]" aria-label="Next month">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M8 4l6 6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+            </button>
+          </div>
+          <div className="border border-[#e5e7eb] rounded-[10px] overflow-hidden">
+            <div className="grid grid-cols-7 bg-[#f3f4f6] border-b border-[#e5e7eb]">
+              {weekDays.map((day) => (
+                <div key={day} className="py-3 text-center text-[14px] font-medium text-[#364153] border-r border-[#e5e7eb] last:border-r-0">
+                  {day}
+                </div>
+              ))}
+            </div>
+            <div className="grid grid-cols-7">
+              {feb2026.map((row, ri) =>
+                row.map((date, ci) => (
+                  <div key={`${ri}-${ci}`} className={`min-h-[80px] p-2 border-b border-[#e5e7eb] bg-white text-[14px] text-[#0a0a0a] ${ci < 6 ? 'border-r' : ''}`}>
+                    {date}
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function App() {
   const [assignee, setAssignee] = useState({})
-  const [insightsOpen, setInsightsOpen] = useState(false)
+  const [optimiserOpen, setOptimiserOpen] = useState(false)
+  const [activeView, setActiveView] = useState('control-panel')
 
   return (
     <div className="h-screen bg-[#f9fafb] flex text-[#0a0a0a] overflow-hidden">
-      {/* App shell: fixed sidebar */}
-      <aside className={`w-[220px] h-full shrink-0 bg-[#12171e] flex flex-col px-4 py-8 ${insightsOpen ? 'overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden' : 'overflow-hidden'}`} data-name="Sidebar" data-node-id="12212:42695">
-        <div className="flex flex-col gap-0 items-start justify-center px-4 py-2 shrink-0 w-full" data-name="Logo container" data-node-id="12203:5658">
+      {/* App shell: fixed sidebar – Figma 14404:7242 OptimiserSidebar/Expanded/Default */}
+      <aside className={`min-w-[220px] w-max h-full shrink-0 bg-[#12171e] flex flex-col px-[var(--spacing-l,16px)] py-[var(--spacing-2xl,32px)] overflow-y-auto overflow-x-visible [scrollbar-width:none] [&::-webkit-scrollbar]:hidden`} data-name="OptimiserSidebar/Expanded/Default" data-node-id="14404:7242">
+        <div className="flex flex-col gap-[var(--spacing-2xl,32px)] min-w-0 flex-1 min-h-0" data-name="Container" data-node-id="14404:7243">
+        <div className="flex flex-row items-center justify-between gap-2 w-full px-[var(--spacing-l,16px)] py-[var(--spacing-s,8px)] shrink-0" data-name="Logo container" data-node-id="14404:7244">
           <AutoneLogo />
+          <button type="button" className="flex items-center justify-center size-8 rounded-[var(--border-radius-s,4px)] text-white hover:bg-white/10 shrink-0" aria-label="Collapse sidebar" data-name="Icon=Collapse" data-node-id="12206:42115">
+            <IconCollapse />
+          </button>
         </div>
 
-        <nav className={`flex-1 flex flex-col gap-[6px] items-start w-full mt-8 min-h-0 ${insightsOpen ? 'overflow-visible' : 'overflow-y-auto'}`} data-name="Container" data-node-id="12203:5677">
-          <button type="button" className="h-10 w-full flex items-center gap-3 px-4 py-2 rounded-[4px] bg-[#0267ff] text-left text-[14px] font-medium text-white shrink-0" data-name="Sidebar element">
-            <IconGrid className="text-white size-6 shrink-0" aria-hidden />
+        <nav className={`flex-1 flex flex-col gap-[var(--spacing-xs,6px)] items-start w-full min-h-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${optimiserOpen ? 'overflow-visible' : 'overflow-y-auto'}`} data-name="Container" data-node-id="14404:7246">
+          <button type="button" onClick={() => setActiveView('control-panel')} className={`h-10 w-full flex items-center gap-[var(--spacing-m,12px)] px-[var(--spacing-l,16px)] py-[var(--spacing-s,8px)] rounded-[var(--border-radius-s,4px)] text-left text-[14px] font-medium shrink-0 ${activeView === 'control-panel' ? 'bg-[#0267ff] text-white' : 'text-white hover:bg-white/5'}`} data-name="Sidebar element" data-node-id="14404:7247">
+            <IconGrid className={`size-6 shrink-0 ${activeView === 'control-panel' ? 'text-white' : 'text-[#22272f]'}`} aria-hidden />
             <span>Control Panel</span>
           </button>
-          <button type="button" className="h-10 w-full flex items-center gap-3 px-4 py-2 rounded-[4px] text-left text-[14px] font-normal text-white hover:bg-white/5 shrink-0" data-name="Sidebar element">
-            <IconBuy className="text-[#22272f] size-6 shrink-0" aria-hidden />
-            <span>Buying</span>
+          <button type="button" className="h-10 w-full flex items-center gap-[var(--spacing-m,12px)] px-[var(--spacing-l,16px)] py-[var(--spacing-s,8px)] rounded-[var(--border-radius-s,4px)] text-left text-[14px] font-normal text-white hover:bg-white/5 shrink-0" data-name="Sidebar element" data-node-id="14404:7252">
+            <IconBars className="text-[#22272f] size-6 shrink-0" aria-hidden />
+            <span className="flex-1 min-w-0 text-left">Insights</span>
+            <span className="ml-auto inline-flex text-white size-5 shrink-0" aria-hidden data-name="icon" data-node-id="I14404:7252;12203:35389">
+              <IconInsightsChevron />
+            </span>
           </button>
-          <div className="flex flex-col gap-[6px] w-full shrink-0">
+          <div className="flex flex-col gap-[var(--spacing-xs,6px)] w-full shrink-0">
             <button
               type="button"
-              onClick={() => setInsightsOpen((o) => !o)}
-              className={`h-10 w-full flex items-center gap-3 px-4 py-2 rounded-[4px] text-left text-[14px] font-normal text-white shrink-0 ${insightsOpen ? 'bg-white/5' : 'hover:bg-white/5'}`}
-              aria-expanded={insightsOpen}
+              onClick={() => { setActiveView('optimiser'); setOptimiserOpen((o) => !o); }}
+              className={`h-10 w-full flex items-center gap-[var(--spacing-m,12px)] px-[var(--spacing-l,16px)] py-[var(--spacing-s,8px)] rounded-[var(--border-radius-s,4px)] text-left text-[14px] shrink-0 ${activeView === 'optimiser' ? 'bg-[#0267ff] text-white font-medium' : 'font-normal text-white hover:bg-white/5'}`}
+              aria-expanded={optimiserOpen}
               aria-haspopup="true"
               data-name="Sidebar element"
+              data-node-id="14404:7825"
             >
-              <IconLightbulb className="text-[#22272f] size-6 shrink-0" aria-hidden />
-              <span className="flex-1 min-w-0 text-left">Insights</span>
-              <span className={`ml-auto inline-flex text-white transition-transform duration-200 shrink-0 ${insightsOpen ? 'rotate-180' : ''}`} aria-hidden>
+              <span className="relative shrink-0 size-6" data-name="Icon=new reorder" data-node-id="I14404:7825;12203:35386">
+                <IconOptimiser className={`size-full ${activeView === 'optimiser' ? 'text-white' : 'text-[#22272f]'}`} aria-hidden />
+              </span>
+              <span className="flex flex-1 min-w-0 flex-col justify-center text-left text-[14px] leading-[100%]" data-node-id="I14404:7825;12203:35387">Optimiser</span>
+              <span className={`relative shrink-0 size-5 inline-flex transition-transform duration-200 ${activeView === 'optimiser' ? 'text-white' : 'text-white'} ${optimiserOpen ? 'rotate-180' : ''}`} aria-hidden data-name="icon" data-node-id="I14404:7825;12203:35389">
                 <IconInsightsChevron />
               </span>
             </button>
-            {insightsOpen && (
-              <div className="flex flex-col gap-[4px] pl-4 pb-2 w-full shrink-0" data-node-id="12354:176031">
-                {['Retail', 'Bestseller', 'Explorer'].map((label) => (
-                  <button
-                    key={label}
-                    type="button"
-                    className="h-9 w-full flex items-center gap-2 px-2 py-1 rounded-[4px] text-left text-[14px] font-normal text-white hover:bg-white/5 shrink-0"
-                    data-name="Sidebar element"
-                  >
-                    {label}
-                  </button>
-                ))}
+            {optimiserOpen && (
+              <div className="flex flex-col gap-[4px] pl-4 pb-2 w-full shrink-0">
+                <button type="button" className="min-h-[36px] w-full flex items-center gap-[var(--spacing-s,8px)] px-[var(--spacing-s,8px)] py-[var(--spacing-xxs,4px)] rounded-[var(--border-radius-s,4px)] text-left text-[14px] font-normal text-white hover:bg-white/5 shrink-0" data-name="Sidebar element" data-node-id="14404:7250">
+                  Replenishment
+                </button>
+                <button type="button" className="min-h-[36px] w-full flex items-center gap-[var(--spacing-s,8px)] px-[var(--spacing-s,8px)] py-[var(--spacing-xxs,4px)] rounded-[var(--border-radius-s,4px)] text-left text-[14px] font-normal text-white hover:bg-white/5 shrink-0" data-name="Sidebar element" data-node-id="14404:7790">
+                  Reorder
+                </button>
+                <button type="button" className="min-h-[36px] w-full flex items-center gap-[var(--spacing-s,8px)] px-[var(--spacing-s,8px)] py-[var(--spacing-xxs,4px)] rounded-[var(--border-radius-s,4px)] text-left text-[14px] font-normal text-white hover:bg-white/5 shrink-0" data-name="Sidebar element" data-node-id="14404:7793">
+                  Rebalancing
+                </button>
               </div>
             )}
           </div>
-          {!insightsOpen && (
+          <button type="button" className="h-10 w-full flex items-center gap-[var(--spacing-m,12px)] px-[var(--spacing-l,16px)] py-[var(--spacing-s,8px)] rounded-[var(--border-radius-s,4px)] text-left text-[14px] font-normal text-white hover:bg-white/5 shrink-0" data-name="Sidebar element" data-node-id="14404:7251">
+            <IconBuy className="text-[#22272f] size-6 shrink-0" aria-hidden />
+            <span>Buying</span>
+          </button>
+          <div className="h-px w-full bg-white/10 shrink-0 my-0" role="separator" data-name="divider" />
+          {!optimiserOpen && (
             <>
-              <div className="h-px w-full bg-white/10 shrink-0 my-0" role="separator" data-name="divider" />
-              <button type="button" className="h-10 w-full flex items-center gap-3 px-4 py-2 rounded-[4px] text-left text-[14px] font-normal text-white hover:bg-white/5 shrink-0" data-name="Sidebar element">
+              <button type="button" className="h-10 w-full flex items-center gap-[var(--spacing-m,12px)] px-[var(--spacing-l,16px)] py-[var(--spacing-s,8px)] rounded-[var(--border-radius-s,4px)] text-left text-[14px] font-normal text-white hover:bg-white/5 shrink-0" data-name="Sidebar element" data-node-id="14404:7254">
                 <IconGridDots className="text-[#22272f] size-6 shrink-0" aria-hidden />
                 <span>Assortment</span>
               </button>
-              <button type="button" className="h-10 w-full flex items-center gap-3 px-4 py-2 rounded-[4px] text-left text-[14px] font-normal text-white hover:bg-white/5 shrink-0" data-name="Sidebar element">
+              <button type="button" className="h-10 w-full flex items-center gap-[var(--spacing-m,12px)] px-[var(--spacing-l,16px)] py-[var(--spacing-s,8px)] rounded-[var(--border-radius-s,4px)] text-left text-[14px] font-normal text-white hover:bg-white/5 shrink-0" data-name="Sidebar element" data-node-id="14404:7255">
                 <IconCalendarSidebar className="text-[#22272f] size-6 shrink-0" aria-hidden />
                 <span>Events</span>
               </button>
-              <button type="button" className="h-10 w-full flex items-center gap-3 px-4 py-2 rounded-[4px] text-left text-[14px] font-normal text-white hover:bg-white/5 shrink-0" data-name="Sidebar element">
+              <button type="button" className="h-10 w-full flex items-center gap-[var(--spacing-m,12px)] px-[var(--spacing-l,16px)] py-[var(--spacing-s,8px)] rounded-[var(--border-radius-s,4px)] text-left text-[14px] font-normal text-white hover:bg-white/5 shrink-0" data-name="Sidebar element">
                 <IconGears className="text-[#22272f] size-6 shrink-0" aria-hidden />
                 <span>Parameters</span>
               </button>
-              <button type="button" className="h-10 w-full flex items-center gap-3 px-4 py-2 rounded-[4px] text-left text-[14px] font-normal text-white hover:bg-white/5 shrink-0" data-name="Sidebar element">
+              <button type="button" className="h-10 w-full flex items-center gap-[var(--spacing-m,12px)] px-[var(--spacing-l,16px)] py-[var(--spacing-s,8px)] rounded-[var(--border-radius-s,4px)] text-left text-[14px] font-normal text-white hover:bg-white/5 shrink-0" data-name="Sidebar element">
                 <IconTeam className="text-[#22272f] size-6 shrink-0" aria-hidden />
                 <span>Team</span>
               </button>
@@ -421,19 +627,26 @@ export default function App() {
             <IconChevronRight className="text-[#22272f] size-5 shrink-0" aria-hidden />
           </button>
         </div>
+        </div>
       </aside>
 
       {/* App shell: fixed top bar + scrollable main */}
       <div className="flex flex-col flex-1 min-w-0 min-h-0 w-full overflow-hidden">
         <div className="shrink-0">
           <TopBar
-          title="Control Panel"
-          subtitle="Control Panel for managing all of your inventory and scheduling needs."
-        />
+            title={activeView === 'optimiser' ? 'Optimiser' : 'Control Panel'}
+            subtitle={activeView === 'optimiser' ? 'Automate replenishment, reordering, and rebalancing with scheduled inventory optimisation.' : 'Control Panel for managing all of your inventory and scheduling needs.'}
+          />
         </div>
 
         {/* Main: scrollable content panel */}
         <main className="flex-1 min-h-0 min-w-0 w-full pl-8 pr-8 pb-12 overflow-y-auto overflow-x-hidden">
+        {activeView === 'optimiser' ? (
+          <div className="pt-6">
+            <OptimiserPage />
+          </div>
+        ) : (
+        <>
         {/* Page header – welcome/date; filters, search, actions */}
         <header className="w-[calc(100%+4rem)] min-w-0 -ml-8 bg-white border-b border-[#e5e7eb] pt-6 pb-4 px-8">
           <div className="flex flex-wrap items-center gap-3 w-full min-w-0">
@@ -617,6 +830,8 @@ export default function App() {
             </div>
           </section>
         </div>
+        </>
+        )}
         </main>
       </div>
     </div>
