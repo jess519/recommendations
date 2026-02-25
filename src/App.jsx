@@ -266,6 +266,19 @@ const IconFlagUK = () => (
     <path fillRule="evenodd" clipRule="evenodd" d="M7.7193 -1.25H10.614V4.51923H18.3333V7.98077H10.614V13.75H7.7193V7.98077H0V4.51923H7.7193V-1.25Z" fill="#F93939" />
   </svg>
 )
+const IconTruck = () => (
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="shrink-0">
+    <path d="M1 4h6v8H1V4zM7 6h2l3 3v3H7V6zM10 9h2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+    <circle cx="4" cy="12" r="1" stroke="currentColor" strokeWidth="1.2" />
+    <circle cx="12" cy="12" r="1" stroke="currentColor" strokeWidth="1.2" />
+  </svg>
+)
+const IconLightbulb = () => (
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="shrink-0">
+    <path d="M6 14h4M8 12v-1M5.5 6.5a3 3 0 015 0c0 .8-.3 1.5-.7 2.1L8 9.5V11M8 2v1M3 5l.7.7M12.3 5.7L13 5M4 9H3M13 9h-1" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+    <path d="M8 3a3.5 3.5 0 00-2.5 5.9v.6c0 .3.2.5.5.5h4c.3 0 .5-.2.5-.5v-.6A3.5 3.5 0 008 3z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+)
 const IconChevronRight = () => (
   <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="shrink-0">
     <path d="M7 5l5 5-5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -384,9 +397,43 @@ function EventCard({ route, units, time, category, priority }) {
   )
 }
 
+/* Sample calendar entry for hover card – Replenishment Feb 2–4 2026 */
+const SAMPLE_CALENDAR_ENTRY = {
+  id: 'entry-1',
+  type: 'replenishment',
+  title: 'Replenishment',
+  startDate: new Date(2026, 1, 2),
+  endDate: new Date(2026, 1, 4),
+  module: 'Replenishment Module',
+  from: 'Warehouse A',
+  to: 'Store B',
+  time: '09:00 AM PST',
+  frequency: 'Weekly · Mon, Wed, Fri',
+  transferUnits: 100,
+  availableToSend: 150,
+  tripType: 'Truck',
+  recommendedUnits: 120,
+  revenueIncrease: 500,
+  reasons: ['High demand', 'Low inventory'],
+}
+
 /* Optimiser page – Figma 174:2696 (Optimiser-Concepts) */
+const DEFAULT_DRAWER_FORM = {
+  module: '',
+  name: '',
+  sending: '',
+  receiving: '',
+  repeats: 'biweekly',
+  time: '',
+  timeZone: 'gmt+1',
+  endsOn: '',
+  notify: '',
+}
+
 function OptimiserPage() {
   const [scheduleDrawerOpen, setScheduleDrawerOpen] = useState(false)
+  const [editingScheduleEntry, setEditingScheduleEntry] = useState(null)
+  const [drawerForm, setDrawerForm] = useState(DEFAULT_DRAWER_FORM)
   const [scheduleDrawerDays, setScheduleDrawerDays] = useState(() => ({ Wed: true, Sat: true }))
   const [activeTypeFilter, setActiveTypeFilter] = useState('all')
   const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
@@ -398,24 +445,106 @@ function OptimiserPage() {
     { id: 'rebalancing', label: 'Rebalancing', icon: 'rebalancing' },
   ]
   const [activeViewOption, setActiveViewOption] = useState('month')
+  const [viewDate, setViewDate] = useState(() => new Date(2026, 1, 1)) // Feb 2026
   const viewOptions = [
     { id: 'list', label: 'List', icon: 'list' },
     { id: 'week', label: 'Week', icon: 'week' },
     { id: 'month', label: 'Month', icon: 'month' },
   ]
-  const feb2026 = (() => {
+  const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+  const getMonday = (d) => {
+    const x = new Date(d)
+    x.setDate(d.getDate() - ((d.getDay() + 6) % 7))
+    return x
+  }
+  const monthGrid = (() => {
+    const y = viewDate.getFullYear()
+    const m = viewDate.getMonth()
+    const first = new Date(y, m, 1)
+    const last = new Date(y, m + 1, 0)
+    const start = getMonday(first)
     const weeks = []
-    let d = new Date(2026, 0, 26)
-    for (let w = 0; w < 5; w++) {
+    let d = new Date(start)
+    while (weeks.length < 6) {
       const row = []
       for (let i = 0; i < 7; i++) {
-        row.push(d.getDate())
+        row.push(d.getMonth() === m ? d.getDate() : null)
         d.setDate(d.getDate() + 1)
       }
       weeks.push(row)
+      if (d > last) break
     }
     return weeks
   })()
+  const weekRow = (() => {
+    const mon = getMonday(new Date(viewDate))
+    return Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(mon)
+      d.setDate(mon.getDate() + i)
+      return d
+    })
+  })()
+  const listMonthDates = (() => {
+    const y = viewDate.getFullYear()
+    const m = viewDate.getMonth()
+    const last = new Date(y, m + 1, 0).getDate()
+    return Array.from({ length: last }, (_, i) => i + 1)
+  })()
+  const viewTitle = activeViewOption === 'month' || activeViewOption === 'list'
+    ? `${monthNames[viewDate.getMonth()]} ${viewDate.getFullYear()}`
+    : (() => {
+        const mon = weekRow[0]
+        const sun = weekRow[6]
+        return `Week of ${mon.getDate()} ${monthNames[mon.getMonth()]} – ${sun.getDate()} ${monthNames[sun.getMonth()]} ${sun.getFullYear()}`
+      })()
+  const goPrev = () => {
+    if (activeViewOption === 'week') {
+      setViewDate((d) => { const x = new Date(d); x.setDate(d.getDate() - 7); return x })
+    } else {
+      setViewDate((d) => new Date(d.getFullYear(), d.getMonth() - 1, 1))
+    }
+  }
+  const goNext = () => {
+    if (activeViewOption === 'week') {
+      setViewDate((d) => { const x = new Date(d); x.setDate(d.getDate() + 7); return x })
+    } else {
+      setViewDate((d) => new Date(d.getFullYear(), d.getMonth() + 1, 1))
+    }
+  }
+  const getCellDate = (ri, ci) => {
+    const y = viewDate.getFullYear()
+    const m = viewDate.getMonth()
+    const start = getMonday(new Date(y, m, 1))
+    const d = new Date(start)
+    d.setDate(start.getDate() + ri * 7 + ci)
+    return d
+  }
+  const entryMatchesCell = (ri, ci) => {
+    const cellDate = getCellDate(ri, ci)
+    const e = SAMPLE_CALENDAR_ENTRY
+    return cellDate >= e.startDate && cellDate <= e.endDate && cellDate.getMonth() === e.startDate.getMonth()
+  }
+  const openDrawerForEdit = () => {
+    const e = SAMPLE_CALENDAR_ENTRY
+    setEditingScheduleEntry(e)
+    setDrawerForm({
+      module: 'replenishment',
+      name: e.title,
+      sending: e.from,
+      receiving: e.to,
+      repeats: 'weekly',
+      time: e.time.replace(/\s+PST$/, ''),
+      timeZone: 'pst',
+      endsOn: `${monthNames[e.endDate.getMonth()]} ${e.endDate.getDate()}, ${e.endDate.getFullYear()}`,
+      notify: '',
+    })
+    setScheduleDrawerDays({ Mon: true, Tue: false, Wed: true, Thu: false, Fri: true, Sat: false, Sun: false })
+    setScheduleDrawerOpen(true)
+  }
+  const closeDrawer = () => {
+    setScheduleDrawerOpen(false)
+    setEditingScheduleEntry(null)
+  }
 
   return (
     <>
@@ -429,7 +558,16 @@ function OptimiserPage() {
               <p className="text-[14px] font-normal text-[#4b535c]">Perform all job and schedule actions for all your upcoming inventory</p>
             </div>
           </div>
-          <button type="button" onClick={() => setScheduleDrawerOpen(true)} className="h-10 px-4 rounded-[4px] bg-[#0267ff] text-white text-[16px] font-medium flex items-center gap-2 shrink-0">
+          <button
+            type="button"
+            onClick={() => {
+              setEditingScheduleEntry(null)
+              setDrawerForm(DEFAULT_DRAWER_FORM)
+              setScheduleDrawerDays({ Wed: true, Sat: true })
+              setScheduleDrawerOpen(true)
+            }}
+            className="h-10 px-4 rounded-[4px] bg-[#0267ff] text-white text-[16px] font-medium flex items-center gap-2 shrink-0"
+          >
             <IconPlus />
             Add Schedule
           </button>
@@ -482,43 +620,174 @@ function OptimiserPage() {
         </div>
         <div className="flex flex-col gap-6">
           <div className="flex items-center gap-4 h-7">
-            <button type="button" className="rounded size-7 flex items-center justify-center text-[#0a0a0a] hover:bg-[#f3f4f6]" aria-label="Previous month">
+            <button type="button" onClick={goPrev} className="rounded size-7 flex items-center justify-center text-[#0a0a0a] hover:bg-[#f3f4f6]" aria-label={activeViewOption === 'week' ? 'Previous week' : 'Previous month'}>
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M12 4l-6 6 6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
             </button>
-            <h2 className="text-[20px] font-semibold text-[#0a0a0a] tracking-tight">February 2026</h2>
-            <button type="button" className="rounded size-7 flex items-center justify-center text-[#0a0a0a] hover:bg-[#f3f4f6]" aria-label="Next month">
+            <h2 className="text-[20px] font-semibold text-[#0a0a0a] tracking-tight">{viewTitle}</h2>
+            <button type="button" onClick={goNext} className="rounded size-7 flex items-center justify-center text-[#0a0a0a] hover:bg-[#f3f4f6]" aria-label={activeViewOption === 'week' ? 'Next week' : 'Next month'}>
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M8 4l6 6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
             </button>
           </div>
-          <div className="border border-[#e5e7eb] rounded-[10px] overflow-hidden">
-            <div className="grid grid-cols-7 bg-[#f3f4f6] border-b border-[#e5e7eb]">
-              {weekDays.map((day) => (
-                <div key={day} className="py-3 text-center text-[14px] font-medium text-[#364153] border-r border-[#e5e7eb] last:border-r-0">
-                  {day}
-                </div>
-              ))}
-            </div>
-            <div className="grid grid-cols-7">
-              {feb2026.map((row, ri) =>
-                row.map((date, ci) => (
-                  <div key={`${ri}-${ci}`} className={`min-h-[80px] p-2 border-b border-[#e5e7eb] bg-white text-[14px] text-[#0a0a0a] ${ci < 6 ? 'border-r' : ''}`}>
-                    {date}
+          {activeViewOption === 'month' && (
+            <div className="border border-[#e5e7eb] rounded-[10px] overflow-visible relative">
+              <div className="grid grid-cols-7 bg-[#f3f4f6] border-b border-[#e5e7eb]">
+                {weekDays.map((day) => (
+                  <div key={day} className="py-3 text-center text-[14px] font-medium text-[#364153] border-r border-[#e5e7eb] last:border-r-0">
+                    {day}
                   </div>
-                ))
-              )}
+                ))}
+              </div>
+              <div className="grid grid-cols-7">
+                {monthGrid.map((row, ri) =>
+                  row.map((date, ci) => {
+                    const isEntry = date !== null && entryMatchesCell(ri, ci)
+                    return (
+                      <div
+                        key={`${ri}-${ci}`}
+                        className={`min-h-[80px] p-2 border-b border-[#e5e7eb] bg-white text-[14px] text-[#0a0a0a] ${ci < 6 ? 'border-r' : ''} ${date === null ? 'text-[#9ca3af]' : ''} ${isEntry ? 'cursor-pointer' : ''}`}
+                      >
+                        {date ?? ''}
+                        {isEntry && (
+                          <div className="relative group mt-1 w-fit">
+                            <div className="px-2 py-1 rounded bg-[#ebf3ff] flex flex-col gap-1 w-fit shrink-0">
+                              <div className="flex items-center gap-1.5 text-[12px] font-medium text-[#0267ff]">
+                                <IconReplenishment className="size-3.5 shrink-0" aria-hidden />
+                                Replenishment
+                              </div>
+                              <div className="text-[10px] leading-tight text-[#0a0a0a] space-y-0.5">
+                                <p>{SAMPLE_CALENDAR_ENTRY.from} → {SAMPLE_CALENDAR_ENTRY.to}</p>
+                                <p>{SAMPLE_CALENDAR_ENTRY.time}</p>
+                                <p>{SAMPLE_CALENDAR_ENTRY.frequency.replace('·', '•')}</p>
+                                <p>Transfer Units: {SAMPLE_CALENDAR_ENTRY.transferUnits}</p>
+                                <p>Available to Send: {SAMPLE_CALENDAR_ENTRY.availableToSend}</p>
+                                <p>Trip Type: {SAMPLE_CALENDAR_ENTRY.tripType}</p>
+                              </div>
+                            </div>
+                            <div
+                              role="dialog"
+                              aria-label="Schedule details"
+                              className="absolute left-[100%] top-0 ml-2 w-[320px] rounded-[12px] bg-white border border-[#e9eaeb] shadow-lg overflow-hidden opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto z-50 transition-opacity"
+                            >
+                              <div className="p-4 flex flex-col gap-3">
+                                <div className="flex items-start justify-between gap-2">
+                                  <div className="flex items-center gap-2">
+                                    <span className="flex items-center justify-center w-8 h-8 rounded-[8px] bg-[#ebf3ff] text-[#0267ff]">
+                                      <IconReplenishment className="size-4" />
+                                    </span>
+                                    <div>
+                                      <p className="text-[14px] font-semibold text-[#0a0a0a]">{SAMPLE_CALENDAR_ENTRY.title}</p>
+                                      <p className="text-[12px] text-[#4b535c]">
+                                        {monthNames[SAMPLE_CALENDAR_ENTRY.startDate.getMonth()]} {SAMPLE_CALENDAR_ENTRY.startDate.getDate()} – {SAMPLE_CALENDAR_ENTRY.endDate.getDate()}, {SAMPLE_CALENDAR_ENTRY.endDate.getFullYear()}
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <button type="button" onClick={openDrawerForEdit} className="shrink-0 h-8 px-3 rounded-[4px] text-[13px] font-medium text-[#0267ff] hover:bg-[#ebf3ff]">
+                                    Edit
+                                  </button>
+                                </div>
+                                <div className="h-px bg-[#e9eaeb]" />
+                                <div className="flex items-center gap-2 text-[13px] text-[#0a0a0a]">
+                                  <span className="text-[#4b535c]">Warehouse A</span>
+                                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="shrink-0 text-[#4b535c]"><path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                                  <span className="text-[#4b535c]">Store B</span>
+                                </div>
+                                <p className="text-[13px] text-[#4b535c]">{SAMPLE_CALENDAR_ENTRY.time}</p>
+                                <div className="h-px bg-[#e9eaeb]" />
+                                <div className="flex justify-between text-[13px]">
+                                  <span className="text-[#4b535c]">Transfer units</span>
+                                  <span className="text-[#0a0a0a] font-medium">{SAMPLE_CALENDAR_ENTRY.transferUnits}</span>
+                                </div>
+                                <div className="flex justify-between text-[13px]">
+                                  <span className="text-[#4b535c]">Available to send</span>
+                                  <span className="text-[#0a0a0a] font-medium">{SAMPLE_CALENDAR_ENTRY.availableToSend}</span>
+                                </div>
+                                <div className="flex justify-between items-center text-[13px]">
+                                  <span className="text-[#4b535c]">Trip type</span>
+                                  <span className="text-[#0a0a0a] font-medium flex items-center gap-1"><IconTruck className="size-3.5" /> {SAMPLE_CALENDAR_ENTRY.tripType}</span>
+                                </div>
+                                <div className="h-px bg-[#e9eaeb]" />
+                                <div className="rounded-[8px] bg-[#eff6ff] p-3 flex flex-col gap-2">
+                                  <div className="flex justify-between items-center text-[13px]">
+                                    <span className="text-[#4b535c]">Recommended units</span>
+                                    <span className="text-[#0a0a0a] font-medium flex items-center gap-1"><IconTrendUp className="size-3.5" /> {SAMPLE_CALENDAR_ENTRY.recommendedUnits}</span>
+                                  </div>
+                                  <div className="flex justify-between text-[13px]">
+                                    <span className="text-[#4b535c]">Revenue increase</span>
+                                    <span className="font-medium text-[#059669]">${SAMPLE_CALENDAR_ENTRY.revenueIncrease}</span>
+                                  </div>
+                                </div>
+                                <div className="h-px bg-[#e9eaeb]" />
+                                <div className="flex items-start gap-2">
+                                  <IconLightbulb className="size-4 text-[#4b535c] shrink-0 mt-0.5" />
+                                  <div>
+                                    <p className="text-[13px] font-medium text-[#0a0a0a]">Recommendation reasons</p>
+                                    <ul className="mt-1 text-[13px] text-[#4b535c] list-disc list-inside">
+                                      {SAMPLE_CALENDAR_ENTRY.reasons.map((r) => (
+                                        <li key={r}>{r}</li>
+                                      ))}
+                                    </ul>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })
+                )}
+              </div>
             </div>
-          </div>
+          )}
+          {activeViewOption === 'week' && (
+            <div className="border border-[#e5e7eb] rounded-[10px] overflow-hidden">
+              <div className="grid grid-cols-7 bg-[#f3f4f6] border-b border-[#e5e7eb]">
+                {weekDays.map((day) => (
+                  <div key={day} className="py-3 text-center text-[14px] font-medium text-[#364153] border-r border-[#e5e7eb] last:border-r-0">
+                    {day}
+                  </div>
+                ))}
+              </div>
+              <div className="grid grid-cols-7">
+                {weekRow.map((d, i) => (
+                  <div key={i} className="min-h-[80px] p-2 border-r border-[#e5e7eb] bg-white text-[14px] text-[#0a0a0a] last:border-r-0">
+                    {d.getDate()}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          {activeViewOption === 'list' && (
+            <div className="border border-[#e5e7eb] rounded-[10px] overflow-hidden">
+              <div className="bg-[#f3f4f6] border-b border-[#e5e7eb] py-3 px-4 text-[14px] font-medium text-[#364153]">
+                {monthNames[viewDate.getMonth()]} {viewDate.getFullYear()} – list
+              </div>
+              <div className="divide-y divide-[#e5e7eb] bg-white">
+                {listMonthDates.length === 0 ? (
+                  <div className="py-8 px-4 text-[14px] text-[#4b535c] text-center">No schedules</div>
+                ) : (
+                  listMonthDates.map((date) => (
+                    <div key={date} className="flex items-center gap-4 min-h-[48px] px-4 py-2 text-[14px] text-[#0a0a0a]">
+                      <span className="font-medium w-8">{date}</span>
+                      <span className="text-[#4b535c]">{monthNames[viewDate.getMonth()].slice(0, 3)}</span>
+                      <span className="text-[#4b535c] flex-1">No schedule</span>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
 
       {scheduleDrawerOpen && (
         <>
-          <div role="presentation" className="fixed inset-0 bg-black/50 z-40" onClick={() => setScheduleDrawerOpen(false)} aria-hidden />
-          <div className="fixed right-0 top-0 bottom-0 w-[800px] bg-white shadow-xl z-50 flex flex-col" role="dialog" aria-modal aria-labelledby="add-schedule-title" data-name="Add Schedule" data-node-id="214:2622">
+          <div role="presentation" className="fixed inset-0 bg-black/50 z-40" onClick={closeDrawer} aria-hidden />
+          <div className="fixed right-0 top-0 bottom-0 w-[800px] bg-white shadow-xl z-50 flex flex-col" role="dialog" aria-modal aria-labelledby="add-schedule-title" data-name={editingScheduleEntry ? 'Schedule' : 'Add Schedule'} data-node-id="214:2622">
             <header className="flex items-center justify-between shrink-0 h-14 px-6 border-b border-[#e9eaeb]">
-              <h2 id="add-schedule-title" className="text-[18px] font-semibold text-[#0a0a0a]">Add Schedule</h2>
-              <button type="button" onClick={() => setScheduleDrawerOpen(false)} className="p-2 -mr-2 text-[#4b535c] hover:bg-[#f3f4f6] rounded-[4px]" aria-label="Close">
+              <h2 id="add-schedule-title" className="text-[18px] font-semibold text-[#0a0a0a]">{editingScheduleEntry ? 'Schedule' : 'Add Schedule'}</h2>
+              <button type="button" onClick={closeDrawer} className="p-2 -mr-2 text-[#4b535c] hover:bg-[#f3f4f6] rounded-[4px]" aria-label="Close">
                 <IconClose />
               </button>
             </header>
@@ -527,8 +796,11 @@ function OptimiserPage() {
                 <p className="text-[14px] font-medium text-[#0a0a0a]">Choose module to create schedule <span className="font-normal text-[#4b535c]">Make a selection</span></p>
                 <label className="text-[14px] font-normal text-[#4b535c]">Module</label>
                 <div className="relative">
-                  <select className="w-full h-10 pl-3 pr-9 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#0a0a0a] appearance-none">
+                  <select value={drawerForm.module} onChange={(ev) => setDrawerForm((f) => ({ ...f, module: ev.target.value }))} className="w-full h-10 pl-3 pr-9 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#0a0a0a] appearance-none">
                     <option value="">Select</option>
+                    <option value="replenishment">Replenishment</option>
+                    <option value="reorder">Reorder</option>
+                    <option value="rebalancing">Rebalancing</option>
                   </select>
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none"><IconChevronDownSelect /></span>
                 </div>
@@ -536,7 +808,7 @@ function OptimiserPage() {
               <section className="flex flex-col gap-2">
                 <p className="text-[14px] font-medium text-[#0a0a0a]">Give your schedule a name:</p>
                 <label className="text-[14px] font-normal text-[#4b535c]">Name schedule</label>
-                <input type="text" placeholder="Placeholder" className="w-full h-10 px-3 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#0a0a0a] placeholder:text-[#4b535c]" />
+                <input type="text" placeholder="Placeholder" value={drawerForm.name} onChange={(ev) => setDrawerForm((f) => ({ ...f, name: ev.target.value }))} className="w-full h-10 px-3 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#0a0a0a] placeholder:text-[#4b535c]" />
                 <p className="text-[12px] font-normal text-[#4b535c]">If not assigned, name will be given automatically</p>
               </section>
               <section className="flex flex-col gap-2">
@@ -545,8 +817,10 @@ function OptimiserPage() {
                   <div className="flex flex-col gap-1">
                     <label className="text-[14px] font-normal text-[#4b535c]">Sending location</label>
                     <div className="relative">
-                      <select className="w-full h-10 pl-3 pr-9 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#0a0a0a] appearance-none">
+                      <select value={drawerForm.sending} onChange={(ev) => setDrawerForm((f) => ({ ...f, sending: ev.target.value }))} className="w-full h-10 pl-3 pr-9 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#0a0a0a] appearance-none">
                         <option value="">Select</option>
+                        <option value="Warehouse A">Warehouse A</option>
+                        <option value="Warehouse B">Warehouse B</option>
                       </select>
                       <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none"><IconChevronDownSelect /></span>
                     </div>
@@ -554,8 +828,10 @@ function OptimiserPage() {
                   <div className="flex flex-col gap-1">
                     <label className="text-[14px] font-normal text-[#4b535c]">Receiving location</label>
                     <div className="relative">
-                      <select className="w-full h-10 pl-3 pr-9 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#0a0a0a] appearance-none">
+                      <select value={drawerForm.receiving} onChange={(ev) => setDrawerForm((f) => ({ ...f, receiving: ev.target.value }))} className="w-full h-10 pl-3 pr-9 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#0a0a0a] appearance-none">
                         <option value="">Select</option>
+                        <option value="Store A">Store A</option>
+                        <option value="Store B">Store B</option>
                       </select>
                       <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none"><IconChevronDownSelect /></span>
                     </div>
@@ -568,8 +844,10 @@ function OptimiserPage() {
                   <div className="flex flex-col gap-1 min-w-[140px]">
                     <label className="text-[14px] font-normal text-[#4b535c]">Repeats</label>
                     <div className="relative">
-                      <select className="w-full h-10 pl-3 pr-9 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#0a0a0a] appearance-none">
+                      <select value={drawerForm.repeats} onChange={(ev) => setDrawerForm((f) => ({ ...f, repeats: ev.target.value }))} className="w-full h-10 pl-3 pr-9 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#0a0a0a] appearance-none">
+                        <option value="weekly">Weekly</option>
                         <option value="biweekly">Bi-weekly (Every 2 weeks)</option>
+                        <option value="monthly">Monthly</option>
                       </select>
                       <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none"><IconChevronDownSelect /></span>
                     </div>
@@ -577,8 +855,11 @@ function OptimiserPage() {
                   <div className="flex flex-col gap-1 min-w-[100px]">
                     <label className="text-[14px] font-normal text-[#4b535c]">Time</label>
                     <div className="relative">
-                      <select className="w-full h-10 pl-3 pr-9 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#0a0a0a] appearance-none">
+                      <select value={drawerForm.time} onChange={(ev) => setDrawerForm((f) => ({ ...f, time: ev.target.value }))} className="w-full h-10 pl-3 pr-9 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#0a0a0a] appearance-none">
                         <option value="">Select time</option>
+                        <option value="09:00 AM">09:00 AM</option>
+                        <option value="10:00 AM">10:00 AM</option>
+                        <option value="12:00 PM">12:00 PM</option>
                       </select>
                       <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none"><IconChevronDownSelect /></span>
                     </div>
@@ -586,7 +867,8 @@ function OptimiserPage() {
                   <div className="flex flex-col gap-1 min-w-[160px]">
                     <label className="text-[14px] font-normal text-[#4b535c]">Time zone</label>
                     <div className="relative">
-                      <select className="w-full h-10 pl-3 pr-9 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#0a0a0a] appearance-none">
+                      <select value={drawerForm.timeZone} onChange={(ev) => setDrawerForm((f) => ({ ...f, timeZone: ev.target.value }))} className="w-full h-10 pl-3 pr-9 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#0a0a0a] appearance-none">
+                        <option value="pst">PST</option>
                         <option value="gmt+1">(GMT +1) Central Europe</option>
                       </select>
                       <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none"><IconChevronDownSelect /></span>
@@ -610,22 +892,22 @@ function OptimiserPage() {
               <section className="flex flex-col gap-2">
                 <label className="text-[14px] font-normal text-[#4b535c]">Ends on</label>
                 <div className="relative">
-                  <input type="text" placeholder="Select date" readOnly className="w-full h-10 pl-3 pr-10 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#0a0a0a] placeholder:text-[#4b535c]" />
+                  <input type="text" placeholder="Select date" value={drawerForm.endsOn} onChange={(ev) => setDrawerForm((f) => ({ ...f, endsOn: ev.target.value }))} className="w-full h-10 pl-3 pr-10 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#0a0a0a] placeholder:text-[#4b535c]" />
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none"><IconCalendarSidebar className="size-4" /></span>
                 </div>
                 <p className="text-[12px] font-normal text-[#4b535c]">If left empty, rebalancing will be repeating indefinitely</p>
               </section>
               <section className="flex flex-col gap-2">
                 <p className="text-[14px] font-medium text-[#0a0a0a]">Notify users:</p>
-                <input type="text" placeholder="Enter user emails" className="w-full h-10 px-3 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#0a0a0a] placeholder:text-[#4b535c]" />
+                <input type="text" placeholder="Enter user emails" value={drawerForm.notify} onChange={(ev) => setDrawerForm((f) => ({ ...f, notify: ev.target.value }))} className="w-full h-10 px-3 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#0a0a0a] placeholder:text-[#4b535c]" />
               </section>
             </div>
             <footer className="flex items-center justify-end gap-3 shrink-0 p-6 border-t border-[#e9eaeb]">
-              <button type="button" onClick={() => setScheduleDrawerOpen(false)} className="h-10 px-4 rounded-[4px] text-[16px] font-medium text-[#0a0a0a] hover:bg-[#f3f4f6]">
+              <button type="button" onClick={closeDrawer} className="h-10 px-4 rounded-[4px] text-[16px] font-medium text-[#0a0a0a] hover:bg-[#f3f4f6]">
                 Cancel
               </button>
               <button type="button" className="h-10 px-4 rounded-[4px] bg-[#0267ff] text-white text-[16px] font-medium">
-                Add Schedule
+                {editingScheduleEntry ? 'Save changes' : 'Add Schedule'}
               </button>
             </footer>
           </div>
