@@ -820,7 +820,7 @@ function OptimiserPage({ onAddJob }) {
         <div role="presentation" className="fixed inset-0 z-40" onClick={() => { setPinnedHoverEntryId(null); setPinnedHoverCellKey(null) }} aria-hidden />
       )}
       <div className="flex flex-col gap-6" data-name="Optimiser" data-node-id="174:2696">
-        <div className="bg-white border border-[#ebf3ff] rounded-[14px] p-6 flex flex-col gap-5" data-name="Calendar container" data-node-id="174:2767">
+        <div className="bg-[#f3f4f6] border border-[#ebf3ff] rounded-[14px] p-6 flex flex-col gap-5" data-name="Calendar container" data-node-id="174:2767">
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <div className="flex items-center gap-2">
             <IconCalendarSidebar className="text-[#22272f] size-6 shrink-0" />
