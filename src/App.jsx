@@ -1467,11 +1467,23 @@ function OptimiserPage({ onAddJob }) {
   )
 }
 
+function InsightsPage() {
+  return (
+    <div className="flex flex-col gap-6">
+      <div className="bg-white border border-[#e5e7eb] rounded-[14px] p-6">
+        <h2 className="text-lg font-medium text-[#0a0a0a] mb-2">Insights</h2>
+        <p className="text-sm text-[#4b535c]">Analytics and insights will appear here.</p>
+      </div>
+    </div>
+  )
+}
+
 export default function App() {
   const [assignee, setAssignee] = useState({})
   const [optimiserOpen, setOptimiserOpen] = useState(false)
   const [insightsOpen, setInsightsOpen] = useState(false)
   const [activeView, setActiveView] = useState('control-panel')
+  const [optimiserSubView, setOptimiserSubView] = useState('schedule')
 
   return (
     <div className="h-screen bg-[#f9fafb] flex text-[#0a0a0a] overflow-hidden">
@@ -1496,7 +1508,6 @@ export default function App() {
               onClick={() => { setActiveView('insights'); setInsightsOpen((o) => !o); }}
               className={`h-10 w-full flex items-center gap-[var(--spacing-m,12px)] px-[var(--spacing-l,16px)] py-[var(--spacing-s,8px)] rounded-[var(--border-radius-s,4px)] text-left text-[14px] shrink-0 ${activeView === 'insights' ? 'bg-[#0267ff] text-white font-medium' : 'font-normal text-white hover:bg-white/5'}`}
               aria-expanded={insightsOpen}
-              aria-haspopup="true"
               data-name="Sidebar element"
               data-node-id="14404:7252"
             >
@@ -1530,7 +1541,6 @@ export default function App() {
               onClick={() => { setActiveView('optimiser'); setOptimiserSubView('schedule'); setOptimiserOpen((o) => !o); }}
               className={`h-10 w-full flex items-center gap-[var(--spacing-m,12px)] px-[var(--spacing-l,16px)] py-[var(--spacing-s,8px)] rounded-[var(--border-radius-s,4px)] text-left text-[14px] shrink-0 ${activeView === 'optimiser' ? 'bg-[#0267ff] text-white font-medium' : 'font-normal text-white hover:bg-white/5'}`}
               aria-expanded={optimiserOpen}
-              aria-haspopup="true"
               data-name="Sidebar element"
               data-node-id="14404:7825"
             >
@@ -1622,8 +1632,8 @@ export default function App() {
       <div className="flex flex-col flex-1 min-w-0 min-h-0 w-full overflow-hidden">
         <div className="shrink-0">
           <TopBar
-            title={activeView === 'optimiser' && optimiserSubView === 'scope' ? 'Scope' : activeView === 'optimiser' ? 'Optimiser' : 'Overview'}
-            subtitle={activeView === 'optimiser' && optimiserSubView === 'scope' ? null : activeView === 'optimiser' ? 'Automate replenishment, reordering, and rebalancing with scheduled inventory optimisation.' : "Overview area, your 'morning check-in' to prioritise and manage inventory, scheduling and more"}
+            title={activeView === 'optimiser' && optimiserSubView === 'scope' ? 'Scope' : activeView === 'optimiser' ? 'Optimiser' : activeView === 'insights' ? 'Insights' : 'Overview'}
+            subtitle={activeView === 'optimiser' && optimiserSubView === 'scope' ? null : activeView === 'optimiser' ? 'Automate replenishment, reordering, and rebalancing with scheduled inventory optimisation.' : activeView === 'insights' ? 'Analytics and insights across your inventory.' : "Overview area, your 'morning check-in' to prioritise and manage inventory, scheduling and more"}
             onBack={activeView === 'optimiser' && optimiserSubView === 'scope' ? () => setOptimiserSubView('schedule') : undefined}
           />
         </div>
