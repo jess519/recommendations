@@ -1497,8 +1497,6 @@ export default function App() {
               className={`h-10 w-full flex items-center gap-[var(--spacing-m,12px)] px-[var(--spacing-l,16px)] py-[var(--spacing-s,8px)] rounded-[var(--border-radius-s,4px)] text-left text-[14px] shrink-0 ${activeView === 'insights' ? 'bg-[#0267ff] text-white font-medium' : 'font-normal text-white hover:bg-white/5'}`}
               aria-expanded={insightsOpen}
               aria-haspopup="true"
-              aria-expanded={insightsOpen}
-              aria-haspopup="true"
               data-name="Sidebar element"
               data-node-id="14404:7252"
             >
