@@ -536,7 +536,9 @@ function OptimiserPage() {
   const setReviewStatus = (entryId, status) => setEntryReviewStatus((prev) => ({ ...prev, [entryId]: status }))
   const [activeTypeFilter, setActiveTypeFilter] = useState('all')
   const [pinnedHoverEntryId, setPinnedHoverEntryId] = useState(null)
+  const [pinnedHoverCellKey, setPinnedHoverCellKey] = useState(null)
   const [hoveredEntryId, setHoveredEntryId] = useState(null)
+  const [hoveredCellKey, setHoveredCellKey] = useState(null)
   const hoverLeaveTimeoutRef = useRef(null)
   const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
   const toggleScheduleDay = (day) => setScheduleDrawerDays((prev) => ({ ...prev, [day]: !prev[day] }))
@@ -696,7 +698,7 @@ function OptimiserPage() {
   return (
     <div className="flex flex-col gap-6">
       {pinnedHoverEntryId && (
-        <div role="presentation" className="fixed inset-0 z-40" onClick={() => setPinnedHoverEntryId(null)} aria-hidden />
+        <div role="presentation" className="fixed inset-0 z-40" onClick={() => { setPinnedHoverEntryId(null); setPinnedHoverCellKey(null) }} aria-hidden />
       )}
       <div className="flex flex-col gap-6" data-name="Optimiser" data-node-id="174:2696">
         <div className="bg-white border border-[#ebf3ff] rounded-[14px] p-6 flex flex-col gap-5" data-name="Calendar container" data-node-id="174:2767">
@@ -922,6 +924,7 @@ function OptimiserPage() {
                       : byReview.filter((e) => e.type === activeTypeFilter)
                     const cellDate = getCellDate(ri, ci)
                     const isEventDate = eventDateSelected && isSameDay(cellDate, eventDateSelected)
+                    const cellKey = `${ri}-${ci}`
                     return (
                       <div
                         key={`${ri}-${ci}`}
@@ -932,10 +935,10 @@ function OptimiserPage() {
                           const Icon = entry.type === 'reorder' ? IconReorder : entry.type === 'rebalancing' ? IconRebalancing : IconReplenishment
                           const reviewStatus = entryReviewStatus[entry.id] || 'upcoming'
                           const reviewLabel = reviewStatus === 'in review' ? 'In review' : reviewStatus === 'submitted' ? 'Submitted' : 'Upcoming'
-                          const isPopoverOpen = pinnedHoverEntryId === entry.id || (hoveredEntryId === entry.id && !pinnedHoverEntryId)
+                          const isPopoverOpen = (pinnedHoverEntryId === entry.id && pinnedHoverCellKey === cellKey) || (hoveredEntryId === entry.id && hoveredCellKey === cellKey && !pinnedHoverEntryId)
                           const clearHoverLater = () => {
                             if (hoverLeaveTimeoutRef.current) clearTimeout(hoverLeaveTimeoutRef.current)
-                            hoverLeaveTimeoutRef.current = setTimeout(() => setHoveredEntryId(null), 150)
+                            hoverLeaveTimeoutRef.current = setTimeout(() => { setHoveredEntryId(null); setHoveredCellKey(null) }, 150)
                           }
                           const setHovered = () => {
                             if (hoverLeaveTimeoutRef.current) {
@@ -943,16 +946,25 @@ function OptimiserPage() {
                               hoverLeaveTimeoutRef.current = null
                             }
                             setHoveredEntryId(entry.id)
+                            setHoveredCellKey(cellKey)
                           }
                           return (
                             <div key={entry.id} className="relative group mt-1 w-fit">
                               <div
-                                className="px-2 py-1 rounded bg-[#ebf3ff] flex flex-col gap-1 w-fit shrink-0 cursor-pointer"
-                                onClick={() => setPinnedHoverEntryId((prev) => (prev === entry.id ? null : entry.id))}
+                                className={`px-2 py-1 rounded-[var(--Border-radius-m,6px)] border border-[var(--tokens-stroke-or-resting,#e9eaeb)] flex flex-col gap-1 w-fit shrink-0 cursor-pointer ${reviewStatus === 'in review' ? 'bg-[var(--tokens-destructive-50,#FFEAEA)]' : reviewStatus === 'submitted' ? 'bg-[var(--tokens-success-50,#E4F4EF)]' : 'bg-[var(--tokens-warning-50,#FFF6E5)]'}`}
+                                onClick={() => {
+                                  if (pinnedHoverEntryId === entry.id && pinnedHoverCellKey === cellKey) {
+                                    setPinnedHoverEntryId(null)
+                                    setPinnedHoverCellKey(null)
+                                  } else {
+                                    setPinnedHoverEntryId(entry.id)
+                                    setPinnedHoverCellKey(cellKey)
+                                  }
+                                }}
                                 onMouseEnter={setHovered}
                                 onMouseLeave={clearHoverLater}
                               >
-                                <div className="flex items-center gap-1.5 text-[12px] font-medium text-[#0267ff]">
+                                <div className="flex items-center gap-1.5 text-[12px] font-medium text-[var(--Tokens-Foreground,#00050A)]">
                                   <Icon className="size-3.5 shrink-0" aria-hidden />
                                   {entry.title}
                                 </div>
