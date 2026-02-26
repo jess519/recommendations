@@ -231,9 +231,8 @@ const IconCalendarNote = () => (
   </svg>
 )
 const IconGears = () => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="shrink-0">
-    <path d="M12 8a4 4 0 100 8 4 4 0 000-8z" stroke="currentColor" strokeWidth="1.5" />
-    <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+  <svg xmlns="http://www.w3.org/2000/svg" width="17" height="15" viewBox="0 0 17 15" fill="none" className="shrink-0">
+    <path d="M9.28516 1.49023L9.87746 1.95032L9.87805 1.94955L9.28516 1.49023ZM11.75 1.00586L12.1251 0.35638L12.125 0.35634L11.75 1.00586ZM12.5625 3.38184L13.2563 3.6666L13.2568 3.6655L12.5625 3.38184ZM12.6973 4.68359L12.0486 5.06003L12.0486 5.06007L12.6973 4.68359ZM12.7051 4.69727L12.0553 5.07184L12.0553 5.07189L12.7051 4.69727ZM13.7646 5.46484L13.663 6.20792L13.6633 6.20797L13.7646 5.46484ZM15.416 7.35742L16.166 7.35761V7.35742H15.416ZM13.7646 9.24902L13.8653 9.99224L13.866 9.99215L13.7646 9.24902ZM12.6992 10.0244L12.0502 9.64855L12.0501 9.64875L12.6992 10.0244ZM12.5625 11.332L13.2568 11.0483L13.2565 11.0476L12.5625 11.332ZM11.75 13.708L12.125 14.3575L12.1251 14.3575L11.75 13.708ZM9.28516 13.2236L8.69197 13.6826L8.69228 13.683L9.28516 13.2236ZM8.0918 12.6904V13.4404L8.09296 13.4404L8.0918 12.6904ZM8.07324 12.6904L8.07174 13.4404H8.07324V12.6904ZM6.88086 13.2236L7.47373 13.683L7.47452 13.682L6.88086 13.2236ZM4.41602 13.708L4.04095 14.3575L4.04103 14.3575L4.41602 13.708ZM3.60352 11.332L4.2978 11.6157L4.29816 11.6148L3.60352 11.332ZM3.46777 10.0283L4.11675 9.65238L4.11672 9.65234L3.46777 10.0283ZM3.45996 10.0146L2.80988 10.3887L2.80991 10.3887L3.45996 10.0146ZM2.40137 9.24902L2.30003 9.99215L2.30055 9.99222L2.40137 9.24902ZM0.75 7.35742H0V7.35761L0.75 7.35742ZM2.40137 5.46484L2.50271 6.20797L2.50314 6.20791L2.40137 5.46484ZM3.45996 4.69824L2.81015 4.32375L2.81015 4.32375L3.45996 4.69824ZM3.46875 4.68359L4.11737 5.06014L4.11742 5.06006L3.46875 4.68359ZM3.60352 3.38184L2.90922 3.66547L2.90933 3.66575L3.60352 3.38184ZM4.41602 1.00586L4.04102 0.35634L4.04097 0.356369L4.41602 1.00586ZM6.88086 1.49023L6.28796 1.94955L6.28808 1.94971L6.88086 1.49023ZM8.07422 2.02344V1.27344L8.0729 1.27344L8.07422 2.02344ZM8.09082 2.02344L8.09185 1.27344H8.09082V2.02344ZM6.08301 7.35645L5.33301 7.35628V7.35645H6.08301ZM10.083 7.35645H10.833V7.35628L10.083 7.35645ZM9.28516 1.49023L9.87805 1.94955C10.2331 1.49123 10.8729 1.3655 11.375 1.65538L11.75 1.00586L12.125 0.35634C10.9733 -0.3086 9.5067 -0.0203767 8.69226 1.03091L9.28516 1.49023ZM11.75 1.00586L11.3749 1.65534C11.8767 1.9451 12.0875 2.56142 11.8682 3.09817L12.5625 3.38184L13.2568 3.6655C13.7596 2.43491 13.2766 1.02139 12.1251 0.35638L11.75 1.00586ZM12.5625 3.38184L11.8687 3.09708C11.5854 3.78729 11.7312 4.5131 12.0486 5.06003L12.6973 4.68359L13.346 4.30715C13.2023 4.05962 13.1909 3.82614 13.2563 3.6666L12.5625 3.38184ZM12.6973 4.68359L12.0486 5.06007C12.0479 5.05894 12.0477 5.05846 12.049 5.06085C12.0498 5.06228 12.0525 5.06704 12.0553 5.07184L12.7051 4.69727L13.3548 4.32269C13.355 4.32301 13.3551 4.32317 13.3533 4.32C13.3521 4.3178 13.3492 4.31273 13.3459 4.30712L12.6973 4.68359ZM12.7051 4.69727L12.0553 5.07189C12.3705 5.6185 12.925 6.10697 13.663 6.20792L13.7646 5.46484L13.8663 4.72176C13.695 4.69833 13.4981 4.57118 13.3548 4.32265L12.7051 4.69727ZM13.7646 5.46484L13.6633 6.20797C14.2374 6.28626 14.666 6.77731 14.666 7.35742H15.416H16.166C16.166 6.02791 15.184 4.90146 13.866 4.72172L13.7646 5.46484ZM15.416 7.35742L14.666 7.35723C14.6659 7.93699 14.2375 8.4276 13.6633 8.5059L13.7646 9.24902L13.866 9.99215C15.1836 9.81248 16.1657 8.68706 16.166 7.35761L15.416 7.35742ZM13.7646 9.24902L13.664 8.50581C12.9209 8.60648 12.3629 9.10852 12.0502 9.64855L12.6992 10.0244L13.3482 10.4003C13.4953 10.1463 13.6992 10.0147 13.8653 9.99223L13.7646 9.24902ZM12.6992 10.0244L12.0501 9.64875C11.7345 10.194 11.5848 10.9243 11.8685 11.6165L12.5625 11.332L13.2565 11.0476C13.1914 10.8889 13.2033 10.6507 13.3484 10.4001L12.6992 10.0244ZM12.5625 11.332L11.8682 11.6157C12.0875 12.1524 11.8767 12.7687 11.3749 13.0585L11.75 13.708L12.1251 14.3575C13.2766 13.6925 13.7596 12.279 13.2568 11.0483L12.5625 11.332ZM11.75 13.708L11.375 13.0585C10.873 13.3483 10.2331 13.2226 9.87803 12.7643L9.28516 13.2236L8.69228 13.683C9.50671 14.7342 10.9733 15.0224 12.125 14.3575L11.75 13.708ZM9.28516 13.2236L9.87834 12.7647C9.42214 12.1751 8.72176 11.9395 8.09063 11.9404L8.0918 12.6904L8.09296 13.4404C8.37938 13.44 8.58668 13.5465 8.69197 13.6826L9.28516 13.2236ZM8.0918 12.6904V11.9404H8.07324V12.6904V13.4404H8.0918V12.6904ZM8.07324 12.6904L8.07475 11.9404C7.44357 11.9392 6.7428 12.1752 6.2872 12.7653L6.88086 13.2236L7.47452 13.682C7.57921 13.5464 7.78609 13.4399 8.07174 13.4404L8.07324 12.6904ZM6.88086 13.2236L6.28798 12.7643C5.93291 13.2226 5.29304 13.3483 4.791 13.0585L4.41602 13.708L4.04103 14.3575C5.19271 15.0224 6.6593 14.7342 7.47373 13.683L6.88086 13.2236ZM4.41602 13.708L4.79108 13.0585C4.28932 12.7688 4.0785 12.1525 4.2978 11.6157L3.60352 11.332L2.90923 11.0484C2.40645 12.279 2.88939 13.6925 4.04095 14.3575L4.41602 13.708ZM3.60352 11.332L4.29816 11.6148C4.57898 10.925 4.43384 10.1998 4.11675 9.65238L3.46777 10.0283L2.8188 10.4043C2.96249 10.6523 2.97466 10.8876 2.90887 11.0492L3.60352 11.332ZM3.46777 10.0283L4.11672 9.65234C4.11712 9.65302 4.11718 9.65313 4.11587 9.65083C4.11502 9.64934 4.11254 9.64496 4.11001 9.64057L3.45996 10.0146L2.80991 10.3887C2.80983 10.3886 2.8099 10.3887 2.81025 10.3893C2.81067 10.3901 2.81102 10.3907 2.81186 10.3921C2.81315 10.3944 2.81582 10.3991 2.81882 10.4043L3.46777 10.0283ZM3.45996 10.0146L4.11004 9.64062C3.79488 9.09287 3.23919 8.60581 2.50218 8.50583L2.40137 9.24902L2.30055 9.99222C2.47159 10.0154 2.66804 10.1422 2.80988 10.3887L3.45996 10.0146ZM2.40137 9.24902L2.5027 8.5059C1.92848 8.4276 1.50015 7.93699 1.5 7.35723L0.75 7.35742L0 7.35761C0.000342309 8.68706 0.982458 9.81248 2.30003 9.99215L2.40137 9.24902ZM0.75 7.35742H1.5C1.5 6.77731 1.92862 6.28626 2.50271 6.20797L2.40137 5.46484L2.30003 4.72172C0.982011 4.90146 1.19209e-07 6.02791 0 7.35742H0.75ZM2.40137 5.46484L2.50314 6.20791C3.24012 6.10696 3.79467 5.6195 4.10977 5.07273L3.45996 4.69824L2.81015 4.32375C2.6675 4.57128 2.47089 4.69832 2.29959 4.72178L2.40137 5.46484ZM3.45996 4.69824L4.10977 5.07273C4.10741 5.07683 4.10559 5.07987 4.10478 5.08122C4.10406 5.08241 4.1036 5.08317 4.10442 5.08183C4.10484 5.08114 4.1067 5.0781 4.10864 5.07489C4.11071 5.07145 4.1138 5.0663 4.11737 5.06014L3.46875 4.68359L2.82013 4.30705C2.82229 4.30332 2.82392 4.30061 2.82453 4.29961C2.82499 4.29884 2.82535 4.29824 2.82428 4.3C2.82361 4.30111 2.82165 4.30431 2.81946 4.30794C2.81718 4.31174 2.81391 4.31722 2.81015 4.32375L3.45996 4.69824ZM3.46875 4.68359L4.11742 5.06006C4.43517 4.51257 4.57959 3.78716 4.2977 3.09792L3.60352 3.38184L2.90933 3.66575C2.97502 3.82637 2.96323 4.06048 2.82008 4.30712L3.46875 4.68359ZM3.60352 3.38184L4.29782 3.0982C4.07852 2.56139 4.28936 1.94506 4.79107 1.65535L4.41602 1.00586L4.04097 0.356369C2.88934 1.02138 2.40653 2.43495 2.90922 3.66547L3.60352 3.38184ZM4.41602 1.00586L4.79102 1.65538C5.2931 1.3655 5.93289 1.49123 6.28796 1.94955L6.88086 1.49023L7.47375 1.03091C6.65931 -0.0203766 5.19273 -0.3086 4.04102 0.35634L4.41602 1.00586ZM6.88086 1.49023L6.28808 1.94971C6.74396 2.53785 7.44394 2.77454 8.07553 2.77344L8.07422 2.02344L8.0729 1.27344C7.78765 1.27394 7.57943 1.16725 7.47364 1.03076L6.88086 1.49023ZM8.07422 2.02344V2.77344H8.09082V2.02344V1.27344H8.07422V2.02344ZM8.09082 2.02344L8.08979 2.77344C8.72145 2.7743 9.42097 2.53798 9.87746 1.95032L9.28516 1.49023L8.69286 1.03015C8.58642 1.16717 8.37783 1.27383 8.09185 1.27344L8.09082 2.02344ZM8.08301 5.35645V4.60645C6.56421 4.60645 5.33334 5.838 5.33301 7.35628L6.08301 7.35645L6.83301 7.35661C6.83316 6.66617 7.39297 6.10645 8.08301 6.10645V5.35645ZM6.08301 7.35645H5.33301C5.33301 8.87523 6.56422 10.1064 8.08301 10.1064V9.35645V8.60645C7.39265 8.60645 6.83301 8.0468 6.83301 7.35645H6.08301ZM8.08301 9.35645V10.1064C9.60179 10.1064 10.833 8.87523 10.833 7.35645H10.083H9.33301C9.33301 8.0468 8.77336 8.60645 8.08301 8.60645V9.35645ZM10.083 7.35645L10.833 7.35628C10.8327 5.838 9.60181 4.60645 8.08301 4.60645V5.35645V6.10645C8.77305 6.10645 9.33286 6.66617 9.33301 7.35661L10.083 7.35645Z" fill="#00050A" />
   </svg>
 )
 const IconTeam = () => (
@@ -323,14 +322,21 @@ const IconUpload = () => (
   </svg>
 )
 
-function TopBar({ title = 'Team', subtitle = 'Manage permissions and invites throughout your team', primaryButtonLabel = '', primaryButtonHref = '#', onPrimaryClick }) {
+function TopBar({ title = 'Team', subtitle = 'Manage permissions and invites throughout your team', primaryButtonLabel = '', primaryButtonHref = '#', onPrimaryClick, onBack }) {
   return (
     <header className="bg-[#12171e] flex items-center justify-between p-6 shrink-0" data-name="Top bar" data-node-id="12301:65733">
-      <div className="flex flex-1 flex-col gap-1 min-w-[520px]">
-        <h1 className="font-sans text-2xl font-medium text-white leading-tight">{title}</h1>
-        {subtitle && (
-          <p className="font-sans text-sm font-normal text-[#878d94] leading-tight whitespace-nowrap">{subtitle}</p>
+      <div className="flex flex-1 items-center gap-3 min-w-0">
+        {onBack && (
+          <button type="button" onClick={onBack} className="flex items-center justify-center w-10 h-10 rounded-[4px] text-white hover:bg-white/10 shrink-0" aria-label="Back">
+            <IconArrowLeft className="text-white" />
+          </button>
         )}
+        <div className="flex flex-col gap-1 min-w-0">
+          <h1 className="font-sans text-2xl font-medium text-white leading-tight">{title}</h1>
+          {subtitle != null && subtitle !== '' && (
+            <p className="font-sans text-sm font-normal text-[#878d94] leading-tight whitespace-nowrap">{subtitle}</p>
+          )}
+        </div>
       </div>
       <div className="flex flex-1 gap-1.5 items-center justify-end min-w-0 shrink-0">
         {primaryButtonLabel && (
@@ -398,6 +404,119 @@ function EventCard({ route, units, time, category, priority }) {
         <span>{time}</span>
       </div>
       <div className="opacity-75">{category}</div>
+    </div>
+  )
+}
+
+/* Scope (Add Job) page – Products/Locations table */
+const SCOPE_PRODUCTS = [
+  { name: 'Ori-sac pte croise m', sku: 'A12528YY', color: 'Kaki fonce', transfers: [32, 8], sales: [33, 155], forecast: 15.54, revenue: '€15.1K', stockouts: [0, 2], locations: [7, 5], overstocks: [46, 16], understocks: [41, 9], dept: 20.0 },
+  { name: 'Ori-sac pte croise m', sku: 'A1252810', color: 'Noir', transfers: [29, 7], sales: [61, 219], forecast: 28.22, revenue: '€12.1K', stockouts: [0, 1], locations: [6, 5], overstocks: [46, 25], understocks: [93, 64], dept: 27.2 },
+  { name: 'Ori-sac hobo m', sku: 'A13314YY', color: 'Kaki fonce', transfers: [20, 6], sales: [19, 74], forecast: 10.71, revenue: '€9.94K', stockouts: [0, 0], locations: [5, 5], overstocks: [27, 7], understocks: [22, 2], dept: 14.4 },
+  { name: 'Ninon-sac seau s', sku: 'A1092220', color: 'Camel', transfers: [28, 23], sales: [5, 35], forecast: 5.64, revenue: '€7.81K', stockouts: [15, 8], locations: [25, 32], overstocks: [31, 9], understocks: [29, 1], dept: 2.1 },
+  { name: 'Hui-sac seau s', sku: 'A9307045', color: 'Bleu nuit', transfers: [16, 6], sales: [15, 82], forecast: 9.96, revenue: '€7.18K', stockouts: [0, 0], locations: [5, 5], overstocks: [32, 17], understocks: [21, 5], dept: 17.4 },
+  { name: 'Ninon-sac rabat l', sku: 'A0922310', color: 'Noir', transfers: [22, 17], sales: [4, 21], forecast: 4.64, revenue: '€7.13K', stockouts: [15, 9], locations: [16, 22], overstocks: [18, 4], understocks: [25, 3], dept: 2.1 },
+  { name: 'Ninon-sac seau s', sku: 'A1092210', color: 'Noir', transfers: [23, 19], sales: [3, 25], forecast: 5.12, revenue: '€6.54K', stockouts: [17, 16], locations: [19, 20], overstocks: [9, 1], understocks: [28, 5], dept: 1.4 },
+]
+
+function ScopePage() {
+  const [activeTab, setActiveTab] = useState('products')
+  const [tripType, setTripType] = useState('rebalancing')
+  const [includeZeroTransfers, setIncludeZeroTransfers] = useState(true)
+  return (
+    <div className="pt-6 flex flex-col gap-6">
+      <div className="rounded-[10px] overflow-hidden">
+        <div className="flex flex-wrap items-start justify-between gap-4 p-4">
+          <div className="flex gap-6">
+            <button type="button" onClick={() => setActiveTab('products')} className={`text-[14px] font-medium pb-2 border-b-2 ${activeTab === 'products' ? 'text-[#0267ff] border-[#0267ff]' : 'text-[#4b535c] border-transparent'}`}>Products</button>
+            <button type="button" onClick={() => setActiveTab('locations')} className={`text-[14px] font-medium pb-2 border-b-2 ${activeTab === 'locations' ? 'text-[#0267ff] border-[#0267ff]' : 'text-[#4b535c] border-transparent'}`}>Locations</button>
+          </div>
+          <div className="flex flex-col gap-4 ml-auto">
+            <div className="flex items-center gap-4">
+              <span className="text-[14px] text-[#4b535c]">Trip type:</span>
+              <div className="flex rounded-[4px] border border-[#e5e7eb] bg-white overflow-hidden">
+                <button type="button" onClick={() => setTripType('rebalancing')} className={`px-3 py-2 text-[14px] font-medium border-r border-[#e5e7eb] ${tripType === 'rebalancing' ? 'bg-[#f7f7f7] text-[#0a0a0a]' : 'text-[#4b535c] hover:bg-[#f9fafb] bg-white'}`}>Rebalancing</button>
+                <button type="button" onClick={() => setTripType('replenishment')} className={`px-3 py-2 text-[14px] font-medium border-r border-[#e5e7eb] ${tripType === 'replenishment' ? 'bg-[#f7f7f7] text-[#0a0a0a]' : 'text-[#4b535c] hover:bg-[#f9fafb] bg-white'}`}>Replenishment</button>
+                <button type="button" onClick={() => setTripType('reorder')} className={`px-3 py-2 text-[14px] font-medium ${tripType === 'reorder' ? 'bg-[#f7f7f7] text-[#0a0a0a]' : 'text-[#4b535c] hover:bg-[#f9fafb] bg-white'}`}>Reorder</button>
+              </div>
+              <div className="w-px h-6 bg-[#e5e7eb]" aria-hidden />
+              <div className="flex items-center gap-2">
+                <span className="text-[14px] text-[#4b535c]">Include zero transfers</span>
+                <button type="button" onClick={() => setIncludeZeroTransfers((v) => !v)} className={`relative w-11 h-6 rounded-full transition-colors flex items-center shrink-0 ${includeZeroTransfers ? 'bg-[#0267ff]' : 'bg-[#e5e7eb]'}`} aria-pressed={includeZeroTransfers}>
+                  <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-transform ${includeZeroTransfers ? 'left-[22px]' : 'left-0.5'}`} />
+                </button>
+              </div>
+            </div>
+            <div className="flex items-center justify-end gap-2">
+              <div className="flex items-center h-10 w-[240px] rounded-[4px] border border-[#e9eaeb] bg-white pl-3 pr-3">
+                <IconSearch className="text-[#4b535c] shrink-0" />
+                <input type="text" placeholder="Search..." className="flex-1 min-w-0 pl-2 border-0 bg-transparent text-[14px] text-[#0a0a0a] outline-none placeholder:text-[#4b535c]" />
+              </div>
+              <button type="button" className="flex items-center justify-center gap-2 h-10 px-4 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#22272f] shrink-0">
+                Revenue increase
+                <IconChevronDown className="shrink-0 text-[#22272f] size-4" aria-hidden />
+              </button>
+              <button type="button" className="h-10 w-10 flex items-center justify-center rounded-[4px] border border-[#e9eaeb] bg-white text-[#22272f] hover:bg-[#f3f4f6] shrink-0" aria-label="Settings">
+                <IconGears className="size-5 shrink-0" />
+              </button>
+            </div>
+          </div>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[1000px] text-[14px]">
+            <thead>
+              <tr className="border-b border-[#e5e7eb] bg-[#F8F8F8]">
+                <th className="text-left py-3 px-4 font-medium text-[#0a0a0a] bg-[#F8F8F8]">Product details</th>
+                <th className="text-left py-3 px-4 font-medium text-[#0a0a0a] bg-[#F8F8F8]">Transfers</th>
+                <th className="text-left py-3 px-4 font-medium text-[#0a0a0a] bg-[#F8F8F8]">Sales</th>
+                <th className="text-left py-3 px-4 font-medium text-[#0a0a0a] bg-[#F8F8F8]">Forecast</th>
+                <th className="text-left py-3 px-4 font-medium text-[#0a0a0a] bg-[#F8F8F8]">Revenue increase</th>
+                <th className="text-left py-3 px-4 font-medium text-[#0a0a0a] bg-[#F8F8F8]">Stockouts</th>
+                <th className="text-left py-3 px-4 font-medium text-[#0a0a0a] bg-[#F8F8F8]">Locations</th>
+                <th className="text-left py-3 px-4 font-medium text-[#0a0a0a] bg-[#F8F8F8]">Overstocks</th>
+                <th className="text-left py-3 px-4 font-medium text-[#0a0a0a] bg-[#F8F8F8]">Understocks</th>
+                <th className="text-left py-3 px-4 font-medium text-[#0a0a0a] bg-[#F8F8F8]">Dept</th>
+              </tr>
+              <tr className="border-b border-[#e5e7eb] bg-[#F8F8F8]">
+                <th className="text-left py-2 px-4 bg-[#F8F8F8]" />
+                <th className="text-left py-2 px-4 text-[12px] font-normal text-[#4b535c] bg-[#F8F8F8]">3,220 units · 113 trips</th>
+                <th className="text-left py-2 px-4 text-[12px] font-normal text-[#4b535c] bg-[#F8F8F8]">991 L7D · 5,468 L30D</th>
+                <th className="text-left py-2 px-4 text-[12px] font-normal text-[#4b535c] bg-[#F8F8F8]">1077.84</th>
+                <th className="text-left py-2 px-4 text-[12px] font-normal text-[#4b535c] bg-[#F8F8F8]">€661.8K</th>
+                <th className="text-left py-2 px-4 text-[12px] font-normal text-[#4b535c] bg-[#F8F8F8]">38,598 → 37,855</th>
+                <th className="text-left py-2 px-4 text-[12px] font-normal text-[#4b535c] bg-[#F8F8F8]">61 → 61</th>
+                <th className="text-left py-2 px-4 text-[12px] font-normal text-[#4b535c] bg-[#F8F8F8]">5,566 → 2,930</th>
+                <th className="text-left py-2 px-4 text-[12px] font-normal text-[#4b535c] bg-[#F8F8F8]">4,846 → 1,672</th>
+                <th className="text-left py-2 px-4 text-[12px] font-normal text-[#4b535c] bg-[#F8F8F8]">0.6</th>
+              </tr>
+            </thead>
+            <tbody>
+              {SCOPE_PRODUCTS.map((row, i) => (
+                <tr key={i} className="border-b border-[#e5e7eb] bg-[#ffffff] hover:bg-[#f9fafb]">
+                  <td className="py-3 px-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-[4px] bg-[#f3f4f6] shrink-0" aria-hidden />
+                      <div>
+                        <p className="font-medium text-[#0a0a0a]">{row.name}</p>
+                        <p className="text-[12px] text-[#4b535c]">{row.sku} · {row.color}</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="py-3 px-4 text-[#0a0a0a]">{row.transfers[0]} · {row.transfers[1]}</td>
+                  <td className="py-3 px-4 text-[#0a0a0a]">{row.sales[0]} · {row.sales[1]}</td>
+                  <td className="py-3 px-4 text-[#0a0a0a]">{row.forecast}</td>
+                  <td className="py-3 px-4 text-[#0a0a0a]">{row.revenue}</td>
+                  <td className="py-3 px-4 text-[#0a0a0a]">{row.stockouts[0]} → {row.stockouts[1]}</td>
+                  <td className="py-3 px-4 text-[#0a0a0a]">{row.locations[0]} → {row.locations[1]}</td>
+                  <td className="py-3 px-4 text-[#0a0a0a]">{row.overstocks[0]} → {row.overstocks[1]}</td>
+                  <td className="py-3 px-4 text-[#0a0a0a]">{row.understocks[0]} → {row.understocks[1]}</td>
+                  <td className="py-3 px-4 text-[#0a0a0a]">{row.dept}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   )
 }
@@ -520,7 +639,7 @@ const MODULE_OPTIONS = [
   { id: 'rebalancing', label: 'Rebalancing' },
 ]
 
-function OptimiserPage() {
+function OptimiserPage({ onAddJob }) {
   const [scheduleDrawerOpen, setScheduleDrawerOpen] = useState(false)
   const [editingScheduleEntry, setEditingScheduleEntry] = useState(null)
   const [drawerForm, setDrawerForm] = useState(DEFAULT_DRAWER_FORM)
@@ -713,6 +832,7 @@ function OptimiserPage() {
           <div className="flex items-center gap-2 shrink-0">
           <button
             type="button"
+            onClick={(e) => { e.preventDefault(); onAddJob?.() }}
             className="h-10 px-4 rounded-[4px] bg-[#0267ff] text-white text-[16px] font-medium flex items-center gap-2 shrink-0"
           >
             <IconPlus />
@@ -1284,7 +1404,8 @@ function OptimiserPage() {
 export default function App() {
   const [assignee, setAssignee] = useState({})
   const [optimiserOpen, setOptimiserOpen] = useState(false)
-  const [activeView, setActiveView] = useState('control-panel')
+  const [activeView, setActiveView] = useState('optimiser') // 'control-panel' | 'optimiser' – set to 'optimiser' to show Scope on load
+  const [optimiserSubView, setOptimiserSubView] = useState('scope') // 'schedule' | 'scope'
 
   return (
     <div className="h-screen bg-[#f9fafb] flex text-[#0a0a0a] overflow-hidden">
@@ -1313,7 +1434,7 @@ export default function App() {
           <div className="flex flex-col gap-[var(--spacing-xs,6px)] w-full shrink-0">
             <button
               type="button"
-              onClick={() => { setActiveView('optimiser'); setOptimiserOpen((o) => !o); }}
+              onClick={() => { setActiveView('optimiser'); setOptimiserSubView('schedule'); setOptimiserOpen((o) => !o); }}
               className={`h-10 w-full flex items-center gap-[var(--spacing-m,12px)] px-[var(--spacing-l,16px)] py-[var(--spacing-s,8px)] rounded-[var(--border-radius-s,4px)] text-left text-[14px] shrink-0 ${activeView === 'optimiser' ? 'bg-[#0267ff] text-white font-medium' : 'font-normal text-white hover:bg-white/5'}`}
               aria-expanded={optimiserOpen}
               aria-haspopup="true"
@@ -1408,16 +1529,19 @@ export default function App() {
       <div className="flex flex-col flex-1 min-w-0 min-h-0 w-full overflow-hidden">
         <div className="shrink-0">
           <TopBar
-            title={activeView === 'optimiser' ? 'Optimiser' : 'Overview'}
-            subtitle={activeView === 'optimiser' ? 'Automate replenishment, reordering, and rebalancing with scheduled inventory optimisation.' : "Overview area, your 'morning check-in' to prioritise and manage inventory, scheduling and more"}
+            title={activeView === 'optimiser' && optimiserSubView === 'scope' ? 'Scope' : activeView === 'optimiser' ? 'Optimiser' : 'Overview'}
+            subtitle={activeView === 'optimiser' && optimiserSubView === 'scope' ? null : activeView === 'optimiser' ? 'Automate replenishment, reordering, and rebalancing with scheduled inventory optimisation.' : "Overview area, your 'morning check-in' to prioritise and manage inventory, scheduling and more"}
+            onBack={activeView === 'optimiser' && optimiserSubView === 'scope' ? () => setOptimiserSubView('schedule') : undefined}
           />
         </div>
 
         {/* Main: scrollable content panel */}
         <main className="flex-1 min-h-0 min-w-0 w-full pl-8 pr-8 pb-12 overflow-y-auto overflow-x-hidden">
-        {activeView === 'optimiser' ? (
+        {activeView === 'optimiser' && optimiserSubView === 'scope' ? (
+          <ScopePage />
+        ) : activeView === 'optimiser' ? (
           <div className="pt-6">
-            <OptimiserPage />
+            <OptimiserPage onAddJob={() => setOptimiserSubView('scope')} />
           </div>
         ) : (
         <>
