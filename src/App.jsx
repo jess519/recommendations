@@ -1,5 +1,4 @@
-import { useState } from 'react'
-import { ComposableMap, Geographies, Geography, ZoomableGroup } from 'react-simple-maps'
+import { useState, useRef } from 'react'
 
 // Simple inline icons (no external assets)
 const IconChevronDown = () => (
@@ -45,6 +44,21 @@ const IconCalendar = () => (
 const IconPlus = () => (
   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="shrink-0">
     <path d="M8 3v10M3 8h10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+  </svg>
+)
+const IconClose = () => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="shrink-0" aria-hidden>
+    <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+)
+const IconEdit = () => (
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="shrink-0" aria-hidden>
+    <path d="M12 2l2 2-8 8H4v-2l8-8z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+)
+const IconChevronDownSelect = () => (
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="shrink-0 pointer-events-none">
+    <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
   </svg>
 )
 const IconArrowRight = () => (
@@ -283,9 +297,8 @@ const IconCalendarNote = () => (
   </svg>
 )
 const IconGears = () => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="shrink-0">
-    <path d="M12 8a4 4 0 100 8 4 4 0 000-8z" stroke="currentColor" strokeWidth="1.5" />
-    <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+  <svg xmlns="http://www.w3.org/2000/svg" width="17" height="15" viewBox="0 0 17 15" fill="none" className="shrink-0">
+    <path d="M9.28516 1.49023L9.87746 1.95032L9.87805 1.94955L9.28516 1.49023ZM11.75 1.00586L12.1251 0.35638L12.125 0.35634L11.75 1.00586ZM12.5625 3.38184L13.2563 3.6666L13.2568 3.6655L12.5625 3.38184ZM12.6973 4.68359L12.0486 5.06003L12.0486 5.06007L12.6973 4.68359ZM12.7051 4.69727L12.0553 5.07184L12.0553 5.07189L12.7051 4.69727ZM13.7646 5.46484L13.663 6.20792L13.6633 6.20797L13.7646 5.46484ZM15.416 7.35742L16.166 7.35761V7.35742H15.416ZM13.7646 9.24902L13.8653 9.99224L13.866 9.99215L13.7646 9.24902ZM12.6992 10.0244L12.0502 9.64855L12.0501 9.64875L12.6992 10.0244ZM12.5625 11.332L13.2568 11.0483L13.2565 11.0476L12.5625 11.332ZM11.75 13.708L12.125 14.3575L12.1251 14.3575L11.75 13.708ZM9.28516 13.2236L8.69197 13.6826L8.69228 13.683L9.28516 13.2236ZM8.0918 12.6904V13.4404L8.09296 13.4404L8.0918 12.6904ZM8.07324 12.6904L8.07174 13.4404H8.07324V12.6904ZM6.88086 13.2236L7.47373 13.683L7.47452 13.682L6.88086 13.2236ZM4.41602 13.708L4.04095 14.3575L4.04103 14.3575L4.41602 13.708ZM3.60352 11.332L4.2978 11.6157L4.29816 11.6148L3.60352 11.332ZM3.46777 10.0283L4.11675 9.65238L4.11672 9.65234L3.46777 10.0283ZM3.45996 10.0146L2.80988 10.3887L2.80991 10.3887L3.45996 10.0146ZM2.40137 9.24902L2.30003 9.99215L2.30055 9.99222L2.40137 9.24902ZM0.75 7.35742H0V7.35761L0.75 7.35742ZM2.40137 5.46484L2.50271 6.20797L2.50314 6.20791L2.40137 5.46484ZM3.45996 4.69824L2.81015 4.32375L2.81015 4.32375L3.45996 4.69824ZM3.46875 4.68359L4.11737 5.06014L4.11742 5.06006L3.46875 4.68359ZM3.60352 3.38184L2.90922 3.66547L2.90933 3.66575L3.60352 3.38184ZM4.41602 1.00586L4.04102 0.35634L4.04097 0.356369L4.41602 1.00586ZM6.88086 1.49023L6.28796 1.94955L6.28808 1.94971L6.88086 1.49023ZM8.07422 2.02344V1.27344L8.0729 1.27344L8.07422 2.02344ZM8.09082 2.02344L8.09185 1.27344H8.09082V2.02344ZM6.08301 7.35645L5.33301 7.35628V7.35645H6.08301ZM10.083 7.35645H10.833V7.35628L10.083 7.35645ZM9.28516 1.49023L9.87805 1.94955C10.2331 1.49123 10.8729 1.3655 11.375 1.65538L11.75 1.00586L12.125 0.35634C10.9733 -0.3086 9.5067 -0.0203767 8.69226 1.03091L9.28516 1.49023ZM11.75 1.00586L11.3749 1.65534C11.8767 1.9451 12.0875 2.56142 11.8682 3.09817L12.5625 3.38184L13.2568 3.6655C13.7596 2.43491 13.2766 1.02139 12.1251 0.35638L11.75 1.00586ZM12.5625 3.38184L11.8687 3.09708C11.5854 3.78729 11.7312 4.5131 12.0486 5.06003L12.6973 4.68359L13.346 4.30715C13.2023 4.05962 13.1909 3.82614 13.2563 3.6666L12.5625 3.38184ZM12.6973 4.68359L12.0486 5.06007C12.0479 5.05894 12.0477 5.05846 12.049 5.06085C12.0498 5.06228 12.0525 5.06704 12.0553 5.07184L12.7051 4.69727L13.3548 4.32269C13.355 4.32301 13.3551 4.32317 13.3533 4.32C13.3521 4.3178 13.3492 4.31273 13.3459 4.30712L12.6973 4.68359ZM12.7051 4.69727L12.0553 5.07189C12.3705 5.6185 12.925 6.10697 13.663 6.20792L13.7646 5.46484L13.8663 4.72176C13.695 4.69833 13.4981 4.57118 13.3548 4.32265L12.7051 4.69727ZM13.7646 5.46484L13.6633 6.20797C14.2374 6.28626 14.666 6.77731 14.666 7.35742H15.416H16.166C16.166 6.02791 15.184 4.90146 13.866 4.72172L13.7646 5.46484ZM15.416 7.35742L14.666 7.35723C14.6659 7.93699 14.2375 8.4276 13.6633 8.5059L13.7646 9.24902L13.866 9.99215C15.1836 9.81248 16.1657 8.68706 16.166 7.35761L15.416 7.35742ZM13.7646 9.24902L13.664 8.50581C12.9209 8.60648 12.3629 9.10852 12.0502 9.64855L12.6992 10.0244L13.3482 10.4003C13.4953 10.1463 13.6992 10.0147 13.8653 9.99223L13.7646 9.24902ZM12.6992 10.0244L12.0501 9.64875C11.7345 10.194 11.5848 10.9243 11.8685 11.6165L12.5625 11.332L13.2565 11.0476C13.1914 10.8889 13.2033 10.6507 13.3484 10.4001L12.6992 10.0244ZM12.5625 11.332L11.8682 11.6157C12.0875 12.1524 11.8767 12.7687 11.3749 13.0585L11.75 13.708L12.1251 14.3575C13.2766 13.6925 13.7596 12.279 13.2568 11.0483L12.5625 11.332ZM11.75 13.708L11.375 13.0585C10.873 13.3483 10.2331 13.2226 9.87803 12.7643L9.28516 13.2236L8.69228 13.683C9.50671 14.7342 10.9733 15.0224 12.125 14.3575L11.75 13.708ZM9.28516 13.2236L9.87834 12.7647C9.42214 12.1751 8.72176 11.9395 8.09063 11.9404L8.0918 12.6904L8.09296 13.4404C8.37938 13.44 8.58668 13.5465 8.69197 13.6826L9.28516 13.2236ZM8.0918 12.6904V11.9404H8.07324V12.6904V13.4404H8.0918V12.6904ZM8.07324 12.6904L8.07475 11.9404C7.44357 11.9392 6.7428 12.1752 6.2872 12.7653L6.88086 13.2236L7.47452 13.682C7.57921 13.5464 7.78609 13.4399 8.07174 13.4404L8.07324 12.6904ZM6.88086 13.2236L6.28798 12.7643C5.93291 13.2226 5.29304 13.3483 4.791 13.0585L4.41602 13.708L4.04103 14.3575C5.19271 15.0224 6.6593 14.7342 7.47373 13.683L6.88086 13.2236ZM4.41602 13.708L4.79108 13.0585C4.28932 12.7688 4.0785 12.1525 4.2978 11.6157L3.60352 11.332L2.90923 11.0484C2.40645 12.279 2.88939 13.6925 4.04095 14.3575L4.41602 13.708ZM3.60352 11.332L4.29816 11.6148C4.57898 10.925 4.43384 10.1998 4.11675 9.65238L3.46777 10.0283L2.8188 10.4043C2.96249 10.6523 2.97466 10.8876 2.90887 11.0492L3.60352 11.332ZM3.46777 10.0283L4.11672 9.65234C4.11712 9.65302 4.11718 9.65313 4.11587 9.65083C4.11502 9.64934 4.11254 9.64496 4.11001 9.64057L3.45996 10.0146L2.80991 10.3887C2.80983 10.3886 2.8099 10.3887 2.81025 10.3893C2.81067 10.3901 2.81102 10.3907 2.81186 10.3921C2.81315 10.3944 2.81582 10.3991 2.81882 10.4043L3.46777 10.0283ZM3.45996 10.0146L4.11004 9.64062C3.79488 9.09287 3.23919 8.60581 2.50218 8.50583L2.40137 9.24902L2.30055 9.99222C2.47159 10.0154 2.66804 10.1422 2.80988 10.3887L3.45996 10.0146ZM2.40137 9.24902L2.5027 8.5059C1.92848 8.4276 1.50015 7.93699 1.5 7.35723L0.75 7.35742L0 7.35761C0.000342309 8.68706 0.982458 9.81248 2.30003 9.99215L2.40137 9.24902ZM0.75 7.35742H1.5C1.5 6.77731 1.92862 6.28626 2.50271 6.20797L2.40137 5.46484L2.30003 4.72172C0.982011 4.90146 1.19209e-07 6.02791 0 7.35742H0.75ZM2.40137 5.46484L2.50314 6.20791C3.24012 6.10696 3.79467 5.6195 4.10977 5.07273L3.45996 4.69824L2.81015 4.32375C2.6675 4.57128 2.47089 4.69832 2.29959 4.72178L2.40137 5.46484ZM3.45996 4.69824L4.10977 5.07273C4.10741 5.07683 4.10559 5.07987 4.10478 5.08122C4.10406 5.08241 4.1036 5.08317 4.10442 5.08183C4.10484 5.08114 4.1067 5.0781 4.10864 5.07489C4.11071 5.07145 4.1138 5.0663 4.11737 5.06014L3.46875 4.68359L2.82013 4.30705C2.82229 4.30332 2.82392 4.30061 2.82453 4.29961C2.82499 4.29884 2.82535 4.29824 2.82428 4.3C2.82361 4.30111 2.82165 4.30431 2.81946 4.30794C2.81718 4.31174 2.81391 4.31722 2.81015 4.32375L3.45996 4.69824ZM3.46875 4.68359L4.11742 5.06006C4.43517 4.51257 4.57959 3.78716 4.2977 3.09792L3.60352 3.38184L2.90933 3.66575C2.97502 3.82637 2.96323 4.06048 2.82008 4.30712L3.46875 4.68359ZM3.60352 3.38184L4.29782 3.0982C4.07852 2.56139 4.28936 1.94506 4.79107 1.65535L4.41602 1.00586L4.04097 0.356369C2.88934 1.02138 2.40653 2.43495 2.90922 3.66547L3.60352 3.38184ZM4.41602 1.00586L4.79102 1.65538C5.2931 1.3655 5.93289 1.49123 6.28796 1.94955L6.88086 1.49023L7.47375 1.03091C6.65931 -0.0203766 5.19273 -0.3086 4.04102 0.35634L4.41602 1.00586ZM6.88086 1.49023L6.28808 1.94971C6.74396 2.53785 7.44394 2.77454 8.07553 2.77344L8.07422 2.02344L8.0729 1.27344C7.78765 1.27394 7.57943 1.16725 7.47364 1.03076L6.88086 1.49023ZM8.07422 2.02344V2.77344H8.09082V2.02344V1.27344H8.07422V2.02344ZM8.09082 2.02344L8.08979 2.77344C8.72145 2.7743 9.42097 2.53798 9.87746 1.95032L9.28516 1.49023L8.69286 1.03015C8.58642 1.16717 8.37783 1.27383 8.09185 1.27344L8.09082 2.02344ZM8.08301 5.35645V4.60645C6.56421 4.60645 5.33334 5.838 5.33301 7.35628L6.08301 7.35645L6.83301 7.35661C6.83316 6.66617 7.39297 6.10645 8.08301 6.10645V5.35645ZM6.08301 7.35645H5.33301C5.33301 8.87523 6.56422 10.1064 8.08301 10.1064V9.35645V8.60645C7.39265 8.60645 6.83301 8.0468 6.83301 7.35645H6.08301ZM8.08301 9.35645V10.1064C9.60179 10.1064 10.833 8.87523 10.833 7.35645H10.083H9.33301C9.33301 8.0468 8.77336 8.60645 8.08301 8.60645V9.35645ZM10.083 7.35645L10.833 7.35628C10.8327 5.838 9.60181 4.60645 8.08301 4.60645V5.35645V6.10645C8.77305 6.10645 9.33286 6.66617 9.33301 7.35661L10.083 7.35645Z" fill="#00050A" />
   </svg>
 )
 const IconTeam = () => (
@@ -321,6 +334,19 @@ const IconFlagUK = () => (
     <path d="M18.3333 -1.25H17.7412L0 12.2971V13.75H0.650483L18.3333 0.211513V-1.25Z" fill="#F93939" />
     <path fillRule="evenodd" clipRule="evenodd" d="M6.66729 -1.25H11.6813V3.37682H18.3333V9.12013H11.6813V13.75H6.66729V9.12013H0V3.37682H6.66729V-1.25Z" fill="white" />
     <path fillRule="evenodd" clipRule="evenodd" d="M7.7193 -1.25H10.614V4.51923H18.3333V7.98077H10.614V13.75H7.7193V7.98077H0V4.51923H7.7193V-1.25Z" fill="#F93939" />
+  </svg>
+)
+const IconTruck = () => (
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="shrink-0">
+    <path d="M1 4h6v8H1V4zM7 6h2l3 3v3H7V6zM10 9h2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+    <circle cx="4" cy="12" r="1" stroke="currentColor" strokeWidth="1.2" />
+    <circle cx="12" cy="12" r="1" stroke="currentColor" strokeWidth="1.2" />
+  </svg>
+)
+const IconLightbulb = () => (
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="shrink-0">
+    <path d="M6 14h4M8 12v-1M5.5 6.5a3 3 0 015 0c0 .8-.3 1.5-.7 2.1L8 9.5V11M8 2v1M3 5l.7.7M12.3 5.7L13 5M4 9H3M13 9h-1" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+    <path d="M8 3a3.5 3.5 0 00-2.5 5.9v.6c0 .3.2.5.5.5h4c.3 0 .5-.2.5-.5v-.6A3.5 3.5 0 008 3z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
   </svg>
 )
 const IconChevronRight = () => (
@@ -362,14 +388,21 @@ const IconUpload = () => (
   </svg>
 )
 
-function TopBar({ title = 'Team', subtitle = 'Manage permissions and invites throughout your team', primaryButtonLabel = '', primaryButtonHref = '#', onPrimaryClick }) {
+function TopBar({ title = 'Team', subtitle = 'Manage permissions and invites throughout your team', primaryButtonLabel = '', primaryButtonHref = '#', onPrimaryClick, onBack }) {
   return (
     <header className="bg-[#12171e] flex items-center justify-between p-6 shrink-0" data-name="Top bar" data-node-id="12301:65733">
-      <div className="flex flex-1 flex-col gap-1 min-w-[520px]">
-        <h1 className="font-sans text-2xl font-medium text-white leading-tight">{title}</h1>
-        {subtitle && (
-          <p className="font-sans text-sm font-normal text-[#878d94] leading-tight whitespace-nowrap">{subtitle}</p>
+      <div className="flex flex-1 items-center gap-3 min-w-0">
+        {onBack && (
+          <button type="button" onClick={onBack} className="flex items-center justify-center w-10 h-10 rounded-[4px] text-white hover:bg-white/10 shrink-0" aria-label="Back">
+            <IconArrowLeft className="text-white" />
+          </button>
         )}
+        <div className="flex flex-col gap-1 min-w-0">
+          <h1 className="font-sans text-2xl font-medium text-white leading-tight">{title}</h1>
+          {subtitle != null && subtitle !== '' && (
+            <p className="font-sans text-sm font-normal text-[#878d94] leading-tight whitespace-nowrap">{subtitle}</p>
+          )}
+        </div>
       </div>
       <div className="flex flex-1 gap-1.5 items-center justify-end min-w-0 shrink-0">
         {primaryButtonLabel && (
@@ -441,798 +474,259 @@ function EventCard({ route, units, time, category, priority }) {
   )
 }
 
-/* Insights page – Analytics dashboard */
-const INSIGHTS_TABS = ['Retail', 'Best sellers', 'Business KPIs', 'Assortment KPIs', 'Data exploration']
-const INSIGHTS_FILTER_CHIPS = [
-  'Customer new demo', 'Date (Select)', 'Season (Select)', 'Department (Select)', 'Sub department (Select)',
-  'Gender (Select)', 'Collection type (Select)', 'Brand (Select)', 'Color (Select)', 'Product ID (Select)',
-  'Product labels (Select)', 'Top N products (Select)', 'Region (Select)', 'Country (Select)',
-  'Location type (Select)', 'Location (Select)',
+/* Scope (Add Job) page – Products/Locations table */
+const SCOPE_PRODUCTS = [
+  { name: 'Ori-sac pte croise m', sku: 'A12528YY', color: 'Kaki fonce', transfers: [32, 8], sales: [33, 155], forecast: 15.54, revenue: '€15.1K', stockouts: [0, 2], locations: [7, 5], overstocks: [46, 16], understocks: [41, 9], dept: 20.0 },
+  { name: 'Ori-sac pte croise m', sku: 'A1252810', color: 'Noir', transfers: [29, 7], sales: [61, 219], forecast: 28.22, revenue: '€12.1K', stockouts: [0, 1], locations: [6, 5], overstocks: [46, 25], understocks: [93, 64], dept: 27.2 },
+  { name: 'Ori-sac hobo m', sku: 'A13314YY', color: 'Kaki fonce', transfers: [20, 6], sales: [19, 74], forecast: 10.71, revenue: '€9.94K', stockouts: [0, 0], locations: [5, 5], overstocks: [27, 7], understocks: [22, 2], dept: 14.4 },
+  { name: 'Ninon-sac seau s', sku: 'A1092220', color: 'Camel', transfers: [28, 23], sales: [5, 35], forecast: 5.64, revenue: '€7.81K', stockouts: [15, 8], locations: [25, 32], overstocks: [31, 9], understocks: [29, 1], dept: 2.1 },
+  { name: 'Hui-sac seau s', sku: 'A9307045', color: 'Bleu nuit', transfers: [16, 6], sales: [15, 82], forecast: 9.96, revenue: '€7.18K', stockouts: [0, 0], locations: [5, 5], overstocks: [32, 17], understocks: [21, 5], dept: 17.4 },
+  { name: 'Ninon-sac rabat l', sku: 'A0922310', color: 'Noir', transfers: [22, 17], sales: [4, 21], forecast: 4.64, revenue: '€7.13K', stockouts: [15, 9], locations: [16, 22], overstocks: [18, 4], understocks: [25, 3], dept: 2.1 },
+  { name: 'Ninon-sac seau s', sku: 'A1092210', color: 'Noir', transfers: [23, 19], sales: [3, 25], forecast: 5.12, revenue: '€6.54K', stockouts: [17, 16], locations: [19, 20], overstocks: [9, 1], understocks: [28, 5], dept: 1.4 },
 ]
-const INSIGHTS_ACTIVE_CHIPS = [
-  'Metric Volume', 'Retail attribute Department', 'Variance Last year', 'View period Weekly', 'Location attributes Location Type', 'Product attributes Department',
-]
-const SALES_PERFORMANCE_ROWS = [
-  { dept: 'Fragrance & Home', wtd: 89, wtdLy: -62, wtdLyPct: -41.07, mtd: '1.98K', mtdLy: -198, mtdLyPct: -9.09, ytd: '4.12K', ytdLy: -402, ytdLyPct: -8.89 },
-  { dept: 'Apparel', wtd: 156, wtdLy: -134, wtdLyPct: -46.21, mtd: '3.45K', mtdLy: -345, mtdLyPct: -9.09, ytd: '6.89K', ytdLy: -673, ytdLyPct: -8.90 },
-  { dept: 'Activewear', wtd: 142, wtdLy: -98, wtdLyPct: -40.83, mtd: '2.78K', mtdLy: -278, mtdLyPct: -9.09, ytd: '5.21K', ytdLy: -509, ytdLyPct: -8.91 },
-  { dept: 'Jewelry', wtd: 98, wtdLy: -76, wtdLyPct: -43.68, mtd: '1.89K', mtdLy: -189, mtdLyPct: -9.09, ytd: '4.15K', ytdLy: -405, ytdLyPct: -8.89 },
-  { dept: 'Watches', wtd: 134, wtdLy: -187, wtdLyPct: -58.26, mtd: '1.45K', mtdLy: -145, mtdLyPct: -9.09, ytd: '2.98K', ytdLy: -291, ytdLyPct: -8.90 },
-  { dept: 'Handbags', wtd: 94, wtdLy: -146, wtdLyPct: -60.83, mtd: '1.24K', mtdLy: -124, mtdLyPct: -9.09, ytd: '2.30K', ytdLy: -225, ytdLyPct: -8.91 },
-]
-const GEO_URL = 'https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json'
-const SALES_BY_COUNTRY = {
-  124: { name: 'Canada', value: 159000 },
-  840: { name: 'United States', value: 13120 },
-  250: { name: 'France', value: 175000 },
-  724: { name: 'Spain', value: 729 },
-  578: { name: 'Norway', value: 424 },
-  826: { name: 'United Kingdom', value: 45000 },
-  276: { name: 'Germany', value: 62000 },
-  380: { name: 'Italy', value: 38000 },
-  392: { name: 'Japan', value: 1296000 },
-  702: { name: 'Singapore', value: 981 },
-  156: { name: 'China', value: 85000 },
-  410: { name: 'South Korea', value: 120000 },
-  36: { name: 'Australia', value: 223 },
-  554: { name: 'New Zealand', value: 13120 },
-  152: { name: 'Chile', value: 12000 },
-  170: { name: 'Colombia', value: 8000 },
-}
-const getSalesData = (id) => SALES_BY_COUNTRY[id] ?? SALES_BY_COUNTRY[String(id).replace(/^0+/, '')]
-const getColor = (value) => {
-  if (!value || value === 0) return '#e5e7eb'
-  const max = 1296000
-  const ratio = Math.min(value / max, 1)
-  const r = Math.round(248 - ratio * 100)
-  const g = Math.round(180 - ratio * 140)
-  const b = Math.round(100 - ratio * 80)
-  return `rgb(${r},${g},${b})`
-}
-function SalesYTDMap() {
-  const [hovered, setHovered] = useState(null)
-  const [zoom, setZoom] = useState(1)
-  const center = [0, 20]
 
-  const handleZoomIn = () => setZoom((z) => Math.min(z * 1.5, 8))
-  const handleZoomOut = () => setZoom((z) => Math.max(z / 1.5, 0.5))
-  const handleMoveEnd = (pos) => {
-    if (pos?.zoom != null) setZoom(pos.zoom)
-  }
-
-  const hoverData = hovered != null ? getSalesData(hovered) : null
-  const formatValue = (v) => v >= 1000 ? `${(v / 1000).toFixed(v >= 100000 ? 0 : 2)}K` : String(v)
-
+function ScopePage() {
+  const [activeTab, setActiveTab] = useState('products')
+  const [tripType, setTripType] = useState('rebalancing')
+  const [includeZeroTransfers, setIncludeZeroTransfers] = useState(true)
   return (
-    <div className="mt-6 bg-white border border-[#e5e7eb] rounded-[14px] overflow-hidden shadow-sm">
-      <div className="flex items-start justify-between gap-4 p-6 pb-0">
-        <h3 className="text-base font-medium text-[#0a0a0a]">Sales YTD</h3>
-        <div className="flex items-center gap-2 shrink-0">
-          <button type="button" className="h-9 px-3 rounded-lg border border-[#e5e7eb] bg-white text-sm text-[#0a0a0a] hover:bg-[#f3f3f5]">Explore</button>
-          <button type="button" className="p-2 rounded-lg text-[#4a5565] hover:bg-[#f3f3f5]"><IconEllipsisVertical /></button>
-        </div>
-      </div>
-      <div className="relative" style={{ height: 420 }}>
-        <div className="absolute left-4 top-4 z-10 flex flex-col gap-1">
-          <button type="button" onClick={handleZoomIn} className="w-8 h-8 rounded bg-white border border-[#e5e7eb] flex items-center justify-center text-[#4a5565] hover:bg-[#f9fafb] text-lg leading-none">+</button>
-          <button type="button" onClick={handleZoomOut} className="w-8 h-8 rounded bg-white border border-[#e5e7eb] flex items-center justify-center text-[#4a5565] hover:bg-[#f9fafb] text-lg leading-none">−</button>
-        </div>
-        <ComposableMap projection="geoMercator" projectionConfig={{ scale: 147 }} width={800} height={420}>
-          <ZoomableGroup center={center} zoom={zoom} onMoveEnd={handleMoveEnd}>
-            <Geographies geography={GEO_URL}>
-              {({ geographies }) =>
-                geographies.map((geo) => {
-                  const id = geo.id
-                  const data = getSalesData(id)
-                  const value = data?.value ?? 0
-                  const isHovered = hovered === id || hovered === String(id)
-                  const fill = isHovered ? '#93c5fd' : getColor(value)
-                  return (
-                    <Geography
-                      key={geo.rsmKey}
-                      geography={geo}
-                      fill={fill}
-                      stroke="#fff"
-                      strokeWidth={0.5}
-                      style={{
-                        default: { outline: 'none' },
-                        hover: { outline: 'none', cursor: 'pointer' },
-                        pressed: { outline: 'none' },
-                      }}
-                      onMouseEnter={() => setHovered(id)}
-                      onMouseLeave={() => setHovered(null)}
-                    />
-                  )
-                })
-              }
-            </Geographies>
-          </ZoomableGroup>
-        </ComposableMap>
-        {hoverData && (
-          <div className="absolute bottom-4 left-4 px-3 py-2 rounded-lg bg-white/95 border border-[#e5e7eb] shadow-sm text-sm">
-            <span className="font-medium text-[#0a0a0a]">{hoverData.name}</span>
-            <span className="text-[#6a7282] ml-2">{formatValue(hoverData.value)}</span>
+    <div className="pt-6 flex flex-col gap-6">
+      <div className="rounded-[10px] overflow-hidden">
+        <div className="flex flex-wrap items-start justify-between gap-4 p-4">
+          <div className="flex gap-6">
+            <button type="button" onClick={() => setActiveTab('products')} className={`text-[14px] font-medium pb-2 border-b-2 ${activeTab === 'products' ? 'text-[#0267ff] border-[#0267ff]' : 'text-[#4b535c] border-transparent'}`}>Products</button>
+            <button type="button" onClick={() => setActiveTab('locations')} className={`text-[14px] font-medium pb-2 border-b-2 ${activeTab === 'locations' ? 'text-[#0267ff] border-[#0267ff]' : 'text-[#4b535c] border-transparent'}`}>Locations</button>
           </div>
-        )}
-        <div className="absolute bottom-4 right-4 flex items-center gap-2 px-3 py-2 rounded-lg bg-white/95 border border-[#e5e7eb] shadow-sm text-xs">
-          <span className="text-[#6a7282]">0</span>
-          <div className="w-24 h-2 rounded-full bg-gradient-to-r from-[#e5e7eb] via-[#fbbf24] to-[#dc2626]" />
-          <span className="text-[#6a7282]">13.12K</span>
-        </div>
-      </div>
-      <p className="text-[10px] text-[#9ca3af] px-6 py-2">© mapbox © Mapbox © OpenStreetMap Improve this map</p>
-    </div>
-  )
-}
-
-/* Pareto chart: blue bars + orange cumulative % line */
-const PARETO_LOCATION_DATA = [
-  { label: 'Store', value: 631120 },
-  { label: 'STR', value: 421480 },
-  { label: 'FIN', value: 0 },
-]
-const PARETO_DEPT_DATA = [
-  { label: 'Fragrance & Home', value: 438990 },
-  { label: 'Apparel', value: 386620 },
-  { label: 'Activewear', value: 213270 },
-  { label: 'Jewelry', value: 7720 },
-  { label: 'Watches', value: 3810 },
-  { label: 'Handbags', value: 2170 },
-]
-function ParetoChart({ title, xAxisLabel, data, hasExplore = true }) {
-  const total = data.reduce((s, d) => s + d.value, 0)
-  const scaleMax = 1052600
-  const formatVal = (v) => (v >= 1000 ? `${(v / 1000).toFixed(v >= 100000 ? 0 : 2)}K` : String(v))
-  let cumul = 0
-  const withCumul = data.map((d) => {
-    cumul += d.value
-    return { ...d, cumul, cumulPct: total ? (cumul / total) * 100 : 0 }
-  })
-  const w = 500
-  const h = 240
-  const pad = { L: 56, R: 56, T: 32, B: 44 }
-  const chartW = w - pad.L - pad.R
-  const chartH = h - pad.T - pad.B
-  const barW = chartW / data.length
-  const barGap = Math.max(0, barW * 0.15)
-
-  return (
-    <div className="bg-white border border-[#e5e7eb] rounded-[14px] p-6 shadow-sm">
-      <div className="flex items-start justify-between gap-4 mb-4">
-        <h3 className="text-base font-medium text-[#0a0a0a]">{title}</h3>
-        {hasExplore && (
-          <div className="flex items-center gap-2 shrink-0">
-            <button type="button" className="h-9 px-3 rounded-lg border border-[#e5e7eb] bg-white text-sm text-[#0a0a0a] hover:bg-[#f3f3f5]">Explore</button>
-            <button type="button" className="p-2 rounded-lg text-[#4a5565] hover:bg-[#f3f3f5]"><IconEllipsisVertical /></button>
-          </div>
-        )}
-      </div>
-      <div className="overflow-x-auto">
-        <svg viewBox={`0 0 ${w} ${h}`} className="min-w-[400px] w-full" preserveAspectRatio="xMidYMid meet" style={{ height: 240 }}>
-          {/* Horizontal grid (0–100% for right axis) */}
-          {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((i) => (
-            <line key={i} x1={pad.L} y1={pad.T + (i / 10) * chartH} x2={w - pad.R} y2={pad.T + (i / 10) * chartH} stroke="#e5e7eb" strokeWidth="0.5" />
-          ))}
-          {/* Left Y-axis: Sales */}
-          <text x="20" y={pad.T + chartH / 2} fill="#6a7282" fontSize="11" transform={`rotate(-90, 20, ${pad.T + chartH / 2})`} textAnchor="middle">Sales</text>
-          {[0, 0.2, 0.4, 0.6, 0.8, 1].map((r) => {
-            const v = r * scaleMax
-            const label = v >= 1000000 ? `${(v / 1000000).toFixed(2)}M` : v >= 1000 ? `${(v / 1000).toFixed(2)}K` : v
-            return <text key={r} x={pad.L - 6} y={pad.T + chartH - r * chartH + 4} fill="#6a7282" fontSize="10" textAnchor="end">{label}</text>
-          })}
-          {/* Right Y-axis: Cumulative % */}
-          <text x={w - 20} y={pad.T + chartH / 2} fill="#6a7282" fontSize="11" transform={`rotate(90, ${w - 20}, ${pad.T + chartH / 2})`} textAnchor="middle">Cumulative Percent Sales</text>
-          {[0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100].map((p) => (
-            <text key={p} x={w - pad.R + 6} y={pad.T + chartH - (p / 100) * chartH + 4} fill="#6a7282" fontSize="10" textAnchor="start">{p}%</text>
-          ))}
-          {/* X-axis label with dropdown cue */}
-          <g>
-            <text x={pad.L + chartW / 2} y={h - 14} fill="#6a7282" fontSize="11" textAnchor="middle">{xAxisLabel}</text>
-            <path d={`M${pad.L + chartW / 2 + 42} ${h - 14} l-4 4 4-4`} fill="none" stroke="#6a7282" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" />
-          </g>
-          {/* Bars */}
-          {withCumul.map((d, i) => {
-            const x = pad.L + i * barW + barGap / 2
-            const barWidth = barW - barGap
-            const barH = scaleMax ? (d.value / scaleMax) * chartH : 0
-            const labelY = barH > 12 ? pad.T + chartH - barH - 6 : pad.T + chartH + 14
-            return (
-              <g key={d.label}>
-                <rect x={x} y={pad.T + chartH - barH} width={barWidth} height={barH} fill="#155dfc" />
-                <text x={x + barWidth / 2} y={labelY} fill="#0a0a0a" fontSize="10" textAnchor="middle">{formatVal(d.value)}</text>
-              </g>
-            )
-          })}
-          {/* Cumulative line (orange) - starts at 0% left of first bar */}
-          <polyline
-            points={[
-              `${pad.L},${pad.T + chartH}`,
-              ...withCumul.map((d, i) => {
-                const x = pad.L + (i + 0.5) * barW
-                const y = pad.T + chartH - (d.cumulPct / 100) * chartH
-                return `${x},${y}`
-              }),
-            ].join(' ')}
-            fill="none"
-            stroke="#f97316"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          {/* Cumulative % labels on line */}
-          {withCumul.map((d, i) => {
-            const x = pad.L + (i + 0.5) * barW
-            const y = pad.T + chartH - (d.cumulPct / 100) * chartH - 8
-            return <text key={d.label} x={x} y={Math.max(y, pad.T + 12)} fill="#0a0a0a" fontSize="10" textAnchor="middle">{d.cumulPct.toFixed(2)}%</text>
-          })}
-          {/* X-axis category labels */}
-          {withCumul.map((d, i) => {
-            const x = pad.L + (i + 0.5) * barW
-            return <text key={d.label} x={x} y={h - 20} fill="#6a7282" fontSize="10" textAnchor="middle">{d.label}</text>
-          })}
-        </svg>
-      </div>
-    </div>
-  )
-}
-
-const SALES_PERFORMANCE_2_ROWS = [
-  { dept: 'Fragrance & Home', wtd: 315, wtdLy: -385, wtdLyPct: -56, mtd: '7.2K', mtdLy: -681, mtdLyPct: -9, ytd: '14K', ytdLy: -337, ytdLyPct: -2 },
-  { dept: 'Apparel', wtd: 255, wtdLy: -194, wtdLyPct: -48, mtd: '3.1K', mtdLy: -364, mtdLyPct: -10, ytd: '7.7K', ytdLy: -378, ytdLyPct: -5 },
-  { dept: 'Activewear', wtd: 148, wtdLy: -120, wtdLyPct: -46, mtd: '2.4K', mtdLy: -89, mtdLyPct: -4, ytd: '3.7K', ytdLy: -1600, ytdLyPct: -31 },
-  { dept: 'Jewelry', wtd: -3, wtdLy: 6, wtdLyPct: 200, mtd: '57', mtdLy: 96, mtdLyPct: 63, ytd: '17K', ytdLy: -100, ytdLyPct: -38 },
-  { dept: 'Watches', wtd: -2, wtdLy: 2, wtdLyPct: -50, mtd: '38', mtdLy: 36, mtdLyPct: -48, ytd: '96', ytdLy: -34, ytdLyPct: -26 },
-  { dept: 'Handbags', wtd: 0, wtdLy: 0, wtdLyPct: 0, mtd: '6', mtdLy: -16, mtdLyPct: -71, ytd: '20', ytdLy: -28, ytdLyPct: -68 },
-  { dept: 'Total', wtd: 713, wtdLy: -703, wtdLyPct: -50, mtd: '12.8K', mtdLy: -1300, mtdLyPct: -9, ytd: '25.6K', ytdLy: -2500, ytdLyPct: -9, isTotal: true },
-]
-function LyCell({ val, display, suffix = '' }) {
-  if (val < 0) return <span className="inline-block px-2 py-0.5 rounded-md bg-red-50 text-red-600">{display}{suffix}</span>
-  return <span className="inline-block px-2 py-0.5 rounded-md bg-green-50 text-green-600">{display}{suffix}</span>
-}
-
-/* Sales trend chart with hover tooltip */
-const SALES_TREND_DATA = [
-  { date: '01/04', ly: 1800, ty: 2100 },
-  { date: '01/11', ly: 3000, ty: 2160 },
-  { date: '01/18', ly: 3300, ty: 2190 },
-  { date: '01/25', ly: 2790, ty: 2010 },
-  { date: '02/01', ly: 2190, ty: 1800 },
-  { date: '02/08', ly: 3490, ty: 3415 },
-  { date: '02/15', ly: 4110, ty: 5190 },
-  { date: '02/22', ly: 5310, ty: 5490 },
-  { date: '03/01', ly: 3600, ty: 750 },
-]
-function catmullRomToBezier(p0, p1, p2, p3, tension = 0.25) {
-  const cp1x = p1.x + (p2.x - p0.x) * tension
-  const cp1y = p1.y + (p2.y - p0.y) * tension
-  const cp2x = p2.x - (p3.x - p1.x) * tension
-  const cp2y = p2.y - (p3.y - p1.y) * tension
-  return `C${cp1x.toFixed(1)},${cp1y.toFixed(1)} ${cp2x.toFixed(1)},${cp2y.toFixed(1)} ${p2.x},${p2.y}`
-}
-function smoothPath(pts, getY) {
-  const getP = (i) => {
-    const idx = Math.max(0, Math.min(i, pts.length - 1))
-    const p = pts[idx]
-    return { x: p.x, y: getY(p) }
-  }
-  let d = `M${getP(0).x},${getP(0).y}`
-  for (let i = 0; i < pts.length - 1; i++) {
-    d += ' ' + catmullRomToBezier(getP(i - 1), getP(i), getP(i + 1), getP(i + 2))
-  }
-  return d
-}
-
-function SalesTrendChart() {
-  const [hoverIndex, setHoverIndex] = useState(null)
-  const chartMax = 6000
-  const pad = { L: 36, R: 12, T: 16, B: 28 }
-  const svgW = 800
-  const chartW = svgW - pad.L - pad.R
-  const chartH = 180
-  const pts = SALES_TREND_DATA.map((d, i) => ({
-    ...d,
-    x: pad.L + (i / (SALES_TREND_DATA.length - 1)) * chartW,
-    yLy: pad.T + chartH - (d.ly / chartMax) * chartH,
-    yTy: pad.T + chartH - (d.ty / chartMax) * chartH,
-  }))
-  const lyPath = smoothPath(pts, (p) => p.yLy)
-  const tyPath = smoothPath(pts, (p) => p.yTy)
-
-  const handleMouseMove = (e) => {
-    const rect = e.currentTarget.getBoundingClientRect()
-    const ratio = (e.clientX - rect.left) / rect.width
-    const idx = Math.round(ratio * (SALES_TREND_DATA.length - 1))
-    const clamped = Math.max(0, Math.min(idx, SALES_TREND_DATA.length - 1))
-    setHoverIndex(clamped)
-  }
-  const handleMouseLeave = () => setHoverIndex(null)
-
-  const hovered = hoverIndex != null ? SALES_TREND_DATA[hoverIndex] : null
-  const total = hovered ? hovered.ly + hovered.ty : 0
-  const lyPct = total ? ((hovered.ly / total) * 100).toFixed(2) : '0'
-  const tyPct = total ? ((hovered.ty / total) * 100).toFixed(2) : '0'
-
-  return (
-    <div className="mt-6 bg-white border border-[#e5e7eb] rounded-[14px] p-6">
-      <div className="flex items-start justify-between gap-4 mb-4">
-        <div>
-          <h3 className="text-base font-medium text-[#0a0a0a]">Sales trend</h3>
-          <p className="text-sm text-[#6a7282] mt-0.5">Select the comparison period using &apos;Variance&apos; parameter</p>
-        </div>
-        <div className="flex flex-col gap-1 text-sm">
-          <span className="text-[#6a7282]">Metrics</span>
-          <div className="flex items-center gap-2">
-            <span className="size-2.5 rounded-full bg-[#7eb8ff]" />
-            <span>LY</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="size-2.5 rounded-full bg-[#155dfc]" />
-            <span>TY</span>
-          </div>
-        </div>
-      </div>
-      <div className="h-[280px] w-full relative" onMouseMove={handleMouseMove} onMouseLeave={handleMouseLeave}>
-        <svg viewBox={`0 0 ${svgW} 240`} className="w-full h-full" preserveAspectRatio="xMinYMid meet">
-          {/* Horizontal grid lines */}
-          {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((i) => (
-            <line key={i} x1={pad.L} y1={pad.T + chartH - (i / 10) * chartH} x2={svgW - pad.R} y2={pad.T + chartH - (i / 10) * chartH} stroke="#e5e7eb" strokeWidth="0.5" />
-          ))}
-          {/* Left Y-axis - stacked vertically, condensed */}
-          <g>
-            <text x="8" y={pad.T + chartH / 2} fill="#6a7282" fontSize="10" transform={`rotate(-90, 8, ${pad.T + chartH / 2})`} textAnchor="middle">Sales</text>
-            {[0, 2, 4, 6].map((i) => (
-              <text key={i} x={pad.L - 4} y={pad.T + chartH - (i / 6) * chartH + 4} fill="#6a7282" fontSize="9" textAnchor="end">{i === 0 ? '0' : `${i}K`}</text>
-            ))}
-          </g>
-          <text x={pad.L + chartW / 2} y={230} fill="#6a7282" fontSize="12" textAnchor="middle">Date period</text>
-          {SALES_TREND_DATA.map((d, i) => (
-            <text key={d.date} x={pad.L + (i / (SALES_TREND_DATA.length - 1)) * chartW} y={236} fill="#6a7282" fontSize="10" textAnchor="middle">{d.date}</text>
-          ))}
-          <path d={lyPath} fill="none" stroke="#7eb8ff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-          <path d={tyPath} fill="none" stroke="#155dfc" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-          {/* Dashed vertical line + highlight circle at hovered point */}
-          {hoverIndex != null && (
-            <g>
-              <line x1={pts[hoverIndex].x} y1={pad.T} x2={pts[hoverIndex].x} y2={pad.T + chartH} stroke="#6a7282" strokeWidth="1" strokeDasharray="4 2" opacity={0.6} />
-              <circle cx={pts[hoverIndex].x} cy={pts[hoverIndex].yLy} r="4" fill="#7eb8ff" stroke="#fff" strokeWidth="2" />
-              <circle cx={pts[hoverIndex].x} cy={pts[hoverIndex].yTy} r="4" fill="#155dfc" stroke="#fff" strokeWidth="2" />
-            </g>
-          )}
-        </svg>
-        {/* Hover tooltip modal - sits left or right of the dotted vertical line */}
-        {hovered && (() => {
-          const lineFrac = (pad.L + (hoverIndex / (SALES_TREND_DATA.length - 1)) * chartW) / svgW
-          const linePercent = lineFrac * 100
-          const toRight = linePercent < 50
-          return (
-          <div
-            className="absolute rounded-xl shadow-lg px-4 py-3 text-sm text-white z-10 pointer-events-none"
-            style={{
-              backgroundColor: '#1f2937',
-              left: toRight ? `calc(${linePercent}% + 12px)` : undefined,
-              right: toRight ? undefined : `calc(${(1 - lineFrac) * 100}% + 12px)`,
-              top: 24,
-              transform: toRight ? 'none' : 'translateX(-100%)',
-              minWidth: 200,
-            }}
-          >
-            <div className="flex flex-col gap-2">
-              <div>
-                <span className="text-[#9ca3af]">Date period:</span>
-                <span className="ml-2 font-medium">{hovered.date}</span>
+          <div className="flex flex-col gap-4 ml-auto">
+            <div className="flex items-center gap-4">
+              <span className="text-[14px] text-[#4b535c]">Trip type:</span>
+              <div className="flex rounded-[4px] border border-[#e5e7eb] bg-white overflow-hidden">
+                <button type="button" onClick={() => setTripType('rebalancing')} className={`px-3 py-2 text-[14px] font-medium border-r border-[#e5e7eb] ${tripType === 'rebalancing' ? 'bg-[#f7f7f7] text-[#0a0a0a]' : 'text-[#4b535c] hover:bg-[#f9fafb] bg-white'}`}>Rebalancing</button>
+                <button type="button" onClick={() => setTripType('replenishment')} className={`px-3 py-2 text-[14px] font-medium border-r border-[#e5e7eb] ${tripType === 'replenishment' ? 'bg-[#f7f7f7] text-[#0a0a0a]' : 'text-[#4b535c] hover:bg-[#f9fafb] bg-white'}`}>Replenishment</button>
+                <button type="button" onClick={() => setTripType('reorder')} className={`px-3 py-2 text-[14px] font-medium ${tripType === 'reorder' ? 'bg-[#f7f7f7] text-[#0a0a0a]' : 'text-[#4b535c] hover:bg-[#f9fafb] bg-white'}`}>Reorder</button>
               </div>
-              <div>
-                <span className="text-[#9ca3af]">Total Sales:</span>
-                <span className="ml-2 font-medium">{total.toLocaleString()}</span>
-              </div>
-              <div className="flex gap-3 mt-1">
-                <div className="w-1 rounded-full bg-[#7eb8ff]" />
-                <div>
-                  <div><span className="text-[#9ca3af]">Metrics:</span> <span className="font-medium">LY</span></div>
-                  <div><span className="text-[#9ca3af]">Sales:</span> <span className="font-medium">{hovered.ly.toLocaleString()} ({lyPct} %)</span></div>
-                </div>
-              </div>
-              <div className="flex gap-3">
-                <div className="w-1 rounded-full bg-[#155dfc]" />
-                <div>
-                  <div><span className="text-[#9ca3af]">Metrics:</span> <span className="font-medium">TY</span></div>
-                  <div><span className="text-[#9ca3af]">Sales:</span> <span className="font-medium">{hovered.ty.toLocaleString()} ({tyPct} %)</span></div>
-                </div>
-              </div>
-            </div>
-          </div>
-          )
-        })()}
-      </div>
-    </div>
-  )
-}
-
-const INSIGHTS_METRIC_CARDS = [
-  { title: 'Daily sales', date: '24/02/2026', value: '551', comparison: 'Comparison point unavailable', comparisonDown: false, chartType: 'area', chartVariant: 'daily', hasExplore: false },
-  { title: 'Sales WTD', date: 'Week of 23/02/2026', value: '713', comparison: '↓37.84%', comparisonSuffix: ' vs Week of 24/02/2025 (1.15K)', comparisonDown: true, chartType: 'area', chartVariant: 'wtd', hasExplore: false },
-  { title: 'Sales MTD', date: 'Feb 2026', value: '12.79K', comparison: '↓9.09%', comparisonSuffix: ' vs Feb 2025 (14.07K)', comparisonDown: true, chartType: 'area', chartVariant: 'mtd', hasExplore: true },
-  { title: 'Sales YTD', date: '2026', value: '25.65K', comparison: '↓8.93%', comparisonSuffix: ' vs 2025 (28.16K)', comparisonDown: true, chartType: 'area', chartVariant: 'ytd', hasExplore: false },
-]
-
-const CHART_VARIANTS = {
-  daily: '0,55 40,45 80,65 120,30 160,50 200,35 240,55',
-  wtd: '0,70 40,65 80,55 120,25 160,45 180,35 210,50 240,60',
-  mtd: '0,65 40,50 80,55 120,55 160,50 200,48 240,52',
-  ytd: '0,70 40,55 80,40 120,25 160,35 200,45 240,55',
-}
-function InsightsMiniChart({ variant = 'daily' }) {
-  const pts = CHART_VARIANTS[variant] || CHART_VARIANTS.daily
-  const pathD = pts.split(' ').map((p, i) => (i === 0 ? `M${p}` : `L${p}`)).join(' ')
-  const areaD = `${pathD} L240,80 L0,80 Z`
-  const pairs = pts.split(' ')
-  const lastPt = pairs[pairs.length - 1].split(',')
-  const useDotted = variant === 'ytd'
-  const solidPts = useDotted ? pairs.slice(0, 6) : pairs
-  const solidPathD = solidPts.map((p, i) => (i === 0 ? `M${p}` : `L${p}`)).join(' ')
-  const dottedPathD = useDotted ? pairs.slice(5).map((p, i) => (i === 0 ? `M${p}` : `L${p}`)).join(' ') : ''
-  return (
-    <div className="h-[100px] w-full mt-6">
-      <svg viewBox="0 0 240 80" className="w-full h-full" preserveAspectRatio="none">
-        <defs>
-          <linearGradient id={`insightsGrad-${variant}`} x1="0" y1="0" x2="0" y2="1">
-            <stop stopColor="#155dfc" stopOpacity="0.4" />
-            <stop stopColor="#155dfc" stopOpacity="0" offset="1" />
-          </linearGradient>
-        </defs>
-        <path d={areaD} fill={`url(#insightsGrad-${variant})`} />
-        <path d={solidPathD} fill="none" stroke="#155dfc" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-        {useDotted && dottedPathD && (
-          <>
-            <path d={dottedPathD} fill="none" stroke="#155dfc" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" strokeDasharray="4 3" />
-            <circle cx={lastPt[0]} cy={lastPt[1]} r="3" fill="#155dfc" />
-          </>
-        )}
-      </svg>
-    </div>
-  )
-}
-
-const LIVEBOARD_RECENT_VIEWERS = [
-  { name: 'David Le Corre', initial: 'D', color: 'bg-[#7c3aed]' },
-  { name: 'Pierre-Alain Renou', initial: 'P', color: 'bg-[#ea580c]' },
-  { name: 'Autone Internal', initial: 'A', color: 'bg-[#2563eb]' },
-  { name: 'ines.sebbar', initial: 'I', color: 'bg-[#16a34a]' },
-  { name: 'Sim Durgun', initial: 'S', color: 'bg-[#0d9488]' },
-  { name: 'Ever Sasson', initial: 'E', color: 'bg-[#0d9488]' },
-  { name: 'Bonaventura Pacileo', initial: 'B', color: 'bg-[#7c3aed]' },
-  { name: 'Autone Internal', initial: 'A', color: 'bg-[#2563eb]' },
-  { name: 'Adil', initial: 'A', color: 'bg-[#ea580c]' },
-]
-
-function InsightsPage() {
-  const [activeTab, setActiveTab] = useState('Retail')
-  const [liveboardModalOpen, setLiveboardModalOpen] = useState(false)
-
-  return (
-    <>
-    <div className="flex flex-col gap-6">
-      {/* Header: title + icons + tabs + actions */}
-      <div className="flex flex-col gap-4">
-        <div className="flex items-center justify-between flex-wrap gap-4">
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-medium text-[#0a0a0a]">Insights</h1>
-            <div className="flex items-center gap-2">
-              <div className="relative group">
-                <button type="button" className="p-2 rounded-lg text-[#4a5565] hover:bg-[#f3f3f5] hover:text-[#0a0a0a]" aria-label="Liveboard details" onClick={() => setLiveboardModalOpen(true)}>
-                  <IconInfo />
+              <div className="w-px h-6 bg-[#e5e7eb]" aria-hidden />
+              <div className="flex items-center gap-2">
+                <span className="text-[14px] text-[#4b535c]">Include zero transfers</span>
+                <button type="button" onClick={() => setIncludeZeroTransfers((v) => !v)} className={`relative w-11 h-6 rounded-full transition-colors flex items-center shrink-0 ${includeZeroTransfers ? 'bg-[#0267ff]' : 'bg-[#e5e7eb]'}`} aria-pressed={includeZeroTransfers}>
+                  <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-transform ${includeZeroTransfers ? 'left-[22px]' : 'left-0.5'}`} />
                 </button>
-                <div className="absolute left-0 bottom-full mb-1 px-2 py-1.5 rounded-md bg-[#1f2937] text-white text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
-                  Liveboard details
-                </div>
-              </div>
-              <div className="relative group">
-                <button type="button" className="p-2 rounded-lg text-[#4a5565] hover:bg-[#f3f3f5] hover:text-[#0a0a0a]" aria-label="Add to favourites">
-                  <IconStar />
-                </button>
-                <div className="absolute left-0 bottom-full mb-1 px-2 py-1.5 rounded-md bg-[#1f2937] text-white text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
-                  Add to favourites
-                </div>
-              </div>
-              <button type="button" className="p-2 rounded-lg text-[#4a5565] hover:bg-[#f3f3f5] hover:text-[#0a0a0a]" aria-label="Permissions">
-                <IconLock />
-              </button>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <button type="button" className="h-10 px-4 rounded-lg bg-[#155dfc] text-white text-sm font-medium flex items-center gap-2">
-              <IconAI />
-              AI Highlights
-            </button>
-            <div className="relative group">
-              <button type="button" className="p-2 rounded-lg text-[#4a5565] hover:bg-[#f3f3f5]" aria-label="Share">
-                <IconShare />
-              </button>
-              <div className="absolute left-0 bottom-full mb-1 px-2 py-1.5 rounded-md bg-[#1f2937] text-white text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
-                Share
               </div>
             </div>
-            <button type="button" className="p-2 rounded-lg text-[#4a5565] hover:bg-[#f3f3f5]" aria-label="More options">
-              <IconEllipsisVertical />
-            </button>
+            <div className="flex items-center justify-end gap-2">
+              <div className="flex items-center h-10 w-[240px] rounded-[4px] border border-[#e9eaeb] bg-white pl-3 pr-3">
+                <IconSearch className="text-[#4b535c] shrink-0" />
+                <input type="text" placeholder="Search..." className="flex-1 min-w-0 pl-2 border-0 bg-transparent text-[14px] text-[#0a0a0a] outline-none placeholder:text-[#4b535c]" />
+              </div>
+              <button type="button" className="flex items-center justify-center gap-2 h-10 px-4 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#22272f] shrink-0">
+                Revenue increase
+                <IconChevronDown className="shrink-0 text-[#22272f] size-4" aria-hidden />
+              </button>
+              <button type="button" className="h-10 w-10 flex items-center justify-center rounded-[4px] border border-[#e9eaeb] bg-white text-[#22272f] hover:bg-[#f3f4f6] shrink-0" aria-label="Settings">
+                <IconGears className="size-5 shrink-0" />
+              </button>
+            </div>
           </div>
         </div>
-        <div className="flex gap-1 border-b border-[#e5e7eb]">
-          {INSIGHTS_TABS.map((tab) => (
-            <button key={tab} type="button" onClick={() => setActiveTab(tab)} className={`px-4 py-3 text-sm font-medium border-b-2 -mb-px transition-colors ${activeTab === tab ? 'border-[#155dfc] text-[#155dfc]' : 'border-transparent text-[#4a5565] hover:text-[#0a0a0a]'}`}>
-              {tab}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Main content: filters + cards + sidebar */}
-      <div className="flex gap-6">
-        <div className="flex-1 min-w-0">
-          {/* Filter chips */}
-          <div className="flex flex-wrap gap-2 mb-6">
-            {INSIGHTS_ACTIVE_CHIPS.map((chip, i) => (
-              <button key={chip} type="button" className={`h-9 px-3 rounded-lg text-sm flex items-center gap-2 ${i === INSIGHTS_ACTIVE_CHIPS.length - 1 ? 'bg-[#364153] text-white' : 'bg-[#e5e7eb] text-[#0a0a0a]'}`}>
-                {chip}
-                {i === INSIGHTS_ACTIVE_CHIPS.length - 1 && <IconArrowRight className="size-4" />}
-              </button>
-            ))}
-            {INSIGHTS_FILTER_CHIPS.map((chip) => (
-              <button key={chip} type="button" className="h-9 px-3 rounded-lg text-sm bg-[#f3f3f5] text-[#4a5565] hover:bg-[#e5e7eb]">
-                {chip}
-              </button>
-            ))}
-          </div>
-
-          {/* Metric and Currency titles */}
-          <div className="flex items-center gap-6 mb-2">
-            <div>
-              <p className="text-xs text-[#6a7282]">Metric</p>
-              <p className="text-sm font-medium text-[#0a0a0a]">Volume</p>
-            </div>
-            <div>
-              <p className="text-xs text-[#6a7282]">Currency</p>
-              <p className="text-sm font-medium text-[#0a0a0a]">EUR</p>
-            </div>
-          </div>
-
-          {/* Metric cards - single full-width box with 4 sections */}
-          <div className="bg-white border border-[#e5e7eb] rounded-[14px] overflow-hidden shadow-sm">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-[#e5e7eb]">
-              {INSIGHTS_METRIC_CARDS.map((card, i) => (
-                <div key={card.title} className="p-6 flex flex-col min-h-[280px]">
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <h3 className="text-base font-medium text-[#0a0a0a]">{card.title}</h3>
-                      <p className="text-sm text-[#6a7282] mt-0.5">{card.date}</p>
-                    </div>
-                    {card.hasExplore && (
-                      <div className="flex items-center gap-1 shrink-0">
-                        <button type="button" className="p-1.5 rounded text-[#4a5565] hover:bg-[#f3f3f5]" aria-label="Document"><IconDocument className="size-4" /></button>
-                        <button type="button" className="h-8 px-3 rounded-lg border border-[#e5e7eb] bg-white text-[#155dfc] text-sm font-medium hover:bg-[#f8fafc]">Explore</button>
-                        <button type="button" className="p-1.5 rounded text-[#4a5565] hover:bg-[#f3f3f5]"><IconEllipsisVertical /></button>
-                      </div>
-                    )}
-                  </div>
-                  <p className="text-3xl font-semibold text-[#0a0a0a] mt-3">{card.value}</p>
-                  <p className="text-sm mt-1 text-[#6a7282]">
-                    {card.comparisonDown ? (
-                      <><span className="text-[#dc2626]">{card.comparison}</span><span className="text-[#6a7282]">{card.comparisonSuffix}</span></>
-                    ) : (
-                      card.comparison
-                    )}
-                  </p>
-                  <div className="flex-1" />
-                  <InsightsMiniChart variant={card.chartVariant} />
-                  <button type="button" className="text-sm text-[#155dfc] mt-3 underline decoration-[#155dfc] hover:decoration-[#0252cc] w-fit">Analyse change</button>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Sales trend chart */}
-          <SalesTrendChart />
-
-          {/* Sales performance table */}
-          <div className="mt-6 bg-white border border-[#e5e7eb] rounded-[14px] p-6 overflow-hidden">
-            <div className="flex items-start justify-between gap-4 mb-4">
-              <div>
-                <h3 className="text-base font-medium text-[#0a0a0a]">Sales performance</h3>
-                <p className="text-sm text-[#6a7282] mt-0.5">Select the comparison period using &apos;Variance&apos; parameter and choose the breakdown selecting the &apos;Retail attribute&apos;</p>
-              </div>
-              <div className="flex items-center gap-2 shrink-0">
-                <button type="button" className="h-9 px-3 rounded-lg border border-[#e5e7eb] text-sm text-[#0a0a0a] hover:bg-[#f3f3f5]">Explore</button>
-                <button type="button" className="p-2 rounded-lg text-[#4a5565] hover:bg-[#f3f3f5]"><IconEllipsisVertical /></button>
-              </div>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="bg-[#f9fafb]">
-                    <th className="text-left py-3 px-4 font-medium text-[#0a0a0a]">Department</th>
-                    <th className="text-right py-3 px-4 font-medium text-[#0a0a0a]">WTD</th>
-                    <th className="text-right py-3 px-4 font-medium text-[#0a0a0a]">WTD vs LY</th>
-                    <th className="text-right py-3 px-4 font-medium text-[#0a0a0a]">WTD vs LY %</th>
-                    <th className="text-right py-3 px-4 font-medium text-[#0a0a0a]">MTD</th>
-                    <th className="text-right py-3 px-4 font-medium text-[#0a0a0a]">MTD vs LY</th>
-                    <th className="text-right py-3 px-4 font-medium text-[#0a0a0a]">MTD vs LY %</th>
-                    <th className="text-right py-3 px-4 font-medium text-[#0a0a0a]">YTD ↓</th>
-                    <th className="text-right py-3 px-4 font-medium text-[#0a0a0a]">YTD vs LY</th>
-                    <th className="text-right py-3 px-4 font-medium text-[#0a0a0a]">YTD vs LY %</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {SALES_PERFORMANCE_ROWS.map((row) => (
-                    <tr key={row.dept} className="border-t border-[#e5e7eb]">
-                      <td className="py-3 px-4 text-[#0a0a0a]">{row.dept}</td>
-                      <td className="py-3 px-4 text-right text-[#0a0a0a]">{row.wtd}</td>
-                      <td className="py-3 px-4 text-right"><LyCell val={row.wtdLy} display={row.wtdLy} /></td>
-                      <td className="py-3 px-4 text-right"><LyCell val={row.wtdLyPct} display={row.wtdLyPct} suffix="%" /></td>
-                      <td className="py-3 px-4 text-right text-[#0a0a0a]">{row.mtd}</td>
-                      <td className="py-3 px-4 text-right"><LyCell val={row.mtdLy} display={row.mtdLy} /></td>
-                      <td className="py-3 px-4 text-right"><LyCell val={row.mtdLyPct} display={row.mtdLyPct} suffix="%" /></td>
-                      <td className="py-3 px-4 text-right text-[#0a0a0a]">{row.ytd}</td>
-                      <td className="py-3 px-4 text-right"><LyCell val={row.ytdLy} display={row.ytdLy} /></td>
-                      <td className="py-3 px-4 text-right"><LyCell val={row.ytdLyPct} display={row.ytdLyPct} suffix="%" /></td>
-                    </tr>
-                  ))}
-                </tbody>
-                <tfoot>
-                  <tr className="border-t-2 border-[#e5e7eb] bg-[#f9fafb]">
-                    <td className="py-3 px-4 text-[#6a7282] font-medium">UNIQUE COUNT 6</td>
-                    <td className="py-3 px-4 text-right font-semibold text-[#0a0a0a]">TOTAL 713</td>
-                    <td className="py-3 px-4 text-right"><LyCell val={-703} display={-703} /></td>
-                    <td className="py-3 px-4 text-right"><LyCell val={-49.65} display="-49.65" suffix="%" /></td>
-                    <td className="py-3 px-4 text-right font-semibold text-[#0a0a0a]">TOTAL 12.79K</td>
-                    <td className="py-3 px-4 text-right"><LyCell val={-1280} display="-1.28K" /></td>
-                    <td className="py-3 px-4 text-right"><LyCell val={-9.09} display="-9.09" suffix="%" /></td>
-                    <td className="py-3 px-4 text-right font-semibold text-[#0a0a0a]">TOTAL 25.65K</td>
-                    <td className="py-3 px-4 text-right"><LyCell val={-2510} display="-2.51K" /></td>
-                    <td className="py-3 px-4 text-right"><LyCell val={-8.93} display="-8.93" suffix="%" /></td>
-                  </tr>
-                </tfoot>
-              </table>
-            </div>
-            <p className="text-xs text-[#6a7282] mt-3">Showing 6 of 6 rows</p>
-          </div>
-
-          {/* Sales performance table 2 - dimension breakdown */}
-          <div className="mt-6 bg-white border border-[#e5e7eb] rounded-[14px] p-6 overflow-hidden">
-            <div className="flex items-start justify-between gap-4 mb-4">
-              <div>
-                <h3 className="text-base font-medium text-[#0a0a0a]">Sales performance</h3>
-                <p className="text-sm text-[#6a7282] mt-0.5">Select the comparison period using &apos;Variance&apos; parameter and choose the breakdown selecting the &apos;Retail attribute&apos;</p>
-              </div>
-              <div className="flex items-center gap-2 shrink-0">
-                <button type="button" className="h-9 px-3 rounded-lg border border-[#e5e7eb] text-sm text-[#0a0a0a] hover:bg-[#f3f3f5]">Explore</button>
-                <button type="button" className="p-2 rounded-lg text-[#4a5565] hover:bg-[#f3f3f5]"><IconEllipsisVertical /></button>
-              </div>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="bg-[#f9fafb]">
-                    <th className="text-left py-3 px-4 font-medium text-[#0a0a0a]">DIMENSION</th>
-                    <th className="text-right py-3 px-4 font-medium text-[#0a0a0a]">WTD</th>
-                    <th className="text-right py-3 px-4 font-medium text-[#0a0a0a]">WTD VS LY</th>
-                    <th className="text-right py-3 px-4 font-medium text-[#0a0a0a]">WTD VS LY%</th>
-                    <th className="text-right py-3 px-4 font-medium text-[#0a0a0a]">MTD</th>
-                    <th className="text-right py-3 px-4 font-medium text-[#0a0a0a]">MTD VS LY</th>
-                    <th className="text-right py-3 px-4 font-medium text-[#0a0a0a]">MTD VS LY%</th>
-                    <th className="text-right py-3 px-4 font-medium text-[#0a0a0a]">YTD</th>
-                    <th className="text-right py-3 px-4 font-medium text-[#0a0a0a]">YTD VS LY</th>
-                    <th className="text-right py-3 px-4 font-medium text-[#0a0a0a]">YTD VS LY%</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {SALES_PERFORMANCE_2_ROWS.map((row) => (
-                    <tr key={row.dept} className={`border-t border-[#e5e7eb] ${row.isTotal ? 'bg-[#f9fafb] font-semibold' : ''}`}>
-                      <td className="py-3 px-4 text-[#0a0a0a]">{row.dept}</td>
-                      <td className="py-3 px-4 text-right text-[#0a0a0a]">{row.wtd}</td>
-                      <td className="py-3 px-4 text-right"><LyCell val={row.wtdLy} display={row.wtdLy > 0 ? `+${row.wtdLy}` : row.wtdLy} /></td>
-                      <td className="py-3 px-4 text-right"><LyCell val={row.wtdLyPct} display={row.wtdLyPct > 0 ? `+${row.wtdLyPct}` : row.wtdLyPct} suffix="%" /></td>
-                      <td className="py-3 px-4 text-right text-[#0a0a0a]">{row.mtd}</td>
-                      <td className="py-3 px-4 text-right"><LyCell val={row.mtdLy} display={Math.abs(row.mtdLy) >= 1000 ? `${(row.mtdLy / 1000).toFixed(1)}K` : row.mtdLy > 0 ? `+${row.mtdLy}` : row.mtdLy} /></td>
-                      <td className="py-3 px-4 text-right"><LyCell val={row.mtdLyPct} display={row.mtdLyPct > 0 ? `+${row.mtdLyPct}` : row.mtdLyPct} suffix="%" /></td>
-                      <td className="py-3 px-4 text-right text-[#0a0a0a]">{row.ytd}</td>
-                      <td className="py-3 px-4 text-right"><LyCell val={row.ytdLy} display={Math.abs(row.ytdLy) >= 1000 ? `${(row.ytdLy / 1000).toFixed(1)}K` : row.ytdLy > 0 ? `+${row.ytdLy}` : row.ytdLy} /></td>
-                      <td className="py-3 px-4 text-right"><LyCell val={row.ytdLyPct} display={row.ytdLyPct > 0 ? `+${row.ytdLyPct}` : row.ytdLyPct} suffix="%" /></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <SalesYTDMap />
-
-          {/* Pareto charts: Sales by Location Type & Sales by Department */}
-          <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <ParetoChart title="Sales by Location Type" xAxisLabel="Location attribute" data={PARETO_LOCATION_DATA} hasExplore />
-            <ParetoChart title="Sales by Department" xAxisLabel="Product attribute" data={PARETO_DEPT_DATA} hasExplore={false} />
-          </div>
-        </div>
-      </div>
-    </div>
-
-      {/* Liveboard details modal */}
-      {liveboardModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" aria-hidden onClick={() => setLiveboardModalOpen(false)} />
-          <div className="relative w-full max-w-2xl bg-white rounded-xl shadow-xl overflow-hidden" role="dialog" aria-labelledby="liveboard-modal-title" aria-modal>
-            <h2 id="liveboard-modal-title" className="text-xl font-semibold text-[#0a0a0a] px-6 pt-6 pb-4">Liveboard details</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 px-6 pb-6">
-              <div className="flex flex-col gap-5">
-                <div>
-                  <h3 className="text-sm font-semibold text-[#0a0a0a] mb-2">Insights</h3>
-                  <div className="flex items-center gap-2">
-                    <span className="w-8 h-8 rounded-full bg-[#0d9488] text-white flex items-center justify-center text-sm font-medium shrink-0">E</span>
-                    <span className="text-sm text-[#4a5565]">Created by Ever Sasson • 24 Feb, 2026</span>
-                  </div>
-                </div>
-                <div>
-                  <h3 className="text-sm font-semibold text-[#0a0a0a] mb-3">Data sources</h3>
-                  <div className="flex flex-col gap-2">
-                    <div className="flex items-center gap-2 p-2 rounded-lg hover:bg-[#f9fafb] cursor-pointer">
-                      <span className="w-8 h-8 rounded bg-[#e5e7eb] flex items-center justify-center shrink-0">
-                        <IconDocument />
-                      </span>
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[1000px] text-[14px]">
+            <thead>
+              <tr className="border-b border-[#e5e7eb] bg-[#F8F8F8]">
+                <th className="text-left py-3 px-4 font-medium text-[#0a0a0a] bg-[#F8F8F8]">Product details</th>
+                <th className="text-left py-3 px-4 font-medium text-[#0a0a0a] bg-[#F8F8F8]">Transfers</th>
+                <th className="text-left py-3 px-4 font-medium text-[#0a0a0a] bg-[#F8F8F8]">Sales</th>
+                <th className="text-left py-3 px-4 font-medium text-[#0a0a0a] bg-[#F8F8F8]">Forecast</th>
+                <th className="text-left py-3 px-4 font-medium text-[#0a0a0a] bg-[#F8F8F8]">Revenue increase</th>
+                <th className="text-left py-3 px-4 font-medium text-[#0a0a0a] bg-[#F8F8F8]">Stockouts</th>
+                <th className="text-left py-3 px-4 font-medium text-[#0a0a0a] bg-[#F8F8F8]">Locations</th>
+                <th className="text-left py-3 px-4 font-medium text-[#0a0a0a] bg-[#F8F8F8]">Overstocks</th>
+                <th className="text-left py-3 px-4 font-medium text-[#0a0a0a] bg-[#F8F8F8]">Understocks</th>
+                <th className="text-left py-3 px-4 font-medium text-[#0a0a0a] bg-[#F8F8F8]">Dept</th>
+              </tr>
+              <tr className="border-b border-[#e5e7eb] bg-[#F8F8F8]">
+                <th className="text-left py-2 px-4 bg-[#F8F8F8]" />
+                <th className="text-left py-2 px-4 text-[12px] font-normal text-[#4b535c] bg-[#F8F8F8]">3,220 units · 113 trips</th>
+                <th className="text-left py-2 px-4 text-[12px] font-normal text-[#4b535c] bg-[#F8F8F8]">991 L7D · 5,468 L30D</th>
+                <th className="text-left py-2 px-4 text-[12px] font-normal text-[#4b535c] bg-[#F8F8F8]">1077.84</th>
+                <th className="text-left py-2 px-4 text-[12px] font-normal text-[#4b535c] bg-[#F8F8F8]">€661.8K</th>
+                <th className="text-left py-2 px-4 text-[12px] font-normal text-[#4b535c] bg-[#F8F8F8]">38,598 → 37,855</th>
+                <th className="text-left py-2 px-4 text-[12px] font-normal text-[#4b535c] bg-[#F8F8F8]">61 → 61</th>
+                <th className="text-left py-2 px-4 text-[12px] font-normal text-[#4b535c] bg-[#F8F8F8]">5,566 → 2,930</th>
+                <th className="text-left py-2 px-4 text-[12px] font-normal text-[#4b535c] bg-[#F8F8F8]">4,846 → 1,672</th>
+                <th className="text-left py-2 px-4 text-[12px] font-normal text-[#4b535c] bg-[#F8F8F8]">0.6</th>
+              </tr>
+            </thead>
+            <tbody>
+              {SCOPE_PRODUCTS.map((row, i) => (
+                <tr key={i} className="border-b border-[#e5e7eb] bg-[#ffffff] hover:bg-[#f9fafb]">
+                  <td className="py-3 px-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-[4px] bg-[#f3f4f6] shrink-0" aria-hidden />
                       <div>
-                        <p className="text-sm font-medium text-[#0a0a0a]">Insights</p>
-                        <p className="text-xs text-[#6a7282]">by Ever Sasson • 26 Feb, 2026</p>
+                        <p className="font-medium text-[#0a0a0a]">{row.name}</p>
+                        <p className="text-[12px] text-[#4b535c]">{row.sku} · {row.color}</p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 p-2 rounded-lg hover:bg-[#f9fafb] cursor-pointer">
-                      <span className="w-8 h-8 rounded bg-[#e5e7eb] flex items-center justify-center shrink-0">
-                        <IconDocument />
-                      </span>
-                      <p className="text-sm font-medium text-[#0a0a0a]">ROI for insights</p>
-                    </div>
-                    <div className="flex items-center gap-2 p-2 rounded-lg hover:bg-[#f9fafb] cursor-pointer">
-                      <span className="w-8 h-8 rounded bg-[#e5e7eb] flex items-center justify-center shrink-0">
-                        <IconDocument />
-                      </span>
-                      <p className="text-sm font-medium text-[#0a0a0a]">Assortment for insights</p>
-                    </div>
-                  </div>
-                </div>
-                <div>
-                  <h3 className="text-sm font-semibold text-[#0a0a0a] mb-2">Visibility</h3>
-                  <p className="text-sm text-[#4a5565]">Discoverable</p>
-                </div>
-                <div>
-                  <h3 className="text-sm font-semibold text-[#0a0a0a] mb-2">Verification status</h3>
-                  <p className="text-sm text-[#4a5565]">Unverified</p>
-                </div>
-              </div>
-              <div>
-                <h3 className="text-sm font-semibold text-[#0a0a0a] mb-3">Recent viewers</h3>
-                <div className="border border-[#e5e7eb] rounded-lg overflow-hidden">
-                  {LIVEBOARD_RECENT_VIEWERS.map((v, i) => (
-                    <div key={`${v.name}-${i}`} className={`flex items-center gap-3 px-3 py-2.5 ${i > 0 ? 'border-t border-[#e5e7eb]' : ''}`}>
-                      <span className={`w-8 h-8 rounded-full ${v.color} text-white flex items-center justify-center text-sm font-medium shrink-0`}>{v.initial}</span>
-                      <span className="text-sm text-[#0a0a0a]">{v.name}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-            <div className="px-6 pb-6 flex justify-end">
-              <button type="button" onClick={() => setLiveboardModalOpen(false)} className="h-10 px-5 rounded-lg bg-[#155dfc] text-white text-sm font-medium hover:bg-[#0252cc]">
-                Close
-              </button>
-            </div>
-          </div>
+                  </td>
+                  <td className="py-3 px-4 text-[#0a0a0a]">{row.transfers[0]} · {row.transfers[1]}</td>
+                  <td className="py-3 px-4 text-[#0a0a0a]">{row.sales[0]} · {row.sales[1]}</td>
+                  <td className="py-3 px-4 text-[#0a0a0a]">{row.forecast}</td>
+                  <td className="py-3 px-4 text-[#0a0a0a]">{row.revenue}</td>
+                  <td className="py-3 px-4 text-[#0a0a0a]">{row.stockouts[0]} → {row.stockouts[1]}</td>
+                  <td className="py-3 px-4 text-[#0a0a0a]">{row.locations[0]} → {row.locations[1]}</td>
+                  <td className="py-3 px-4 text-[#0a0a0a]">{row.overstocks[0]} → {row.overstocks[1]}</td>
+                  <td className="py-3 px-4 text-[#0a0a0a]">{row.understocks[0]} → {row.understocks[1]}</td>
+                  <td className="py-3 px-4 text-[#0a0a0a]">{row.dept}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
-      )}
-    </>
+      </div>
+    </div>
   )
 }
+
+/* Sample calendar entries – Replenishment Feb 2–4, Reorder Feb 15–17 2026 */
+const SAMPLE_CALENDAR_ENTRY = {
+  id: 'entry-1',
+  type: 'replenishment',
+  title: 'Replenishment',
+  startDate: new Date(2026, 1, 2),
+  endDate: new Date(2026, 1, 4),
+  module: 'Replenishment Module',
+  from: 'Warehouse A',
+  to: 'Store B',
+  time: '09:00 AM PST',
+  frequency: 'Weekly · Mon, Wed, Fri',
+  transferUnits: 100,
+  availableToSend: 150,
+  tripType: 'Truck',
+  recommendedUnits: 120,
+  revenueIncrease: 500,
+  reasons: ['High demand', 'Low inventory'],
+}
+const SAMPLE_CALENDAR_ENTRY_REORDER = {
+  id: 'entry-2',
+  type: 'reorder',
+  title: 'Reorder',
+  startDate: new Date(2026, 1, 15),
+  endDate: new Date(2026, 1, 17),
+  module: 'Reorder Module',
+  from: 'Distribution Center',
+  to: 'Store C',
+  time: '10:00 AM PST',
+  frequency: 'Weekly · Tue, Thu',
+  transferUnits: 80,
+  availableToSend: 120,
+  tripType: 'Van',
+  recommendedUnits: 90,
+  revenueIncrease: 320,
+  reasons: ['Stock level below threshold', 'Seasonal demand'],
+}
+const SAMPLE_CALENDAR_ENTRY_REBALANCING_1 = {
+  id: 'entry-3',
+  type: 'rebalancing',
+  title: 'Rebalancing',
+  startDate: new Date(2026, 1, 9),
+  endDate: new Date(2026, 1, 9),
+  module: 'Rebalancing Module',
+  from: 'Store A',
+  to: 'Store B',
+  time: '08:00 AM PST',
+  frequency: 'Weekly · Mon',
+  transferUnits: 50,
+  availableToSend: 200,
+  tripType: 'Truck',
+  recommendedUnits: 55,
+  revenueIncrease: 180,
+  reasons: ['Inventory imbalance', 'Regional demand shift'],
+}
+const SAMPLE_CALENDAR_ENTRY_REBALANCING_2 = {
+  id: 'entry-4',
+  type: 'rebalancing',
+  title: 'Rebalancing',
+  startDate: new Date(2026, 1, 20),
+  endDate: new Date(2026, 1, 21),
+  module: 'Rebalancing Module',
+  from: 'Warehouse B',
+  to: 'Store D',
+  time: '02:00 PM PST',
+  frequency: 'Bi-weekly · Thu',
+  transferUnits: 120,
+  availableToSend: 300,
+  tripType: 'Truck',
+  recommendedUnits: 130,
+  revenueIncrease: 420,
+  reasons: ['Overstock at origin', 'Understock at destination'],
+}
+const SAMPLE_CALENDAR_ENTRY_REBALANCING_3 = {
+  id: 'entry-5',
+  type: 'rebalancing',
+  title: 'Rebalancing',
+  startDate: new Date(2026, 1, 26),
+  endDate: new Date(2026, 1, 27),
+  module: 'Rebalancing Module',
+  from: 'Distribution Center',
+  to: 'Store A',
+  time: '11:00 AM PST',
+  frequency: 'Monthly',
+  transferUnits: 200,
+  availableToSend: 500,
+  tripType: 'Truck',
+  recommendedUnits: 220,
+  revenueIncrease: 650,
+  reasons: ['End of month rebalance', 'Forecast adjustment'],
+}
+const CALENDAR_ENTRIES = [
+  SAMPLE_CALENDAR_ENTRY,
+  SAMPLE_CALENDAR_ENTRY_REORDER,
+  SAMPLE_CALENDAR_ENTRY_REBALANCING_1,
+  SAMPLE_CALENDAR_ENTRY_REBALANCING_2,
+  SAMPLE_CALENDAR_ENTRY_REBALANCING_3,
+]
 
 /* Optimiser page – Figma 174:2696 (Optimiser-Concepts) */
-function OptimiserPage() {
+const DEFAULT_DRAWER_FORM = {
+  module: '',
+  modules: [],
+  name: '',
+  sending: '',
+  receiving: '',
+  repeats: 'biweekly',
+  time: '',
+  timeZone: 'gmt+1',
+  endsOn: '',
+  notify: '',
+}
+const MODULE_OPTIONS = [
+  { id: 'replenishment', label: 'Replenishment' },
+  { id: 'reorder', label: 'Reorder' },
+  { id: 'rebalancing', label: 'Rebalancing' },
+]
+
+function OptimiserPage({ onAddJob }) {
+  const [scheduleDrawerOpen, setScheduleDrawerOpen] = useState(false)
+  const [editingScheduleEntry, setEditingScheduleEntry] = useState(null)
+  const [drawerForm, setDrawerForm] = useState(DEFAULT_DRAWER_FORM)
+  const [scheduleDrawerDays, setScheduleDrawerDays] = useState(() => ({ Wed: true, Sat: true }))
+  const [moduleDropdownOpen, setModuleDropdownOpen] = useState(false)
+  const [entryReviewStatus, setEntryReviewStatus] = useState(() => ({
+    'entry-1': 'upcoming',   // Replenishment
+    'entry-2': 'in review', // Reorder
+    'entry-3': 'submitted', // Rebalancing (Feb 9)
+    'entry-4': 'in review', // Rebalancing (Feb 20–21)
+    'entry-5': 'upcoming',  // Rebalancing (Feb 26–27)
+  }))
+  const setReviewStatus = (entryId, status) => setEntryReviewStatus((prev) => ({ ...prev, [entryId]: status }))
   const [activeTypeFilter, setActiveTypeFilter] = useState('all')
+  const [pinnedHoverEntryId, setPinnedHoverEntryId] = useState(null)
+  const [pinnedHoverCellKey, setPinnedHoverCellKey] = useState(null)
+  const [hoveredEntryId, setHoveredEntryId] = useState(null)
+  const [hoveredCellKey, setHoveredCellKey] = useState(null)
+  const hoverLeaveTimeoutRef = useRef(null)
   const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+  const toggleScheduleDay = (day) => setScheduleDrawerDays((prev) => ({ ...prev, [day]: !prev[day] }))
   const typeFilters = [
     { id: 'all', label: 'All', icon: null },
     { id: 'replenishment', label: 'Replenishment', icon: 'replenishment' },
@@ -1240,28 +734,159 @@ function OptimiserPage() {
     { id: 'rebalancing', label: 'Rebalancing', icon: 'rebalancing' },
   ]
   const [activeViewOption, setActiveViewOption] = useState('month')
+  const [viewDate, setViewDate] = useState(() => new Date(2026, 1, 1)) // Feb 2026
+  const [eventDatePickerOpen, setEventDatePickerOpen] = useState(false)
+  const [eventDateSelected, setEventDateSelected] = useState(() => new Date(2026, 1, 26))
+  const [eventDatePickerViewDate, setEventDatePickerViewDate] = useState(() => new Date(2026, 1, 1))
+  const [selectedReviewStatuses, setSelectedReviewStatuses] = useState([])
+  const [reviewStatusDropdownOpen, setReviewStatusDropdownOpen] = useState(false)
+  const reviewStatusFilterOptions = [
+    { id: 'in review', label: 'In review' },
+    { id: 'upcoming', label: 'Upcoming' },
+    { id: 'submitted', label: 'Submitted' },
+  ]
+  const toggleReviewStatusFilter = (id) => {
+    setSelectedReviewStatuses((prev) =>
+      prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id]
+    )
+  }
   const viewOptions = [
     { id: 'list', label: 'List', icon: 'list' },
     { id: 'week', label: 'Week', icon: 'week' },
     { id: 'month', label: 'Month', icon: 'month' },
   ]
-  const feb2026 = (() => {
+  const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+  const getMonday = (d) => {
+    const x = new Date(d)
+    x.setDate(d.getDate() - ((d.getDay() + 6) % 7))
+    return x
+  }
+  const monthGrid = (() => {
+    const y = viewDate.getFullYear()
+    const m = viewDate.getMonth()
+    const first = new Date(y, m, 1)
+    const last = new Date(y, m + 1, 0)
+    const start = getMonday(first)
     const weeks = []
-    let d = new Date(2026, 0, 26)
-    for (let w = 0; w < 5; w++) {
+    let d = new Date(start)
+    while (weeks.length < 6) {
       const row = []
       for (let i = 0; i < 7; i++) {
-        row.push(d.getDate())
+        row.push(d.getMonth() === m ? d.getDate() : null)
         d.setDate(d.getDate() + 1)
       }
       weeks.push(row)
+      if (d > last) break
     }
     return weeks
   })()
+  const weekRow = (() => {
+    const mon = getMonday(new Date(viewDate))
+    return Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(mon)
+      d.setDate(mon.getDate() + i)
+      return d
+    })
+  })()
+  const listMonthDates = (() => {
+    const y = viewDate.getFullYear()
+    const m = viewDate.getMonth()
+    const last = new Date(y, m + 1, 0).getDate()
+    return Array.from({ length: last }, (_, i) => i + 1)
+  })()
+  const viewTitle = activeViewOption === 'month' || activeViewOption === 'list'
+    ? `${monthNames[viewDate.getMonth()]} ${viewDate.getFullYear()}`
+    : (() => {
+        const mon = weekRow[0]
+        const sun = weekRow[6]
+        return `Week of ${mon.getDate()} ${monthNames[mon.getMonth()]} – ${sun.getDate()} ${monthNames[sun.getMonth()]} ${sun.getFullYear()}`
+      })()
+  const goPrev = () => {
+    if (activeViewOption === 'week') {
+      setViewDate((d) => { const x = new Date(d); x.setDate(d.getDate() - 7); return x })
+    } else {
+      setViewDate((d) => new Date(d.getFullYear(), d.getMonth() - 1, 1))
+    }
+  }
+  const goNext = () => {
+    if (activeViewOption === 'week') {
+      setViewDate((d) => { const x = new Date(d); x.setDate(d.getDate() + 7); return x })
+    } else {
+      setViewDate((d) => new Date(d.getFullYear(), d.getMonth() + 1, 1))
+    }
+  }
+  const getCellDate = (ri, ci) => {
+    const y = viewDate.getFullYear()
+    const m = viewDate.getMonth()
+    const start = getMonday(new Date(y, m, 1))
+    const d = new Date(start)
+    d.setDate(start.getDate() + ri * 7 + ci)
+    return d
+  }
+  const entryMatchesCell = (ri, ci, entry) => {
+    const cellDate = getCellDate(ri, ci)
+    return cellDate >= entry.startDate && cellDate <= entry.endDate && cellDate.getMonth() === entry.startDate.getMonth()
+  }
+  const getEntriesForCell = (ri, ci) => CALENDAR_ENTRIES.filter((e) => entryMatchesCell(ri, ci, e))
+  const openDrawerForEdit = (entry) => {
+    const e = entry || SAMPLE_CALENDAR_ENTRY
+    setPinnedHoverEntryId(null)
+    setEditingScheduleEntry(e)
+    setDrawerForm({
+      module: e.type || 'replenishment',
+      modules: e.type ? [e.type] : [],
+      name: e.title,
+      sending: e.from,
+      receiving: e.to,
+      repeats: 'weekly',
+      time: e.time.replace(/\s+PST$/, ''),
+      timeZone: 'pst',
+      endsOn: `${monthNames[e.endDate.getMonth()]} ${e.endDate.getDate()}, ${e.endDate.getFullYear()}`,
+      notify: '',
+    })
+    setScheduleDrawerDays({ Mon: true, Tue: false, Wed: true, Thu: false, Fri: true, Sat: false, Sun: false })
+    setScheduleDrawerOpen(true)
+  }
+  const closeDrawer = () => {
+    setScheduleDrawerOpen(false)
+    setEditingScheduleEntry(null)
+    setModuleDropdownOpen(false)
+  }
+  const toggleModule = (id) => {
+    setDrawerForm((f) => ({
+      ...f,
+      modules: f.modules.includes(id) ? f.modules.filter((m) => m !== id) : [...f.modules, id],
+    }))
+  }
+  const eventDatePickerGrid = (() => {
+    const y = eventDatePickerViewDate.getFullYear()
+    const m = eventDatePickerViewDate.getMonth()
+    const first = new Date(y, m, 1)
+    const last = new Date(y, m + 1, 0)
+    const start = getMonday(first)
+    const rows = []
+    let d = new Date(start)
+    for (let row = 0; row < 6; row++) {
+      const cells = []
+      for (let col = 0; col < 7; col++) {
+        cells.push({ date: d.getDate(), month: d.getMonth(), fullDate: new Date(d) })
+        d.setDate(d.getDate() + 1)
+      }
+      rows.push(cells)
+    }
+    return rows
+  })()
+  const isSameDay = (a, b) => a && b && a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
+  const eventDatePickerPrevMonth = () => setEventDatePickerViewDate((d) => new Date(d.getFullYear(), d.getMonth() - 1, 1))
+  const eventDatePickerNextMonth = () => setEventDatePickerViewDate((d) => new Date(d.getFullYear(), d.getMonth() + 1, 1))
 
   return (
-    <div className="flex flex-col gap-6" data-name="Optimiser" data-node-id="174:2696">
-      <div className="bg-white border border-[#ebf3ff] rounded-[14px] p-6 flex flex-col gap-5" data-name="Calendar container" data-node-id="174:2767">
+    <div className="flex flex-col gap-6">
+      {pinnedHoverEntryId && (
+        <div role="presentation" className="fixed inset-0 z-40" onClick={() => { setPinnedHoverEntryId(null); setPinnedHoverCellKey(null) }} aria-hidden />
+      )}
+      <div className="flex flex-col gap-6" data-name="Optimiser" data-node-id="174:2696">
+        <div className="bg-white border border-[#ebf3ff] rounded-[14px] p-6 flex flex-col gap-5" data-name="Calendar container" data-node-id="174:2767">
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <div className="flex items-center gap-2">
             <IconCalendarSidebar className="text-[#22272f] size-6 shrink-0" />
@@ -1270,10 +895,29 @@ function OptimiserPage() {
               <p className="text-[14px] font-normal text-[#4b535c]">Perform all job and schedule actions for all your upcoming inventory</p>
             </div>
           </div>
-          <button type="button" className="h-10 px-4 rounded-[4px] bg-[#0267ff] text-white text-[16px] font-medium flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-2 shrink-0">
+          <button
+            type="button"
+            onClick={(e) => { e.preventDefault(); onAddJob?.() }}
+            className="h-10 px-4 rounded-[4px] bg-[#0267ff] text-white text-[16px] font-medium flex items-center gap-2 shrink-0"
+          >
+            <IconPlus />
+            Add Job
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setEditingScheduleEntry(null)
+              setDrawerForm(DEFAULT_DRAWER_FORM)
+              setScheduleDrawerDays({ Wed: true, Sat: true })
+              setScheduleDrawerOpen(true)
+            }}
+            className="h-10 px-4 rounded-[4px] bg-[#0267ff] text-white text-[16px] font-medium flex items-center gap-2 shrink-0"
+          >
             <IconPlus />
             Add Schedule
           </button>
+        </div>
         </div>
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="bg-white border border-[#e9eaeb] flex gap-[var(--spacing-s,8px)] items-center p-[var(--spacing-xxs,4px)] rounded-[var(--border-radius-s,4px)] shrink-0 h-12" data-name="segment-control" data-node-id="202:3165">
@@ -1295,11 +939,121 @@ function OptimiserPage() {
               )
             })}
           </div>
-          <div className="flex items-center gap-2">
-            <button type="button" className="flex items-center gap-[var(--spacing-s,8px)] h-12 px-[var(--spacing-l,16px)] py-[var(--spacing-m,12px)] rounded-[var(--border-radius-s,4px)] bg-white border border-[#e9eaeb] text-[16px] font-medium text-[#0a0a0a] shrink-0" data-name="Button" data-node-id="202:3228">
+          <div className="flex items-center gap-2 ml-auto shrink-0">
+          <div className="flex items-center gap-2 relative" data-name="Review status multiselect" data-node-id="12771:5757">
+            <button
+              type="button"
+              onClick={() => { setReviewStatusDropdownOpen((o) => !o); setEventDatePickerOpen(false) }}
+              className={`flex items-center justify-between gap-2 h-12 px-4 py-3 rounded-[4px] bg-white text-[16px] font-medium text-left shrink-0 min-w-[160px] border ${reviewStatusDropdownOpen ? 'border-[#0267ff]' : 'border-[#e9eaeb]'}`}
+            >
+              <span className={selectedReviewStatuses.length === 0 ? 'text-[#0a0a0a]' : 'text-[#0a0a0a]'}>
+                Review status
+                {selectedReviewStatuses.length > 0 && (
+                  <span className="text-[#4b535c] font-normal">
+                    {' · '}
+                    {selectedReviewStatuses.length === reviewStatusFilterOptions.length
+                      ? 'Upcoming, In review, Submitted'
+                      : reviewStatusFilterOptions.filter((o) => selectedReviewStatuses.includes(o.id)).map((o) => o.label).join(', ')}
+                  </span>
+                )}
+              </span>
+              <IconChevronDown className="text-[#22272f] size-4 shrink-0" aria-hidden />
+            </button>
+            {reviewStatusDropdownOpen && (
+              <>
+                <div role="presentation" className="fixed inset-0 z-40" onClick={() => setReviewStatusDropdownOpen(false)} aria-hidden />
+                <div
+                  className="absolute left-0 top-full mt-1 z-50 w-full min-w-[200px] bg-white border border-[#e9eaeb] rounded-[4px] p-2 shadow-[0px_8px_25px_0px_rgba(0,0,0,0.12)]"
+                  data-name="Dropdown list"
+                  data-node-id="12771:5850"
+                >
+                  {reviewStatusFilterOptions.map((opt) => {
+                    const selected = selectedReviewStatuses.includes(opt.id)
+                    return (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        onClick={() => toggleReviewStatusFilter(opt.id)}
+                        className="w-full flex gap-2 items-center p-3 rounded-[3px] text-left hover:bg-[#f8f8f8] focus:bg-[#f8f8f8]"
+                        data-name="Dropdown item"
+                      >
+                        <span className="flex items-center justify-center shrink-0 size-6">
+                          <span className={`flex items-center justify-center rounded-[4px] size-5 border-2 ${selected ? 'bg-[#0267ff] border-[#0267ff]' : 'bg-white border-[#e5e7eb]'}`}>
+                            {selected && (
+                              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="text-white"><path d="M2 6l3 3 5-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                            )}
+                          </span>
+                        </span>
+                        <span className="flex-1 text-[12px] font-medium text-[#0a0a0a] leading-normal">{opt.label}</span>
+                      </button>
+                    )
+                  })}
+                </div>
+              </>
+            )}
+          </div>
+          <div className="flex items-center gap-2 relative">
+            <button
+              type="button"
+              onClick={() => { setEventDatePickerOpen((o) => !o); setEventDatePickerViewDate(eventDateSelected || new Date(2026, 1, 1)); setReviewStatusDropdownOpen(false) }}
+              className="flex items-center gap-[var(--spacing-s,8px)] h-12 px-[var(--spacing-l,16px)] py-[var(--spacing-m,12px)] rounded-[var(--border-radius-s,4px)] bg-white border border-[#e9eaeb] text-[16px] font-medium text-[#0a0a0a] shrink-0"
+              data-name="Button"
+              data-node-id="202:3228"
+            >
               <IconCalendarSidebar className="text-[#22272f] size-4 shrink-0" aria-hidden data-name="icon" data-node-id="I202:3228;12027:34152" />
               <span data-node-id="I202:3228;12027:34153">Event Date</span>
             </button>
+            {eventDatePickerOpen && (
+              <>
+                <div role="presentation" className="fixed inset-0 z-40" onClick={() => setEventDatePickerOpen(false)} aria-hidden />
+                <div className="absolute left-0 top-full mt-2 z-50 w-[336px] bg-white border border-[#e9eaeb] rounded-[4px] p-4 flex flex-col gap-3 shadow-lg" data-name="Datepicker" data-node-id="2360:105506">
+                  <div className="flex items-center justify-between p-1">
+                    <button type="button" onClick={eventDatePickerPrevMonth} className="flex items-center justify-center h-10 w-10 rounded-[4px] text-[#0a0a0a] hover:bg-[#f3f4f6]" aria-label="Previous month">
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 4L6 8l4 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                    </button>
+                    <p className="text-[18px] font-medium text-[#0a0a0a] leading-none">
+                      {monthNames[eventDatePickerViewDate.getMonth()]}, {eventDatePickerViewDate.getFullYear()}
+                    </p>
+                    <button type="button" onClick={eventDatePickerNextMonth} className="flex items-center justify-center h-10 w-10 rounded-[4px] text-[#0a0a0a] hover:bg-[#f3f4f6]" aria-label="Next month">
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                    </button>
+                  </div>
+                  <div className="flex flex-col gap-0">
+                    <div className="grid grid-cols-7">
+                      {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((wd) => (
+                        <div key={wd} className="size-12 flex items-center justify-center text-[14px] font-medium text-[#4b535c]">
+                          {wd}
+                        </div>
+                      ))}
+                    </div>
+                    {eventDatePickerGrid.map((row, ri) => (
+                      <div key={ri} className="grid grid-cols-7">
+                        {row.map((cell, ci) => {
+                          const inMonth = cell.month === eventDatePickerViewDate.getMonth()
+                          const selected = isSameDay(cell.fullDate, eventDateSelected)
+                          return (
+                            <div key={`${ri}-${ci}`} className="size-12 flex items-center justify-center p-1">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setEventDateSelected(cell.fullDate)
+                                  setViewDate(new Date(cell.fullDate.getFullYear(), cell.fullDate.getMonth(), 1))
+                                  setEventDatePickerOpen(false)
+                                }}
+                                className={`size-10 flex items-center justify-center rounded-[2px] text-[14px] ${selected ? 'bg-[#0267ff] text-white font-bold' : inMonth ? 'text-[#0a0a0a] hover:bg-[#f3f4f6]' : 'text-[#4b535c] opacity-50 hover:bg-[#f3f4f6]'}`}
+                              >
+                                {cell.date}
+                              </button>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
             <div className="bg-white border border-[#e9eaeb] flex gap-[var(--spacing-s,8px)] items-center p-[var(--spacing-xxs,4px)] rounded-[var(--border-radius-s,4px)] shrink-0 h-12" data-name="segment-control" data-node-id="203:1343">
               {viewOptions.map((v) => {
                 const isActive = activeViewOption === v.id
@@ -1320,37 +1074,395 @@ function OptimiserPage() {
               })}
             </div>
           </div>
+          </div>
         </div>
         <div className="flex flex-col gap-6">
           <div className="flex items-center gap-4 h-7">
-            <button type="button" className="rounded size-7 flex items-center justify-center text-[#0a0a0a] hover:bg-[#f3f4f6]" aria-label="Previous month">
+            <button type="button" onClick={goPrev} className="rounded size-7 flex items-center justify-center text-[#0a0a0a] hover:bg-[#f3f4f6]" aria-label={activeViewOption === 'week' ? 'Previous week' : 'Previous month'}>
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M12 4l-6 6 6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
             </button>
-            <h2 className="text-[20px] font-semibold text-[#0a0a0a] tracking-tight">February 2026</h2>
-            <button type="button" className="rounded size-7 flex items-center justify-center text-[#0a0a0a] hover:bg-[#f3f4f6]" aria-label="Next month">
+            <h2 className="text-[20px] font-semibold text-[#0a0a0a] tracking-tight">{viewTitle}</h2>
+            <button type="button" onClick={goNext} className="rounded size-7 flex items-center justify-center text-[#0a0a0a] hover:bg-[#f3f4f6]" aria-label={activeViewOption === 'week' ? 'Next week' : 'Next month'}>
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M8 4l6 6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
             </button>
           </div>
-          <div className="border border-[#e5e7eb] rounded-[10px] overflow-hidden">
-            <div className="grid grid-cols-7 bg-[#f3f4f6] border-b border-[#e5e7eb]">
-              {weekDays.map((day) => (
-                <div key={day} className="py-3 text-center text-[14px] font-medium text-[#364153] border-r border-[#e5e7eb] last:border-r-0">
-                  {day}
-                </div>
-              ))}
-            </div>
-            <div className="grid grid-cols-7">
-              {feb2026.map((row, ri) =>
-                row.map((date, ci) => (
-                  <div key={`${ri}-${ci}`} className={`min-h-[80px] p-2 border-b border-[#e5e7eb] bg-white text-[14px] text-[#0a0a0a] ${ci < 6 ? 'border-r' : ''}`}>
-                    {date}
+          {activeViewOption === 'month' && (
+            <div className="border border-[#e5e7eb] rounded-[10px] overflow-visible relative">
+              <div className="grid grid-cols-7 bg-[#f3f4f6] border-b border-[#e5e7eb]">
+                {weekDays.map((day) => (
+                  <div key={day} className="py-3 text-center text-[14px] font-medium text-[#364153] border-r border-[#e5e7eb] last:border-r-0">
+                    {day}
                   </div>
-                ))
-              )}
+                ))}
+              </div>
+              <div className="grid grid-cols-7">
+                {monthGrid.map((row, ri) =>
+                  row.map((date, ci) => {
+                    const rawCellEntries = date !== null ? getEntriesForCell(ri, ci) : []
+                    const byReview =
+                      selectedReviewStatuses.length === 0
+                        ? rawCellEntries
+                        : rawCellEntries.filter((e) =>
+                            selectedReviewStatuses.includes(entryReviewStatus[e.id] || 'upcoming')
+                          )
+                    const cellEntries = activeTypeFilter === 'all'
+                      ? byReview
+                      : byReview.filter((e) => e.type === activeTypeFilter)
+                    const cellDate = getCellDate(ri, ci)
+                    const isEventDate = eventDateSelected && isSameDay(cellDate, eventDateSelected)
+                    const cellKey = `${ri}-${ci}`
+                    return (
+                      <div
+                        key={`${ri}-${ci}`}
+                        className={`min-h-[80px] p-2 border-b border-[#e5e7eb] text-[14px] text-[#0a0a0a] ${ci < 6 ? 'border-r' : ''} ${date === null ? 'text-[#9ca3af]' : ''} ${cellEntries.length > 0 ? 'cursor-pointer' : ''} ${isEventDate ? 'bg-[#ebf3ff] ring-2 ring-inset ring-[#0267ff]' : 'bg-white'}`}
+                      >
+                        {date ?? ''}
+                        {cellEntries.map((entry) => {
+                          const Icon = entry.type === 'reorder' ? IconReorder : entry.type === 'rebalancing' ? IconRebalancing : IconReplenishment
+                          const reviewStatus = entryReviewStatus[entry.id] || 'upcoming'
+                          const reviewLabel = reviewStatus === 'in review' ? 'In review' : reviewStatus === 'submitted' ? 'Submitted' : 'Upcoming'
+                          const isPopoverOpen = (pinnedHoverEntryId === entry.id && pinnedHoverCellKey === cellKey) || (hoveredEntryId === entry.id && hoveredCellKey === cellKey && !pinnedHoverEntryId)
+                          const clearHoverLater = () => {
+                            if (hoverLeaveTimeoutRef.current) clearTimeout(hoverLeaveTimeoutRef.current)
+                            hoverLeaveTimeoutRef.current = setTimeout(() => { setHoveredEntryId(null); setHoveredCellKey(null) }, 150)
+                          }
+                          const setHovered = () => {
+                            if (hoverLeaveTimeoutRef.current) {
+                              clearTimeout(hoverLeaveTimeoutRef.current)
+                              hoverLeaveTimeoutRef.current = null
+                            }
+                            setHoveredEntryId(entry.id)
+                            setHoveredCellKey(cellKey)
+                          }
+                          return (
+                            <div key={entry.id} className="relative group mt-1 w-fit">
+                              <div
+                                className={`px-2 py-1 rounded-[var(--Border-radius-m,6px)] border border-[var(--tokens-stroke-or-resting,#e9eaeb)] flex flex-col gap-1 w-fit shrink-0 cursor-pointer ${reviewStatus === 'in review' ? 'bg-[var(--tokens-destructive-50,#FFEAEA)]' : reviewStatus === 'submitted' ? 'bg-[var(--tokens-success-50,#E4F4EF)]' : 'bg-[var(--tokens-warning-50,#FFF6E5)]'}`}
+                                onClick={() => {
+                                  if (pinnedHoverEntryId === entry.id && pinnedHoverCellKey === cellKey) {
+                                    setPinnedHoverEntryId(null)
+                                    setPinnedHoverCellKey(null)
+                                  } else {
+                                    setPinnedHoverEntryId(entry.id)
+                                    setPinnedHoverCellKey(cellKey)
+                                  }
+                                }}
+                                onMouseEnter={setHovered}
+                                onMouseLeave={clearHoverLater}
+                              >
+                                <div className="flex items-center gap-1.5 text-[12px] font-medium text-[var(--Tokens-Foreground,#00050A)]">
+                                  <Icon className="size-3.5 shrink-0" aria-hidden />
+                                  {entry.title}
+                                </div>
+                                <div className="flex items-center gap-[5px]">
+                                  <span className="text-[12px] text-[#4b535c] leading-normal">Review</span>
+                                  <span className="bg-white border border-[#bfd9ff] px-1 py-0.5 rounded-[5px] text-[12px] text-[#0a0a0a] leading-normal shrink-0">{reviewLabel}</span>
+                                </div>
+                              </div>
+                              <div
+                                role="dialog"
+                                aria-label="Schedule details"
+                                className={`absolute left-[100%] top-0 ml-2 w-[320px] rounded-[12px] bg-white border border-[#e9eaeb] shadow-lg overflow-hidden z-50 transition-opacity ${isPopoverOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
+                                onMouseEnter={setHovered}
+                                onMouseLeave={clearHoverLater}
+                              >
+                                <div className="p-4 flex flex-col gap-3">
+                                  <div className="flex items-start justify-between gap-2">
+                                    <div className="flex items-center gap-2">
+                                      <span className="flex items-center justify-center w-8 h-8 rounded-[8px] bg-[#ebf3ff] text-[#0267ff]">
+                                        <Icon className="size-4" />
+                                      </span>
+                                      <div>
+                                        <p className="text-[14px] font-semibold text-[#0a0a0a]">{entry.title}</p>
+                                        <p className="text-[12px] text-[#4b535c]">
+                                          {monthNames[entry.startDate.getMonth()]} {entry.startDate.getDate()} – {entry.endDate.getDate()}, {entry.endDate.getFullYear()}
+                                        </p>
+                                      </div>
+                                    </div>
+                                    <button type="button" onClick={() => openDrawerForEdit(entry)} className="shrink-0 h-8 px-3 rounded-[4px] text-[13px] font-medium text-[#0267ff] hover:bg-[#ebf3ff]">
+                                      Edit schedule
+                                    </button>
+                                  </div>
+                                  <div className="flex flex-col gap-1.5">
+                                    <p className="text-[12px] font-medium text-[#4b535c]">Review status</p>
+                                    <p className="text-[14px] font-medium text-[#0a0a0a]">{reviewLabel}</p>
+                                  </div>
+                                  <div className="h-px bg-[#e9eaeb]" />
+                                  <div className="flex items-center gap-2 text-[13px] text-[#0a0a0a]">
+                                    <span className="text-[#4b535c]">{entry.from}</span>
+                                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="shrink-0 text-[#4b535c]"><path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                                    <span className="text-[#4b535c]">{entry.to}</span>
+                                  </div>
+                                  <p className="text-[13px] text-[#4b535c]">{entry.time}</p>
+                                  <div className="h-px bg-[#e9eaeb]" />
+                                  <div className="flex justify-between text-[13px]">
+                                    <span className="text-[#4b535c]">Transfer units</span>
+                                    <span className="text-[#0a0a0a] font-medium">{entry.transferUnits}</span>
+                                  </div>
+                                  <div className="flex justify-between text-[13px]">
+                                    <span className="text-[#4b535c]">Available to send</span>
+                                    <span className="text-[#0a0a0a] font-medium">{entry.availableToSend}</span>
+                                  </div>
+                                  <div className="flex justify-between items-center text-[13px]">
+                                    <span className="text-[#4b535c]">Trip type</span>
+                                    <span className="text-[#0a0a0a] font-medium flex items-center gap-1"><IconTruck className="size-3.5" /> {entry.tripType}</span>
+                                  </div>
+                                  <div className="h-px bg-[#e9eaeb]" />
+                                  <div className="rounded-[8px] bg-[#eff6ff] p-3 flex flex-col gap-2">
+                                    <div className="flex justify-between items-center text-[13px]">
+                                      <span className="text-[#4b535c]">Recommended units</span>
+                                      <span className="text-[#0a0a0a] font-medium flex items-center gap-1"><IconTrendUp className="size-3.5" /> {entry.recommendedUnits}</span>
+                                    </div>
+                                    <div className="flex justify-between text-[13px]">
+                                      <span className="text-[#4b535c]">Revenue increase</span>
+                                      <span className="font-medium text-[#059669]">${entry.revenueIncrease}</span>
+                                    </div>
+                                  </div>
+                                  <div className="h-px bg-[#e9eaeb]" />
+                                  <div className="flex items-start gap-2">
+                                    <IconLightbulb className="size-4 text-[#4b535c] shrink-0 mt-0.5" />
+                                    <div>
+                                      <p className="text-[13px] font-medium text-[#0a0a0a]">Recommendation reasons</p>
+                                      <ul className="mt-1 text-[13px] text-[#4b535c] list-disc list-inside">
+                                        {entry.reasons.map((r) => (
+                                          <li key={r}>{r}</li>
+                                        ))}
+                                      </ul>
+                                    </div>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={() => openDrawerForEdit(entry)}
+                                    className="w-full h-10 px-4 rounded-[4px] bg-[#0267ff] text-white text-[16px] font-medium flex items-center justify-center gap-2 shrink-0"
+                                  >
+                                    <IconEdit />
+                                    Edit Job
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )
+                  })
+                )}
+              </div>
             </div>
-          </div>
+          )}
+          {activeViewOption === 'week' && (
+            <div className="border border-[#e5e7eb] rounded-[10px] overflow-hidden">
+              <div className="grid grid-cols-7 bg-[#f3f4f6] border-b border-[#e5e7eb]">
+                {weekDays.map((day) => (
+                  <div key={day} className="py-3 text-center text-[14px] font-medium text-[#364153] border-r border-[#e5e7eb] last:border-r-0">
+                    {day}
+                  </div>
+                ))}
+              </div>
+              <div className="grid grid-cols-7">
+                {weekRow.map((d, i) => (
+                  <div key={i} className="min-h-[80px] p-2 border-r border-[#e5e7eb] bg-white text-[14px] text-[#0a0a0a] last:border-r-0">
+                    {d.getDate()}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          {activeViewOption === 'list' && (
+            <div className="border border-[#e5e7eb] rounded-[10px] overflow-hidden">
+              <div className="bg-[#f3f4f6] border-b border-[#e5e7eb] py-3 px-4 text-[14px] font-medium text-[#364153]">
+                {monthNames[viewDate.getMonth()]} {viewDate.getFullYear()} – list
+              </div>
+              <div className="divide-y divide-[#e5e7eb] bg-white">
+                {listMonthDates.length === 0 ? (
+                  <div className="py-8 px-4 text-[14px] text-[#4b535c] text-center">No schedules</div>
+                ) : (
+                  listMonthDates.map((date) => (
+                    <div key={date} className="flex items-center gap-4 min-h-[48px] px-4 py-2 text-[14px] text-[#0a0a0a]">
+                      <span className="font-medium w-8">{date}</span>
+                      <span className="text-[#4b535c]">{monthNames[viewDate.getMonth()].slice(0, 3)}</span>
+                      <span className="text-[#4b535c] flex-1">No schedule</span>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </div>
+
+      {scheduleDrawerOpen && (
+        <>
+          <div role="presentation" className="fixed inset-0 bg-black/50 z-40" onClick={closeDrawer} aria-hidden />
+          <div className="fixed right-0 top-0 bottom-0 w-[800px] bg-white shadow-xl z-50 flex flex-col" role="dialog" aria-modal aria-labelledby="add-schedule-title" data-name={editingScheduleEntry ? 'Edit schedule' : 'Add Schedule'} data-node-id="214:2622">
+            <header className="flex items-center justify-between shrink-0 h-14 px-6 border-b border-[#e9eaeb]">
+              <h2 id="add-schedule-title" className="text-[18px] font-semibold text-[#0a0a0a]">{editingScheduleEntry ? 'Edit schedule' : 'Add Schedule'}</h2>
+              <button type="button" onClick={closeDrawer} className="p-2 -mr-2 text-[#4b535c] hover:bg-[#f3f4f6] rounded-[4px]" aria-label="Close">
+                <IconClose />
+              </button>
+            </header>
+            <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-6">
+              <section className="flex flex-col gap-2">
+                <p className="text-[14px] font-medium text-[#0a0a0a]">Choose module to create schedule <span className="font-normal text-[#4b535c]">Make a selection</span></p>
+                <label className="text-[14px] font-normal text-[#4b535c]">Module</label>
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setModuleDropdownOpen((o) => !o)}
+                    className={`w-full h-10 flex items-center justify-between gap-2 px-3 rounded-[4px] border bg-white text-[14px] text-left ${moduleDropdownOpen ? 'border-[#0267ff]' : 'border-[#e9eaeb]'}`}
+                    data-name="Input multiple select"
+                    data-node-id="12770:4659"
+                  >
+                    <span className={drawerForm.modules.length === 0 ? 'text-[#4b535c]' : 'text-[#0a0a0a]'}>
+                      {drawerForm.modules.length === 0
+                        ? 'Select'
+                        : drawerForm.modules.map((id) => MODULE_OPTIONS.find((o) => o.id === id)?.label).filter(Boolean).join(', ')}
+                    </span>
+                    <IconChevronDownSelect />
+                  </button>
+                  {moduleDropdownOpen && (
+                    <>
+                      <div role="presentation" className="fixed inset-0 z-[60]" onClick={() => setModuleDropdownOpen(false)} aria-hidden />
+                      <div
+                        className="absolute left-0 top-full mt-1 z-[70] w-full min-w-[200px] bg-white border border-[#e9eaeb] rounded-[4px] p-2 shadow-[0px_8px_25px_0px_rgba(0,0,0,0.12)]"
+                        data-name="Dropdown list"
+                        data-node-id="12771:5850"
+                      >
+                        {MODULE_OPTIONS.map((opt) => {
+                          const selected = drawerForm.modules.includes(opt.id)
+                          return (
+                            <button
+                              key={opt.id}
+                              type="button"
+                              onClick={() => toggleModule(opt.id)}
+                              className="w-full flex gap-2 items-center p-3 rounded-[3px] text-left hover:bg-[#f8f8f8] focus:bg-[#f8f8f8]"
+                              data-name="Dropdown item"
+                              data-node-id="12771:5851"
+                            >
+                              <span className="flex items-center justify-center shrink-0 size-6">
+                                <span className={`flex items-center justify-center rounded-[4px] size-5 border-2 ${selected ? 'bg-[#0267ff] border-[#0267ff]' : 'bg-white border-[#e5e7eb]'}`}>
+                                  {selected && (
+                                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="text-white"><path d="M2 6l3 3 5-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                                  )}
+                                </span>
+                              </span>
+                              <span className="flex-1 text-[12px] font-medium text-[#0a0a0a] leading-normal">{opt.label}</span>
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </>
+                  )}
+                </div>
+              </section>
+              <section className="flex flex-col gap-2">
+                <p className="text-[14px] font-medium text-[#0a0a0a]">Give your schedule a name:</p>
+                <label className="text-[14px] font-normal text-[#4b535c]">Name schedule</label>
+                <input type="text" placeholder="Placeholder" value={drawerForm.name} onChange={(ev) => setDrawerForm((f) => ({ ...f, name: ev.target.value }))} className="w-full h-10 px-3 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#0a0a0a] placeholder:text-[#4b535c]" />
+                <p className="text-[12px] font-normal text-[#4b535c]">If not assigned, name will be given automatically</p>
+              </section>
+              <section className="flex flex-col gap-2">
+                <p className="text-[14px] font-medium text-[#0a0a0a]">Scheduling Dates <span className="font-normal text-[#4b535c]">Make a selection</span></p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[14px] font-normal text-[#4b535c]">Sending location</label>
+                    <div className="relative">
+                      <select value={drawerForm.sending} onChange={(ev) => setDrawerForm((f) => ({ ...f, sending: ev.target.value }))} className="w-full h-10 pl-3 pr-9 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#0a0a0a] appearance-none">
+                        <option value="">Select</option>
+                        <option value="Warehouse A">Warehouse A</option>
+                        <option value="Warehouse B">Warehouse B</option>
+                      </select>
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none"><IconChevronDownSelect /></span>
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[14px] font-normal text-[#4b535c]">Receiving location</label>
+                    <div className="relative">
+                      <select value={drawerForm.receiving} onChange={(ev) => setDrawerForm((f) => ({ ...f, receiving: ev.target.value }))} className="w-full h-10 pl-3 pr-9 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#0a0a0a] appearance-none">
+                        <option value="">Select</option>
+                        <option value="Store A">Store A</option>
+                        <option value="Store B">Store B</option>
+                      </select>
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none"><IconChevronDownSelect /></span>
+                    </div>
+                  </div>
+                </div>
+              </section>
+              <section className="flex flex-col gap-2">
+                <p className="text-[14px] font-medium text-[#0a0a0a]">Schedule:</p>
+                <div className="flex flex-wrap gap-3">
+                  <div className="flex flex-col gap-1 min-w-[140px]">
+                    <label className="text-[14px] font-normal text-[#4b535c]">Repeats</label>
+                    <div className="relative">
+                      <select value={drawerForm.repeats} onChange={(ev) => setDrawerForm((f) => ({ ...f, repeats: ev.target.value }))} className="w-full h-10 pl-3 pr-9 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#0a0a0a] appearance-none">
+                        <option value="weekly">Weekly</option>
+                        <option value="biweekly">Bi-weekly (Every 2 weeks)</option>
+                        <option value="monthly">Monthly</option>
+                      </select>
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none"><IconChevronDownSelect /></span>
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-1 min-w-[100px]">
+                    <label className="text-[14px] font-normal text-[#4b535c]">Time</label>
+                    <div className="relative">
+                      <select value={drawerForm.time} onChange={(ev) => setDrawerForm((f) => ({ ...f, time: ev.target.value }))} className="w-full h-10 pl-3 pr-9 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#0a0a0a] appearance-none">
+                        <option value="">Select time</option>
+                        <option value="09:00 AM">09:00 AM</option>
+                        <option value="10:00 AM">10:00 AM</option>
+                        <option value="12:00 PM">12:00 PM</option>
+                      </select>
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none"><IconChevronDownSelect /></span>
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-1 min-w-[160px]">
+                    <label className="text-[14px] font-normal text-[#4b535c]">Time zone</label>
+                    <div className="relative">
+                      <select value={drawerForm.timeZone} onChange={(ev) => setDrawerForm((f) => ({ ...f, timeZone: ev.target.value }))} className="w-full h-10 pl-3 pr-9 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#0a0a0a] appearance-none">
+                        <option value="pst">PST</option>
+                        <option value="gmt+1">(GMT +1) Central Europe</option>
+                      </select>
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none"><IconChevronDownSelect /></span>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-[14px] font-normal text-[#4b535c]">Day selection</label>
+                  <div className="flex gap-2 flex-wrap">
+                    {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => {
+                      const selected = scheduleDrawerDays[day]
+                      return (
+                        <button key={day} type="button" onClick={() => toggleScheduleDay(day)} className={`h-9 px-3 rounded-[4px] border text-[14px] font-normal shrink-0 ${selected ? 'border-[#0267ff] bg-[#ebf3ff] text-[#0267ff]' : 'border-[#e9eaeb] bg-white text-[#4b535c] hover:bg-[#f3f4f6]'}`}>
+                          {day}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              </section>
+              <section className="flex flex-col gap-2">
+                <label className="text-[14px] font-normal text-[#4b535c]">Ends on</label>
+                <div className="relative">
+                  <input type="text" placeholder="Select date" value={drawerForm.endsOn} onChange={(ev) => setDrawerForm((f) => ({ ...f, endsOn: ev.target.value }))} className="w-full h-10 pl-3 pr-10 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#0a0a0a] placeholder:text-[#4b535c]" />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none"><IconCalendarSidebar className="size-4" /></span>
+                </div>
+                <p className="text-[12px] font-normal text-[#4b535c]">If left empty, rebalancing will be repeating indefinitely</p>
+              </section>
+              <section className="flex flex-col gap-2">
+                <p className="text-[14px] font-medium text-[#0a0a0a]">Notify users:</p>
+                <input type="text" placeholder="Enter user emails" value={drawerForm.notify} onChange={(ev) => setDrawerForm((f) => ({ ...f, notify: ev.target.value }))} className="w-full h-10 px-3 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#0a0a0a] placeholder:text-[#4b535c]" />
+              </section>
+            </div>
+            <footer className="flex items-center justify-end gap-3 shrink-0 p-6 border-t border-[#e9eaeb]">
+              <button type="button" onClick={closeDrawer} className="h-10 px-4 rounded-[4px] text-[16px] font-medium text-[#0a0a0a] hover:bg-[#f3f4f6]">
+                Cancel
+              </button>
+              <button type="button" className="h-10 px-4 rounded-[4px] bg-[#0267ff] text-white text-[16px] font-medium">
+                {editingScheduleEntry ? 'Save changes' : 'Add Schedule'}
+              </button>
+            </footer>
+          </div>
+        </>
+      )}
     </div>
   )
 }
@@ -1417,7 +1529,7 @@ export default function App() {
           <div className="flex flex-col gap-[var(--spacing-xs,6px)] w-full shrink-0">
             <button
               type="button"
-              onClick={() => { setActiveView('optimiser'); setOptimiserOpen((o) => !o); }}
+              onClick={() => { setActiveView('optimiser'); setOptimiserSubView('schedule'); setOptimiserOpen((o) => !o); }}
               className={`h-10 w-full flex items-center gap-[var(--spacing-m,12px)] px-[var(--spacing-l,16px)] py-[var(--spacing-s,8px)] rounded-[var(--border-radius-s,4px)] text-left text-[14px] shrink-0 ${activeView === 'optimiser' ? 'bg-[#0267ff] text-white font-medium' : 'font-normal text-white hover:bg-white/5'}`}
               aria-expanded={optimiserOpen}
               aria-haspopup="true"
@@ -1512,16 +1624,19 @@ export default function App() {
       <div className="flex flex-col flex-1 min-w-0 min-h-0 w-full overflow-hidden">
         <div className="shrink-0">
           <TopBar
-            title={activeView === 'optimiser' ? 'Optimiser' : activeView === 'insights' ? 'Insights' : 'Overview'}
-            subtitle={activeView === 'optimiser' ? 'Automate replenishment, reordering, and rebalancing with scheduled inventory optimisation.' : activeView === 'insights' ? 'Analytics and reporting for your retail performance.' : "Overview area, your 'morning check-in' to prioritise and manage inventory, scheduling and more"}
+            title={activeView === 'optimiser' && optimiserSubView === 'scope' ? 'Scope' : activeView === 'optimiser' ? 'Optimiser' : 'Overview'}
+            subtitle={activeView === 'optimiser' && optimiserSubView === 'scope' ? null : activeView === 'optimiser' ? 'Automate replenishment, reordering, and rebalancing with scheduled inventory optimisation.' : "Overview area, your 'morning check-in' to prioritise and manage inventory, scheduling and more"}
+            onBack={activeView === 'optimiser' && optimiserSubView === 'scope' ? () => setOptimiserSubView('schedule') : undefined}
           />
         </div>
 
         {/* Main: scrollable content panel */}
         <main className="flex-1 min-h-0 min-w-0 w-full pl-8 pr-8 pb-12 overflow-y-auto overflow-x-hidden">
-        {activeView === 'optimiser' ? (
+        {activeView === 'optimiser' && optimiserSubView === 'scope' ? (
+          <ScopePage />
+        ) : activeView === 'optimiser' ? (
           <div className="pt-6">
-            <OptimiserPage />
+            <OptimiserPage onAddJob={() => setOptimiserSubView('scope')} />
           </div>
         ) : activeView === 'insights' ? (
           <div className="pt-6">
