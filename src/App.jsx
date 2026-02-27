@@ -20,6 +20,10 @@ import {
 } from './components/icons'
 import OverviewPage from './pages/OverviewPage'
 import InsightsPage from './pages/InsightsPage'
+import BuyingPage from './pages/BuyingPage'
+import DataHealthPage from './pages/DataHealthPage'
+import OptimiserStatusPage from './pages/OptimiserStatusPage'
+import ForecastInspectorPage from './pages/ForecastInspectorPage'
 import OptimiserPage from './pages/OptimiserPage'
 import ScopePage from './pages/ScopePage'
 
@@ -29,9 +33,10 @@ export default function App() {
   const [insightsOpen, setInsightsOpen] = useState(false)
   const [activeView, setActiveView] = useState('control-panel')
   const [optimiserSubView, setOptimiserSubView] = useState('schedule')
+  const [insightSubView, setInsightSubView] = useState(null)
 
   return (
-    <div className="h-screen bg-[#f9fafb] flex text-[#0a0a0a] overflow-hidden">
+    <div className="h-screen bg-[#f5f5f5] flex text-[#0a0a0a] overflow-hidden">
       <aside className={`min-w-[220px] w-max h-full shrink-0 bg-[#12171e] flex flex-col px-[var(--spacing-l,16px)] py-[var(--spacing-2xl,32px)] overflow-y-auto overflow-x-visible [scrollbar-width:none] [&::-webkit-scrollbar]:hidden`} data-name="OptimiserSidebar/Expanded/Default" data-node-id="14404:7242">
         <div className="flex flex-col gap-[var(--spacing-2xl,32px)] min-w-0 flex-1 min-h-0" data-name="Container" data-node-id="14404:7243">
         <div className="flex flex-row items-center justify-between gap-2 w-full px-[var(--spacing-l,16px)] py-[var(--spacing-s,8px)] shrink-0" data-name="Logo container" data-node-id="14404:7244">
@@ -49,7 +54,7 @@ export default function App() {
           <div className="flex flex-col gap-[var(--spacing-xs,6px)] w-full shrink-0">
             <button
               type="button"
-              onClick={() => { setActiveView('insights'); setInsightsOpen((o) => !o); }}
+              onClick={() => { setActiveView('insights'); setInsightSubView(null); setInsightsOpen((o) => !o); }}
               className={`h-10 w-full flex items-center gap-[var(--spacing-m,12px)] px-[var(--spacing-l,16px)] py-[var(--spacing-s,8px)] rounded-[var(--border-radius-s,4px)] text-left text-[14px] shrink-0 ${activeView === 'insights' ? 'bg-[#0267ff] text-white font-medium' : 'font-normal text-white hover:bg-white/5'}`}
               aria-expanded={insightsOpen}
               data-name="Sidebar element"
@@ -63,16 +68,16 @@ export default function App() {
             </button>
             {insightsOpen && (
               <div className="flex flex-col gap-[4px] pl-4 pb-2 w-full shrink-0">
-                <button type="button" onClick={() => setActiveView('insights')} className="min-h-[36px] w-full flex items-center gap-[var(--spacing-s,8px)] px-[var(--spacing-s,8px)] py-[var(--spacing-xxs,4px)] rounded-[var(--border-radius-s,4px)] text-left text-[14px] font-normal text-white hover:bg-white/5 shrink-0" data-name="Sidebar element">
+                <button type="button" onClick={() => { setActiveView('insights'); setInsightSubView('buying'); }} className={`min-h-[36px] w-full flex items-center gap-[var(--spacing-s,8px)] px-[var(--spacing-s,8px)] py-[var(--spacing-xxs,4px)] rounded-[var(--border-radius-s,4px)] text-left text-[14px] font-normal shrink-0 ${insightSubView === 'buying' ? 'bg-[#0267ff]/50 text-white' : 'text-white hover:bg-white/5'}`} data-name="Sidebar element">
                   Buying
                 </button>
-                <button type="button" onClick={() => setActiveView('insights')} className="min-h-[36px] w-full flex items-center gap-[var(--spacing-s,8px)] px-[var(--spacing-s,8px)] py-[var(--spacing-xxs,4px)] rounded-[var(--border-radius-s,4px)] text-left text-[14px] font-normal text-white hover:bg-white/5 shrink-0" data-name="Sidebar element">
+                <button type="button" onClick={() => { setActiveView('insights'); setInsightSubView('data-health'); }} className={`min-h-[36px] w-full flex items-center gap-[var(--spacing-s,8px)] px-[var(--spacing-s,8px)] py-[var(--spacing-xxs,4px)] rounded-[var(--border-radius-s,4px)] text-left text-[14px] font-normal shrink-0 ${insightSubView === 'data-health' ? 'bg-[#0267ff]/50 text-white' : 'text-white hover:bg-white/5'}`} data-name="Sidebar element">
                   Data health
                 </button>
-                <button type="button" onClick={() => setActiveView('insights')} className="min-h-[36px] w-full flex items-center gap-[var(--spacing-s,8px)] px-[var(--spacing-s,8px)] py-[var(--spacing-xxs,4px)] rounded-[var(--border-radius-s,4px)] text-left text-[14px] font-normal text-white hover:bg-white/5 shrink-0" data-name="Sidebar element">
+                <button type="button" onClick={() => { setActiveView('insights'); setInsightSubView('optimiser-status'); }} className={`min-h-[36px] w-full flex items-center gap-[var(--spacing-s,8px)] px-[var(--spacing-s,8px)] py-[var(--spacing-xxs,4px)] rounded-[var(--border-radius-s,4px)] text-left text-[14px] font-normal shrink-0 ${insightSubView === 'optimiser-status' ? 'bg-[#0267ff]/50 text-white' : 'text-white hover:bg-white/5'}`} data-name="Sidebar element">
                   Optimiser status
                 </button>
-                <button type="button" onClick={() => setActiveView('insights')} className="min-h-[36px] w-full flex items-center gap-[var(--spacing-s,8px)] px-[var(--spacing-s,8px)] py-[var(--spacing-xxs,4px)] rounded-[var(--border-radius-s,4px)] text-left text-[14px] font-normal text-white hover:bg-white/5 shrink-0" data-name="Sidebar element">
+                <button type="button" onClick={() => { setActiveView('insights'); setInsightSubView('forecast-inspector'); }} className={`min-h-[36px] w-full flex items-center gap-[var(--spacing-s,8px)] px-[var(--spacing-s,8px)] py-[var(--spacing-xxs,4px)] rounded-[var(--border-radius-s,4px)] text-left text-[14px] font-normal shrink-0 ${insightSubView === 'forecast-inspector' ? 'bg-[#0267ff]/50 text-white' : 'text-white hover:bg-white/5'}`} data-name="Sidebar element">
                   <span className="flex-1 min-w-0 text-left">Forecast inspector</span>
                   <span className="text-xs bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded shrink-0">Premium</span>
                 </button>
@@ -176,7 +181,7 @@ export default function App() {
           <TopBar
             title={activeView === 'optimiser' && optimiserSubView === 'scope' ? 'Scope' : activeView === 'optimiser' ? 'Optimiser' : activeView === 'insights' ? 'Insights' : 'Overview'}
             subtitle={activeView === 'optimiser' && optimiserSubView === 'scope' ? null : activeView === 'optimiser' ? 'Automate replenishment, reordering, and rebalancing with scheduled inventory optimisation.' : activeView === 'insights' ? 'Analytics and statistics for your sales performance.' : "Overview area, your 'morning check-in' to prioritise and manage inventory, scheduling and more"}
-            primaryButtonLabel={activeView === 'insights' ? 'Add Insights' : undefined}
+            primaryButtonLabel={undefined}
             showMenuButton={activeView === 'insights'}
             onBack={activeView === 'optimiser' && optimiserSubView === 'scope' ? () => setOptimiserSubView('schedule') : undefined}
           />
@@ -190,8 +195,12 @@ export default function App() {
               <OptimiserPage onAddJob={() => setOptimiserSubView('scope')} />
             </div>
           ) : activeView === 'insights' ? (
-            <div className="pt-6">
-              <InsightsPage />
+            <div>
+              {insightSubView === 'buying' && <BuyingPage />}
+              {insightSubView === 'data-health' && <DataHealthPage />}
+              {insightSubView === 'optimiser-status' && <OptimiserStatusPage />}
+              {insightSubView === 'forecast-inspector' && <ForecastInspectorPage />}
+              {!insightSubView && <InsightsPage />}
             </div>
           ) : (
             <OverviewPage assignee={assignee} setAssignee={setAssignee} />

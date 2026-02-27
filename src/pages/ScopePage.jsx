@@ -27,9 +27,9 @@ export default function ScopePage() {
             <div className="flex items-center gap-4">
               <span className="text-[14px] text-[#4b535c]">Trip type:</span>
               <div className="flex rounded-[4px] border border-[#e5e7eb] bg-white overflow-hidden">
-                <button type="button" onClick={() => setTripType('rebalancing')} className={`px-3 py-2 text-[14px] font-medium border-r border-[#e5e7eb] ${tripType === 'rebalancing' ? 'bg-[#f7f7f7] text-[#0a0a0a]' : 'text-[#4b535c] hover:bg-[#f9fafb] bg-white'}`}>Rebalancing</button>
-                <button type="button" onClick={() => setTripType('replenishment')} className={`px-3 py-2 text-[14px] font-medium border-r border-[#e5e7eb] ${tripType === 'replenishment' ? 'bg-[#f7f7f7] text-[#0a0a0a]' : 'text-[#4b535c] hover:bg-[#f9fafb] bg-white'}`}>Replenishment</button>
-                <button type="button" onClick={() => setTripType('reorder')} className={`px-3 py-2 text-[14px] font-medium ${tripType === 'reorder' ? 'bg-[#f7f7f7] text-[#0a0a0a]' : 'text-[#4b535c] hover:bg-[#f9fafb] bg-white'}`}>Reorder</button>
+                <button type="button" onClick={() => setTripType('rebalancing')} className={`px-3 py-2 text-[14px] font-medium border-r border-[#e5e7eb] ${tripType === 'rebalancing' ? 'bg-[#f7f7f7] text-[#0a0a0a]' : 'text-[#4b535c] hover:bg-[#f0f0f0] bg-white'}`}>Rebalancing</button>
+                <button type="button" onClick={() => setTripType('replenishment')} className={`px-3 py-2 text-[14px] font-medium border-r border-[#e5e7eb] ${tripType === 'replenishment' ? 'bg-[#f7f7f7] text-[#0a0a0a]' : 'text-[#4b535c] hover:bg-[#f0f0f0] bg-white'}`}>Replenishment</button>
+                <button type="button" onClick={() => setTripType('reorder')} className={`px-3 py-2 text-[14px] font-medium ${tripType === 'reorder' ? 'bg-[#f7f7f7] text-[#0a0a0a]' : 'text-[#4b535c] hover:bg-[#f0f0f0] bg-white'}`}>Reorder</button>
               </div>
               <div className="w-px h-6 bg-[#e5e7eb]" aria-hidden />
               <div className="flex items-center gap-2">
@@ -84,7 +84,7 @@ export default function ScopePage() {
             </thead>
             <tbody>
               {SCOPE_PRODUCTS.map((row, i) => (
-                <tr key={i} className="border-b border-[#e5e7eb] bg-[#ffffff] hover:bg-[#f9fafb]">
+                <tr key={i} className="border-b border-[#e5e7eb] bg-[#ffffff] hover:bg-[#f0f0f0]">
                   <td className="py-3 px-4">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-[4px] bg-[#f3f4f6] shrink-0" aria-hidden />

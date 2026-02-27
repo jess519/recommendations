@@ -72,7 +72,7 @@ export default function OverviewPage({ assignee = {}, setAssignee }) {
       <header className="w-[calc(100%+4rem)] min-w-0 -ml-8 bg-white border-b border-[#e5e7eb] pt-6 pb-4 px-8">
         <div className="flex flex-wrap items-center gap-3 w-full min-w-0">
           <div className="shrink-0 mr-2 min-w-0">
-            <h1 className="text-xl font-semibold text-[#0a0a0a] leading-tight">Welcome back, Tamir</h1>
+            <h1 className="text-xl font-medium text-[#0a0a0a] leading-tight">Welcome back, Tamir</h1>
             <p className="text-sm text-[#6a7282]">Monday, February 23, 2026</p>
           </div>
           <div className="flex flex-wrap items-center gap-3 ml-auto min-w-0 justify-end">
@@ -118,7 +118,7 @@ export default function OverviewPage({ assignee = {}, setAssignee }) {
           </div>
           <div className="grid grid-cols-7 gap-3">
             {WEEK_DAYS.map((d) => (
-              <div key={`${d.day}-${d.date}`} className={`rounded-lg border min-h-[200px] flex flex-col ${d.today ? 'bg-[#eff6ff] border-[#8ec5ff]' : 'bg-[#f9fafb] border-[#e5e7eb]'}`}>
+              <div key={`${d.day}-${d.date}`} className={`rounded-lg border min-h-[200px] flex flex-col ${d.today ? 'bg-[#eff6ff] border-[#8ec5ff]' : 'bg-[#f5f5f5] border-[#e5e7eb]'}`}>
                 <div className="p-3 border-b border-[#d1d5dc]">
                   <p className={`text-xs ${d.today ? 'text-[#155dfc]' : 'text-[#6a7282]'}`}>{d.day}</p>
                   <p className={`text-lg font-normal ${d.today ? 'text-[#1447e6]' : 'text-[#101828]'}`}>{d.date}</p>
