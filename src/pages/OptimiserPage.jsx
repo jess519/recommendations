@@ -494,7 +494,7 @@ export default function OptimiserPage({ onAddJob }) {
             <button type="button" onClick={goPrev} className="rounded size-7 flex items-center justify-center text-[#0a0a0a] hover:bg-[#f3f4f6]" aria-label={activeViewOption === 'week' ? 'Previous week' : 'Previous month'}>
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M12 4l-6 6 6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
             </button>
-            <h2 className="text-[20px] font-semibold text-[#0a0a0a] tracking-tight">{viewTitle}</h2>
+            <h2 className="text-[20px] font-medium text-[#0a0a0a] tracking-tight">{viewTitle}</h2>
             <button type="button" onClick={goNext} className="rounded size-7 flex items-center justify-center text-[#0a0a0a] hover:bg-[#f3f4f6]" aria-label={activeViewOption === 'week' ? 'Next week' : 'Next month'}>
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M8 4l6 6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
             </button>
@@ -586,7 +586,7 @@ export default function OptimiserPage({ onAddJob }) {
                                         <Icon className="size-4" />
                                       </span>
                                       <div>
-                                        <p className="text-[14px] font-semibold text-[#0a0a0a]">{entry.title}</p>
+                                        <p className="text-[14px] font-medium text-[#0a0a0a]">{entry.title}</p>
                                         <p className="text-[12px] text-[#4b535c]">
                                           {monthNames[entry.startDate.getMonth()]} {entry.startDate.getDate()} – {entry.endDate.getDate()}, {entry.endDate.getFullYear()}
                                         </p>
@@ -709,7 +709,7 @@ export default function OptimiserPage({ onAddJob }) {
           <div role="presentation" className="fixed inset-0 bg-black/50 z-40" onClick={closeDrawer} aria-hidden />
           <div className="fixed right-0 top-0 bottom-0 w-[800px] bg-white shadow-xl z-50 flex flex-col" role="dialog" aria-modal aria-labelledby="add-schedule-title" data-name={editingScheduleEntry ? 'Edit schedule' : 'Add Schedule'} data-node-id="214:2622">
             <header className="flex items-center justify-between shrink-0 h-14 px-6 border-b border-[#e9eaeb]">
-              <h2 id="add-schedule-title" className="text-[18px] font-semibold text-[#0a0a0a]">{editingScheduleEntry ? 'Edit schedule' : 'Add Schedule'}</h2>
+              <h2 id="add-schedule-title" className="text-[18px] font-medium text-[#0a0a0a]">{editingScheduleEntry ? 'Edit schedule' : 'Add Schedule'}</h2>
               <button type="button" onClick={closeDrawer} className="p-2 -mr-2 text-[#4b535c] hover:bg-[#f3f4f6] rounded-[4px]" aria-label="Close">
                 <IconClose />
               </button>

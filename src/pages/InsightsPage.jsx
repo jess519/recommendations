@@ -1,23 +1,49 @@
 import { useState } from 'react'
 import { ComposableMap, Geographies, Geography, ZoomableGroup } from 'react-simple-maps'
-import { IconChevronDown, IconArrowRight } from '../components/icons'
+import { IconChevronDown, IconArrowRight, IconInfo, IconStar, IconLock, IconBulb, IconShare, IconEllipsisVertical } from '../components/icons'
 
 const GEO_URL = 'https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json'
 
-const TABS = [
-  'Period',
-  'Buying',
-  'Sales Health',
-  'Read makers',
+const HEADER_TABS = [
+  'Retail',
+  'Best sellers',
   'Business KPIs',
-  'Assessment APIs',
+  'Assortment KPIs',
   'Data exploration',
+  'Rebalance',
+  'Replenishment',
+  'Reorder',
 ]
 
-const FILTER_CHIPS = [
-  { label: 'Sales Volume (All)', active: false },
-  { label: 'Product (All)', active: false },
-  { label: 'Product attribute (Retail)', active: true },
+const FILTER_ROW_1 = [
+  { label: 'Customer lancel', active: false },
+  { label: 'Date (Select)', active: false },
+  { label: 'Department (Select)', active: false },
+  { label: 'Sub department (Select)', active: false },
+  { label: 'Season (Select)', active: false },
+  { label: 'Gender (Select)', active: false },
+  { label: 'Collection type (Select)', active: false },
+  { label: 'Brand (Select)', active: false },
+  { label: 'Color (Select)', active: false },
+  { label: 'Product ID (Select)', active: false },
+  { label: 'Product labels (Select)', active: false },
+]
+
+const FILTER_ROW_2 = [
+  { label: 'Bestseller cohort (Select)', active: false },
+  { label: 'Top N products (Select)', active: false },
+  { label: 'Is assorted (Select)', active: false },
+  { label: 'Region (Select)', active: false },
+  { label: 'Country (Select)', active: false },
+  { label: 'Location type (Select)', active: false },
+  { label: 'Location (Select)', active: false },
+  { label: 'Location attributes All selected', active: true },
+  { label: 'Product attributes Product ID', active: true },
+]
+
+const FILTER_ROW_3 = [
+  { label: 'Period attributes All selected', active: true },
+  { label: 'Time granularity Weekly', active: true, showArrow: true },
 ]
 
 const KPI_CARDS = [
@@ -94,18 +120,18 @@ function Sparkline({ data }) {
   }).join(' ')
   return (
     <svg width={w} height={h} className="overflow-visible">
-      <polyline fill="none" stroke="#0267ff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" points={points} />
+      <polyline fill="none" stroke="#155dfc" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" points={points} />
     </svg>
   )
 }
 
 function KPICard({ title, value, sub, period, sparkline }) {
   return (
-    <div className="bg-white rounded-[4px] border border-neutral-200 p-4 flex flex-col gap-2">
-      <div className="text-sm font-medium text-neutral-700">{title}</div>
-      <div className="text-[28px] font-bold text-neutral-900">{value}</div>
-      <div className="text-xs text-neutral-700">{sub}</div>
-      <div className="text-xs text-neutral-700">{period}</div>
+    <div className="bg-white rounded-[14px] border border-[#e5e7eb] p-6 flex flex-col gap-2">
+      <div className="text-sm font-medium text-[#4a5565]">{title}</div>
+      <div className="text-[28px] font-normal tracking-tight text-[#0a0a0a]">{value}</div>
+      <div className="text-xs text-[#6a7282]">{sub}</div>
+      <div className="text-xs text-[#6a7282]">{period}</div>
       <div className="mt-auto pt-2">
         <Sparkline data={sparkline} />
       </div>
@@ -117,7 +143,7 @@ function PctCell({ value }) {
   const isNeg = value.startsWith('-')
   const isPos = value.startsWith('+') && parseFloat(value) !== 0
   return (
-    <span className={isNeg ? 'text-red-500' : isPos ? 'text-emerald-600' : 'text-neutral-900'}>
+    <span className={isNeg ? 'text-red-500' : isPos ? 'text-[#1447e6]' : 'text-[#0a0a0a]'}>
       {value}
     </span>
   )
@@ -137,8 +163,8 @@ function SalesMap() {
                   <Geography
                     key={geo.rsmKey}
                     geography={geo}
-                    fill={highlight ? '#ea580c' : '#e5e7eb'}
-                    stroke="#d1d5db"
+                    fill={highlight ? '#ea580c' : '#f5f5f5'}
+                    stroke="#e5e7eb"
                     strokeWidth={0.5}
                   />
                 )
@@ -151,64 +177,118 @@ function SalesMap() {
   )
 }
 
+function FilterPill({ label, active, showArrow }) {
+  return (
+    <button
+      type="button"
+      className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-medium transition-colors shrink-0 ${
+        active
+          ? 'bg-[#4a5565] text-white'
+          : 'bg-[#f3f3f5] text-[#0a0a0a] border border-[#e5e7eb] hover:bg-[#eeeeee]'
+      }`}
+    >
+      {label}
+      {active && showArrow && <IconArrowRight className="size-4 opacity-90" />}
+    </button>
+  )
+}
+
 export default function InsightsPage() {
-  const [activeTab, setActiveTab] = useState('Period')
+  const [activeTab, setActiveTab] = useState('Business KPIs')
 
   return (
-    <div className="flex flex-col gap-6 bg-neutral-100 min-h-full pb-8">
-      {/* Tabs */}
-      <div className="flex flex-wrap gap-1 border-b border-neutral-200 pb-2">
-        {TABS.map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`px-3 py-2 text-sm font-medium rounded-[4px] transition-colors ${
-              activeTab === tab ? 'bg-blue-50 text-[#0267ff]' : 'text-neutral-700 hover:bg-neutral-100'
-            }`}
-          >
-            {tab}
-          </button>
-        ))}
+    <div className="bg-[#f5f5f5] min-h-full">
+      {/* Header - white bar */}
+      <header className="w-[calc(100%+4rem)] min-w-0 -ml-8 bg-white border-b border-[#e5e7eb]">
+        <div className="flex flex-wrap items-center justify-between gap-4 px-8 py-4">
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl font-medium text-[#0a0a0a]">Insights</h1>
+            <div className="flex items-center gap-1">
+              <button type="button" className="p-1.5 rounded text-[#6a7282] hover:bg-[#f5f5f5]" aria-label="Info">
+                <IconInfo className="size-4" />
+              </button>
+              <button type="button" className="p-1.5 rounded text-[#6a7282] hover:bg-[#f5f5f5]" aria-label="Favorite">
+                <IconStar className="size-4" />
+              </button>
+              <button type="button" className="p-1.5 rounded text-[#6a7282] hover:bg-[#f5f5f5]" aria-label="Lock">
+                <IconLock className="size-4" />
+              </button>
+            </div>
+          </div>
+
+          <nav className="flex flex-wrap items-center gap-6">
+            {HEADER_TABS.map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`text-sm font-medium pb-1 border-b-2 transition-colors shrink-0 ${
+                  activeTab === tab
+                    ? 'text-[#0a0a0a] border-[#155dfc]'
+                    : 'text-[#6a7282] border-transparent hover:text-[#0a0a0a]'
+                }`}
+              >
+                {tab}
+              </button>
+            ))}
+          </nav>
+
+          <div className="flex items-center gap-2">
+            <button type="button" className="h-10 px-4 rounded-lg border border-[#e5e7eb] bg-[#f3f3f5] text-[#4a5565] text-sm font-medium flex items-center gap-2 hover:bg-[#eeeeee] shrink-0">
+              <IconBulb className="size-4" />
+              All Highlights
+            </button>
+            <button type="button" className="size-10 rounded-lg flex items-center justify-center text-[#4a5565] hover:bg-[#f5f5f5] shrink-0" aria-label="Export">
+              <IconShare className="size-5" />
+            </button>
+            <button type="button" className="size-10 rounded-lg flex items-center justify-center text-[#4a5565] hover:bg-[#f5f5f5] shrink-0" aria-label="More options">
+              <IconEllipsisVertical className="size-5" />
+            </button>
+          </div>
+        </div>
+      </header>
+
+      {/* Filter pills - 3 rows on white background */}
+      <div className="w-[calc(100%+4rem)] min-w-0 -ml-8 bg-white px-8 py-4 border-b border-[#e5e7eb]">
+        <div className="flex flex-col gap-3">
+          <div className="flex flex-wrap gap-2">
+            {FILTER_ROW_1.map((pill) => (
+              <FilterPill key={pill.label} label={pill.label} active={pill.active} showArrow={pill.showArrow} />
+            ))}
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {FILTER_ROW_2.map((pill) => (
+              <FilterPill key={pill.label} label={pill.label} active={pill.active} showArrow={pill.showArrow} />
+            ))}
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {FILTER_ROW_3.map((pill) => (
+              <FilterPill key={pill.label} label={pill.label} active={pill.active} showArrow={pill.showArrow} />
+            ))}
+          </div>
+        </div>
       </div>
 
-      {/* Filter chips */}
-      <div className="flex flex-wrap gap-2">
-        {FILTER_CHIPS.map((chip) => (
-          <span
-            key={chip.label}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[4px] text-sm ${
-              chip.active ? 'bg-neutral-200 text-neutral-900' : 'bg-white border border-neutral-200 text-neutral-700'
-            }`}
-          >
-            {chip.label}
-            {chip.active ? (
-              <IconArrowRight className="size-4 text-neutral-600" />
-            ) : (
-              <span className="text-neutral-400 cursor-pointer hover:text-neutral-600">×</span>
-            )}
-          </span>
-        ))}
-      </div>
+      <div className="pt-6 space-y-6">
 
       {/* KPI cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {KPI_CARDS.map((card) => (
           <KPICard key={card.title} {...card} />
         ))}
       </div>
 
       {/* Line chart */}
-      <div className="bg-white rounded-[4px] border border-neutral-200 p-6">
-        <p className="text-sm text-neutral-700 mb-4">
+      <section className="bg-white border border-[#e5e7eb] rounded-[14px] p-6">
+        <p className="text-sm text-[#6a7282] mb-4">
           Select the comparison period using &quot;Period&quot; and &quot;comparison&quot; menu.
         </p>
         <div className="flex justify-end gap-4 mb-4">
-          <span className="flex items-center gap-2 text-sm">
-            <span className="w-8 h-0.5 bg-[#0267ff]" />
+          <span className="flex items-center gap-2 text-sm text-[#4a5565]">
+            <span className="w-8 h-0.5 bg-[#155dfc]" />
             LY
           </span>
-          <span className="flex items-center gap-2 text-sm">
-            <span className="w-8 h-0.5 bg-blue-300" />
+          <span className="flex items-center gap-2 text-sm text-[#4a5565]">
+            <span className="w-8 h-0.5 bg-[#8ec5ff]" />
             TY
           </span>
         </div>
@@ -216,7 +296,7 @@ export default function InsightsPage() {
           <svg viewBox="0 0 400 150" className="w-full h-full" preserveAspectRatio="none">
             <polyline
               fill="none"
-              stroke="#0267ff"
+              stroke="#155dfc"
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -224,7 +304,7 @@ export default function InsightsPage() {
             />
             <polyline
               fill="none"
-              stroke="#60a5fa"
+              stroke="#8ec5ff"
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -232,22 +312,22 @@ export default function InsightsPage() {
             />
           </svg>
         </div>
-        <div className="flex gap-4 mt-2 text-xs text-neutral-600">
+        <div className="flex gap-4 mt-2 text-xs text-[#6a7282]">
           <span>Today</span>
           <span>Category [All]</span>
           <span>Daily</span>
         </div>
-      </div>
+      </section>
 
       {/* Sales performance tables */}
       {[1, 2].map((n) => (
-        <div key={n} className="bg-white rounded-[4px] border border-neutral-200 overflow-hidden">
-          <div className="p-4 border-b border-neutral-200 flex items-center justify-between">
+        <section key={n} className="bg-white border border-[#e5e7eb] rounded-[14px] overflow-hidden">
+          <div className="p-6 border-b border-[#e5e7eb] flex items-center justify-between">
             <div>
-              <h3 className="text-base font-semibold text-neutral-900">Sales performance</h3>
-              <p className="text-sm text-neutral-700">Select the component comparison using &quot;Retail volume total&quot;</p>
+              <h2 className="text-lg text-[#0a0a0a]">Sales performance</h2>
+              <p className="text-sm text-[#6a7282]">Select the component comparison using &quot;Retail volume total&quot;</p>
             </div>
-            <button type="button" className="flex items-center gap-1 text-sm text-neutral-600 hover:text-neutral-900">
+            <button type="button" className="text-sm text-[#155dfc] flex items-center gap-1">
               Legend
               <IconChevronDown className="size-4" />
             </button>
@@ -255,107 +335,108 @@ export default function InsightsPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="bg-neutral-50 border-b border-neutral-200">
-                  <th className="text-left py-3 px-4 font-medium text-neutral-700">Dimension</th>
-                  <th className="text-right py-3 px-4 font-medium text-neutral-700">WTD</th>
-                  <th className="text-right py-3 px-4 font-medium text-neutral-700">WTD VS LY</th>
-                  <th className="text-right py-3 px-4 font-medium text-neutral-700">WTD VS LY %</th>
-                  <th className="text-right py-3 px-4 font-medium text-neutral-700">MTD</th>
-                  <th className="text-right py-3 px-4 font-medium text-neutral-700">MTD VS LY</th>
-                  <th className="text-right py-3 px-4 font-medium text-neutral-700">MTD VS LY %</th>
-                  <th className="text-right py-3 px-4 font-medium text-neutral-700">YTD</th>
-                  <th className="text-right py-3 px-4 font-medium text-neutral-700">YTD VS LY</th>
-                  <th className="text-right py-3 px-4 font-medium text-neutral-700">YTD VS LY %</th>
+                <tr className="bg-[#f5f5f5] border-b border-[#e5e7eb]">
+                  <th className="text-left py-3 px-4 font-medium text-[#4a5565]">Dimension</th>
+                  <th className="text-right py-3 px-4 font-medium text-[#4a5565]">WTD</th>
+                  <th className="text-right py-3 px-4 font-medium text-[#4a5565]">WTD VS LY</th>
+                  <th className="text-right py-3 px-4 font-medium text-[#4a5565]">WTD VS LY %</th>
+                  <th className="text-right py-3 px-4 font-medium text-[#4a5565]">MTD</th>
+                  <th className="text-right py-3 px-4 font-medium text-[#4a5565]">MTD VS LY</th>
+                  <th className="text-right py-3 px-4 font-medium text-[#4a5565]">MTD VS LY %</th>
+                  <th className="text-right py-3 px-4 font-medium text-[#4a5565]">YTD</th>
+                  <th className="text-right py-3 px-4 font-medium text-[#4a5565]">YTD VS LY</th>
+                  <th className="text-right py-3 px-4 font-medium text-[#4a5565]">YTD VS LY %</th>
                 </tr>
               </thead>
               <tbody>
                 {SALES_TABLE_ROWS.map((row) => (
-                  <tr key={row.dimension} className="border-b border-neutral-100 hover:bg-neutral-50">
-                    <td className="py-2.5 px-4 text-neutral-900">{row.dimension}</td>
-                    <td className="py-2.5 px-4 text-right text-neutral-900">{row.wtd}</td>
-                    <td className="py-2.5 px-4 text-right">{row.wtdLy}</td>
+                  <tr key={row.dimension} className="border-b border-[#e5e7eb] hover:bg-[#f0f0f0]">
+                    <td className="py-2.5 px-4 text-[#0a0a0a]">{row.dimension}</td>
+                    <td className="py-2.5 px-4 text-right text-[#0a0a0a]">{row.wtd}</td>
+                    <td className="py-2.5 px-4 text-right text-[#4a5565]">{row.wtdLy}</td>
                     <td className="py-2.5 px-4 text-right"><PctCell value={row.wtdLyPct} /></td>
-                    <td className="py-2.5 px-4 text-right text-neutral-900">{row.mtd}</td>
-                    <td className="py-2.5 px-4 text-right">{row.mtdLy}</td>
+                    <td className="py-2.5 px-4 text-right text-[#0a0a0a]">{row.mtd}</td>
+                    <td className="py-2.5 px-4 text-right text-[#4a5565]">{row.mtdLy}</td>
                     <td className="py-2.5 px-4 text-right"><PctCell value={row.mtdLyPct} /></td>
-                    <td className="py-2.5 px-4 text-right text-neutral-900">{row.ytd}</td>
-                    <td className="py-2.5 px-4 text-right">{row.ytdLy}</td>
+                    <td className="py-2.5 px-4 text-right text-[#0a0a0a]">{row.ytd}</td>
+                    <td className="py-2.5 px-4 text-right text-[#4a5565]">{row.ytdLy}</td>
                     <td className="py-2.5 px-4 text-right"><PctCell value={row.ytdLyPct} /></td>
                   </tr>
                 ))}
-                <tr className="bg-neutral-50 font-semibold">
-                  <td className="py-3 px-4 text-neutral-900">TOTAL SALES</td>
-                  <td className="py-3 px-4 text-right">4,210</td>
-                  <td className="py-3 px-4 text-right">+215</td>
+                <tr className="bg-[#f5f5f5] font-semibold border-b border-[#e5e7eb]">
+                  <td className="py-3 px-4 text-[#0a0a0a]">TOTAL SALES</td>
+                  <td className="py-3 px-4 text-right text-[#0a0a0a]">4,210</td>
+                  <td className="py-3 px-4 text-right text-[#4a5565]">+215</td>
                   <td className="py-3 px-4 text-right"><PctCell value="+5.38%" /></td>
-                  <td className="py-3 px-4 text-right">52.1K</td>
-                  <td className="py-3 px-4 text-right">+2,100</td>
+                  <td className="py-3 px-4 text-right text-[#0a0a0a]">52.1K</td>
+                  <td className="py-3 px-4 text-right text-[#4a5565]">+2,100</td>
                   <td className="py-3 px-4 text-right"><PctCell value="+4.20%" /></td>
-                  <td className="py-3 px-4 text-right">608K</td>
-                  <td className="py-3 px-4 text-right">+28,400</td>
+                  <td className="py-3 px-4 text-right text-[#0a0a0a]">608K</td>
+                  <td className="py-3 px-4 text-right text-[#4a5565]">+28,400</td>
                   <td className="py-3 px-4 text-right"><PctCell value="+4.90%" /></td>
                 </tr>
               </tbody>
             </table>
           </div>
-        </div>
+        </section>
       ))}
 
       {/* World map */}
-      <div className="bg-white rounded-[4px] border border-neutral-200 overflow-hidden">
-        <div className="p-4 border-b border-neutral-200">
-          <h3 className="text-base font-semibold text-neutral-900">Sales YTD</h3>
+      <section className="bg-white border border-[#e5e7eb] rounded-[14px] overflow-hidden">
+        <div className="p-6 border-b border-[#e5e7eb]">
+          <h2 className="text-lg text-[#0a0a0a]">Sales YTD</h2>
         </div>
         <div className="relative">
           <div className="absolute left-4 top-4 z-10 flex flex-col gap-1">
-            <button type="button" className="size-8 rounded-[4px] bg-white border border-neutral-200 flex items-center justify-center text-neutral-700 hover:bg-neutral-50">+</button>
-            <button type="button" className="size-8 rounded-[4px] bg-white border border-neutral-200 flex items-center justify-center text-neutral-700 hover:bg-neutral-50">−</button>
+            <button type="button" className="size-8 rounded-lg bg-white border border-[#e5e7eb] flex items-center justify-center text-[#4a5565] hover:bg-[#f0f0f0]">+</button>
+            <button type="button" className="size-8 rounded-lg bg-white border border-[#e5e7eb] flex items-center justify-center text-[#4a5565] hover:bg-[#f0f0f0]">−</button>
           </div>
           <SalesMap />
-          <div className="absolute right-4 bottom-4 flex items-center gap-2 text-xs text-neutral-600">
+          <div className="absolute right-4 bottom-4 flex items-center gap-2 text-xs text-[#6a7282]">
             <span>Low</span>
             <div className="w-24 h-2 rounded-full bg-gradient-to-r from-orange-200 via-orange-400 to-orange-700" />
             <span>High</span>
           </div>
         </div>
-      </div>
+      </section>
 
       {/* Bar charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white rounded-[4px] border border-neutral-200 p-6">
-          <h3 className="text-base font-semibold text-neutral-900 mb-4">Sales by Location Type</h3>
+        <section className="bg-white border border-[#e5e7eb] rounded-[14px] p-6">
+          <h2 className="text-lg text-[#0a0a0a] mb-4">Sales by Location Type</h2>
           <div className="flex gap-8 items-end h-40">
             {LOCATION_BARS.map((bar) => (
               <div key={bar.label} className="flex-1 flex flex-col items-center gap-2">
-                <span className="text-sm font-medium text-neutral-900">{bar.pct}%</span>
+                <span className="text-sm font-medium text-[#0a0a0a]">{bar.pct}%</span>
                 <div className="w-full flex justify-center">
                   <div
-                    className="w-12 bg-[#0267ff] rounded-[4px]"
+                    className="w-12 bg-[#155dfc] rounded-lg"
                     style={{ height: `${(bar.value / 14) * 120}px` }}
                   />
                 </div>
-                <span className="text-sm text-neutral-700">{bar.label}</span>
+                <span className="text-sm text-[#4a5565]">{bar.label}</span>
               </div>
             ))}
           </div>
-        </div>
-        <div className="bg-white rounded-[4px] border border-neutral-200 p-6">
-          <h3 className="text-base font-semibold text-neutral-900 mb-4">Sales by Department</h3>
+        </section>
+        <section className="bg-white border border-[#e5e7eb] rounded-[14px] p-6">
+          <h2 className="text-lg text-[#0a0a0a] mb-4">Sales by Department</h2>
           <div className="flex gap-6 items-end h-40">
             {DEPARTMENT_BARS.map((bar) => (
               <div key={bar.label} className="flex-1 flex flex-col items-center gap-2">
-                <span className="text-sm font-medium text-neutral-900">{bar.value}K</span>
+                <span className="text-sm font-medium text-[#0a0a0a]">{bar.value}K</span>
                 <div className="w-full flex justify-center">
                   <div
-                    className="w-12 bg-[#0267ff] rounded-[4px]"
+                    className="w-12 bg-[#155dfc] rounded-lg"
                     style={{ height: `${(bar.value / 9) * 120}px` }}
                   />
                 </div>
-                <span className="text-sm text-neutral-700 truncate max-w-full">{bar.label}</span>
+                <span className="text-sm text-[#4a5565] truncate max-w-full">{bar.label}</span>
               </div>
             ))}
           </div>
-        </div>
+        </section>
+      </div>
       </div>
     </div>
   )
