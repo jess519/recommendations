@@ -11,9 +11,11 @@ const SCOPE_PRODUCTS = [
   { name: 'Ninon-sac seau s', sku: 'A1092210', color: 'Noir', transfers: [23, 19], sales: [3, 25], forecast: 5.12, revenue: '€6.54K', stockouts: [17, 16], locations: [19, 20], overstocks: [9, 1], understocks: [28, 5], dept: 1.4 },
 ]
 
-export default function ScopePage() {
+export default function ScopePage({ tripType: tripTypeProp, onTripTypeChange }) {
   const [activeTab, setActiveTab] = useState('products')
-  const [tripType, setTripType] = useState('rebalancing')
+  const [internalTripType, setInternalTripType] = useState('rebalancing')
+  const tripType = onTripTypeChange != null ? (tripTypeProp ?? 'rebalancing') : internalTripType
+  const setTripType = onTripTypeChange != null ? onTripTypeChange : setInternalTripType
   const [includeZeroTransfers, setIncludeZeroTransfers] = useState(true)
   return (
     <div className="pt-6 flex flex-col gap-6">

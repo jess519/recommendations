@@ -1,6 +1,6 @@
 import { IconArrowLeft, IconEllipsisVertical } from './icons'
 
-export default function TopBar({ title = 'Team', subtitle = 'Manage permissions and invites throughout your team', primaryButtonLabel = '', primaryButtonHref = '#', onPrimaryClick, onBack, showMenuButton }) {
+export default function TopBar({ title = 'Team', subtitle = 'Manage permissions and invites throughout your team', primaryButtonLabel = '', primaryButtonHref = '#', onPrimaryClick, secondaryButtonLabel = '', onSecondaryClick, onBack, showMenuButton }) {
   return (
     <header className="bg-[#12171e] flex items-center justify-between p-6 shrink-0" data-name="Top bar" data-node-id="12301:65733">
       <div className="flex flex-1 items-center gap-3 min-w-0">
@@ -20,6 +20,11 @@ export default function TopBar({ title = 'Team', subtitle = 'Manage permissions 
         {showMenuButton && (
           <button type="button" className="flex items-center justify-center size-10 rounded-[4px] text-white hover:bg-white/10 shrink-0" aria-label="More options">
             <IconEllipsisVertical className="size-5" />
+          </button>
+        )}
+        {secondaryButtonLabel && onSecondaryClick && (
+          <button type="button" onClick={onSecondaryClick} className="bg-[#364153] hover:bg-[#4b5565] flex items-center justify-center h-12 px-4 rounded-[4px] text-base font-medium text-white shrink-0">
+            {secondaryButtonLabel}
           </button>
         )}
         {primaryButtonLabel && (
