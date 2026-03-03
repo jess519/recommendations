@@ -372,7 +372,7 @@ export default function InsightsPage() {
                     <td className="py-2.5 px-4 text-right"><PctCell value={row.ytdLyPct} /></td>
                   </tr>
                 ))}
-                <tr className="bg-[#f5f5f5] font-semibold border-b border-[#e5e7eb]">
+                <tr className="bg-[#f5f5f5] font-medium border-b border-[#e5e7eb]">
                   <td className="py-3 px-4 text-[#0a0a0a]">TOTAL SALES</td>
                   <td className="py-3 px-4 text-right text-[#0a0a0a]">4,210</td>
                   <td className="py-3 px-4 text-right text-[#4a5565]">+215</td>
