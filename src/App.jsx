@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import TopBar from './components/TopBar'
+import AddScheduleDrawer from './components/AddScheduleDrawer'
 import AutoneLogo from './components/Logo'
 import {
   IconCollapse,
@@ -35,6 +36,7 @@ export default function App() {
   const [optimiserSubView, setOptimiserSubView] = useState('schedule')
   const [scopeTripType, setScopeTripType] = useState('rebalancing')
   const [insightSubView, setInsightSubView] = useState(null)
+  const [createScheduleDrawerOpen, setCreateScheduleDrawerOpen] = useState(false)
 
   return (
     <div className="h-screen bg-[#f5f5f5] flex text-[#0a0a0a] overflow-hidden">
@@ -183,7 +185,7 @@ export default function App() {
             title={activeView === 'optimiser' && optimiserSubView === 'scope' ? (scopeTripType === 'rebalancing' ? 'Rebalancing' : scopeTripType === 'replenishment' ? 'Replenishment' : 'Reorder') : activeView === 'optimiser' ? 'Optimiser' : activeView === 'insights' ? 'Insights' : 'Overview'}
             subtitle={activeView === 'optimiser' && optimiserSubView === 'scope' ? (scopeTripType === 'rebalancing' ? 'Optimize your inventory between points of sales' : scopeTripType === 'replenishment' ? 'Move stock from your warehouse to your points of sale' : 'Order more of your bestsellers') : activeView === 'optimiser' ? 'Automate replenishment, reordering, and rebalancing with scheduled inventory optimisation.' : activeView === 'insights' ? 'Analytics and statistics for your sales performance.' : "Overview area, your 'morning check-in' to prioritise and manage inventory, scheduling and more"}
             primaryButtonLabel={activeView === 'optimiser' && optimiserSubView === 'scope' ? (scopeTripType === 'rebalancing' ? 'Create new rebalancing' : scopeTripType === 'replenishment' ? 'Create new replenishment' : 'Create new reorder') : undefined}
-            onPrimaryClick={activeView === 'optimiser' && optimiserSubView === 'scope' ? () => {} : undefined}
+            onPrimaryClick={activeView === 'optimiser' && optimiserSubView === 'scope' ? () => setCreateScheduleDrawerOpen(true) : undefined}
             secondaryButtonLabel={activeView === 'optimiser' && optimiserSubView === 'scope' ? 'Switch back' : undefined}
             onSecondaryClick={activeView === 'optimiser' && optimiserSubView === 'scope' ? () => setOptimiserSubView('schedule') : undefined}
             showMenuButton={activeView === 'insights'}
@@ -211,6 +213,8 @@ export default function App() {
           )}
         </main>
       </div>
+
+      <AddScheduleDrawer open={createScheduleDrawerOpen} onClose={() => setCreateScheduleDrawerOpen(false)} />
     </div>
   )
 }
