@@ -163,6 +163,22 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
     exceptions: false,
   })
   const [scopeOption, setScopeOption] = useState('include-all')
+  const [productFilterOpen, setProductFilterOpen] = useState({
+    departments: false,
+    subDepartments: false,
+    seasons: false,
+    events: false,
+  })
+  const [geoFilterOpen, setGeoFilterOpen] = useState({
+    locationTypes: false,
+    regions: false,
+    countries: false,
+    sendingCountries: false,
+    receivingCountries: false,
+    locations: false,
+    sendingLocations: false,
+    receivingLocations: false,
+  })
   const reviewStatusFilterOptions = [
     { id: 'in review', label: 'In review' },
     { id: 'upcoming', label: 'Upcoming' },
@@ -399,6 +415,20 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
       scope: key === 'scope',
       exceptions: key === 'exceptions',
     })
+  }
+
+  const toggleProductFilterRow = (key) => {
+    setProductFilterOpen((prev) => ({
+      ...prev,
+      [key]: !prev[key],
+    }))
+  }
+
+  const toggleGeoFilterRow = (key) => {
+    setGeoFilterOpen((prev) => ({
+      ...prev,
+      [key]: !prev[key],
+    }))
   }
 
   if (isCreateSchedulePage) {
@@ -678,35 +708,221 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
               />
             </button>
             {accordionOpen.scope && (
-              <div className="px-4 pb-4 pt-1 flex flex-col gap-3">
-                <label className="flex items-start gap-3 p-4 rounded-[10px] border border-[#e5e7eb] bg-white cursor-pointer hover:border-[#0267ff]/40 has-[:checked]:border-[#0267ff]">
-                  <input
-                    type="radio"
-                    name="scopeOption"
-                    value="include-all"
-                    checked={scopeOption === 'include-all'}
-                    onChange={() => setScopeOption('include-all')}
-                    className="mt-1 size-4 shrink-0 border-[#e5e7eb] text-[#0267ff] focus:ring-[#0267ff]"
-                  />
-                  <div className="flex flex-col gap-1 min-w-0">
-                    <span className="text-[14px] font-semibold text-[#0a0a0a]">Include all recommendations</span>
-                    <span className="text-[12px] font-normal text-[#4b535c]">Applies the full optimised recommendation set for maximum impact.</span>
+              <div className="px-4 pb-4 pt-1 flex flex-col gap-4">
+                <div className="flex flex-col gap-3">
+                  <label className="flex items-start gap-3 p-4 rounded-[10px] border border-[#e5e7eb] bg-white cursor-pointer hover:border-[#0267ff]/40 has-[:checked]:border-[#0267ff]">
+                    <input
+                      type="radio"
+                      name="scopeOption"
+                      value="include-all"
+                      checked={scopeOption === 'include-all'}
+                      onChange={() => setScopeOption('include-all')}
+                      className="mt-1 size-4 shrink-0 border-[#e5e7eb] text-[#0267ff] focus:ring-[#0267ff]"
+                    />
+                    <div className="flex flex-col gap-1 min-w-0">
+                      <span className="text-[14px] font-semibold text-[#0a0a0a]">Include all recommendations</span>
+                      <span className="text-[12px] font-normal text-[#4b535c]">Applies the full optimised recommendation set for maximum impact.</span>
+                    </div>
+                  </label>
+                  <label className="flex items-start gap-3 p-4 rounded-[10px] border border-[#e5e7eb] bg-white cursor-pointer hover:border-[#0267ff]/40 has-[:checked]:border-[#0267ff]">
+                    <input
+                      type="radio"
+                      name="scopeOption"
+                      value="filter"
+                      checked={scopeOption === 'filter'}
+                      onChange={() => setScopeOption('filter')}
+                      className="mt-1 size-4 shrink-0 border-[#e5e7eb] text-[#0267ff] focus:ring-[#0267ff]"
+                    />
+                    <div className="flex flex-col gap-1 min-w-0">
+                      <span className="text-[14px] font-semibold text-[#0a0a0a]">Filter recommendations</span>
+                      <span className="text-[12px] font-normal text-[#4b535c]">Narrow recommendations to specific products, locations, or criteria.</span>
+                    </div>
+                  </label>
+                </div>
+
+                {scopeOption === 'filter' && (
+                  <div className="mt-1 flex flex-col gap-6">
+                    <section className="flex flex-col gap-2">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-[13px] font-semibold text-[#0a0a0a] uppercase tracking-[0.04em]">
+                          Product
+                        </h3>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setProductFilterOpen({
+                              departments: false,
+                              subDepartments: false,
+                              seasons: false,
+                              events: false,
+                            })
+                          }
+                          className="text-[12px] font-medium text-[#4b535c] hover:text-[#0a0a0a]"
+                        >
+                          Clear all
+                        </button>
+                      </div>
+                      <div className="mt-1 flex flex-col border-t border-[#e5e7eb]">
+                        {[
+                          { id: 'departments', label: 'Departments' },
+                          { id: 'subDepartments', label: 'Sub-departments' },
+                          { id: 'seasons', label: 'Seasons' },
+                          { id: 'events', label: 'Events' },
+                        ].map((row) => {
+                          const isOpen = productFilterOpen[row.id]
+                          return (
+                            <div key={row.id} className="border-b border-[#e5e7eb] last:border-b-0">
+                              <button
+                                type="button"
+                                onClick={() => toggleProductFilterRow(row.id)}
+                                className="w-full flex items-center justify-between px-3 py-2.5 text-left hover:bg-[#f8f8f8]"
+                              >
+                                <span className="text-[13px] font-medium text-[#0a0a0a]">
+                                  {row.label}
+                                </span>
+                                <span
+                                  className={`inline-flex items-center justify-center size-5 text-[#4b535c] transition-transform ${
+                                    isOpen ? 'rotate-180' : ''
+                                  }`}
+                                >
+                                  <IconChevronDown className="size-4" />
+                                </span>
+                              </button>
+                              {isOpen && (
+                                <div className="px-3 pb-3 pt-1 flex flex-col gap-2 bg-[#fafafa]">
+                                  <div className="flex items-center justify-between gap-2">
+                                    <div className="relative flex-1">
+                                      <input
+                                        type="text"
+                                        placeholder="search..."
+                                        className="w-full h-9 px-3 rounded-[4px] border border-[#e5e7eb] bg-white text-[13px] text-[#0a0a0a] placeholder:text-[#9ca3af]"
+                                      />
+                                    </div>
+                                    <button
+                                      type="button"
+                                      className="text-[12px] font-medium text-[#0267ff] hover:underline shrink-0"
+                                    >
+                                      Select all
+                                    </button>
+                                  </div>
+                                  <div className="flex flex-col gap-1.5 mt-1">
+                                    {['Cadeaux', 'Exotiques', 'Femme', 'Homme', 'Voyage'].map(
+                                      (name) => (
+                                        <label
+                                          key={name}
+                                          className="flex items-center gap-2 text-[13px] text-[#0a0a0a]"
+                                        >
+                                          <input
+                                            type="checkbox"
+                                            className="size-4 rounded border-[#d1d5db] text-[#0267ff] focus:ring-[#0267ff]"
+                                          />
+                                          <span>{name}</span>
+                                        </label>
+                                      ),
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </section>
+
+                    <section className="flex flex-col gap-2">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-[13px] font-semibold text-[#0a0a0a] uppercase tracking-[0.04em]">
+                          Geographic
+                        </h3>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setGeoFilterOpen({
+                              locationTypes: false,
+                              regions: false,
+                              countries: false,
+                              sendingCountries: false,
+                              receivingCountries: false,
+                              locations: false,
+                              sendingLocations: false,
+                              receivingLocations: false,
+                            })
+                          }
+                          className="text-[12px] font-medium text-[#4b535c] hover:text-[#0a0a0a]"
+                        >
+                          Clear all
+                        </button>
+                      </div>
+                      <div className="mt-1 flex flex-col border-t border-[#e5e7eb]">
+                        {[
+                          { id: 'locationTypes', label: 'Location Types' },
+                          { id: 'regions', label: 'Regions' },
+                          { id: 'countries', label: 'Countries' },
+                          { id: 'sendingCountries', label: 'Sending countries' },
+                          { id: 'receivingCountries', label: 'Receiving countries' },
+                          { id: 'locations', label: 'Locations' },
+                          { id: 'sendingLocations', label: 'Sending locations' },
+                          { id: 'receivingLocations', label: 'Receiving locations' },
+                        ].map((row) => {
+                          const isOpen = geoFilterOpen[row.id]
+                          return (
+                            <div key={row.id} className="border-b border-[#e5e7eb] last:border-b-0">
+                              <button
+                                type="button"
+                                onClick={() => toggleGeoFilterRow(row.id)}
+                                className="w-full flex items-center justify-between px-3 py-2.5 text-left hover:bg-[#f8f8f8]"
+                              >
+                                <span className="text-[13px] font-medium text-[#0a0a0a]">
+                                  {row.label}
+                                </span>
+                                <span
+                                  className={`inline-flex items-center justify-center size-5 text-[#4b535c] transition-transform ${
+                                    isOpen ? 'rotate-180' : ''
+                                  }`}
+                                >
+                                  <IconChevronDown className="size-4" />
+                                </span>
+                              </button>
+                              {isOpen && (
+                                <div className="px-3 pb-3 pt-1 flex flex-col gap-2 bg-[#fafafa]">
+                                  <div className="flex items-center justify-between gap-2">
+                                    <div className="relative flex-1">
+                                      <input
+                                        type="text"
+                                        placeholder="search..."
+                                        className="w-full h-9 px-3 rounded-[4px] border border-[#e5e7eb] bg-white text-[13px] text-[#0a0a0a] placeholder:text-[#9ca3af]"
+                                      />
+                                    </div>
+                                    <button
+                                      type="button"
+                                      className="text-[12px] font-medium text-[#0267ff] hover:underline shrink-0"
+                                    >
+                                      Select all
+                                    </button>
+                                  </div>
+                                  <div className="flex flex-col gap-1.5 mt-1">
+                                    {['Alpha', 'Bravo', 'Charlie', 'Delta', 'Echo'].map((name) => (
+                                      <label
+                                        key={name}
+                                        className="flex items-center gap-2 text-[13px] text-[#0a0a0a]"
+                                      >
+                                        <input
+                                          type="checkbox"
+                                          className="size-4 rounded border-[#d1d5db] text-[#0267ff] focus:ring-[#0267ff]"
+                                        />
+                                        <span>{name}</span>
+                                      </label>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </section>
                   </div>
-                </label>
-                <label className="flex items-start gap-3 p-4 rounded-[10px] border border-[#e5e7eb] bg-white cursor-pointer hover:border-[#0267ff]/40 has-[:checked]:border-[#0267ff]">
-                  <input
-                    type="radio"
-                    name="scopeOption"
-                    value="filter"
-                    checked={scopeOption === 'filter'}
-                    onChange={() => setScopeOption('filter')}
-                    className="mt-1 size-4 shrink-0 border-[#e5e7eb] text-[#0267ff] focus:ring-[#0267ff]"
-                  />
-                  <div className="flex flex-col gap-1 min-w-0">
-                    <span className="text-[14px] font-semibold text-[#0a0a0a]">Filter recommendations</span>
-                    <span className="text-[12px] font-normal text-[#4b535c]">Narrow recommendations to specific products, locations, or criteria.</span>
-                  </div>
-                </label>
+                )}
               </div>
             )}
           </div>
