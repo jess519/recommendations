@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { IconCalendarSidebar, IconPlus, IconReplenishment, IconReorder, IconRebalancing, IconChevronDown, IconList, IconCalendarNote, IconTruck, IconTrendUp, IconLightbulb, IconEdit, IconClose, IconChevronDownSelect } from '../components/icons'
+import { IconCalendarSidebar, IconPlus, IconReplenishment, IconReorder, IconRebalancing, IconChevronDown, IconList, IconCalendarNote, IconTruck, IconTrendUp, IconLightbulb, IconEdit, IconClose, IconChevronDownSelect, IconArrowLeft } from '../components/icons'
 
 const SAMPLE_CALENDAR_ENTRY = {
   id: 'entry-1',
@@ -118,7 +118,7 @@ const MODULE_OPTIONS = [
   { id: 'rebalancing', label: 'Rebalancing' },
 ]
 
-export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob, resetToUpcoming }) {
+export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob, resetToUpcoming, openCreateSchedulePage }) {
   const [scheduleDrawerOpen, setScheduleDrawerOpen] = useState(false)
   const [editingScheduleEntry, setEditingScheduleEntry] = useState(null)
   const [drawerForm, setDrawerForm] = useState(DEFAULT_DRAWER_FORM)
@@ -155,6 +155,12 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
   const [reviewStatusDropdownOpen, setReviewStatusDropdownOpen] = useState(false)
   const [activeStatusTab, setActiveStatusTab] = useState('upcoming')
   const [expandedExceptionsScheduleId, setExpandedExceptionsScheduleId] = useState(null)
+  const [isCreateSchedulePage, setIsCreateSchedulePage] = useState(false)
+  const [accordionOpen, setAccordionOpen] = useState({
+    details: true,
+    scope: false,
+    exceptions: false,
+  })
   const reviewStatusFilterOptions = [
     { id: 'in review', label: 'In review' },
     { id: 'upcoming', label: 'Upcoming' },
@@ -379,6 +385,117 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
     if (!resetToUpcoming) return
     setActiveStatusTab('upcoming')
   }, [resetToUpcoming])
+
+  useEffect(() => {
+    if (!openCreateSchedulePage) return
+    setIsCreateSchedulePage(true)
+  }, [openCreateSchedulePage])
+
+  const toggleAccordion = (key) => {
+    setAccordionOpen((prev) => ({
+      ...prev,
+      [key]: !prev[key],
+    }))
+  }
+
+  if (isCreateSchedulePage) {
+    return (
+      <div className="flex flex-col gap-6">
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setIsCreateSchedulePage(false)}
+            className="flex items-center justify-center w-9 h-9 rounded-[4px] text-[#0a0a0a] hover:bg-[#e5e7eb]"
+            aria-label="Back to recommendations"
+          >
+            <IconArrowLeft className="size-4" />
+          </button>
+          <h1 className="text-[20px] md:text-[24px] font-medium text-[#0a0a0a]">
+            Create schedule
+          </h1>
+        </div>
+
+        <div className="flex flex-col gap-4">
+          <div className="border border-[#e5e7eb] rounded-[10px] bg-white">
+            <button
+              type="button"
+              onClick={() => toggleAccordion('details')}
+              className="w-full flex items-center justify-between px-4 py-3 text-left"
+            >
+              <span className="text-[14px] font-medium text-[#0a0a0a]">
+                Schedule details
+              </span>
+              <IconChevronDown
+                className={`size-4 text-[#4b535c] transition-transform ${
+                  accordionOpen.details ? 'rotate-180' : ''
+                }`}
+              />
+            </button>
+            {accordionOpen.details && (
+              <div className="px-4 pb-4" />
+            )}
+          </div>
+
+          <div className="border border-[#e5e7eb] rounded-[10px] bg-white">
+            <button
+              type="button"
+              onClick={() => toggleAccordion('scope')}
+              className="w-full flex items-center justify-between px-4 py-3 text-left"
+            >
+              <span className="text-[14px] font-medium text-[#0a0a0a]">
+                Scope
+              </span>
+              <IconChevronDown
+                className={`size-4 text-[#4b535c] transition-transform ${
+                  accordionOpen.scope ? 'rotate-180' : ''
+                }`}
+              />
+            </button>
+            {accordionOpen.scope && (
+              <div className="px-4 pb-4" />
+            )}
+          </div>
+
+          <div className="border border-[#e5e7eb] rounded-[10px] bg-white">
+            <button
+              type="button"
+              onClick={() => toggleAccordion('exceptions')}
+              className="w-full flex items-center justify-between px-4 py-3 text-left"
+            >
+              <span className="text-[14px] font-medium text-[#0a0a0a]">
+                Manage by exceptions
+              </span>
+              <IconChevronDown
+                className={`size-4 text-[#4b535c] transition-transform ${
+                  accordionOpen.exceptions ? 'rotate-180' : ''
+                }`}
+              />
+            </button>
+            {accordionOpen.exceptions && (
+              <div className="px-4 pb-4" />
+            )}
+          </div>
+        </div>
+
+        <div className="flex items-center justify-end gap-3 pt-2">
+          <button
+            type="button"
+            onClick={() => setIsCreateSchedulePage(false)}
+            className="h-10 px-4 rounded-[4px] text-[14px] font-medium text-[#0a0a0a] hover:bg-[#e5e7eb]"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={() => setIsCreateSchedulePage(false)}
+            className="h-10 px-4 rounded-[4px] bg-[#0267ff] text-white text-[14px] font-medium hover:bg-[#0252cc]"
+          >
+            Create schedule
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="flex flex-col gap-6">

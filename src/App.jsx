@@ -37,6 +37,7 @@ export default function App() {
   const [openScheduleDrawerSignal, setOpenScheduleDrawerSignal] = useState(0)
   const [openAddJobSignal, setOpenAddJobSignal] = useState(0)
   const [resetToUpcomingSignal, setResetToUpcomingSignal] = useState(0)
+  const [openCreateSchedulePageSignal, setOpenCreateSchedulePageSignal] = useState(0)
 
   return (
     <div className="h-screen bg-[#f5f5f5] flex text-[#0a0a0a] overflow-hidden">
@@ -218,7 +219,7 @@ export default function App() {
             }
             onCreateSchedule={
               activeView === 'optimiser'
-                ? () => setOpenScheduleDrawerSignal((n) => n + 1)
+                ? () => setOpenCreateSchedulePageSignal((n) => n + 1)
                 : undefined
             }
           />
@@ -234,6 +235,7 @@ export default function App() {
                 openScheduleDrawer={openScheduleDrawerSignal}
                 openAddJob={openAddJobSignal}
                 resetToUpcoming={resetToUpcomingSignal}
+                openCreateSchedulePage={openCreateSchedulePageSignal}
               />
             </div>
           ) : activeView === 'insights' ? (
