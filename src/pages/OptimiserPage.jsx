@@ -154,6 +154,7 @@ export default function OptimiserPage({ onAddJob, onRegisterCreateScheduleHandle
   const [selectedReviewStatuses, setSelectedReviewStatuses] = useState([])
   const [reviewStatusDropdownOpen, setReviewStatusDropdownOpen] = useState(false)
   const [activeStatusTab, setActiveStatusTab] = useState('upcoming')
+  const [expandedExceptionsScheduleId, setExpandedExceptionsScheduleId] = useState(null)
   const reviewStatusFilterOptions = [
     { id: 'in review', label: 'In review' },
     { id: 'upcoming', label: 'Upcoming' },
@@ -185,6 +186,23 @@ export default function OptimiserPage({ onAddJob, onRegisterCreateScheduleHandle
         { label: 'Revenue increase', value: '€501.1K' },
         { label: 'Stockouts', value: '1,013 → 559' },
       ],
+      exceptionsList: [
+        {
+          receiving: 'Opera',
+          products: 'A1252810, A12528YY, A13314YY',
+          reason: 'Transfer units lower than 10',
+        },
+        {
+          receiving: 'Bond Street',
+          products: 'B99281AA, B99281BB',
+          reason: 'Negative on-hand after transfer',
+        },
+        {
+          receiving: 'Regent Street',
+          products: 'C77123AA, C77123BB',
+          reason: 'Exceeds truck capacity',
+        },
+      ],
     },
     {
       id: 'uk-weekly-replen',
@@ -202,6 +220,16 @@ export default function OptimiserPage({ onAddJob, onRegisterCreateScheduleHandle
       ],
     },
   ]
+  const parseDate = (dateStr) => {
+    const [day, month, year] = dateStr.split('/').map(Number)
+    return new Date(year, month - 1, day)
+  }
+  const today = new Date(2026, 2, 5) // 05/03/2026
+  const sortedNextSchedules = [...nextSchedules].sort((a, b) => {
+    const da = parseDate(a.deadline)
+    const db = parseDate(b.deadline)
+    return Math.abs(da - today) - Math.abs(db - today)
+  })
   const viewOptions = [
     { id: 'list', label: 'List', icon: 'list' },
     { id: 'week', label: 'Week', icon: 'week' },
@@ -949,20 +977,26 @@ export default function OptimiserPage({ onAddJob, onRegisterCreateScheduleHandle
           )}
         </>
       ) : activeStatusTab === 'next' ? (
-        <div className="mt-4 space-y-6">
-          {nextSchedules.map((schedule) => (
+        <div className="mt-3 space-y-4">
+          {sortedNextSchedules.map((schedule) => {
+            const deadlineDate = parseDate(schedule.deadline)
+            const isDeadlinePast = deadlineDate < today
+            const deadlineBadgeClass = isDeadlinePast
+              ? 'bg-[#fee2e2] text-[#b91c1c]'
+              : 'bg-[#fef3c7] text-[#92400e]'
+            return (
             <div
               key={schedule.id}
-              className="bg-white border border-[#e5e7eb] border-l-4 border-l-[#0267ff] rounded-[14px] p-6 flex flex-col gap-5 max-w-4xl"
+              className="bg-white border border-[#e5e7eb] border-l-4 border-l-[#0267ff] rounded-[14px] p-4 flex flex-col gap-4 max-w-4xl"
             >
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <h2 className="text-xl font-semibold text-[#0a0a0a]">{schedule.name}</h2>
+                <h2 className="text-xl md:text-2xl font-semibold text-[#0a0a0a]">{schedule.name}</h2>
               </div>
               <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-[#4b535c]">
                 <span>Created: {schedule.created}</span>
                 <span className="flex items-center gap-2">
                   <span>Submission deadline:</span>
-                  <span className="px-2 py-1 rounded-full bg-[#fef3c7] text-[#92400e] text-xs font-medium">
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${deadlineBadgeClass}`}>
                     {schedule.deadline}
                   </span>
                 </span>
@@ -993,28 +1027,58 @@ export default function OptimiserPage({ onAddJob, onRegisterCreateScheduleHandle
                   return (
                     <div
                       key={metric.label}
-                      className={`rounded-[12px] border border-[#e5e7eb] px-4 py-3 flex flex-col ${bgClass}`}
+                      className={`rounded-[12px] border border-[#e5e7eb] px-3 py-2.5 flex flex-col ${bgClass}`}
                     >
-                    <span className="text-2xl md:text-3xl font-semibold tracking-tight text-[#0a0a0a]">
+                      <span className="text-xl md:text-2xl font-semibold tracking-tight text-[#0a0a0a]">
                       {metric.value}
                     </span>
-                    <span className="mt-1 text-xs text-[#4b535c]">
+                      <span className="mt-1 text-[11px] text-[#4b535c]">
                       {metric.label}
                     </span>
                     </div>
                   )
                 })}
               </div>
+              {schedule.exceptionsList && (
+                <div className="mt-2 space-y-2">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setExpandedExceptionsScheduleId((prev) =>
+                        prev === schedule.id ? null : schedule.id
+                      )
+                    }
+                    className="text-xs font-medium text-[#0267ff] hover:underline"
+                  >
+                    {expandedExceptionsScheduleId === schedule.id ? 'Hide exceptions (3)' : 'Show exceptions (3)'}
+                  </button>
+                  {expandedExceptionsScheduleId === schedule.id && (
+                    <div className="space-y-2">
+                      {schedule.exceptionsList.map((ex, idx) => (
+                        <div
+                          key={`${schedule.id}-ex-${idx}`}
+                          className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border border-[#e5e7eb] rounded-[8px] px-3 py-2 bg-[#f9fafb] text-xs text-[#0a0a0a]"
+                        >
+                          <span><span className="font-medium text-[#4b535c]">Receiving location:</span> {ex.receiving}</span>
+                          <span><span className="font-medium text-[#4b535c]">Products:</span> {ex.products}</span>
+                          <span><span className="font-medium text-[#4b535c]">Reason:</span> {ex.reason}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
               <div className="flex justify-end">
                 <button
                   type="button"
                   className="h-9 px-4 rounded-[4px] border border-[#0267ff] text-sm font-medium text-[#0267ff] bg-white hover:bg-[#ebf3ff]"
                 >
-                  Review schedule
+                  Submit
                 </button>
               </div>
             </div>
-          ))}
+            )
+          })}
         </div>
       ) : (
         <div />
