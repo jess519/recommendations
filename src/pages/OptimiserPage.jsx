@@ -170,6 +170,38 @@ export default function OptimiserPage({ onAddJob, onRegisterCreateScheduleHandle
     { id: 'failed', label: 'Failed' },
     { id: 'submitted', label: 'Submitted' },
   ]
+  const nextSchedules = [
+    {
+      id: 'eu-monthly-rebal',
+      name: 'Europe monthly rebal',
+      created: '24/02/2026',
+      deadline: '28/02/2026',
+      status: 'Ready to review',
+      exceptions: '12',
+      approved: '96',
+      metrics: [
+        { label: 'Unique trips', value: '113' },
+        { label: 'Recommended transfers', value: '2,308' },
+        { label: 'Revenue increase', value: '€501.1K' },
+        { label: 'Stockouts', value: '1,013 → 559' },
+      ],
+    },
+    {
+      id: 'uk-weekly-replen',
+      name: 'UK weekly replenishment',
+      created: '20/02/2026',
+      deadline: '22/02/2026',
+      status: 'Ready to review',
+      exceptions: '5',
+      approved: '42',
+      metrics: [
+        { label: 'Unique trips', value: '48' },
+        { label: 'Recommended transfers', value: '1,120' },
+        { label: 'Revenue increase', value: '€210.4K' },
+        { label: 'Stockouts', value: '512 → 304' },
+      ],
+    },
+  ]
   const viewOptions = [
     { id: 'list', label: 'List', icon: 'list' },
     { id: 'week', label: 'Week', icon: 'week' },
@@ -917,52 +949,48 @@ export default function OptimiserPage({ onAddJob, onRegisterCreateScheduleHandle
           )}
         </>
       ) : activeStatusTab === 'next' ? (
-        <div className="mt-4">
-          <div className="bg-white border border-[#e5e7eb] rounded-[14px] p-6 flex flex-col gap-4 max-w-4xl">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <h2 className="text-lg font-medium text-[#0a0a0a]">Europe monthly rebal</h2>
-            </div>
-            <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-[#4b535c]">
-              <span>Created: 24/02/2026</span>
-              <span className="flex items-center gap-2">
-                <span>Submission deadline:</span>
-                <span className="px-2 py-1 rounded-full bg-[#fef3c7] text-[#92400e] text-xs font-medium">
-                  28/02/2026
+        <div className="mt-4 space-y-4">
+          {nextSchedules.map((schedule) => (
+            <div key={schedule.id} className="bg-white border border-[#e5e7eb] rounded-[14px] p-6 flex flex-col gap-5 max-w-4xl">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <h2 className="text-xl font-semibold text-[#0a0a0a]">{schedule.name}</h2>
+              </div>
+              <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-[#4b535c]">
+                <span>Created: {schedule.created}</span>
+                <span className="flex items-center gap-2">
+                  <span>Submission deadline:</span>
+                  <span className="px-2 py-1 rounded-full bg-[#fef3c7] text-[#92400e] text-xs font-medium">
+                    {schedule.deadline}
+                  </span>
                 </span>
-              </span>
-            </div>
-            <div>
-              <span className="inline-flex items-center px-3 py-1 rounded-full bg-[#fef3c7] text-[#92400e] text-xs font-medium">
-                Ready to review
-              </span>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-sm text-[#0a0a0a]">
-              <div className="flex flex-col">
-                <span className="text-[#4b535c]">Total exceptions</span>
-                <span className="font-medium">12</span>
               </div>
-              <div className="flex flex-col">
-                <span className="text-[#4b535c]">Total approved</span>
-                <span className="font-medium">96</span>
+              <div className="flex flex-wrap items-center justify-between gap-3 text-sm">
+                <span className="inline-flex items-center px-3 py-1 rounded-full bg-[#fef3c7] text-[#92400e] text-xs font-medium">
+                  {schedule.status}
+                </span>
+                <div className="flex flex-wrap items-center gap-4 text-sm text-[#4b535c]">
+                  <span>
+                    <span className="font-medium text-[#0a0a0a]">Total exceptions:</span> {schedule.exceptions}
+                  </span>
+                  <span>
+                    <span className="font-medium text-[#0a0a0a]">Total approved:</span> {schedule.approved}
+                  </span>
+                </div>
               </div>
-              <div className="flex flex-col">
-                <span className="text-[#4b535c]">Unique trips</span>
-                <span className="font-medium">113</span>
-              </div>
-              <div className="flex flex-col">
-                <span className="text-[#4b535c]">Recommended transfers</span>
-                <span className="font-medium">2,308</span>
-              </div>
-              <div className="flex flex-col">
-                <span className="text-[#4b535c]">Revenue increase</span>
-                <span className="font-medium">€501.1K</span>
-              </div>
-              <div className="flex flex-col">
-                <span className="text-[#4b535c]">Stockouts</span>
-                <span className="font-medium">1,013 → 559</span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {schedule.metrics.map((metric) => (
+                  <div key={metric.label} className="rounded-[12px] border border-[#e5e7eb] bg-[#eff6ff] px-4 py-3 flex flex-col">
+                    <span className="text-2xl md:text-3xl font-semibold tracking-tight text-[#0a0a0a]">
+                      {metric.value}
+                    </span>
+                    <span className="mt-1 text-xs text-[#4b535c]">
+                      {metric.label}
+                    </span>
+                  </div>
+                ))}
               </div>
             </div>
-          </div>
+          ))}
         </div>
       ) : (
         <div />
