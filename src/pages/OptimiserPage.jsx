@@ -1325,7 +1325,7 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                           className="self-start h-9 px-3 rounded-[4px] border border-[#0267ff] text-[13px] font-medium text-[#0267ff] hover:bg-[#ebf3ff] flex items-center gap-2"
                         >
                           <IconPlus className="size-4" />
-                          Add row
+                          Add approval
                         </button>
                       </div>
                     </section>
