@@ -180,6 +180,7 @@ export default function OptimiserPage({ onAddJob, onRegisterCreateScheduleHandle
       status: 'Ready to review',
       exceptions: '12',
       approved: '96',
+      exceptionsTotal: 12,
       metrics: [
         { label: 'Unique trips', value: '113' },
         { label: 'Recommended transfers', value: '2,308' },
@@ -188,19 +189,20 @@ export default function OptimiserPage({ onAddJob, onRegisterCreateScheduleHandle
       ],
       exceptionsList: [
         {
-          receiving: 'Opera',
-          products: 'A1252810, A12528YY, A13314YY',
-          reason: 'Transfer units lower than 10',
+          count: '6 exceptions',
+          description: 'Receiving location: Opera',
         },
         {
-          receiving: 'Bond Street',
-          products: 'B99281AA, B99281BB',
-          reason: 'Negative on-hand after transfer',
+          count: '4 exceptions',
+          description: 'Receiving location: Opera, includes Product: A1252810, A12528YY',
         },
         {
-          receiving: 'Regent Street',
-          products: 'C77123AA, C77123BB',
-          reason: 'Exceeds truck capacity',
+          count: '1 exception',
+          description: 'includes Product: A13314YY',
+        },
+        {
+          count: '1 exception',
+          description: 'Transfer units lower than 10',
         },
       ],
     },
@@ -1041,6 +1043,9 @@ export default function OptimiserPage({ onAddJob, onRegisterCreateScheduleHandle
               </div>
               {schedule.exceptionsList && (
                 <div className="mt-2 space-y-2">
+                  {(() => {
+                    const totalExceptions = schedule.exceptionsTotal ?? schedule.exceptionsList.length
+                    return (
                   <button
                     type="button"
                     onClick={() =>
@@ -1050,8 +1055,12 @@ export default function OptimiserPage({ onAddJob, onRegisterCreateScheduleHandle
                     }
                     className="text-xs font-medium text-[#0267ff] hover:underline"
                   >
-                    {expandedExceptionsScheduleId === schedule.id ? 'Hide exceptions (3)' : 'Show exceptions (3)'}
+                      {expandedExceptionsScheduleId === schedule.id
+                        ? `Hide exceptions (${totalExceptions})`
+                        : `Show exceptions (${totalExceptions})`}
                   </button>
+                    )
+                  })()}
                   {expandedExceptionsScheduleId === schedule.id && (
                     <div className="space-y-2">
                       {schedule.exceptionsList.map((ex, idx) => (
@@ -1059,9 +1068,10 @@ export default function OptimiserPage({ onAddJob, onRegisterCreateScheduleHandle
                           key={`${schedule.id}-ex-${idx}`}
                           className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border border-[#e5e7eb] rounded-[8px] px-3 py-2 bg-[#f9fafb] text-xs text-[#0a0a0a]"
                         >
-                          <span><span className="font-medium text-[#4b535c]">Receiving location:</span> {ex.receiving}</span>
-                          <span><span className="font-medium text-[#4b535c]">Products:</span> {ex.products}</span>
-                          <span><span className="font-medium text-[#4b535c]">Reason:</span> {ex.reason}</span>
+                          <span>
+                            <span className="font-medium text-[#0a0a0a]">{ex.count}:</span>{' '}
+                            <span className="text-[#4b535c]">{ex.description}</span>
+                          </span>
                         </div>
                       ))}
                     </div>
