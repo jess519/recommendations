@@ -112,6 +112,7 @@ const DEFAULT_DRAWER_FORM = {
   endsOn: '',
   notify: '',
 }
+const DAY_OPTIONS = Array.from({ length: 31 }, (_, i) => i + 1)
 const MODULE_OPTIONS = [
   { id: 'replenishment', label: 'Replenishment' },
   { id: 'reorder', label: 'Reorder' },
@@ -392,10 +393,11 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
   }, [openCreateSchedulePage])
 
   const toggleAccordion = (key) => {
-    setAccordionOpen((prev) => ({
-      ...prev,
-      [key]: !prev[key],
-    }))
+    setAccordionOpen({
+      details: key === 'details',
+      scope: key === 'scope',
+      exceptions: key === 'exceptions',
+    })
   }
 
   if (isCreateSchedulePage) {
@@ -422,9 +424,14 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
               onClick={() => toggleAccordion('details')}
               className="w-full flex items-center justify-between px-4 py-3 text-left"
             >
-              <span className="text-[14px] font-medium text-[#0a0a0a]">
-                Schedule details
-              </span>
+              <div className="flex flex-col">
+                <span className="text-[14px] font-medium text-[#0a0a0a]">
+                  Schedule details
+                </span>
+                <span className="text-[12px] font-normal text-[#4b535c]">
+                  Configure how you want your schedule to run
+                </span>
+              </div>
               <IconChevronDown
                 className={`size-4 text-[#4b535c] transition-transform ${
                   accordionOpen.details ? 'rotate-180' : ''
@@ -432,7 +439,225 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
               />
             </button>
             {accordionOpen.details && (
-              <div className="px-4 pb-4" />
+              <div className="px-4 pb-4 pt-1 flex flex-col gap-4">
+                <section className="flex flex-col gap-2">
+                  <p className="text-[14px] font-medium text-[#0a0a0a]">
+                    Choose movement type
+                  </p>
+                  <label className="text-[14px] font-normal text-[#4b535c]">Movement type</label>
+                  <div className="relative max-w-sm">
+                    <select
+                      value={drawerForm.module}
+                      onChange={(ev) =>
+                        setDrawerForm((f) => ({
+                          ...f,
+                          module: ev.target.value,
+                        }))
+                      }
+                      className="w-full h-10 pl-3 pr-9 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#0a0a0a] appearance-none"
+                    >
+                      <option value="">Select</option>
+                      {MODULE_OPTIONS.map((opt) => (
+                        <option key={opt.id} value={opt.id}>
+                          {opt.label}
+                        </option>
+                      ))}
+                    </select>
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
+                      <IconChevronDownSelect />
+                    </span>
+                  </div>
+                </section>
+
+                <section className="flex flex-col gap-2">
+                  <p className="text-[14px] font-medium text-[#0a0a0a]">Give your schedule a name:</p>
+                  <label className="text-[14px] font-normal text-[#4b535c]">Name schedule</label>
+                  <input
+                    type="text"
+                    placeholder="Placeholder"
+                    value={drawerForm.name}
+                    onChange={(ev) =>
+                      setDrawerForm((f) => ({
+                        ...f,
+                        name: ev.target.value,
+                      }))
+                    }
+                    className="w-full max-w-md h-10 px-3 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#0a0a0a] placeholder:text-[#4b535c]"
+                  />
+                  <p className="text-[12px] font-normal text-[#4b535c]">
+                    If not assigned, name will be given automatically
+                  </p>
+                </section>
+
+                <section className="flex flex-col gap-2">
+                  <p className="text-[14px] font-medium text-[#0a0a0a]">Scheduling Dates</p>
+                </section>
+
+                <section className="flex flex-col gap-2">
+                  <div className="flex flex-wrap gap-3">
+                    <div className="flex flex-col gap-1 min-w-[140px]">
+                      <label className="text-[14px] font-normal text-[#4b535c]">Repeats</label>
+                      <div className="relative">
+                        <select
+                          value={drawerForm.repeats}
+                          onChange={(ev) =>
+                            setDrawerForm((f) => ({
+                              ...f,
+                              repeats: ev.target.value,
+                            }))
+                          }
+                          className="w-full h-10 pl-3 pr-9 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#0a0a0a] appearance-none"
+                        >
+                          <option value="weekly">Weekly</option>
+                          <option value="biweekly">Bi-weekly (Every 2 weeks)</option>
+                          <option value="monthly">Monthly</option>
+                        </select>
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
+                          <IconChevronDownSelect />
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex flex-col gap-1 min-w-[100px]">
+                      <label className="text-[14px] font-normal text-[#4b535c]">Time</label>
+                      <div className="relative">
+                        <select
+                          value={drawerForm.time}
+                          onChange={(ev) =>
+                            setDrawerForm((f) => ({
+                              ...f,
+                              time: ev.target.value,
+                            }))
+                          }
+                          className="w-full h-10 pl-3 pr-9 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#0a0a0a] appearance-none"
+                        >
+                          <option value="">Select time</option>
+                          <option value="09:00 AM">09:00 AM</option>
+                          <option value="10:00 AM">10:00 AM</option>
+                          <option value="12:00 PM">12:00 PM</option>
+                        </select>
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
+                          <IconChevronDownSelect />
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex flex-col gap-1 min-w-[160px]">
+                      <label className="text-[14px] font-normal text-[#4b535c]">Time zone</label>
+                      <div className="relative">
+                        <select
+                          value={drawerForm.timeZone}
+                          onChange={(ev) =>
+                            setDrawerForm((f) => ({
+                              ...f,
+                              timeZone: ev.target.value,
+                            }))
+                          }
+                          className="w-full h-10 pl-3 pr-9 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#0a0a0a] appearance-none"
+                        >
+                          <option value="pst">PST</option>
+                          <option value="gmt+1">(GMT +1) Central Europe</option>
+                        </select>
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
+                          <IconChevronDownSelect />
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3 max-w-xl">
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[14px] font-normal text-[#4b535c]">Start date</label>
+                      <div className="relative">
+                        <select
+                          value={drawerForm.startDateDay || ''}
+                          onChange={(ev) =>
+                            setDrawerForm((f) => ({
+                              ...f,
+                              startDateDay: ev.target.value,
+                            }))
+                          }
+                          className="w-full h-10 pl-3 pr-9 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#0a0a0a] appearance-none"
+                        >
+                          <option value="">Select</option>
+                          {DAY_OPTIONS.map((day) => (
+                            <option key={day} value={day}>
+                              {day}
+                            </option>
+                          ))}
+                        </select>
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
+                          <IconChevronDownSelect />
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[14px] font-normal text-[#4b535c]">End date</label>
+                      <div className="relative">
+                        <select
+                          value={drawerForm.endDateDay || ''}
+                          onChange={(ev) =>
+                            setDrawerForm((f) => ({
+                              ...f,
+                              endDateDay: ev.target.value,
+                            }))
+                          }
+                          className="w-full h-10 pl-3 pr-9 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#0a0a0a] appearance-none"
+                        >
+                          <option value="">Select</option>
+                          {DAY_OPTIONS.map((day) => (
+                            <option key={day} value={day}>
+                              {day}
+                            </option>
+                          ))}
+                        </select>
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
+                          <IconChevronDownSelect />
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[14px] font-normal text-[#4b535c]">Submission deadline</label>
+                      <div className="relative">
+                        <select
+                          value={drawerForm.submissionDeadlineDay || ''}
+                          onChange={(ev) =>
+                            setDrawerForm((f) => ({
+                              ...f,
+                              submissionDeadlineDay: ev.target.value,
+                            }))
+                          }
+                          className="w-full h-10 pl-3 pr-9 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#0a0a0a] appearance-none"
+                        >
+                          <option value="">Select</option>
+                          {DAY_OPTIONS.map((day) => (
+                            <option key={day} value={day}>
+                              {day}
+                            </option>
+                          ))}
+                        </select>
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
+                          <IconChevronDownSelect />
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </section>
+
+                <section className="flex flex-col gap-2">
+                  <p className="text-[14px] font-medium text-[#0a0a0a]">Notify users:</p>
+                  <input
+                    type="text"
+                    placeholder="Enter user emails"
+                    value={drawerForm.notify}
+                    onChange={(ev) =>
+                      setDrawerForm((f) => ({
+                        ...f,
+                        notify: ev.target.value,
+                      }))
+                    }
+                    className="w-full max-w-md h-10 px-3 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#0a0a0a] placeholder:text-[#4b535c]"
+                  />
+                </section>
+              </div>
             )}
           </div>
 
