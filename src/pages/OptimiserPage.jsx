@@ -180,6 +180,22 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
     sendingLocations: false,
     receivingLocations: false,
   })
+  const [productFilterOpenApproval, setProductFilterOpenApproval] = useState({
+    departments: false,
+    subDepartments: false,
+    seasons: false,
+    events: false,
+  })
+  const [geoFilterOpenApproval, setGeoFilterOpenApproval] = useState({
+    locationTypes: false,
+    regions: false,
+    countries: false,
+    sendingCountries: false,
+    receivingCountries: false,
+    locations: false,
+    sendingLocations: false,
+    receivingLocations: false,
+  })
   const reviewStatusFilterOptions = [
     { id: 'in review', label: 'In review' },
     { id: 'upcoming', label: 'Upcoming' },
@@ -427,6 +443,20 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
 
   const toggleGeoFilterRow = (key) => {
     setGeoFilterOpen((prev) => ({
+      ...prev,
+      [key]: !prev[key],
+    }))
+  }
+
+  const toggleProductFilterRowApproval = (key) => {
+    setProductFilterOpenApproval((prev) => ({
+      ...prev,
+      [key]: !prev[key],
+    }))
+  }
+
+  const toggleGeoFilterRowApproval = (key) => {
+    setGeoFilterOpenApproval((prev) => ({
       ...prev,
       [key]: !prev[key],
     }))
@@ -987,7 +1017,187 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                   </p>
                 )}
                 {savedApprovalRule === 'create-new' && (
-                  <div className="min-h-[120px] rounded-[8px] border border-[#e5e7eb] bg-[#fafafa]" />
+                  <div className="flex flex-col gap-6 mt-1">
+                    <section className="flex flex-col gap-2">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-[13px] font-semibold text-[#0a0a0a] uppercase tracking-[0.04em]">
+                          Product
+                        </h3>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setProductFilterOpenApproval({
+                              departments: false,
+                              subDepartments: false,
+                              seasons: false,
+                              events: false,
+                            })
+                          }
+                          className="text-[12px] font-medium text-[#4b535c] hover:text-[#0a0a0a]"
+                        >
+                          Clear all
+                        </button>
+                      </div>
+                      <div className="mt-1 flex flex-col border-t border-[#e5e7eb]">
+                        {[
+                          { id: 'departments', label: 'Departments' },
+                          { id: 'subDepartments', label: 'Sub-departments' },
+                          { id: 'seasons', label: 'Seasons' },
+                          { id: 'events', label: 'Events' },
+                        ].map((row) => {
+                          const isOpen = productFilterOpenApproval[row.id]
+                          return (
+                            <div key={row.id} className="border-b border-[#e5e7eb] last:border-b-0">
+                              <button
+                                type="button"
+                                onClick={() => toggleProductFilterRowApproval(row.id)}
+                                className="w-full flex items-center justify-between px-3 py-2.5 text-left hover:bg-[#f8f8f8]"
+                              >
+                                <span className="text-[13px] font-medium text-[#0a0a0a]">
+                                  {row.label}
+                                </span>
+                                <span
+                                  className={`inline-flex items-center justify-center size-5 text-[#4b535c] transition-transform ${
+                                    isOpen ? 'rotate-180' : ''
+                                  }`}
+                                >
+                                  <IconChevronDown className="size-4" />
+                                </span>
+                              </button>
+                              {isOpen && (
+                                <div className="px-3 pb-3 pt-1 flex flex-col gap-2 bg-[#fafafa]">
+                                  <div className="flex items-center justify-between gap-2">
+                                    <div className="relative flex-1">
+                                      <input
+                                        type="text"
+                                        placeholder="search..."
+                                        className="w-full h-9 px-3 rounded-[4px] border border-[#e5e7eb] bg-white text-[13px] text-[#0a0a0a] placeholder:text-[#9ca3af]"
+                                      />
+                                    </div>
+                                    <button
+                                      type="button"
+                                      className="text-[12px] font-medium text-[#0267ff] hover:underline shrink-0"
+                                    >
+                                      Select all
+                                    </button>
+                                  </div>
+                                  <div className="flex flex-col gap-1.5 mt-1">
+                                    {['Cadeaux', 'Exotiques', 'Femme', 'Homme', 'Voyage'].map(
+                                      (name) => (
+                                        <label
+                                          key={name}
+                                          className="flex items-center gap-2 text-[13px] text-[#0a0a0a]"
+                                        >
+                                          <input
+                                            type="checkbox"
+                                            className="size-4 rounded border-[#d1d5db] text-[#0267ff] focus:ring-[#0267ff]"
+                                          />
+                                          <span>{name}</span>
+                                        </label>
+                                      ),
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </section>
+
+                    <section className="flex flex-col gap-2">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-[13px] font-semibold text-[#0a0a0a] uppercase tracking-[0.04em]">
+                          Geographic
+                        </h3>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setGeoFilterOpenApproval({
+                              locationTypes: false,
+                              regions: false,
+                              countries: false,
+                              sendingCountries: false,
+                              receivingCountries: false,
+                              locations: false,
+                              sendingLocations: false,
+                              receivingLocations: false,
+                            })
+                          }
+                          className="text-[12px] font-medium text-[#4b535c] hover:text-[#0a0a0a]"
+                        >
+                          Clear all
+                        </button>
+                      </div>
+                      <div className="mt-1 flex flex-col border-t border-[#e5e7eb]">
+                        {[
+                          { id: 'locationTypes', label: 'Location Types' },
+                          { id: 'regions', label: 'Regions' },
+                          { id: 'countries', label: 'Countries' },
+                          { id: 'sendingCountries', label: 'Sending countries' },
+                          { id: 'receivingCountries', label: 'Receiving countries' },
+                          { id: 'locations', label: 'Locations' },
+                          { id: 'sendingLocations', label: 'Sending locations' },
+                          { id: 'receivingLocations', label: 'Receiving locations' },
+                        ].map((row) => {
+                          const isOpen = geoFilterOpenApproval[row.id]
+                          return (
+                            <div key={row.id} className="border-b border-[#e5e7eb] last:border-b-0">
+                              <button
+                                type="button"
+                                onClick={() => toggleGeoFilterRowApproval(row.id)}
+                                className="w-full flex items-center justify-between px-3 py-2.5 text-left hover:bg-[#f8f8f8]"
+                              >
+                                <span className="text-[13px] font-medium text-[#0a0a0a]">
+                                  {row.label}
+                                </span>
+                                <span
+                                  className={`inline-flex items-center justify-center size-5 text-[#4b535c] transition-transform ${
+                                    isOpen ? 'rotate-180' : ''
+                                  }`}
+                                >
+                                  <IconChevronDown className="size-4" />
+                                </span>
+                              </button>
+                              {isOpen && (
+                                <div className="px-3 pb-3 pt-1 flex flex-col gap-2 bg-[#fafafa]">
+                                  <div className="flex items-center justify-between gap-2">
+                                    <div className="relative flex-1">
+                                      <input
+                                        type="text"
+                                        placeholder="search..."
+                                        className="w-full h-9 px-3 rounded-[4px] border border-[#e5e7eb] bg-white text-[13px] text-[#0a0a0a] placeholder:text-[#9ca3af]"
+                                      />
+                                    </div>
+                                    <button
+                                      type="button"
+                                      className="text-[12px] font-medium text-[#0267ff] hover:underline shrink-0"
+                                    >
+                                      Select all
+                                    </button>
+                                  </div>
+                                  <div className="flex flex-col gap-1.5 mt-1">
+                                    {['Alpha', 'Bravo', 'Charlie', 'Delta', 'Echo'].map((name) => (
+                                      <label
+                                        key={name}
+                                        className="flex items-center gap-2 text-[13px] text-[#0a0a0a]"
+                                      >
+                                        <input
+                                          type="checkbox"
+                                          className="size-4 rounded border-[#d1d5db] text-[#0267ff] focus:ring-[#0267ff]"
+                                        />
+                                        <span>{name}</span>
+                                      </label>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </section>
+                  </div>
                 )}
               </div>
             )}
