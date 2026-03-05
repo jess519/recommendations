@@ -153,6 +153,7 @@ export default function OptimiserPage({ onAddJob }) {
   const [eventDatePickerViewDate, setEventDatePickerViewDate] = useState(() => new Date(2026, 1, 1))
   const [selectedReviewStatuses, setSelectedReviewStatuses] = useState([])
   const [reviewStatusDropdownOpen, setReviewStatusDropdownOpen] = useState(false)
+  const [activeStatusTab, setActiveStatusTab] = useState('next')
   const reviewStatusFilterOptions = [
     { id: 'in review', label: 'In review' },
     { id: 'upcoming', label: 'Upcoming' },
@@ -163,6 +164,12 @@ export default function OptimiserPage({ onAddJob }) {
       prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id]
     )
   }
+  const statusTabs = [
+    { id: 'next', label: 'Next' },
+    { id: 'upcoming', label: 'Upcoming' },
+    { id: 'failed', label: 'Failed' },
+    { id: 'submitted', label: 'Submitted' },
+  ]
   const viewOptions = [
     { id: 'list', label: 'List', icon: 'list' },
     { id: 'week', label: 'Week', icon: 'week' },
@@ -298,6 +305,27 @@ export default function OptimiserPage({ onAddJob }) {
       {pinnedHoverEntryId && (
         <div role="presentation" className="fixed inset-0 z-40" onClick={() => { setPinnedHoverEntryId(null); setPinnedHoverCellKey(null) }} aria-hidden />
       )}
+      <div className="border-b border-[#e5e7eb]">
+        <nav className="flex items-center gap-6 h-11">
+          {statusTabs.map((tab) => {
+            const isActive = activeStatusTab === tab.id
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveStatusTab(tab.id)}
+                className={`pb-2 text-[14px] font-medium border-b-2 ${
+                  isActive
+                    ? 'text-[#0a0a0a] border-[#0267ff]'
+                    : 'text-[#4b535c] border-transparent hover:text-[#0a0a0a]'
+                }`}
+              >
+                {tab.label}
+              </button>
+            )
+          })}
+        </nav>
+      </div>
       <div className="flex flex-col gap-6" data-name="Optimiser" data-node-id="174:2696">
         <div className="bg-[#f3f4f6] border border-[#ebf3ff] rounded-[14px] p-6 flex flex-col gap-5" data-name="Calendar container" data-node-id="174:2767">
         <div className="flex items-center justify-between gap-4 flex-wrap">
