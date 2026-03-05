@@ -162,6 +162,7 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
     scope: false,
     exceptions: false,
   })
+  const [scopeOption, setScopeOption] = useState('include-all')
   const reviewStatusFilterOptions = [
     { id: 'in review', label: 'In review' },
     { id: 'upcoming', label: 'Upcoming' },
@@ -677,7 +678,36 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
               />
             </button>
             {accordionOpen.scope && (
-              <div className="px-4 pb-4" />
+              <div className="px-4 pb-4 pt-1 flex flex-col gap-3">
+                <label className="flex items-start gap-3 p-4 rounded-[10px] border border-[#e5e7eb] bg-white cursor-pointer hover:border-[#0267ff]/40 has-[:checked]:border-[#0267ff]">
+                  <input
+                    type="radio"
+                    name="scopeOption"
+                    value="include-all"
+                    checked={scopeOption === 'include-all'}
+                    onChange={() => setScopeOption('include-all')}
+                    className="mt-1 size-4 shrink-0 border-[#e5e7eb] text-[#0267ff] focus:ring-[#0267ff]"
+                  />
+                  <div className="flex flex-col gap-1 min-w-0">
+                    <span className="text-[14px] font-semibold text-[#0a0a0a]">Include all recommendations</span>
+                    <span className="text-[12px] font-normal text-[#4b535c]">Applies the full optimised recommendation set for maximum impact.</span>
+                  </div>
+                </label>
+                <label className="flex items-start gap-3 p-4 rounded-[10px] border border-[#e5e7eb] bg-white cursor-pointer hover:border-[#0267ff]/40 has-[:checked]:border-[#0267ff]">
+                  <input
+                    type="radio"
+                    name="scopeOption"
+                    value="filter"
+                    checked={scopeOption === 'filter'}
+                    onChange={() => setScopeOption('filter')}
+                    className="mt-1 size-4 shrink-0 border-[#e5e7eb] text-[#0267ff] focus:ring-[#0267ff]"
+                  />
+                  <div className="flex flex-col gap-1 min-w-0">
+                    <span className="text-[14px] font-semibold text-[#0a0a0a]">Filter recommendations</span>
+                    <span className="text-[12px] font-normal text-[#4b535c]">Narrow recommendations to specific products, locations, or criteria.</span>
+                  </div>
+                </label>
+              </div>
             )}
           </div>
 
