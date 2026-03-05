@@ -154,7 +154,7 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
   const [eventDatePickerViewDate, setEventDatePickerViewDate] = useState(() => new Date(2026, 1, 1))
   const [selectedReviewStatuses, setSelectedReviewStatuses] = useState([])
   const [reviewStatusDropdownOpen, setReviewStatusDropdownOpen] = useState(false)
-  const [activeStatusTab, setActiveStatusTab] = useState('upcoming')
+  const [activeStatusTab, setActiveStatusTab] = useState('next')
   const [expandedExceptionsScheduleId, setExpandedExceptionsScheduleId] = useState(null)
   const [isCreateSchedulePage, setIsCreateSchedulePage] = useState(false)
   const [accordionOpen, setAccordionOpen] = useState({
@@ -401,7 +401,7 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
 
   useEffect(() => {
     if (!resetToUpcoming) return
-    setActiveStatusTab('upcoming')
+    setActiveStatusTab('next')
   }, [resetToUpcoming])
 
   useEffect(() => {
