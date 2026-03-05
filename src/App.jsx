@@ -34,7 +34,7 @@ export default function App() {
   const [activeView, setActiveView] = useState('control-panel')
   const [optimiserSubView, setOptimiserSubView] = useState('schedule')
   const [insightSubView, setInsightSubView] = useState(null)
-  const [openScheduleFromHeader, setOpenScheduleFromHeader] = useState(null)
+  const [openScheduleDrawerSignal, setOpenScheduleDrawerSignal] = useState(0)
 
   return (
     <div className="h-screen bg-[#f5f5f5] flex text-[#0a0a0a] overflow-hidden">
@@ -204,22 +204,18 @@ export default function App() {
             headerActions={
               activeView === 'optimiser'
                 ? (
-                    <div className="flex items-center gap-3">
-                      <button
-                        type="button"
-                        className="h-10 px-4 rounded-[4px] bg-[#0267ff] text-white text-sm font-medium flex items-center gap-2 shrink-0 hover:bg-[#0252cc]"
-                      >
-                        +Use latest recommendations
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => { if (openScheduleFromHeader) openScheduleFromHeader() }}
-                        className="h-10 px-4 rounded-[4px] bg-[#0267ff] text-white text-sm font-medium flex items-center gap-2 shrink-0 hover:bg-[#0252cc]"
-                      >
-                        +Create schedule
-                      </button>
-                    </div>
+                    <button
+                      type="button"
+                      className="h-10 px-4 rounded-[4px] bg-[#0267ff] text-white text-sm font-medium flex items-center gap-2 shrink-0 hover:bg-[#0252cc]"
+                    >
+                      +Use latest recommendations
+                    </button>
                   )
+                : undefined
+            }
+            onCreateSchedule={
+              activeView === 'optimiser'
+                ? () => setOpenScheduleDrawerSignal((n) => n + 1)
                 : undefined
             }
           />
@@ -230,7 +226,10 @@ export default function App() {
             <ScopePage />
           ) : activeView === 'optimiser' ? (
             <div className="pt-6">
-              <OptimiserPage onAddJob={() => setOptimiserSubView('scope')} onRegisterCreateScheduleHandler={setOpenScheduleFromHeader} />
+              <OptimiserPage
+                onAddJob={() => setOptimiserSubView('scope')}
+                openScheduleDrawer={openScheduleDrawerSignal}
+              />
             </div>
           ) : activeView === 'insights' ? (
             <div>

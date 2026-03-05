@@ -118,7 +118,7 @@ const MODULE_OPTIONS = [
   { id: 'rebalancing', label: 'Rebalancing' },
 ]
 
-export default function OptimiserPage({ onAddJob, onRegisterCreateScheduleHandler }) {
+export default function OptimiserPage({ onAddJob, openScheduleDrawer }) {
   const [scheduleDrawerOpen, setScheduleDrawerOpen] = useState(false)
   const [editingScheduleEntry, setEditingScheduleEntry] = useState(null)
   const [drawerForm, setDrawerForm] = useState(DEFAULT_DRAWER_FORM)
@@ -363,14 +363,12 @@ export default function OptimiserPage({ onAddJob, onRegisterCreateScheduleHandle
   const eventDatePickerNextMonth = () => setEventDatePickerViewDate((d) => new Date(d.getFullYear(), d.getMonth() + 1, 1))
 
   useEffect(() => {
-    if (!onRegisterCreateScheduleHandler) return
-    onRegisterCreateScheduleHandler(() => {
-      setEditingScheduleEntry(null)
-      setDrawerForm(DEFAULT_DRAWER_FORM)
-      setScheduleDrawerDays({ Wed: true, Sat: true })
-      setScheduleDrawerOpen(true)
-    })
-  }, [onRegisterCreateScheduleHandler])
+    if (!openScheduleDrawer) return
+    setEditingScheduleEntry(null)
+    setDrawerForm(DEFAULT_DRAWER_FORM)
+    setScheduleDrawerDays({ Wed: true, Sat: true })
+    setScheduleDrawerOpen(true)
+  }, [openScheduleDrawer])
 
   return (
     <div className="flex flex-col gap-6">
@@ -805,178 +803,6 @@ export default function OptimiserPage({ onAddJob, onRegisterCreateScheduleHandle
             </div>
           )}
           </div>
-          {scheduleDrawerOpen && (
-            <>
-              <div role="presentation" className="fixed inset-0 bg-black/50 z-40" onClick={closeDrawer} aria-hidden />
-              <div className="fixed right-0 top-0 bottom-0 w-[800px] bg-white shadow-xl z-50 flex flex-col" role="dialog" aria-modal aria-labelledby="add-schedule-title" data-name={editingScheduleEntry ? 'Edit schedule' : 'Add Schedule'} data-node-id="214:2622">
-                <header className="flex items-center justify-between shrink-0 h-14 px-6 border-b border-[#e9eaeb]">
-                  <h2 id="add-schedule-title" className="text-[18px] font-medium text-[#0a0a0a]">{editingScheduleEntry ? 'Edit schedule' : 'Add Schedule'}</h2>
-                  <button type="button" onClick={closeDrawer} className="p-2 -mr-2 text-[#4b535c] hover:bg-[#f3f4f6] rounded-[4px]" aria-label="Close">
-                    <IconClose />
-                  </button>
-                </header>
-                <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-6">
-                  <section className="flex flex-col gap-2">
-                    <p className="text-[14px] font-medium text-[#0a0a0a]">Choose module to create schedule <span className="font-normal text-[#4b535c]">Make a selection</span></p>
-                    <label className="text-[14px] font-normal text-[#4b535c]">Module</label>
-                    <div className="relative">
-                      <button
-                        type="button"
-                        onClick={() => setModuleDropdownOpen((o) => !o)}
-                        className={`w-full h-10 flex items-center justify-between gap-2 px-3 rounded-[4px] border bg-white text-[14px] text-left ${moduleDropdownOpen ? 'border-[#0267ff]' : 'border-[#e9eaeb]'}`}
-                        data-name="Input multiple select"
-                        data-node-id="12770:4659"
-                      >
-                        <span className={drawerForm.modules.length === 0 ? 'text-[#4b535c]' : 'text-[#0a0a0a]'}>
-                          {drawerForm.modules.length === 0
-                            ? 'Select'
-                            : drawerForm.modules.map((id) => MODULE_OPTIONS.find((o) => o.id === id)?.label).filter(Boolean).join(', ')}
-                        </span>
-                        <IconChevronDownSelect />
-                      </button>
-                      {moduleDropdownOpen && (
-                        <>
-                          <div role="presentation" className="fixed inset-0 z-[60]" onClick={() => setModuleDropdownOpen(false)} aria-hidden />
-                          <div
-                            className="absolute left-0 top-full mt-1 z-[70] w-full min-w-[200px] bg-white border border-[#e9eaeb] rounded-[4px] p-2 shadow-[0px_8px_25px_0px_rgba(0,0,0,0.12)]"
-                            data-name="Dropdown list"
-                            data-node-id="12771:5850"
-                          >
-                            {MODULE_OPTIONS.map((opt) => {
-                              const selected = drawerForm.modules.includes(opt.id)
-                              return (
-                                <button
-                                  key={opt.id}
-                                  type="button"
-                                  onClick={() => toggleModule(opt.id)}
-                                  className="w-full flex gap-2 items-center p-3 rounded-[3px] text-left hover:bg-[#f8f8f8] focus:bg-[#f8f8f8]"
-                                  data-name="Dropdown item"
-                                  data-node-id="12771:5851"
-                                >
-                                  <span className="flex items-center justify-center shrink-0 size-6">
-                                    <span className={`flex items-center justify-center rounded-[4px] size-5 border-2 ${selected ? 'bg-[#0267ff] border-[#0267ff]' : 'bg-white border-[#e5e7eb]'}`}>
-                                      {selected && (
-                                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="text-white"><path d="M2 6l3 3 5-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                                      )}
-                                    </span>
-                                  </span>
-                                  <span className="flex-1 text-[12px] font-medium text-[#0a0a0a] leading-normal">{opt.label}</span>
-                                </button>
-                              )
-                            })}
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  </section>
-                  <section className="flex flex-col gap-2">
-                    <p className="text-[14px] font-medium text-[#0a0a0a]">Give your schedule a name:</p>
-                    <label className="text-[14px] font-normal text-[#4b535c]">Name schedule</label>
-                    <input type="text" placeholder="Placeholder" value={drawerForm.name} onChange={(ev) => setDrawerForm((f) => ({ ...f, name: ev.target.value }))} className="w-full h-10 px-3 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#0a0a0a] placeholder:text-[#4b535c]" />
-                    <p className="text-[12px] font-normal text-[#4b535c]">If not assigned, name will be given automatically</p>
-                  </section>
-                  <section className="flex flex-col gap-2">
-                    <p className="text-[14px] font-medium text-[#0a0a0a]">Scheduling Dates <span className="font-normal text-[#4b535c]">Make a selection</span></p>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="flex flex-col gap-1">
-                        <label className="text-[14px] font-normal text-[#4b535c]">Sending location</label>
-                        <div className="relative">
-                          <select value={drawerForm.sending} onChange={(ev) => setDrawerForm((f) => ({ ...f, sending: ev.target.value }))} className="w-full h-10 pl-3 pr-9 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#0a0a0a] appearance-none">
-                            <option value="">Select</option>
-                            <option value="Warehouse A">Warehouse A</option>
-                            <option value="Warehouse B">Warehouse B</option>
-                          </select>
-                          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none"><IconChevronDownSelect /></span>
-                        </div>
-                      </div>
-                      <div className="flex flex-col gap-1">
-                        <label className="text-[14px] font-normal text-[#4b535c]">Receiving location</label>
-                        <div className="relative">
-                          <select value={drawerForm.receiving} onChange={(ev) => setDrawerForm((f) => ({ ...f, receiving: ev.target.value }))} className="w-full h-10 pl-3 pr-9 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#0a0a0a] appearance-none">
-                            <option value="">Select</option>
-                            <option value="Store A">Store A</option>
-                            <option value="Store B">Store B</option>
-                          </select>
-                          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none"><IconChevronDownSelect /></span>
-                        </div>
-                      </div>
-                    </div>
-                  </section>
-                  <section className="flex flex-col gap-2">
-                    <p className="text-[14px] font-medium text-[#0a0a0a]">Schedule:</p>
-                    <div className="flex flex-wrap gap-3">
-                      <div className="flex flex-col gap-1 min-w-[140px]">
-                        <label className="text-[14px] font-normal text-[#4b535c]">Repeats</label>
-                        <div className="relative">
-                          <select value={drawerForm.repeats} onChange={(ev) => setDrawerForm((f) => ({ ...f, repeats: ev.target.value }))} className="w-full h-10 pl-3 pr-9 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#0a0a0a] appearance-none">
-                            <option value="weekly">Weekly</option>
-                            <option value="biweekly">Bi-weekly (Every 2 weeks)</option>
-                            <option value="monthly">Monthly</option>
-                          </select>
-                          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none"><IconChevronDownSelect /></span>
-                        </div>
-                      </div>
-                      <div className="flex flex-col gap-1 min-w-[100px]">
-                        <label className="text-[14px] font-normal text-[#4b535c]">Time</label>
-                        <div className="relative">
-                          <select value={drawerForm.time} onChange={(ev) => setDrawerForm((f) => ({ ...f, time: ev.target.value }))} className="w-full h-10 pl-3 pr-9 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#0a0a0a] appearance-none">
-                            <option value="">Select time</option>
-                            <option value="09:00 AM">09:00 AM</option>
-                            <option value="10:00 AM">10:00 AM</option>
-                            <option value="12:00 PM">12:00 PM</option>
-                          </select>
-                          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none"><IconChevronDownSelect /></span>
-                        </div>
-                      </div>
-                      <div className="flex flex-col gap-1 min-w-[160px]">
-                        <label className="text-[14px] font-normal text-[#4b535c]">Time zone</label>
-                        <div className="relative">
-                          <select value={drawerForm.timeZone} onChange={(ev) => setDrawerForm((f) => ({ ...f, timeZone: ev.target.value }))} className="w-full h-10 pl-3 pr-9 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#0a0a0a] appearance-none">
-                            <option value="pst">PST</option>
-                            <option value="gmt+1">(GMT +1) Central Europe</option>
-                          </select>
-                          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none"><IconChevronDownSelect /></span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[14px] font-normal text-[#4b535c]">Day selection</label>
-                      <div className="flex gap-2 flex-wrap">
-                        {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => {
-                          const selected = scheduleDrawerDays[day]
-                          return (
-                            <button key={day} type="button" onClick={() => toggleScheduleDay(day)} className={`h-9 px-3 rounded-[4px] border text-[14px] font-normal shrink-0 ${selected ? 'border-[#0267ff] bg-[#ebf3ff] text-[#0267ff]' : 'border-[#e9eaeb] bg-white text-[#4b535c] hover:bg-[#f3f4f6]'}`}>
-                              {day}
-                            </button>
-                          )
-                        })}
-                      </div>
-                    </div>
-                  </section>
-                  <section className="flex flex-col gap-2">
-                    <label className="text-[14px] font-normal text-[#4b535c]">Ends on</label>
-                    <div className="relative">
-                      <input type="text" placeholder="Select date" value={drawerForm.endsOn} onChange={(ev) => setDrawerForm((f) => ({ ...f, endsOn: ev.target.value }))} className="w-full h-10 pl-3 pr-10 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#0a0a0a] placeholder:text-[#4b535c]" />
-                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none"><IconCalendarSidebar className="size-4" /></span>
-                    </div>
-                    <p className="text-[12px] font-normal text-[#4b535c]">If left empty, rebalancing will be repeating indefinitely</p>
-                  </section>
-                  <section className="flex flex-col gap-2">
-                    <p className="text-[14px] font-medium text-[#0a0a0a]">Notify users:</p>
-                    <input type="text" placeholder="Enter user emails" value={drawerForm.notify} onChange={(ev) => setDrawerForm((f) => ({ ...f, notify: ev.target.value }))} className="w-full h-10 px-3 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#0a0a0a] placeholder:text-[#4b535c]" />
-                  </section>
-                </div>
-                <footer className="flex items-center justify-end gap-3 shrink-0 p-6 border-t border-[#e9eaeb]">
-                  <button type="button" onClick={closeDrawer} className="h-10 px-4 rounded-[4px] text-[16px] font-medium text-[#0a0a0a] hover:bg-[#f3f4f6]">
-                    Cancel
-                  </button>
-                  <button type="button" className="h-10 px-4 rounded-[4px] bg-[#0267ff] text-white text-[16px] font-medium">
-                    {editingScheduleEntry ? 'Save changes' : 'Add Schedule'}
-                  </button>
-                </footer>
-              </div>
-            </>
-          )}
         </>
       ) : activeStatusTab === 'next' ? (
         <div className="mt-3 space-y-4">
@@ -1090,6 +916,178 @@ export default function OptimiserPage({ onAddJob, onRegisterCreateScheduleHandle
         </div>
       ) : (
         <div />
+      )}
+      {scheduleDrawerOpen && (
+        <>
+          <div role="presentation" className="fixed inset-0 bg-black/50 z-40" onClick={closeDrawer} aria-hidden />
+          <div className="fixed right-0 top-0 bottom-0 w-[800px] bg-white shadow-xl z-50 flex flex-col" role="dialog" aria-modal aria-labelledby="add-schedule-title" data-name={editingScheduleEntry ? 'Edit schedule' : 'Add Schedule'} data-node-id="214:2622">
+            <header className="flex items-center justify-between shrink-0 h-14 px-6 border-b border-[#e9eaeb]">
+              <h2 id="add-schedule-title" className="text-[18px] font-medium text-[#0a0a0a]">{editingScheduleEntry ? 'Edit schedule' : 'Add Schedule'}</h2>
+              <button type="button" onClick={closeDrawer} className="p-2 -mr-2 text-[#4b535c] hover:bg-[#f3f4f6] rounded-[4px]" aria-label="Close">
+                <IconClose />
+              </button>
+            </header>
+            <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-6">
+              <section className="flex flex-col gap-2">
+                <p className="text-[14px] font-medium text-[#0a0a0a]">Choose module to create schedule <span className="font-normal text-[#4b535c]">Make a selection</span></p>
+                <label className="text-[14px] font-normal text-[#4b535c]">Module</label>
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setModuleDropdownOpen((o) => !o)}
+                    className={`w-full h-10 flex items-center justify-between gap-2 px-3 rounded-[4px] border bg-white text-[14px] text-left ${moduleDropdownOpen ? 'border-[#0267ff]' : 'border-[#e9eaeb]'}`}
+                    data-name="Input multiple select"
+                    data-node-id="12770:4659"
+                  >
+                    <span className={drawerForm.modules.length === 0 ? 'text-[#4b535c]' : 'text-[#0a0a0a]'}>
+                      {drawerForm.modules.length === 0
+                        ? 'Select'
+                        : drawerForm.modules.map((id) => MODULE_OPTIONS.find((o) => o.id === id)?.label).filter(Boolean).join(', ')}
+                    </span>
+                    <IconChevronDownSelect />
+                  </button>
+                  {moduleDropdownOpen && (
+                    <>
+                      <div role="presentation" className="fixed inset-0 z-[60]" onClick={() => setModuleDropdownOpen(false)} aria-hidden />
+                      <div
+                        className="absolute left-0 top-full mt-1 z-[70] w-full min-w-[200px] bg-white border border-[#e9eaeb] rounded-[4px] p-2 shadow-[0px_8px_25px_0px_rgba(0,0,0,0.12)]"
+                        data-name="Dropdown list"
+                        data-node-id="12771:5850"
+                      >
+                        {MODULE_OPTIONS.map((opt) => {
+                          const selected = drawerForm.modules.includes(opt.id)
+                          return (
+                            <button
+                              key={opt.id}
+                              type="button"
+                              onClick={() => toggleModule(opt.id)}
+                              className="w-full flex gap-2 items-center p-3 rounded-[3px] text-left hover:bg-[#f8f8f8] focus:bg-[#f8f8f8]"
+                              data-name="Dropdown item"
+                              data-node-id="12771:5851"
+                            >
+                              <span className="flex items-center justify-center shrink-0 size-6">
+                                <span className={`flex items-center justify-center rounded-[4px] size-5 border-2 ${selected ? 'bg-[#0267ff] border-[#0267ff]' : 'bg-white border-[#e5e7eb]'}`}>
+                                  {selected && (
+                                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="text-white"><path d="M2 6l3 3 5-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                                  )}
+                                </span>
+                              </span>
+                              <span className="flex-1 text-[12px] font-medium text-[#0a0a0a] leading-normal">{opt.label}</span>
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </>
+                  )}
+                </div>
+              </section>
+              <section className="flex flex-col gap-2">
+                <p className="text-[14px] font-medium text-[#0a0a0a]">Give your schedule a name:</p>
+                <label className="text-[14px] font-normal text-[#4b535c]">Name schedule</label>
+                <input type="text" placeholder="Placeholder" value={drawerForm.name} onChange={(ev) => setDrawerForm((f) => ({ ...f, name: ev.target.value }))} className="w-full h-10 px-3 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#0a0a0a] placeholder:text-[#4b535c]" />
+                <p className="text-[12px] font-normal text-[#4b535c]">If not assigned, name will be given automatically</p>
+              </section>
+              <section className="flex flex-col gap-2">
+                <p className="text-[14px] font-medium text-[#0a0a0a]">Scheduling Dates <span className="font-normal text-[#4b535c]">Make a selection</span></p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[14px] font-normal text-[#4b535c]">Sending location</label>
+                    <div className="relative">
+                      <select value={drawerForm.sending} onChange={(ev) => setDrawerForm((f) => ({ ...f, sending: ev.target.value }))} className="w-full h-10 pl-3 pr-9 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#0a0a0a] appearance-none">
+                        <option value="">Select</option>
+                        <option value="Warehouse A">Warehouse A</option>
+                        <option value="Warehouse B">Warehouse B</option>
+                      </select>
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none"><IconChevronDownSelect /></span>
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[14px] font-normal text-[#4b535c]">Receiving location</label>
+                    <div className="relative">
+                      <select value={drawerForm.receiving} onChange={(ev) => setDrawerForm((f) => ({ ...f, receiving: ev.target.value }))} className="w-full h-10 pl-3 pr-9 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#0a0a0a] appearance-none">
+                        <option value="">Select</option>
+                        <option value="Store A">Store A</option>
+                        <option value="Store B">Store B</option>
+                      </select>
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none"><IconChevronDownSelect /></span>
+                    </div>
+                  </div>
+                </div>
+              </section>
+              <section className="flex flex-col gap-2">
+                <p className="text-[14px] font-medium text-[#0a0a0a]">Schedule:</p>
+                <div className="flex flex-wrap gap-3">
+                  <div className="flex flex-col gap-1 min-w-[140px]">
+                    <label className="text-[14px] font-normal text-[#4b535c]">Repeats</label>
+                    <div className="relative">
+                      <select value={drawerForm.repeats} onChange={(ev) => setDrawerForm((f) => ({ ...f, repeats: ev.target.value }))} className="w-full h-10 pl-3 pr-9 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#0a0a0a] appearance-none">
+                        <option value="weekly">Weekly</option>
+                        <option value="biweekly">Bi-weekly (Every 2 weeks)</option>
+                        <option value="monthly">Monthly</option>
+                      </select>
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none"><IconChevronDownSelect /></span>
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-1 min-w-[100px]">
+                    <label className="text-[14px] font-normal text-[#4b535c]">Time</label>
+                    <div className="relative">
+                      <select value={drawerForm.time} onChange={(ev) => setDrawerForm((f) => ({ ...f, time: ev.target.value }))} className="w-full h-10 pl-3 pr-9 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#0a0a0a] appearance-none">
+                        <option value="">Select time</option>
+                        <option value="09:00 AM">09:00 AM</option>
+                        <option value="10:00 AM">10:00 AM</option>
+                        <option value="12:00 PM">12:00 PM</option>
+                      </select>
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none"><IconChevronDownSelect /></span>
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-1 min-w-[160px]">
+                    <label className="text-[14px] font-normal text-[#4b535c]">Time zone</label>
+                    <div className="relative">
+                      <select value={drawerForm.timeZone} onChange={(ev) => setDrawerForm((f) => ({ ...f, timeZone: ev.target.value }))} className="w-full h-10 pl-3 pr-9 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#0a0a0a] appearance-none">
+                        <option value="pst">PST</option>
+                        <option value="gmt+1">(GMT +1) Central Europe</option>
+                      </select>
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none"><IconChevronDownSelect /></span>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-[14px] font-normal text-[#4b535c]">Day selection</label>
+                  <div className="flex gap-2 flex-wrap">
+                    {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => {
+                      const selected = scheduleDrawerDays[day]
+                      return (
+                        <button key={day} type="button" onClick={() => toggleScheduleDay(day)} className={`h-9 px-3 rounded-[4px] border text-[14px] font-normal shrink-0 ${selected ? 'border-[#0267ff] bg-[#ebf3ff] text-[#0267ff]' : 'border-[#e9eaeb] bg-white text-[#4b535c] hover:bg-[#f3f4f6]'}`}>
+                          {day}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              </section>
+              <section className="flex flex-col gap-2">
+                <label className="text-[14px] font-normal text-[#4b535c]">Ends on</label>
+                <div className="relative">
+                  <input type="text" placeholder="Select date" value={drawerForm.endsOn} onChange={(ev) => setDrawerForm((f) => ({ ...f, endsOn: ev.target.value }))} className="w-full h-10 pl-3 pr-10 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#0a0a0a] placeholder:text-[#4b535c]" />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none"><IconCalendarSidebar className="size-4" /></span>
+                </div>
+                <p className="text-[12px] font-normal text-[#4b535c]">If left empty, rebalancing will be repeating indefinitely</p>
+              </section>
+              <section className="flex flex-col gap-2">
+                <p className="text-[14px] font-medium text-[#0a0a0a]">Notify users:</p>
+                <input type="text" placeholder="Enter user emails" value={drawerForm.notify} onChange={(ev) => setDrawerForm((f) => ({ ...f, notify: ev.target.value }))} className="w-full h-10 px-3 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#0a0a0a] placeholder:text-[#4b535c]" />
+              </section>
+            </div>
+            <footer className="flex items-center justify-end gap-3 shrink-0 p-6 border-t border-[#e9eaeb]">
+              <button type="button" onClick={closeDrawer} className="h-10 px-4 rounded-[4px] text-[16px] font-medium text-[#0a0a0a] hover:bg-[#f3f4f6]">
+                Cancel
+              </button>
+              <button type="button" className="h-10 px-4 rounded-[4px] bg-[#0267ff] text-white text-[16px] font-medium">
+                {editingScheduleEntry ? 'Save changes' : 'Add Schedule'}
+              </button>
+            </footer>
+          </div>
+        </>
       )}
     </div>
   )
