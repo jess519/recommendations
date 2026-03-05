@@ -916,6 +916,54 @@ export default function OptimiserPage({ onAddJob, onRegisterCreateScheduleHandle
             </>
           )}
         </>
+      ) : activeStatusTab === 'next' ? (
+        <div className="mt-4">
+          <div className="bg-white border border-[#e5e7eb] rounded-[14px] p-6 flex flex-col gap-4 max-w-4xl">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h2 className="text-lg font-medium text-[#0a0a0a]">Europe monthly rebal</h2>
+            </div>
+            <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-[#4b535c]">
+              <span>Created: 24/02/2026</span>
+              <span className="flex items-center gap-2">
+                <span>Submission deadline:</span>
+                <span className="px-2 py-1 rounded-full bg-[#fef3c7] text-[#92400e] text-xs font-medium">
+                  28/02/2026
+                </span>
+              </span>
+            </div>
+            <div>
+              <span className="inline-flex items-center px-3 py-1 rounded-full bg-[#fef3c7] text-[#92400e] text-xs font-medium">
+                Ready to review
+              </span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-sm text-[#0a0a0a]">
+              <div className="flex flex-col">
+                <span className="text-[#4b535c]">Total exceptions</span>
+                <span className="font-medium">12</span>
+              </div>
+              <div className="flex flex-col">
+                <span className="text-[#4b535c]">Total approved</span>
+                <span className="font-medium">96</span>
+              </div>
+              <div className="flex flex-col">
+                <span className="text-[#4b535c]">Unique trips</span>
+                <span className="font-medium">113</span>
+              </div>
+              <div className="flex flex-col">
+                <span className="text-[#4b535c]">Recommended transfers</span>
+                <span className="font-medium">2,308</span>
+              </div>
+              <div className="flex flex-col">
+                <span className="text-[#4b535c]">Revenue increase</span>
+                <span className="font-medium">€501.1K</span>
+              </div>
+              <div className="flex flex-col">
+                <span className="text-[#4b535c]">Stockouts</span>
+                <span className="font-medium">1,013 → 559</span>
+              </div>
+            </div>
+          </div>
+        </div>
       ) : (
         <div />
       )}
