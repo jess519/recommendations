@@ -18,20 +18,15 @@ export default function TopBar({
             <IconArrowLeft className="text-white" />
           </button>
         )}
-        {headerActions ? (
-          <div className="flex items-center gap-4 min-w-0">
-            {headerActions}
-          </div>
-        ) : (
-          <div className="flex flex-col gap-1 min-w-0">
-            <h1 className="font-sans text-2xl font-medium text-white leading-tight">{title}</h1>
-            {subtitle != null && subtitle !== '' && (
-              <p className="font-sans text-sm font-normal text-[#878d94] leading-tight whitespace-nowrap">{subtitle}</p>
-            )}
-          </div>
-        )}
+        <div className="flex flex-col gap-1 min-w-0">
+          <h1 className="font-sans text-2xl font-medium text-white leading-tight">{title}</h1>
+          {subtitle != null && subtitle !== '' && (
+            <p className="font-sans text-sm font-normal text-[#878d94] leading-tight whitespace-nowrap">{subtitle}</p>
+          )}
+        </div>
       </div>
       <div className="flex flex-1 gap-1.5 items-center justify-end min-w-0 shrink-0">
+        {headerActions}
         {showMenuButton && (
           <button type="button" className="flex items-center justify-center size-10 rounded-[4px] text-white hover:bg-white/10 shrink-0" aria-label="More options">
             <IconEllipsisVertical className="size-5" />

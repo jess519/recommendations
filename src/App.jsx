@@ -180,30 +180,48 @@ export default function App() {
       <div className="flex flex-col flex-1 min-w-0 min-h-0 w-full overflow-hidden">
         <div className="shrink-0">
           <TopBar
-            title={activeView === 'optimiser' && optimiserSubView === 'scope' ? 'Scope' : activeView === 'optimiser' ? 'Optimiser' : activeView === 'insights' ? 'Insights' : 'Overview'}
-            subtitle={activeView === 'optimiser' && optimiserSubView === 'scope' ? null : activeView === 'optimiser' ? 'Automate replenishment, reordering, and rebalancing with scheduled inventory optimisation.' : activeView === 'insights' ? 'Analytics and statistics for your sales performance.' : "Overview area, your 'morning check-in' to prioritise and manage inventory, scheduling and more"}
+            title={
+              activeView === 'optimiser' && optimiserSubView === 'scope'
+                ? 'Scope'
+                : activeView === 'optimiser'
+                  ? 'Recommendations'
+                  : activeView === 'insights'
+                    ? 'Insights'
+                    : 'Overview'
+            }
+            subtitle={
+              activeView === 'optimiser' && optimiserSubView === 'scope'
+                ? null
+                : activeView === 'optimiser'
+                  ? 'Automate replenishment, reordering, and rebalancing with scheduled inventory optimisation.'
+                  : activeView === 'insights'
+                    ? 'Analytics and statistics for your sales performance.'
+                    : "Overview area, your 'morning check-in' to prioritise and manage inventory, scheduling and more"
+            }
             primaryButtonLabel={undefined}
             showMenuButton={activeView === 'insights'}
             onBack={activeView === 'optimiser' && optimiserSubView === 'scope' ? () => setOptimiserSubView('schedule') : undefined}
-            headerActions={activeView === 'optimiser'
-              ? (
-                  <div className="flex items-center gap-4">
-                    <button
-                      type="button"
-                      className="text-sm font-medium text-white hover:text-white/80"
-                    >
-                      +Use latest recommendations
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => { if (openScheduleFromHeader) openScheduleFromHeader() }}
-                      className="text-sm font-medium text-white hover:text-white/80"
-                    >
-                      +Create schedule
-                    </button>
-                  </div>
-                )
-              : undefined}
+            headerActions={
+              activeView === 'optimiser'
+                ? (
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        className="h-10 px-4 rounded-[4px] bg-[#0267ff] text-white text-sm font-medium flex items-center gap-2 shrink-0 hover:bg-[#0252cc]"
+                      >
+                        +Use latest recommendations
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => { if (openScheduleFromHeader) openScheduleFromHeader() }}
+                        className="h-10 px-4 rounded-[4px] bg-[#0267ff] text-white text-sm font-medium flex items-center gap-2 shrink-0 hover:bg-[#0252cc]"
+                      >
+                        +Create schedule
+                      </button>
+                    </div>
+                  )
+                : undefined
+            }
           />
         </div>
 
