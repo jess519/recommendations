@@ -1,10 +1,31 @@
 import { useState } from 'react'
-import { IconSearch, IconChevronDown, IconGears, IconShare, IconDocument } from '../components/icons'
+import { IconSearch, IconChevronDown, IconShare, IconDocument } from '../components/icons'
+
+function IconColumnSettings() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="shrink-0" aria-hidden>
+      <path d="M4 4h3v12H4V4zm9 0h3v12h-3V4zM8 4h4v12H8V4z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+function IconSortOrder() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="shrink-0" aria-hidden>
+      <path d="M6 5h8M6 10h8M6 15h5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M14 13l2 2 2-2M18 7v8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+function IconFilterFunnel() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="shrink-0" aria-hidden>
+      <path d="M2 4h16l-5 7v5l-4 2v-7L2 4z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
 
 export default function ScheduleDetailPage() {
   const [activeTab, setActiveTab] = useState('trips')
-  const [tripType, setTripType] = useState('rebalancing')
-  const [includeZeroTransfers, setIncludeZeroTransfers] = useState(true)
 
   return (
     <div className="pt-6 flex flex-col gap-6">
@@ -53,9 +74,9 @@ export default function ScheduleDetailPage() {
         <div className="border-b border-[#e5e7eb]">
           <nav className="flex items-center gap-6 h-11">
             {[
+              { id: 'trips', label: 'Trips' },
               { id: 'products', label: 'Products' },
               { id: 'locations', label: 'Locations' },
-              { id: 'trips', label: 'Trips' },
             ].map((tab) => {
               const isActive = activeTab === tab.id
               return (
@@ -78,86 +99,46 @@ export default function ScheduleDetailPage() {
 
         {activeTab === 'trips' ? (
           <div className="flex flex-col gap-4">
-            <div className="flex flex-wrap items-center justify-between gap-4">
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2">
-                  <span className="text-[14px] text-[#4b535c]">Trip type:</span>
-                  <div className="flex rounded-[4px] border border-[#e5e7eb] bg-white overflow-hidden">
-                    <button
-                      type="button"
-                      onClick={() => setTripType('rebalancing')}
-                      className={`px-3 py-2 text-[14px] font-medium border-r border-[#e5e7eb] ${
-                        tripType === 'rebalancing'
-                          ? 'bg-[#f7f7f7] text-[#0a0a0a]'
-                          : 'text-[#4b535c] hover:bg-[#f0f0f0] bg-white'
-                      }`}
-                    >
-                      Rebalancing
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setTripType('replenishment')}
-                      className={`px-3 py-2 text-[14px] font-medium ${
-                        tripType === 'replenishment'
-                          ? 'bg-[#f7f7f7] text-[#0a0a0a]'
-                          : 'text-[#4b535c] hover:bg-[#f0f0f0] bg-white'
-                      }`}
-                    >
-                      Replenishment
-                    </button>
-                  </div>
-                </div>
-                <div className="w-px h-6 bg-[#e5e7eb]" aria-hidden />
-                <div className="flex items-center gap-2">
-                  <span className="text-[14px] text-[#4b535c]">Include zero transfers</span>
-                  <button
-                    type="button"
-                    onClick={() => setIncludeZeroTransfers((v) => !v)}
-                    className={`relative w-11 h-6 rounded-full transition-colors flex items-center shrink-0 ${
-                      includeZeroTransfers ? 'bg-[#0267ff]' : 'bg-[#e5e7eb]'
-                    }`}
-                    aria-pressed={includeZeroTransfers}
-                  >
-                    <span
-                      className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-transform ${
-                        includeZeroTransfers ? 'left-[22px]' : 'left-0.5'
-                      }`}
-                    />
-                  </button>
-                </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="relative">
+                <select
+                  className="h-10 pl-3 pr-9 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#0a0a0a] appearance-none min-w-[220px]"
+                  defaultValue="stockouts"
+                >
+                  <option value="stockouts">Stockouts before rebalance</option>
+                </select>
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
+                  <IconChevronDown className="size-4" />
+                </span>
               </div>
-
-              <div className="flex items-center gap-2">
-                <div className="flex items-center h-10 w-[240px] rounded-[4px] border border-[#e9eaeb] bg-white pl-3 pr-3">
-                  <IconSearch className="text-[#4b535c] shrink-0" />
-                  <input
-                    type="text"
-                    placeholder="Search..."
-                    className="flex-1 min-w-0 pl-2 border-0 bg-transparent text-[14px] text-[#0a0a0a] outline-none placeholder:text-[#4b535c]"
-                  />
-                </div>
-                <button
-                  type="button"
-                  className="flex items-center justify-center gap-2 h-10 px-4 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#22272f] shrink-0"
-                >
-                  Revenue increase
-                  <IconChevronDown className="shrink-0 text-[#22272f] size-4" aria-hidden />
-                </button>
-                <button
-                  type="button"
-                  className="h-10 w-10 flex items-center justify-center rounded-[4px] border border-[#e9eaeb] bg-white text-[#22272f] hover:bg-[#f3f4f6] shrink-0"
-                  aria-label="Filters"
-                >
-                  <IconSearch className="size-4" />
-                </button>
-                <button
-                  type="button"
-                  className="h-10 w-10 flex items-center justify-center rounded-[4px] border border-[#e9eaeb] bg-white text-[#22272f] hover:bg-[#f3f4f6] shrink-0"
-                  aria-label="Settings"
-                >
-                  <IconGears className="size-5 shrink-0" />
-                </button>
-              </div>
+              <button
+                type="button"
+                className="h-10 w-10 flex items-center justify-center rounded-[4px] border border-[#e9eaeb] bg-white text-[#22272f] hover:bg-[#f3f4f6] shrink-0"
+                aria-label="Column settings"
+              >
+                <IconColumnSettings />
+              </button>
+              <button
+                type="button"
+                className="h-10 w-10 flex items-center justify-center rounded-[4px] border border-[#e9eaeb] bg-white text-[#22272f] hover:bg-[#f3f4f6] shrink-0"
+                aria-label="Sort order"
+              >
+                <IconSortOrder />
+              </button>
+              <button
+                type="button"
+                className="h-10 w-10 flex items-center justify-center rounded-[4px] border border-[#e9eaeb] bg-white text-[#22272f] hover:bg-[#f3f4f6] shrink-0"
+                aria-label="Search"
+              >
+                <IconSearch className="size-4" />
+              </button>
+              <button
+                type="button"
+                className="h-10 px-4 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#22272f] hover:bg-[#f3f4f6] shrink-0 flex items-center gap-2"
+              >
+                <IconFilterFunnel />
+                Filters
+              </button>
             </div>
 
             <div className="border border-[#e5e7eb] rounded-[10px] overflow-hidden mt-2">
@@ -180,12 +161,12 @@ export default function ScheduleDetailPage() {
                   </tr>
                   <tr className="border-b border-[#e5e7eb]">
                     <th className="py-2 px-3" />
+                    <th className="py-2 px-3 text-[12px] font-normal text-[#4b535c]" />
+                    <th className="py-2 px-3 text-[12px] font-normal text-[#4b535c]" />
                     <th className="py-2 px-3 text-[12px] font-normal text-[#4b535c]">2,110 units</th>
-                    <th className="py-2 px-3 text-[12px] font-normal text-[#4b535c]" />
-                    <th className="py-2 px-3 text-[12px] font-normal text-[#4b535c]">2,132 units</th>
                     <th className="py-2 px-3 text-[12px] font-normal text-[#4b535c]">€489.5K</th>
+                    <th className="py-2 px-3 text-[12px] font-normal text-[#4b535c]">2,132 units</th>
                     <th className="py-2 px-3 text-[12px] font-normal text-[#4b535c]">N/A</th>
-                    <th className="py-2 px-3 text-[12px] font-normal text-[#4b535c]" />
                   </tr>
                 </thead>
                 <tbody>
