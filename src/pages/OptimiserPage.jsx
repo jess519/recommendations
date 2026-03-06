@@ -1799,16 +1799,21 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
               ? 'bg-[#fee2e2] text-[#b91c1c]'
               : 'bg-[#fef3c7] text-[#92400e]'
             return (
-            <button
+            <div
               key={schedule.id}
-              type="button"
-              onClick={() => onOpenScheduleDetail && onOpenScheduleDetail(schedule)}
-              className="text-left bg-white border border-[#e5e7eb] border-l-4 border-l-[#0267ff] rounded-[14px] p-4 flex flex-col gap-4 w-full hover:border-[#0267ff] hover:shadow-sm transition-shadow"
+              className="bg-white border border-[#e5e7eb] border-l-4 border-l-[#0267ff] rounded-[14px] p-4 flex flex-col gap-4 w-full hover:border-[#0267ff] hover:shadow-sm transition-shadow"
             >
-              <div className="flex flex-wrap items-center justify-between gap-2">
+              <div
+                className="flex flex-wrap items-center justify-between gap-2 cursor-pointer"
+                onClick={() => onOpenScheduleDetail && onOpenScheduleDetail(schedule)}
+              >
                 <h2 className="text-xl md:text-2xl font-semibold text-[#0a0a0a]">{schedule.name}</h2>
                 <button
                   type="button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    // submit handler can be wired here later
+                  }}
                   className="h-9 px-4 rounded-[4px] border border-[#0267ff] text-sm font-medium text-[#0267ff] bg-white hover:bg-[#ebf3ff]"
                 >
                   Submit
@@ -1868,11 +1873,12 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                     return (
                   <button
                     type="button"
-                    onClick={() =>
+                    onClick={(e) => {
+                      e.stopPropagation()
                       setExpandedExceptionsScheduleId((prev) =>
                         prev === schedule.id ? null : schedule.id
                       )
-                    }
+                    }}
                     className="text-xs font-medium text-[#0267ff] hover:underline"
                   >
                       {expandedExceptionsScheduleId === schedule.id
@@ -1898,7 +1904,7 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                   )}
                 </div>
               )}
-            </button>
+            </div>
             )
           })}
         </div>
