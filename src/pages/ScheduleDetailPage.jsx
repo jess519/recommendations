@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { IconSearch, IconChevronDown, IconShare, IconDocument } from '../components/icons'
+import { IconSearch, IconChevronDown, IconShare, IconDocument, IconClose } from '../components/icons'
 
 function IconColumnSettings() {
   return (
@@ -141,6 +141,30 @@ export default function ScheduleDetailPage() {
               </button>
             </div>
 
+            <div className="flex flex-wrap items-center gap-2 text-[12px] mt-1">
+              <div className="flex flex-wrap items-center gap-2">
+                {[
+                  'Receiving location: Opéra',
+                  'Products: A1252810 +2',
+                  'Advanced: Transfer units lower than 10',
+                ].map((label) => (
+                  <span
+                    key={label}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#f3f4f6] text-[#4b535c] border border-[#e5e7eb]"
+                  >
+                    <span>{label}</span>
+                    <IconClose className="size-3 text-[#9ca3af]" />
+                  </span>
+                ))}
+              </div>
+              <button
+                type="button"
+                className="ml-auto text-[12px] font-medium text-[#4b535c] hover:text-[#0a0a0a]"
+              >
+                Clear filters
+              </button>
+            </div>
+
             <div className="border border-[#e5e7eb] rounded-[10px] overflow-hidden mt-2">
               <table className="w-full text-[14px]">
                 <thead className="bg-[#f8f8f8]">
@@ -163,9 +187,9 @@ export default function ScheduleDetailPage() {
                     <th className="py-2 px-3" />
                     <th className="py-2 px-3 text-[12px] font-normal text-[#4b535c]" />
                     <th className="py-2 px-3 text-[12px] font-normal text-[#4b535c]" />
-                    <th className="py-2 px-3 text-[12px] font-normal text-[#4b535c]">2,110 units</th>
-                    <th className="py-2 px-3 text-[12px] font-normal text-[#4b535c]">€489.5K</th>
-                    <th className="py-2 px-3 text-[12px] font-normal text-[#4b535c]">2,132 units</th>
+                    <th className="py-2 px-3 text-[12px] font-normal text-[#4b535c]">203 units</th>
+                    <th className="py-2 px-3 text-[12px] font-normal text-[#4b535c]">€41.3K</th>
+                    <th className="py-2 px-3 text-[12px] font-normal text-[#4b535c]">203 units</th>
                     <th className="py-2 px-3 text-[12px] font-normal text-[#4b535c]">N/A</th>
                   </tr>
                 </thead>
@@ -173,135 +197,75 @@ export default function ScheduleDetailPage() {
                   {[
                     {
                       id: 1,
-                      from: 'Miramas',
-                      fromCode: 'MRS01',
-                      to: 'Romans',
-                      toCode: 'ROM02',
-                      transfers: '180',
-                      revenue: '€52.4K',
-                      recommended: '192',
-                      products: 18,
+                      from: 'Cannes',
+                      fromCode: 'A1R',
+                      to: 'Opéra',
+                      toCode: 'A1A',
+                      transfers: '119',
+                      revenue: '€23.5K',
+                      recommended: '119',
+                      products: 68,
+                      badges: ['VIS', 'REV'],
                     },
                     {
                       id: 2,
-                      from: 'Troyes',
-                      fromCode: 'TRY03',
-                      to: 'Grenoble',
-                      toCode: 'GRE04',
-                      transfers: '164',
-                      revenue: '€41.7K',
-                      recommended: '176',
-                      products: 14,
+                      from: 'G.I cap 3000',
+                      fromCode: 'A3E',
+                      to: 'Opéra',
+                      toCode: 'A1A',
+                      transfers: '35',
+                      revenue: '€5.73K',
+                      recommended: '35',
+                      products: 23,
+                      badges: ['VIS', 'REV'],
                     },
                     {
                       id: 3,
-                      from: 'Cannes',
-                      fromCode: 'CAN05',
-                      to: 'Nice',
-                      toCode: 'NCE06',
-                      transfers: '192',
-                      revenue: '€38.2K',
-                      recommended: '200',
-                      products: 12,
+                      from: 'Printemps toulon',
+                      fromCode: 'A5O',
+                      to: 'Opéra',
+                      toCode: 'A1A',
+                      transfers: '24',
+                      revenue: '€5.09K',
+                      recommended: '24',
+                      products: 16,
+                      badges: ['VIS', 'REV'],
                     },
                     {
                       id: 4,
-                      from: 'Miramas',
-                      fromCode: 'MRS01',
-                      to: 'Toulon',
-                      toCode: 'TLN07',
-                      transfers: '175',
-                      revenue: '€36.9K',
-                      recommended: '188',
-                      products: 9,
+                      from: 'Pr.com',
+                      fromCode: 'A9E',
+                      to: 'Opéra',
+                      toCode: 'A1A',
+                      transfers: '6',
+                      revenue: '€2.76K',
+                      recommended: '6',
+                      products: 2,
+                      badges: ['REV'],
                     },
                     {
                       id: 5,
-                      from: 'Grenoble',
-                      fromCode: 'GRE04',
-                      to: 'Cannes',
-                      toCode: 'CAN05',
-                      transfers: '162',
-                      revenue: '€34.1K',
-                      recommended: '170',
-                      products: 11,
+                      from: 'Bruxelles',
+                      fromCode: 'A2F',
+                      to: 'Opéra',
+                      toCode: 'A1A',
+                      transfers: '15',
+                      revenue: '€2.28K',
+                      recommended: '15',
+                      products: 12,
+                      badges: ['VIS', 'REV'],
                     },
                     {
                       id: 6,
-                      from: 'Romans',
-                      fromCode: 'ROM02',
-                      to: 'Troyes',
-                      toCode: 'TRY03',
-                      transfers: '148',
-                      revenue: '€29.8K',
-                      recommended: '159',
-                      products: 10,
-                    },
-                    {
-                      id: 7,
-                      from: 'Troyes',
-                      fromCode: 'TRY03',
-                      to: 'Cannes',
-                      toCode: 'CAN05',
-                      transfers: '136',
-                      revenue: '€27.5K',
-                      recommended: '144',
-                      products: 8,
-                    },
-                    {
-                      id: 8,
-                      from: 'Nice',
-                      fromCode: 'NCE06',
-                      to: 'Grenoble',
-                      toCode: 'GRE04',
-                      transfers: '142',
-                      revenue: '€26.3K',
-                      recommended: '151',
-                      products: 7,
-                    },
-                    {
-                      id: 9,
-                      from: 'Cannes',
-                      fromCode: 'CAN05',
-                      to: 'Romans',
-                      toCode: 'ROM02',
-                      transfers: '128',
-                      revenue: '€24.7K',
-                      recommended: '136',
-                      products: 6,
-                    },
-                    {
-                      id: 10,
-                      from: 'Toulon',
-                      fromCode: 'TLN07',
-                      to: 'Miramas',
-                      toCode: 'MRS01',
-                      transfers: '120',
-                      revenue: '€22.4K',
-                      recommended: '129',
-                      products: 5,
-                    },
-                    {
-                      id: 11,
-                      from: 'Grenoble',
-                      fromCode: 'GRE04',
-                      to: 'Romans',
-                      toCode: 'ROM02',
-                      transfers: '138',
-                      revenue: '€21.3K',
-                      recommended: '145',
-                      products: 6,
-                    },
-                    {
-                      id: 12,
-                      from: 'Nice',
-                      fromCode: 'NCE06',
-                      to: 'Toulon',
-                      toCode: 'TLN07',
-                      transfers: '112',
-                      revenue: '€18.7K',
-                      recommended: '120',
+                      from: 'G.I annecy',
+                      fromCode: 'A3C',
+                      to: 'Opéra',
+                      toCode: 'A1A',
+                      transfers: '4',
+                      revenue: '€1.98K',
+                      recommended: '4',
                       products: 4,
+                      badges: ['REV'],
                     },
                   ].map((row) => (
                     <tr key={row.id} className="border-b border-[#e5e7eb] hover:bg-[#f9fafb]">
@@ -341,15 +305,16 @@ export default function ScheduleDetailPage() {
                           <span className="text-[#0a0a0a]">{row.recommended}</span>
                           <span className="text-[12px] text-[#4b535c]">max 200</span>
                           <div className="flex flex-wrap gap-1 mt-1">
-                            <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-[#eff6ff] text-[11px] text-[#1d4ed8]">
-                              MDQ
-                            </span>
-                            <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-[#f3e8ff] text-[11px] text-[#6b21a8]">
-                              VIS
-                            </span>
-                            <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-[#ecfdf3] text-[11px] text-[#166534]">
-                              REV
-                            </span>
+                            {row.badges?.includes('VIS') && (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-[#f3e8ff] text-[11px] text-[#6b21a8]">
+                                VIS
+                              </span>
+                            )}
+                            {row.badges?.includes('REV') && (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-[#ecfdf3] text-[11px] text-[#166534]">
+                                REV
+                              </span>
+                            )}
                           </div>
                         </div>
                       </td>
