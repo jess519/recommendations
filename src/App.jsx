@@ -26,6 +26,7 @@ import OptimiserStatusPage from './pages/OptimiserStatusPage'
 import ForecastInspectorPage from './pages/ForecastInspectorPage'
 import OptimiserPage from './pages/OptimiserPage'
 import ScopePage from './pages/ScopePage'
+import ScheduleDetailPage from './pages/ScheduleDetailPage'
 
 export default function App() {
   const [assignee, setAssignee] = useState({})
@@ -186,28 +187,34 @@ export default function App() {
             title={
               activeView === 'optimiser' && optimiserSubView === 'scope'
                 ? 'Scope'
-                : activeView === 'optimiser'
-                  ? 'Recommendations'
-                  : activeView === 'insights'
-                    ? 'Insights'
-                    : 'Overview'
+                : activeView === 'optimiser' && optimiserSubView === 'schedule-detail'
+                  ? 'Schedule detail'
+                  : activeView === 'optimiser'
+                    ? 'Recommendations'
+                    : activeView === 'insights'
+                      ? 'Insights'
+                      : 'Overview'
             }
             subtitle={
               activeView === 'optimiser' && optimiserSubView === 'scope'
                 ? null
-                : activeView === 'optimiser'
-                  ? 'Automate replenishment, reordering, and rebalancing with scheduled inventory optimisation.'
-                  : activeView === 'insights'
-                    ? 'Analytics and statistics for your sales performance.'
-                    : "Overview area, your 'morning check-in' to prioritise and manage inventory, scheduling and more"
+                : activeView === 'optimiser' && optimiserSubView === 'schedule-detail'
+                  ? null
+                  : activeView === 'optimiser'
+                    ? 'Automate replenishment, reordering, and rebalancing with scheduled inventory optimisation.'
+                    : activeView === 'insights'
+                      ? 'Analytics and statistics for your sales performance.'
+                      : "Overview area, your 'morning check-in' to prioritise and manage inventory, scheduling and more"
             }
             primaryButtonLabel={undefined}
             showMenuButton={activeView === 'insights'}
             onBack={
-              activeView === 'optimiser' && optimiserSubView === 'scope'
+              activeView === 'optimiser' && (optimiserSubView === 'scope' || optimiserSubView === 'schedule-detail')
                 ? () => {
                     setOptimiserSubView(null)
-                    setResetToUpcomingSignal((n) => n + 1)
+                    if (optimiserSubView === 'scope') {
+                      setResetToUpcomingSignal((n) => n + 1)
+                    }
                     setOpenAddJobSignal(0)
                   }
                 : undefined
@@ -229,6 +236,10 @@ export default function App() {
         <main className="flex-1 min-h-0 min-w-0 w-full pl-8 pr-8 pb-12 overflow-y-auto overflow-x-hidden">
           {activeView === 'optimiser' && optimiserSubView === 'scope' ? (
             <ScopePage />
+          ) : activeView === 'optimiser' && optimiserSubView === 'schedule-detail' ? (
+            <div className="pt-6">
+              <ScheduleDetailPage />
+            </div>
           ) : activeView === 'optimiser' ? (
             <div className="pt-6">
               <OptimiserPage
@@ -237,6 +248,7 @@ export default function App() {
                 openAddJob={openAddJobSignal}
                 resetToUpcoming={resetToUpcomingSignal}
                 openCreateSchedulePage={openCreateSchedulePageSignal}
+                onOpenScheduleDetail={() => setOptimiserSubView('schedule-detail')}
               />
             </div>
           ) : activeView === 'insights' ? (

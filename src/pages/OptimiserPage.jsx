@@ -119,7 +119,7 @@ const MODULE_OPTIONS = [
   { id: 'rebalancing', label: 'Rebalancing' },
 ]
 
-export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob, resetToUpcoming, openCreateSchedulePage }) {
+export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob, resetToUpcoming, openCreateSchedulePage, onOpenScheduleDetail }) {
   const [scheduleDrawerOpen, setScheduleDrawerOpen] = useState(false)
   const [editingScheduleEntry, setEditingScheduleEntry] = useState(null)
   const [drawerForm, setDrawerForm] = useState(DEFAULT_DRAWER_FORM)
@@ -1799,9 +1799,11 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
               ? 'bg-[#fee2e2] text-[#b91c1c]'
               : 'bg-[#fef3c7] text-[#92400e]'
             return (
-            <div
+            <button
               key={schedule.id}
-              className="bg-white border border-[#e5e7eb] border-l-4 border-l-[#0267ff] rounded-[14px] p-4 flex flex-col gap-4 w-full"
+              type="button"
+              onClick={() => onOpenScheduleDetail && onOpenScheduleDetail(schedule)}
+              className="text-left bg-white border border-[#e5e7eb] border-l-4 border-l-[#0267ff] rounded-[14px] p-4 flex flex-col gap-4 w-full hover:border-[#0267ff] hover:shadow-sm transition-shadow"
             >
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <h2 className="text-xl md:text-2xl font-semibold text-[#0a0a0a]">{schedule.name}</h2>
@@ -1896,7 +1898,7 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                   )}
                 </div>
               )}
-            </div>
+            </button>
             )
           })}
         </div>
