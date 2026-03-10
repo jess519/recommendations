@@ -588,6 +588,7 @@ function StockAnalysisDrilldown({ product, trip, onBack }) {
         <table className="w-full text-[14px]">
           <thead className="bg-[#F8F8F8]">
             <tr className="border-b border-[#E9EAEB]">
+              <th className="w-10 max-w-[40px] py-3 px-2 text-left" />
               <th className="w-12 py-3 px-4 text-left">
                 <input type="checkbox" className="size-4 rounded border-[#E9EAEB] text-[#0267ff]" aria-label="Select all" />
               </th>
@@ -614,7 +615,7 @@ function StockAnalysisDrilldown({ product, trip, onBack }) {
               <th className="text-right py-3 px-4 font-medium text-[#00050A]">Coverage</th>
             </tr>
             <tr className="border-b border-[#E9EAEB] bg-[#F8F8F8]">
-              <th className="py-2 px-2" />
+              <th className="w-10 max-w-[40px] py-2 px-2" />
               <th className="py-2 px-4" />
               <th className="py-2 px-4" />
               <th className="py-2 px-4 text-[12px] font-semibold text-[#0a0a0a] text-right">
@@ -632,7 +633,7 @@ function StockAnalysisDrilldown({ product, trip, onBack }) {
           <tbody>
             {locations.map((loc, idx) => (
               <tr key={loc.id} className={`border-b border-[#E9EAEB] hover:bg-[#f9fafb] ${idx === 0 ? 'bg-[#F8F8F8]' : 'bg-white'}`}>
-                <td className="py-3 px-2">
+                <td className="w-10 max-w-[40px] py-3 px-2">
                   <button
                     type="button"
                     onClick={() => setSelectedTransferDetail(loc)}
