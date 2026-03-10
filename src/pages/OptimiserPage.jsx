@@ -1801,7 +1801,7 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
             return (
             <div
               key={schedule.id}
-              className="bg-white border border-[#e5e7eb] border-l-4 border-l-[#0267ff] rounded-[14px] p-4 flex flex-col gap-4 w-full hover:border-[#0267ff] hover:shadow-sm transition-shadow"
+              className="bg-white border border-[#EAEAEA] border-l-4 border-l-[#0267FF] rounded-[3.42px] p-5 flex flex-col gap-4 w-full hover:border-[#0267FF]/30 hover:shadow-sm transition-shadow"
             >
               <div
                 className="flex flex-wrap items-center justify-between gap-2 cursor-pointer"
@@ -1823,13 +1823,13 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                 <span>Created: {schedule.created}</span>
                 <span className="flex items-center gap-2">
                   <span>Submission deadline:</span>
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${deadlineBadgeClass}`}>
+                  <span className={`px-2 py-[3px] rounded-[2px] text-[14px] font-medium ${deadlineBadgeClass}`}>
                     {schedule.deadline}
                   </span>
                 </span>
               </div>
               <div className="flex flex-wrap items-center justify-between gap-3 text-sm">
-                <span className="inline-flex items-center px-3 py-1 rounded-full bg-[#fef3c7] text-[#92400e] text-xs font-medium">
+                <span className="inline-flex items-center px-2 py-[3px] rounded-[2px] bg-[#00A195] text-white text-[14px] font-medium">
                   {schedule.status}
                 </span>
                 <div className="flex flex-wrap items-center gap-4 text-sm text-[#4b535c]">
@@ -1845,16 +1845,16 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                 {schedule.metrics.map((metric) => {
                   const bgClass =
                     metric.label === 'Unique trips'
-                      ? 'bg-[#eff6ff]'
+                      ? 'bg-[#dbeafe]'
                       : metric.label === 'Recommended transfers'
-                        ? 'bg-[#f3e8ff]'
+                        ? 'bg-[#ede9fe]'
                         : metric.label === 'Revenue increase'
-                          ? 'bg-[#ecfdf3]'
-                          : 'bg-[#fef2f2]'
+                          ? 'bg-[#d1fae5]'
+                          : 'bg-[#fef9c3]'
                   return (
                     <div
                       key={metric.label}
-                      className={`rounded-[12px] border border-[#e5e7eb] px-3 py-2.5 flex flex-col ${bgClass}`}
+                      className={`rounded-[4px] border border-[#EAEAEA] px-4 py-3 flex flex-col ${bgClass}`}
                     >
                       <span className="text-xl md:text-2xl font-semibold tracking-tight text-[#0a0a0a]">
                       {metric.value}

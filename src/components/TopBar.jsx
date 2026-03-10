@@ -27,13 +27,13 @@ export default function TopBar({
           )}
         </div>
       </div>
-      <div className="flex flex-1 gap-1.5 items-center justify-end min-w-0 shrink-0">
+      <div className="flex flex-1 gap-2 items-center justify-end min-w-0 shrink-0">
         {headerActions}
         {onUseLatestRecommendations && (
           <button
             type="button"
             onClick={onUseLatestRecommendations}
-            className="h-10 px-4 rounded-[4px] bg-[#0267ff] text-white text-sm font-medium flex items-center gap-2 shrink-0 hover:bg-[#0252cc]"
+            className="h-14 px-6 rounded-[6px] bg-[#0267FF] text-white text-[18px] font-medium flex items-center gap-2 shrink-0 hover:bg-[#0252cc]"
           >
             +Use latest recommendations
           </button>
@@ -42,7 +42,7 @@ export default function TopBar({
           <button
             type="button"
             onClick={onCreateSchedule}
-            className="h-10 px-4 rounded-[4px] bg-[#0267ff] text-white text-sm font-medium flex items-center gap-2 shrink-0 hover:bg-[#0252cc]"
+            className="h-14 px-6 rounded-[6px] bg-[#0267FF] text-white text-[18px] font-medium flex items-center gap-2 shrink-0 hover:bg-[#0252cc]"
           >
             +Create schedule
           </button>

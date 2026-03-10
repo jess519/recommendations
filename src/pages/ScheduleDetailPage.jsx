@@ -267,7 +267,7 @@ const TRIPS_OTHER = [
 const TRIPS_ALL = [...TRIPS_OPERA, ...TRIPS_OTHER]
 
 const VIEW_OPTIONS = [
-  'Show everything',
+  'Show all recommendations',
   'Saved view: Dresses - UK & Spain',
   'Saved view: Hoodies drop',
   'Exception: Europe monthly rebal',
@@ -298,7 +298,7 @@ export default function ScheduleDetailPage() {
   function handleSelectView(option) {
     setSelectedView(option)
     setViewDropdownOpen(false)
-    if (option === 'Show everything') {
+    if (option === 'Show all recommendations') {
       setViewShowsFullDataset(true)
     } else if (option === 'Exception: Europe monthly rebal') {
       setViewShowsFullDataset(false)
@@ -369,9 +369,18 @@ export default function ScheduleDetailPage() {
         </div>
       </header>
 
-      <div className="rounded-[8px] border border-[#e5e7eb] bg-[#f9fafb] px-4 py-3 text-[14px] text-[#4b535c] flex flex-col gap-1">
-        <span className="font-semibold text-[#b91c1c]">12 exceptions still to approve</span>
-        <span>The next scheduled recommendations are the UK weekly replenishment running on 10/03/2026.</span>
+      <div className="rounded-[8px] border border-[#e5e7eb] bg-[#f9fafb] px-4 py-3 text-[14px] text-[#4b535c] flex items-start justify-between gap-3">
+        <div className="flex flex-col gap-1">
+          <span className="font-semibold text-[#b91c1c]">12 exceptions still to approve</span>
+          <span>The next scheduled recommendations are the UK weekly replenishment running on 10/03/2026.</span>
+        </div>
+        <button
+          type="button"
+          className="mt-0.5 text-[#9ca3af] hover:text-[#4b535c]"
+          aria-label="Dismiss exceptions info"
+        >
+          <IconClose className="size-4" />
+        </button>
       </div>
 
       <div className="flex flex-col gap-4">
@@ -515,7 +524,7 @@ export default function ScheduleDetailPage() {
                     type="button"
                     onClick={() => {
                       setViewShowsFullDataset(true)
-                      setSelectedView('Show everything')
+                      setSelectedView('Show all recommendations')
                     }}
                     className="text-[12px] font-medium text-[#4b535c] hover:text-[#0a0a0a]"
                   >
@@ -544,8 +553,8 @@ export default function ScheduleDetailPage() {
                       />
                     </th>
                     <th className="text-left py-3 px-3 font-medium text-[#0a0a0a]">Sending location</th>
-                    <th className="text-left py-3 px-3 font-medium text-[#0a0a0a]">Movement type</th>
                     <th className="text-left py-3 px-3 font-medium text-[#0a0a0a]">Receiving location</th>
+                    <th className="text-left py-3 px-3 font-medium text-[#0a0a0a]">Movement type</th>
                     <th className="text-left py-3 px-3 font-medium text-[#0a0a0a]">Transfers</th>
                     <th className="text-left py-3 px-3 font-medium text-[#0a0a0a]">Revenue increase</th>
                     <th className="text-left py-3 px-3 font-medium text-[#0a0a0a]">Recommended transfers</th>
@@ -595,17 +604,17 @@ export default function ScheduleDetailPage() {
                           </div>
                         </td>
                         <td className="py-3 px-3 align-top">
+                          <div className="flex flex-col">
+                            <span className="text-[#0a0a0a] font-medium">{row.to}</span>
+                            <span className="text-[12px] text-[#4b535c]">{row.toCode}</span>
+                          </div>
+                        </td>
+                        <td className="py-3 px-3 align-top">
                           <span
                             className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium ${movementBadgeClass}`}
                           >
                             {movementType}
                           </span>
-                        </td>
-                        <td className="py-3 px-3 align-top">
-                          <div className="flex flex-col">
-                            <span className="text-[#0a0a0a] font-medium">{row.to}</span>
-                            <span className="text-[12px] text-[#4b535c]">{row.toCode}</span>
-                          </div>
                         </td>
                         <td className="py-3 px-3 align-top">
                           <div className="flex flex-col">
