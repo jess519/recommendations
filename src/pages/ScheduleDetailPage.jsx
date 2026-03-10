@@ -309,6 +309,9 @@ const PRODUCTS_BY_TRIP = {
 // Default products when trip not in PRODUCTS_BY_TRIP
 const DEFAULT_PRODUCTS = PRODUCTS_BY_TRIP[1]
 
+// Product IDs that show 'Edited' badge in Products drilldown
+const PRODUCTS_EDITED_IDS = [1, 3]
+
 function IconCheck() {
   return (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="shrink-0" aria-hidden>
@@ -375,7 +378,7 @@ function ProductsDrilldown({ trip, onBack }) {
         </button>
       </div>
 
-      <div className="border border-[#e5e7eb] rounded-[4px] overflow-hidden bg-white">
+      <div className="border border-[#e5e7eb] rounded-[4px] overflow-x-auto bg-white">
         <table className="w-full text-[14px]">
           <thead className="bg-[#F8F8F8]">
             <tr className="border-b border-[#E9EAEB]">
@@ -413,6 +416,8 @@ function ProductsDrilldown({ trip, onBack }) {
               <th className="text-right py-3 px-4 font-medium text-[#00050A]">
                 <span className="inline-flex items-center gap-1">Depth <IconInfo /></span>
               </th>
+              <th className="text-left py-3 px-4 font-medium text-[#00050A]">Approval status</th>
+              <th className="w-[100px] py-3 px-4 bg-[#F8F8F8] sticky right-0 shadow-[-4px_0_8px_-2px_rgba(0,0,0,0.05)]" />
             </tr>
             <tr className="border-b border-[#E9EAEB] bg-[#F8F8F8]">
               <th className="py-2 px-4" />
@@ -427,6 +432,8 @@ function ProductsDrilldown({ trip, onBack }) {
               <th className="py-2 px-4 text-[12px] font-normal text-[#4b535c] text-right">—</th>
               <th className="py-2 px-4 text-[12px] font-normal text-[#4b535c] text-right">—</th>
               <th className="py-2 px-4 text-[12px] font-normal text-[#4b535c] text-right">—</th>
+              <th className="py-2 px-4" />
+              <th className="py-2 px-4 bg-[#F8F8F8] sticky right-0 shadow-[-4px_0_8px_-2px_rgba(0,0,0,0.05)]" />
             </tr>
           </thead>
           <tbody>
@@ -477,6 +484,21 @@ function ProductsDrilldown({ trip, onBack }) {
                 <td className="py-3 px-4 text-right text-[#0a0a0a]">{p.overstocks}</td>
                 <td className="py-3 px-4 text-right text-[#0a0a0a]">{p.understocks}</td>
                 <td className="py-3 px-4 text-right text-[#0a0a0a]">{p.depth}</td>
+                <td className="py-3 px-4">
+                  {PRODUCTS_EDITED_IDS.includes(p.id) ? (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-[2px] bg-[#FFF8E1] text-[11px] font-medium text-[#B8860B]">
+                      Edited
+                    </span>
+                  ) : null}
+                </td>
+                <td className="py-3 px-4 text-right bg-white sticky right-0 shadow-[-4px_0_8px_-2px_rgba(0,0,0,0.05)]">
+                  <button
+                    type="button"
+                    className="inline-flex items-center justify-center h-8 px-3 rounded-[4px] border border-[#E9EAEB] bg-white text-[12px] text-[#0a0a0a] hover:bg-[#f3f4f6]"
+                  >
+                    Approve
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>
