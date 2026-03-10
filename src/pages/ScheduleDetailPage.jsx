@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { IconSearch, IconChevronDown, IconShare, IconDocument, IconClose, IconArrowLeft } from '../components/icons'
+import { IconSearch, IconChevronDown, IconChevronRight, IconShare, IconDocument, IconClose, IconArrowLeft } from '../components/icons'
 
 function IconColumnSettings() {
   return (
@@ -315,20 +315,20 @@ const PRODUCTS_EDITED_IDS = [1, 3]
 // Mock locations for stock analysis drilldown (keyed by product id)
 const LOCATIONS_BY_PRODUCT = {
   1: [
-    { id: 1, name: 'Opéra', code: 'A1A', stock: '6 → 12', tu: '6 → 12', tuWarehouse: 6, tuTruck: [3, 3], salesL7: 1, salesL30: 2, forecast: 1.87, stockouts: '0 → 0', coverage: '0% → 100%', targetWeeks: 6, recommendationReason: 'Increase revenue', revenueIncrease: '€679' },
-    { id: 2, name: 'G.L. Haussmann Maro', code: 'AIA', stock: '6 → 6', tu: '4 → 5', tuWarehouse: 3, tuTruck: [1], salesL7: 0, salesL30: 0, forecast: 0, stockouts: '0 → 0', coverage: '0% → 0%', targetWeeks: 4, recommendationReason: 'Reduce overstock', revenueIncrease: '€120' },
-    { id: 3, name: 'La Défense', code: 'A2B', stock: '5 → 5', tu: '4 → 5', tuWarehouse: 3, tuTruck: [1], salesL7: 1, salesL30: 1, forecast: 0.76, stockouts: '0 → 0', coverage: '100% → 100%', targetWeeks: 4, recommendationReason: 'Increase revenue', revenueIncrease: '€245' },
-    { id: 4, name: 'Cap 3000', code: 'A3E', stock: '4 → 4', tu: '0 → 1', tuWarehouse: null, tuTruck: [1], salesL7: 0, salesL30: 2, forecast: 0.32, stockouts: '0 → 0', coverage: '0% → 0%', targetWeeks: 4, recommendationReason: 'Improve coverage', revenueIncrease: '€89' },
-    { id: 5, name: 'Lyon Herriot', code: 'A4C', stock: '5 → 5', tu: '0 → 1', tuWarehouse: null, tuTruck: [1], salesL7: 1, salesL30: 1, forecast: 0.54, stockouts: '0 → 0', coverage: '0% → 0%', targetWeeks: 4, recommendationReason: 'Increase revenue', revenueIncrease: '€156' },
-    { id: 6, name: 'Printemps Lille', code: 'ASF', stock: '8 → 8', tu: '0 → 20', tuWarehouse: 4, tuTruck: [20], salesL7: 2, salesL30: 4, forecast: 2.1, stockouts: '0 → 0', coverage: '100% → 100%', targetWeeks: 6, recommendationReason: 'Increase revenue', revenueIncrease: '€1.2K' },
+    { id: 1, name: 'Opéra', code: 'A1A', stock: '6 → 12', tu: '6 → 12', tuWarehouse: 6, tuTruck: [3, 3], salesL7: 1, salesL30: 2, forecast: 1.87, stockouts: '0 → 0', coverage: '0% → 100%', targetWeeks: 6, receivingWeeksCoverage: '3.2 → 6.4 (6 target)', recommendationReason: 'Increase revenue', revenueIncrease: '€679', availableToSend: 4, sendingStock: '10 → 7', sendingCoverage: '2.1 → 1.8 (4 target)' },
+    { id: 2, name: 'G.L. Haussmann Maro', code: 'AIA', stock: '6 → 6', tu: '4 → 5', tuWarehouse: 3, tuTruck: [1], salesL7: 0, salesL30: 0, forecast: 0, stockouts: '0 → 0', coverage: '0% → 0%', targetWeeks: 4, receivingWeeksCoverage: 'N/A (0 forecast)', recommendationReason: 'Reduce overstock', revenueIncrease: '€120', availableToSend: 3, sendingStock: '8 → 5', sendingCoverage: 'N/A (0 forecast)' },
+    { id: 3, name: 'La Défense', code: 'A2B', stock: '5 → 5', tu: '4 → 5', tuWarehouse: 3, tuTruck: [1], salesL7: 1, salesL30: 1, forecast: 0.76, stockouts: '0 → 0', coverage: '100% → 100%', targetWeeks: 4, receivingWeeksCoverage: '5.2 → 5.8 (4 target)', recommendationReason: 'Increase revenue', revenueIncrease: '€245', availableToSend: 4, sendingStock: '9 → 6', sendingCoverage: '1.8 → 1.2 (4 target)' },
+    { id: 4, name: 'Cap 3000', code: 'A3E', stock: '4 → 4', tu: '0 → 1', tuWarehouse: null, tuTruck: [1], salesL7: 0, salesL30: 2, forecast: 0.32, stockouts: '0 → 0', coverage: '0% → 0%', targetWeeks: 4, receivingWeeksCoverage: 'N/A (0 forecast)', recommendationReason: 'Improve coverage', revenueIncrease: '€89', availableToSend: 2, sendingStock: '6 → 5', sendingCoverage: 'N/A (0 forecast)' },
+    { id: 5, name: 'Lyon Herriot', code: 'A4C', stock: '5 → 5', tu: '0 → 1', tuWarehouse: null, tuTruck: [1], salesL7: 1, salesL30: 1, forecast: 0.54, stockouts: '0 → 0', coverage: '0% → 0%', targetWeeks: 4, receivingWeeksCoverage: '4.1 → 4.5 (4 target)', recommendationReason: 'Increase revenue', revenueIncrease: '€156', availableToSend: 3, sendingStock: '7 → 6', sendingCoverage: '2.4 → 2.0 (4 target)' },
+    { id: 6, name: 'Printemps Lille', code: 'ASF', stock: '8 → 8', tu: '0 → 20', tuWarehouse: 4, tuTruck: [20], salesL7: 2, salesL30: 4, forecast: 2.1, stockouts: '0 → 0', coverage: '100% → 100%', targetWeeks: 6, receivingWeeksCoverage: '3.8 → 6.2 (6 target)', recommendationReason: 'Increase revenue', revenueIncrease: '€1.2K', availableToSend: 5, sendingStock: '12 → 8', sendingCoverage: '3.2 → 2.1 (6 target)' },
   ],
   2: [
-    { id: 1, name: 'Opéra', code: 'A1A', stock: '4 → 4', tu: '4 → 4', tuWarehouse: 4, tuTruck: [], salesL7: 2, salesL30: 3, forecast: 0.54, stockouts: '0 → 0', coverage: '100% → 100%', targetWeeks: 4, recommendationReason: 'Increase revenue', revenueIncrease: '€312' },
-    { id: 2, name: 'La Défense', code: 'A2B', stock: '3 → 3', tu: '3 → 3', tuWarehouse: 3, tuTruck: [], salesL7: 1, salesL30: 2, forecast: 0.45, stockouts: '0 → 0', coverage: '100% → 100%', targetWeeks: 4, recommendationReason: 'Reduce understock', revenueIncrease: '€98' },
+    { id: 1, name: 'Opéra', code: 'A1A', stock: '4 → 4', tu: '4 → 4', tuWarehouse: 4, tuTruck: [], salesL7: 2, salesL30: 3, forecast: 0.54, stockouts: '0 → 0', coverage: '100% → 100%', targetWeeks: 4, receivingWeeksCoverage: '5.2 → 5.2 (4 target)', recommendationReason: 'Increase revenue', revenueIncrease: '€312', availableToSend: 4, sendingStock: '8 → 4', sendingCoverage: '2.0 → 1.0 (4 target)' },
+    { id: 2, name: 'La Défense', code: 'A2B', stock: '3 → 3', tu: '3 → 3', tuWarehouse: 3, tuTruck: [], salesL7: 1, salesL30: 2, forecast: 0.45, stockouts: '0 → 0', coverage: '100% → 100%', targetWeeks: 4, receivingWeeksCoverage: '4.1 → 4.1 (4 target)', recommendationReason: 'Reduce understock', revenueIncrease: '€98', availableToSend: 3, sendingStock: '6 → 3', sendingCoverage: '1.5 → 0.8 (4 target)' },
   ],
   3: [
-    { id: 1, name: 'Opéra', code: 'A1A', stock: '6 → 6', tu: '6 → 6', tuWarehouse: 6, tuTruck: [], salesL7: 1, salesL30: 4, forecast: 2.1, stockouts: '0 → 0', coverage: '100% → 100%', targetWeeks: 6, recommendationReason: 'Increase revenue', revenueIncrease: '€445' },
-    { id: 2, name: 'G.L. Haussmann Maro', code: 'AIA', stock: '5 → 5', tu: '5 → 5', tuWarehouse: 5, tuTruck: [], salesL7: 0, salesL30: 0, forecast: 0, stockouts: '0 → 0', coverage: '0% → 0%', targetWeeks: 5, recommendationReason: 'Improve coverage', revenueIncrease: '€0' },
+    { id: 1, name: 'Opéra', code: 'A1A', stock: '6 → 6', tu: '6 → 6', tuWarehouse: 6, tuTruck: [], salesL7: 1, salesL30: 4, forecast: 2.1, stockouts: '0 → 0', coverage: '100% → 100%', targetWeeks: 6, receivingWeeksCoverage: '2.9 → 2.9 (6 target)', recommendationReason: 'Increase revenue', revenueIncrease: '€445', availableToSend: 6, sendingStock: '12 → 6', sendingCoverage: '2.8 → 1.4 (6 target)' },
+    { id: 2, name: 'G.L. Haussmann Maro', code: 'AIA', stock: '5 → 5', tu: '5 → 5', tuWarehouse: 5, tuTruck: [], salesL7: 0, salesL30: 0, forecast: 0, stockouts: '0 → 0', coverage: '0% → 0%', targetWeeks: 5, receivingWeeksCoverage: 'N/A (0 forecast)', recommendationReason: 'Improve coverage', revenueIncrease: '€0', availableToSend: 5, sendingStock: '10 → 5', sendingCoverage: 'N/A (0 forecast)' },
   ],
 }
 
@@ -362,7 +362,149 @@ function IconTruck() {
   )
 }
 
+function TransferDetailView({ transfer, product, trip, onBack }) {
+  const breadcrumbFrom = `${trip.from} [${trip.fromCode}]`
+  const breadcrumbTo = trip.to
+  const productLabel = product.name
+  const productSku = product.sku
+  const tripType = trip.movementType || 'Rebalancing'
+  const receivingCoverage = transfer.receivingWeeksCoverage ?? (transfer.coverage ? `${transfer.coverage} (${transfer.targetWeeks} target)` : '—')
+
+  return (
+    <div className="flex flex-col gap-6">
+      <div className="flex flex-wrap items-center gap-3">
+        <button
+          type="button"
+          onClick={onBack}
+          className="h-10 w-10 flex items-center justify-center rounded-[4px] border border-[#e5e7eb] bg-white text-[#4b535c] hover:bg-[#f3f4f6] shrink-0"
+          aria-label="Back to Transfers"
+        >
+          <IconArrowLeft className="size-5" />
+        </button>
+        <nav className="flex items-center gap-2 text-[14px] text-[#4b535c]">
+          <span>{breadcrumbFrom}</span>
+          <span>→</span>
+          <span>{breadcrumbTo}</span>
+          <span>→</span>
+          <span className="text-[#0a0a0a]">{productLabel} [{productSku}]</span>
+          <span>→</span>
+          <span className="font-medium text-[#0a0a0a]">Transfer detail</span>
+        </nav>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 text-[14px]">
+        <div className="rounded-[4px] border border-[#E9EAEB] bg-white p-4">
+          <h3 className="font-medium text-[#0a0a0a] mb-3">Transfer info</h3>
+          <div className="space-y-2">
+            <div className="flex justify-between items-center">
+              <span className="text-[#4b535c]">Transfer units</span>
+              <span className="text-[#0a0a0a] font-medium">{transfer.tu}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-[#4b535c]">Available to send</span>
+              <span className="text-[#0a0a0a] font-medium">{transfer.availableToSend ?? '—'}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-[#4b535c]">Trip type</span>
+              <span className="inline-flex px-2 py-0.5 rounded-[2px] bg-[#f3f4f6] text-[12px] font-medium text-[#4b535c]">{tripType}</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-[4px] border border-[#E9EAEB] bg-white p-4">
+          <h3 className="font-medium text-[#0a0a0a] mb-3">Recommendation</h3>
+          <div className="space-y-2">
+            <div className="flex justify-between items-center">
+              <span className="text-[#4b535c]">Transfer units</span>
+              <span className="text-[#0a0a0a] font-medium">{transfer.tu}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-[#4b535c]">Revenue increase</span>
+              <span className="text-[#0a0a0a] font-medium">{transfer.revenueIncrease ?? '—'}</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-[4px] border border-[#E9EAEB] bg-white p-4">
+          <h3 className="font-medium text-[#0a0a0a] mb-3">Recommendation reasons</h3>
+          <p className="text-[#0a0a0a]">{transfer.recommendationReason ?? '—'}</p>
+        </div>
+
+        <div className="rounded-[4px] border border-[#E9EAEB] bg-white p-4">
+          <h3 className="font-medium text-[#0a0a0a] mb-3">Total stock</h3>
+          <div className="space-y-2">
+            <div className="flex justify-between items-center">
+              <span className="text-[#4b535c]">{trip.from}</span>
+              <span className="text-[#0a0a0a] font-medium">{transfer.sendingStock ?? '—'}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-[#4b535c]">{transfer.name}</span>
+              <span className="text-[#0a0a0a] font-medium">{transfer.stock}</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-[4px] border border-[#E9EAEB] bg-white p-4">
+          <h3 className="font-medium text-[#0a0a0a] mb-3">Total weeks coverage</h3>
+          <div className="space-y-2">
+            <div className="flex justify-between items-center">
+              <span className="text-[#4b535c]">{trip.from}</span>
+              <span className="text-[#0a0a0a] font-medium">{transfer.sendingCoverage ?? '—'}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-[#4b535c]">{transfer.name}</span>
+              <span className="text-[#0a0a0a] font-medium">{receivingCoverage}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="rounded-[4px] border border-[#E9EAEB] bg-white p-4">
+          <h4 className="text-[12px] font-medium text-[#4b535c] mb-2">Product details</h4>
+          <div className="text-[14px] text-[#0a0a0a]">
+            <div className="font-medium">{product.name}</div>
+            <div className="text-[#4b535c]">#{product.sku}</div>
+          </div>
+        </div>
+        <div className="rounded-[4px] border border-[#E9EAEB] bg-white p-4">
+          <h4 className="text-[12px] font-medium text-[#4b535c] mb-2">Units and stock</h4>
+          <div className="text-[14px] text-[#0a0a0a]">
+            <div>Currently in stock: 90 units</div>
+            <div className="text-[#4b535c]">Left in warehouse: 1,543 units</div>
+          </div>
+        </div>
+        <div className="rounded-[4px] border border-[#E9EAEB] bg-white p-4">
+          <h4 className="text-[12px] font-medium text-[#4b535c] mb-2">Current coverage</h4>
+          <div className="text-[14px] text-[#0a0a0a]">
+            <div>77% below target</div>
+            <div className="text-[#4b535c]">1,543 units</div>
+          </div>
+        </div>
+        <div className="rounded-[4px] border border-[#E9EAEB] bg-white p-4">
+          <h4 className="text-[12px] font-medium text-[#4b535c] mb-2">Coverage after replenishment</h4>
+          <div className="text-[14px] text-[#0a0a0a]">
+            <div>77% below target</div>
+            <div className="text-[#4b535c]">1,543 units</div>
+          </div>
+        </div>
+      </div>
+
+      <div className="rounded-[4px] border border-[#E9EAEB] bg-white p-4">
+        <div className="flex gap-4 border-b border-[#E9EAEB] mb-4">
+          <button type="button" className="pb-2 border-b-2 border-[#0267ff] text-[14px] font-medium text-[#0a0a0a]">General</button>
+          <button type="button" className="pb-2 text-[14px] text-[#4b535c] hover:text-[#0a0a0a]">Key factors</button>
+        </div>
+        <div className="h-[240px] min-h-[240px] rounded-[4px] bg-[#f8f8f8] border border-[#E9EAEB] flex items-center justify-center text-[14px] text-[#4b535c]">
+          Chart placeholder
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function StockAnalysisDrilldown({ product, trip, onBack }) {
+  const [selectedTransferDetail, setSelectedTransferDetail] = useState(null)
   const locations = LOCATIONS_BY_PRODUCT[product.id] || DEFAULT_LOCATIONS
   const breadcrumbFrom = `${trip.from} [${trip.fromCode}]`
   const breadcrumbTo = trip.to.length > 12 ? `${trip.to.slice(0, 10)}...` : trip.to
@@ -383,6 +525,17 @@ function StockAnalysisDrilldown({ product, trip, onBack }) {
     },
     { before: 0, after: 0 }
   )
+
+  if (selectedTransferDetail) {
+    return (
+      <TransferDetailView
+        transfer={selectedTransferDetail}
+        product={product}
+        trip={trip}
+        onBack={() => setSelectedTransferDetail(null)}
+      />
+    )
+  }
 
   return (
     <div className="flex flex-col gap-4">
@@ -461,6 +614,7 @@ function StockAnalysisDrilldown({ product, trip, onBack }) {
               <th className="text-right py-3 px-4 font-medium text-[#00050A]">Coverage</th>
             </tr>
             <tr className="border-b border-[#E9EAEB] bg-[#F8F8F8]">
+              <th className="py-2 px-2" />
               <th className="py-2 px-4" />
               <th className="py-2 px-4" />
               <th className="py-2 px-4 text-[12px] font-semibold text-[#0a0a0a] text-right">
@@ -478,6 +632,16 @@ function StockAnalysisDrilldown({ product, trip, onBack }) {
           <tbody>
             {locations.map((loc, idx) => (
               <tr key={loc.id} className={`border-b border-[#E9EAEB] hover:bg-[#f9fafb] ${idx === 0 ? 'bg-[#F8F8F8]' : 'bg-white'}`}>
+                <td className="py-3 px-2">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedTransferDetail(loc)}
+                    className="p-1 rounded-[4px] text-[#4B535C] hover:text-[#00050A] cursor-pointer transition-colors"
+                    aria-label={`View transfer detail for ${loc.name}`}
+                  >
+                    <IconChevronRight className="size-4" />
+                  </button>
+                </td>
                 <td className="py-3 px-4">
                   <input type="checkbox" className="size-4 rounded border-[#E9EAEB] text-[#0267ff]" aria-label={`Select ${loc.name}`} />
                 </td>
