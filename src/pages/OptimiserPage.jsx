@@ -1811,13 +1811,13 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                 </button>
               </div>
               <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-[#4b535c]">
-                <span>Created: {schedule.created}</span>
                 <span className="flex items-center gap-2">
                   <span>Submission deadline:</span>
                   <span className={`px-2 py-[3px] rounded-[2px] text-[14px] font-medium ${deadlineBadgeClass}`}>
                     {schedule.deadline}
                   </span>
                 </span>
+                <span>Created: {schedule.created}</span>
               </div>
               <div className="flex flex-wrap items-center justify-between gap-3 text-sm">
                 <span className="inline-flex items-center px-2 py-[3px] rounded-[2px] bg-[#00A195] text-white text-[14px] font-medium">
