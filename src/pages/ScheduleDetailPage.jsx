@@ -372,6 +372,7 @@ function TransferDetailView({ transfer, product, trip, onBack }) {
 
   return (
     <div className="flex flex-col gap-6">
+      {/* 1. Breadcrumb with back arrow */}
       <div className="flex flex-wrap items-center gap-3">
         <button
           type="button"
@@ -392,73 +393,7 @@ function TransferDetailView({ transfer, product, trip, onBack }) {
         </nav>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 text-[14px]">
-        <div className="rounded-[4px] border border-[#E9EAEB] bg-white p-4">
-          <h3 className="font-medium text-[#0a0a0a] mb-3">Transfer info</h3>
-          <div className="space-y-2">
-            <div className="flex justify-between items-center">
-              <span className="text-[#4b535c]">Transfer units</span>
-              <span className="text-[#0a0a0a] font-medium">{transfer.tu}</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-[#4b535c]">Available to send</span>
-              <span className="text-[#0a0a0a] font-medium">{transfer.availableToSend ?? '—'}</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-[#4b535c]">Trip type</span>
-              <span className="inline-flex px-2 py-0.5 rounded-[2px] bg-[#f3f4f6] text-[12px] font-medium text-[#4b535c]">{tripType}</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="rounded-[4px] border border-[#E9EAEB] bg-white p-4">
-          <h3 className="font-medium text-[#0a0a0a] mb-3">Recommendation</h3>
-          <div className="space-y-2">
-            <div className="flex justify-between items-center">
-              <span className="text-[#4b535c]">Transfer units</span>
-              <span className="text-[#0a0a0a] font-medium">{transfer.tu}</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-[#4b535c]">Revenue increase</span>
-              <span className="text-[#0a0a0a] font-medium">{transfer.revenueIncrease ?? '—'}</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="rounded-[4px] border border-[#E9EAEB] bg-white p-4">
-          <h3 className="font-medium text-[#0a0a0a] mb-3">Recommendation reasons</h3>
-          <p className="text-[#0a0a0a]">{transfer.recommendationReason ?? '—'}</p>
-        </div>
-
-        <div className="rounded-[4px] border border-[#E9EAEB] bg-white p-4">
-          <h3 className="font-medium text-[#0a0a0a] mb-3">Total stock</h3>
-          <div className="space-y-2">
-            <div className="flex justify-between items-center">
-              <span className="text-[#4b535c]">{trip.from}</span>
-              <span className="text-[#0a0a0a] font-medium">{transfer.sendingStock ?? '—'}</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-[#4b535c]">{transfer.name}</span>
-              <span className="text-[#0a0a0a] font-medium">{transfer.stock}</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="rounded-[4px] border border-[#E9EAEB] bg-white p-4">
-          <h3 className="font-medium text-[#0a0a0a] mb-3">Total weeks coverage</h3>
-          <div className="space-y-2">
-            <div className="flex justify-between items-center">
-              <span className="text-[#4b535c]">{trip.from}</span>
-              <span className="text-[#0a0a0a] font-medium">{transfer.sendingCoverage ?? '—'}</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-[#4b535c]">{transfer.name}</span>
-              <span className="text-[#0a0a0a] font-medium">{receivingCoverage}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
+      {/* 2. Summary cards in single row */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="rounded-[4px] border border-[#E9EAEB] bg-white p-4">
           <h4 className="text-[12px] font-medium text-[#4b535c] mb-2">Product details</h4>
@@ -490,6 +425,7 @@ function TransferDetailView({ transfer, product, trip, onBack }) {
         </div>
       </div>
 
+      {/* 3. General / Key factors tabs and chart area */}
       <div className="rounded-[4px] border border-[#E9EAEB] bg-white p-4">
         <div className="flex gap-4 border-b border-[#E9EAEB] mb-4">
           <button type="button" className="pb-2 border-b-2 border-[#0267ff] text-[14px] font-medium text-[#0a0a0a]">General</button>
@@ -497,6 +433,74 @@ function TransferDetailView({ transfer, product, trip, onBack }) {
         </div>
         <div className="h-[240px] min-h-[240px] rounded-[4px] bg-[#f8f8f8] border border-[#E9EAEB] flex items-center justify-center text-[14px] text-[#4b535c]">
           Chart placeholder
+        </div>
+      </div>
+
+      {/* 4. Transfer info, Recommendation, etc. in single card with dividers */}
+      <div className="rounded-[4px] border border-[#E9EAEB] bg-white p-6 text-[14px]">
+        <div className="pb-4">
+          <h3 className="font-medium text-[#0a0a0a] mb-3">Transfer info</h3>
+          <div className="space-y-2">
+            <div className="flex justify-between items-center">
+              <span className="text-[#4b535c]">Transfer units</span>
+              <span className="text-[#0a0a0a] font-medium">{transfer.tu}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-[#4b535c]">Available to send</span>
+              <span className="text-[#0a0a0a] font-medium">{transfer.availableToSend ?? '—'}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-[#4b535c]">Trip type</span>
+              <span className="inline-flex px-2 py-0.5 rounded-[2px] bg-[#f3f4f6] text-[12px] font-medium text-[#4b535c]">{tripType}</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="pt-4 pb-4 border-t border-[#E9EAEB]">
+          <h3 className="font-medium text-[#0a0a0a] mb-3">Recommendation</h3>
+          <div className="space-y-2">
+            <div className="flex justify-between items-center">
+              <span className="text-[#4b535c]">Transfer units</span>
+              <span className="text-[#0a0a0a] font-medium">{transfer.tu}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-[#4b535c]">Revenue increase</span>
+              <span className="text-[#0a0a0a] font-medium">{transfer.revenueIncrease ?? '—'}</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="pt-4 pb-4 border-t border-[#E9EAEB]">
+          <h3 className="font-medium text-[#0a0a0a] mb-3">Recommendation reasons</h3>
+          <p className="text-[#0a0a0a]">{transfer.recommendationReason ?? '—'}</p>
+        </div>
+
+        <div className="pt-4 pb-4 border-t border-[#E9EAEB]">
+          <h3 className="font-medium text-[#0a0a0a] mb-3">Total stock</h3>
+          <div className="space-y-2">
+            <div className="flex justify-between items-center">
+              <span className="text-[#4b535c]">{trip.from}</span>
+              <span className="text-[#0a0a0a] font-medium">{transfer.sendingStock ?? '—'}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-[#4b535c]">{transfer.name}</span>
+              <span className="text-[#0a0a0a] font-medium">{transfer.stock}</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="pt-4 border-t border-[#E9EAEB]">
+          <h3 className="font-medium text-[#0a0a0a] mb-3">Total weeks coverage</h3>
+          <div className="space-y-2">
+            <div className="flex justify-between items-center">
+              <span className="text-[#4b535c]">{trip.from}</span>
+              <span className="text-[#0a0a0a] font-medium">{transfer.sendingCoverage ?? '—'}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-[#4b535c]">{transfer.name}</span>
+              <span className="text-[#0a0a0a] font-medium">{receivingCoverage}</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
