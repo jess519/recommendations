@@ -367,20 +367,20 @@ const PRODUCTS_EDITED_IDS = [1, 3]
 // Mock locations for stock analysis drilldown (keyed by product id)
 const LOCATIONS_BY_PRODUCT = {
   1: [
-    { id: 1, name: 'Opéra', code: 'A1A', stock: '6 → 12', tu: '6 → 12', tuWarehouse: 6, tuTruck: [3, 3], salesL7: 1, salesL30: 2, forecast: 1.87, stockouts: '0 → 0', coverage: '0% → 100%', targetWeeks: 6, receivingWeeksCoverage: '3.2 → 6.4 (6 target)', recommendationReason: 'Increase revenue', revenueIncrease: '€679', availableToSend: 4, sendingStock: '10 → 7', sendingCoverage: '2.1 → 1.8 (4 target)' },
+    { id: 1, name: 'Opéra', code: 'A1A', stock: '6 → 12', tu: '6 → 12', tuWarehouse: 6, tuTruck: [3, 3], salesL7: 1, salesL30: 2, forecast: 1.87, stockouts: '0 → 0', coverage: '0% → 100%', targetWeeks: 6, receivingWeeksCoverage: '3.2 → 6.4 (6 target)', recommendationReason: 'Increase revenue', revenueIncrease: '€679', availableToSend: 4, sendingStock: '10 → 7', sendingCoverage: '2.1 → 1.8 (4 target)', approvalStatus: 'approved_by_system' },
     { id: 2, name: 'G.L. Haussmann Maro', code: 'AIA', stock: '6 → 6', tu: '4 → 5', tuWarehouse: 3, tuTruck: [1], salesL7: 0, salesL30: 0, forecast: 0, stockouts: '0 → 0', coverage: '0% → 0%', targetWeeks: 4, receivingWeeksCoverage: 'N/A (0 forecast)', recommendationReason: 'Reduce overstock', revenueIncrease: '€120', availableToSend: 3, sendingStock: '8 → 5', sendingCoverage: 'N/A (0 forecast)' },
-    { id: 3, name: 'La Défense', code: 'A2B', stock: '5 → 5', tu: '4 → 5', tuWarehouse: 3, tuTruck: [1], salesL7: 1, salesL30: 1, forecast: 0.76, stockouts: '0 → 0', coverage: '100% → 100%', targetWeeks: 4, receivingWeeksCoverage: '5.2 → 5.8 (4 target)', recommendationReason: 'Increase revenue', revenueIncrease: '€245', availableToSend: 4, sendingStock: '9 → 6', sendingCoverage: '1.8 → 1.2 (4 target)' },
-    { id: 4, name: 'Cap 3000', code: 'A3E', stock: '4 → 4', tu: '0 → 1', tuWarehouse: null, tuTruck: [1], salesL7: 0, salesL30: 2, forecast: 0.32, stockouts: '0 → 0', coverage: '0% → 0%', targetWeeks: 4, receivingWeeksCoverage: 'N/A (0 forecast)', recommendationReason: 'Improve coverage', revenueIncrease: '€89', availableToSend: 2, sendingStock: '6 → 5', sendingCoverage: 'N/A (0 forecast)' },
+    { id: 3, name: 'La Défense', code: 'A2B', stock: '5 → 5', tu: '4 → 5', tuWarehouse: 3, tuTruck: [1], salesL7: 1, salesL30: 1, forecast: 0.76, stockouts: '0 → 0', coverage: '100% → 100%', targetWeeks: 4, receivingWeeksCoverage: '5.2 → 5.8 (4 target)', recommendationReason: 'Increase revenue', revenueIncrease: '€245', availableToSend: 4, sendingStock: '9 → 6', sendingCoverage: '1.8 → 1.2 (4 target)', approvalStatus: 'edited_by_user', editedByUser: 'Csabi Toth' },
+    { id: 4, name: 'Cap 3000', code: 'A3E', stock: '4 → 4', tu: '0 → 1', tuWarehouse: null, tuTruck: [1], salesL7: 0, salesL30: 2, forecast: 0.32, stockouts: '0 → 0', coverage: '0% → 0%', targetWeeks: 4, receivingWeeksCoverage: 'N/A (0 forecast)', recommendationReason: 'Improve coverage', revenueIncrease: '€89', availableToSend: 2, sendingStock: '6 → 5', sendingCoverage: 'N/A (0 forecast)', approvalStatus: 'approved_by_user', approvedByUser: 'Jess Briggs' },
     { id: 5, name: 'Lyon Herriot', code: 'A4C', stock: '5 → 5', tu: '0 → 1', tuWarehouse: null, tuTruck: [1], salesL7: 1, salesL30: 1, forecast: 0.54, stockouts: '0 → 0', coverage: '0% → 0%', targetWeeks: 4, receivingWeeksCoverage: '4.1 → 4.5 (4 target)', recommendationReason: 'Increase revenue', revenueIncrease: '€156', availableToSend: 3, sendingStock: '7 → 6', sendingCoverage: '2.4 → 2.0 (4 target)' },
-    { id: 6, name: 'Printemps Lille', code: 'ASF', stock: '8 → 8', tu: '0 → 20', tuWarehouse: 4, tuTruck: [20], salesL7: 2, salesL30: 4, forecast: 2.1, stockouts: '0 → 0', coverage: '100% → 100%', targetWeeks: 6, receivingWeeksCoverage: '3.8 → 6.2 (6 target)', recommendationReason: 'Increase revenue', revenueIncrease: '€1.2K', availableToSend: 5, sendingStock: '12 → 8', sendingCoverage: '3.2 → 2.1 (6 target)' },
+    { id: 6, name: 'Printemps Lille', code: 'ASF', stock: '8 → 8', tu: '0 → 20', tuWarehouse: 4, tuTruck: [20], salesL7: 2, salesL30: 4, forecast: 2.1, stockouts: '0 → 0', coverage: '100% → 100%', targetWeeks: 6, receivingWeeksCoverage: '3.8 → 6.2 (6 target)', recommendationReason: 'Increase revenue', revenueIncrease: '€1.2K', availableToSend: 5, sendingStock: '12 → 8', sendingCoverage: '3.2 → 2.1 (6 target)', approvalStatus: 'approved_by_system' },
   ],
   2: [
-    { id: 1, name: 'Opéra', code: 'A1A', stock: '4 → 4', tu: '4 → 4', tuWarehouse: 4, tuTruck: [], salesL7: 2, salesL30: 3, forecast: 0.54, stockouts: '0 → 0', coverage: '100% → 100%', targetWeeks: 4, receivingWeeksCoverage: '5.2 → 5.2 (4 target)', recommendationReason: 'Increase revenue', revenueIncrease: '€312', availableToSend: 4, sendingStock: '8 → 4', sendingCoverage: '2.0 → 1.0 (4 target)' },
-    { id: 2, name: 'La Défense', code: 'A2B', stock: '3 → 3', tu: '3 → 3', tuWarehouse: 3, tuTruck: [], salesL7: 1, salesL30: 2, forecast: 0.45, stockouts: '0 → 0', coverage: '100% → 100%', targetWeeks: 4, receivingWeeksCoverage: '4.1 → 4.1 (4 target)', recommendationReason: 'Reduce understock', revenueIncrease: '€98', availableToSend: 3, sendingStock: '6 → 3', sendingCoverage: '1.5 → 0.8 (4 target)' },
+    { id: 1, name: 'Opéra', code: 'A1A', stock: '4 → 4', tu: '4 → 4', tuWarehouse: 4, tuTruck: [], salesL7: 2, salesL30: 3, forecast: 0.54, stockouts: '0 → 0', coverage: '100% → 100%', targetWeeks: 4, receivingWeeksCoverage: '5.2 → 5.2 (4 target)', recommendationReason: 'Increase revenue', revenueIncrease: '€312', availableToSend: 4, sendingStock: '8 → 4', sendingCoverage: '2.0 → 1.0 (4 target)', approvalStatus: 'approved_by_user', approvedByUser: 'Jess Briggs' },
+    { id: 2, name: 'La Défense', code: 'A2B', stock: '3 → 3', tu: '3 → 3', tuWarehouse: 3, tuTruck: [], salesL7: 1, salesL30: 2, forecast: 0.45, stockouts: '0 → 0', coverage: '100% → 100%', targetWeeks: 4, receivingWeeksCoverage: '4.1 → 4.1 (4 target)', recommendationReason: 'Reduce understock', revenueIncrease: '€98', availableToSend: 3, sendingStock: '6 → 3', sendingCoverage: '1.5 → 0.8 (4 target)', approvalStatus: 'edited_by_user', editedByUser: 'Csabi Toth' },
   ],
   3: [
     { id: 1, name: 'Opéra', code: 'A1A', stock: '6 → 6', tu: '6 → 6', tuWarehouse: 6, tuTruck: [], salesL7: 1, salesL30: 4, forecast: 2.1, stockouts: '0 → 0', coverage: '100% → 100%', targetWeeks: 6, receivingWeeksCoverage: '2.9 → 2.9 (6 target)', recommendationReason: 'Increase revenue', revenueIncrease: '€445', availableToSend: 6, sendingStock: '12 → 6', sendingCoverage: '2.8 → 1.4 (6 target)' },
-    { id: 2, name: 'G.L. Haussmann Maro', code: 'AIA', stock: '5 → 5', tu: '5 → 5', tuWarehouse: 5, tuTruck: [], salesL7: 0, salesL30: 0, forecast: 0, stockouts: '0 → 0', coverage: '0% → 0%', targetWeeks: 5, receivingWeeksCoverage: 'N/A (0 forecast)', recommendationReason: 'Improve coverage', revenueIncrease: '€0', availableToSend: 5, sendingStock: '10 → 5', sendingCoverage: 'N/A (0 forecast)' },
+    { id: 2, name: 'G.L. Haussmann Maro', code: 'AIA', stock: '5 → 5', tu: '5 → 5', tuWarehouse: 5, tuTruck: [], salesL7: 0, salesL30: 0, forecast: 0, stockouts: '0 → 0', coverage: '0% → 0%', targetWeeks: 5, receivingWeeksCoverage: 'N/A (0 forecast)', recommendationReason: 'Improve coverage', revenueIncrease: '€0', availableToSend: 5, sendingStock: '10 → 5', sendingCoverage: 'N/A (0 forecast)', approvalStatus: 'approved_by_system' },
   ],
 }
 
@@ -659,8 +659,43 @@ function TransferDetailView({ transfer, product, trip, onBack }) {
 
 function StockAnalysisDrilldown({ product, trip, onBack }) {
   const [selectedTransferDetail, setSelectedTransferDetail] = useState(null)
+  const [approvedLocations, setApprovedLocations] = useState({})
+  const [selectedLocationIds, setSelectedLocationIds] = useState(new Set())
   const locations = LOCATIONS_BY_PRODUCT[product.id] || DEFAULT_LOCATIONS
   const breadcrumbFrom = `${trip.from} [${trip.fromCode}]`
+
+  const toggleLocationSelection = (id) => {
+    setSelectedLocationIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  const toggleAllLocationsSelection = () => {
+    const allIds = locations.map((loc) => loc.id)
+    const allSelected = allIds.every((id) => selectedLocationIds.has(id))
+    setSelectedLocationIds(allSelected ? new Set() : new Set(allIds))
+  }
+
+  const clearLocationSelection = () => setSelectedLocationIds(new Set())
+
+  const handleApproveSelectedLocations = () => {
+    if (!selectedLocationIds.size) return
+    setApprovedLocations((prev) => {
+      const next = { ...prev }
+      selectedLocationIds.forEach((id) => {
+        next[id] = true
+      })
+      return next
+    })
+    setSelectedLocationIds(new Set())
+  }
+
+  const handleExcludeSelectedLocations = () => {
+    setSelectedLocationIds(new Set())
+  }
   const breadcrumbTo = trip.to.length > 12 ? `${trip.to.slice(0, 10)}...` : trip.to
   const productLabel = product.name.length > 16 ? `${product.name.slice(0, 14)}...` : product.name
   const productSku = product.sku
@@ -713,6 +748,10 @@ function StockAnalysisDrilldown({ product, trip, onBack }) {
         </nav>
       </div>
 
+      <p className="text-[13px] text-[#878D94] mb-2">
+        Select locations to approve or exclude transfers for this product
+      </p>
+
       <div className="flex flex-row flex-nowrap items-center gap-[8px]">
         <div className="relative shrink-0">
           <IconSearch className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-[#9ca3af] pointer-events-none" />
@@ -744,7 +783,13 @@ function StockAnalysisDrilldown({ product, trip, onBack }) {
             <tr className="border-b border-[#E9EAEB]">
               <th className="w-10 max-w-[40px] py-3 px-2 text-left" />
               <th className="w-12 py-3 px-4 text-left">
-                <input type="checkbox" className="size-4 rounded border-[#E9EAEB] text-[#0267ff]" aria-label="Select all" />
+                <input
+                  type="checkbox"
+                  className="size-4 rounded border-[#E9EAEB] text-[#0267ff]"
+                  aria-label="Select all"
+                  checked={locations.length > 0 && locations.every((loc) => selectedLocationIds.has(loc.id))}
+                  onChange={toggleAllLocationsSelection}
+                />
               </th>
               <th className="text-left py-3 px-4 font-medium text-[#00050A]">Locations</th>
               <th className="text-right py-3 px-4 font-medium text-[#00050A]">
@@ -797,8 +842,14 @@ function StockAnalysisDrilldown({ product, trip, onBack }) {
                     <IconChevronRight className="size-4" />
                   </button>
                 </td>
-                <td className="py-3 px-4">
-                  <input type="checkbox" className="size-4 rounded border-[#E9EAEB] text-[#0267ff]" aria-label={`Select ${loc.name}`} />
+                <td className="py-3 px-4" onClick={(e) => e.stopPropagation()}>
+                  <input
+                    type="checkbox"
+                    className="size-4 rounded border-[#E9EAEB] text-[#0267ff]"
+                    aria-label={`Select ${loc.name}`}
+                    checked={selectedLocationIds.has(loc.id)}
+                    onChange={() => toggleLocationSelection(loc.id)}
+                  />
                 </td>
                 <td className="py-3 px-4">
                   <div className="flex flex-col gap-0.5">
@@ -911,6 +962,39 @@ function StockAnalysisDrilldown({ product, trip, onBack }) {
           </tbody>
         </table>
       </div>
+
+      {selectedLocationIds.size > 0 && (
+        <div
+          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-4 rounded-[8px] px-6 py-3"
+          style={{ background: '#1A1A2E', boxShadow: '0 4px 12px rgba(0,0,0,0.25)' }}
+        >
+          <button
+            type="button"
+            onClick={clearLocationSelection}
+            className="flex items-center justify-center size-8 rounded-[4px] text-white hover:bg-white/10"
+            aria-label="Close"
+          >
+            <IconClose className="size-4" />
+          </button>
+          <span className="text-[14px] font-medium text-white">
+            {selectedLocationIds.size} selected
+          </span>
+          <button
+            type="button"
+            onClick={handleApproveSelectedLocations}
+            className="px-4 py-2 rounded-[4px] text-[14px] font-medium text-white hover:bg-white/10"
+          >
+            Approve all
+          </button>
+          <button
+            type="button"
+            onClick={handleExcludeSelectedLocations}
+            className="px-4 py-2 rounded-[4px] text-[14px] font-medium text-white hover:bg-white/10"
+          >
+            Exclude
+          </button>
+        </div>
+      )}
     </div>
   )
 }
