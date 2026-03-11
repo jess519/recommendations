@@ -1139,6 +1139,7 @@ function ProductsDrilldown({ trip, onBack, showBackButton = true }) {
               <th className="text-right py-3 px-4 font-medium text-[#00050A]">
                 <span className="inline-flex items-center gap-1">Recommended transfers <IconInfo /></span>
               </th>
+              <th className="text-right py-3 px-4 font-medium text-[#00050A]">Recommendations updated</th>
               <th className="text-right py-3 px-4 font-medium text-[#00050A]">
                 <span className="flex flex-col items-end">
                   Sales
@@ -1171,6 +1172,7 @@ function ProductsDrilldown({ trip, onBack, showBackButton = true }) {
               <th className="py-2 px-4 text-[12px] font-semibold text-[#0a0a0a] text-right">{summaryTransfers} units</th>
               <th className="py-2 px-4 text-[12px] font-semibold text-[#0a0a0a] text-right">€{summaryRevenue.toFixed(1)}K</th>
               <th className="py-2 px-4 text-[12px] font-semibold text-[#0a0a0a] text-right">{summaryRecommended} units</th>
+              <th className="py-2 px-4 text-[12px] font-normal text-[#4b535c] text-right">—</th>
               <th className="py-2 px-4 text-[12px] font-normal text-[#4b535c] text-right">—</th>
               <th className="py-2 px-4 text-[12px] font-normal text-[#4b535c] text-right">—</th>
               <th className="py-2 px-4 text-[12px] font-normal text-[#4b535c] text-right">—</th>
@@ -1236,6 +1238,7 @@ function ProductsDrilldown({ trip, onBack, showBackButton = true }) {
                     <span className="text-[12px] text-[#4b535c]">{p.recommendedSub}</span>
                   </div>
                 </td>
+                <td className="py-3 px-4 text-right text-[14px] text-[#4B535C]">26/02/2026</td>
                 <td className="py-3 px-4 text-right">
                   <div className="flex flex-col items-end">
                     <span className="text-[#0a0a0a]">{p.salesL7}</span>
@@ -1697,6 +1700,7 @@ export default function ScheduleDetailPage() {
                         <IconInfo />
                       </span>
                     </th>
+                    <th className="text-left py-3 px-3 font-medium text-[#0a0a0a]">Recommendations updated</th>
                     <th className="text-left py-3 px-3 font-medium text-[#0a0a0a]">Products</th>
                     <th className="text-left py-3 px-3 font-medium text-[#0a0a0a]">Approval status</th>
                     <th className="py-3 px-3" />
@@ -1709,6 +1713,7 @@ export default function ScheduleDetailPage() {
                     <th className="py-2 px-3 text-[12px] font-semibold text-[#0a0a0a]">{summaryTransfers}</th>
                     <th className="py-2 px-3 text-[12px] font-semibold text-[#0a0a0a]">{summaryRevenue}</th>
                     <th className="py-2 px-3 text-[12px] font-semibold text-[#0a0a0a]">{summaryRecommended}</th>
+                    <th className="py-2 px-3 text-[12px] font-normal text-[#4b535c]">—</th>
                     <th className="py-2 px-3 text-[12px] font-normal text-[#4b535c]">N/A</th>
                     <th className="py-2 px-3" />
                     <th className="py-2 px-3" />
@@ -1798,6 +1803,7 @@ export default function ScheduleDetailPage() {
                             </div>
                           </div>
                         </td>
+                        <td className="py-3 px-3 align-top text-[14px] text-[#4B535C]">26/02/2026</td>
                         <td className="py-3 px-3 align-top">
                           <span className="text-[#0a0a0a]">{row.products}</span>
                         </td>
