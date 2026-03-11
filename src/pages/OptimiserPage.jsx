@@ -163,7 +163,8 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
     exceptions: false,
   })
   const [scopeOption, setScopeOption] = useState('include-all')
-  const [savedApprovalRule, setSavedApprovalRule] = useState('')
+  const [savedApprovalRule, setSavedApprovalRule] = useState('create-new')
+  const [exceptionName, setExceptionName] = useState('')
   const [productFilterOpen, setProductFilterOpen] = useState({
     departments: false,
     subDepartments: false,
@@ -1019,7 +1020,7 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
             {accordionOpen.exceptions && (
               <div className="px-5 pb-6 pt-2 flex flex-col gap-6 border-t border-[#EAEAEA]">
                 <p className="text-[12px] font-normal italic text-[#4b535c]">
-                  These exception rules will apply at the unique trip level. If you create a set, it will save
+                  These exception rules will apply at the unique trip level. If you create a new exception, it will save automatically
                 </p>
                 <div className="flex flex-col gap-2">
                   <label className="text-[14px] font-normal text-[#4b535c]">Saved exception rules</label>
@@ -1029,10 +1030,9 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                       onChange={(ev) => setSavedApprovalRule(ev.target.value)}
                       className="w-full h-14 pl-4 pr-10 rounded-[4px] border border-[#EAEAEA] bg-white text-[16px] text-[#0a0a0a] appearance-none"
                     >
-                      <option value="">Select</option>
+                      <option value="create-new">Create new exceptions</option>
                       <option value="liberty">Liberty exceptions</option>
                       <option value="paris">Paris stores</option>
-                      <option value="create-new">Create new exception set</option>
                     </select>
                     <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
                       <IconChevronDownSelect />
@@ -1051,6 +1051,110 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                 )}
                 {savedApprovalRule === 'create-new' && (
                   <div className="flex flex-col gap-6 mt-1">
+                    <div className="flex flex-col gap-2">
+                      <label className="text-[14px] font-normal text-[#4b535c]">Name your exception</label>
+                      <input
+                        type="text"
+                        value={exceptionName}
+                        onChange={(e) => setExceptionName(e.target.value)}
+                        placeholder="e.g. High value items review"
+                        className="w-full max-w-sm h-14 px-4 rounded-[4px] border border-[#EAEAEA] bg-white text-[16px] text-[#0a0a0a] placeholder:text-[#9ca3af]"
+                      />
+                      <p className="text-[12px] font-normal text-[#4b535c]">Required when creating new exceptions</p>
+                    </div>
+
+                    <section className="flex flex-col gap-2">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-[13px] font-semibold text-[#0a0a0a] uppercase tracking-[0.04em]">
+                          Advanced
+                        </h3>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setAdvancedApprovalRows([{ id: 'adv-1', mainColumn: '', condition: '', value: '' }])
+                            setAdvancedRowNextId(2)
+                          }}
+                          className="text-[12px] font-medium text-[#4b535c] hover:text-[#0a0a0a]"
+                        >
+                          Clear all
+                        </button>
+                      </div>
+                      <div className="mt-1 flex flex-col gap-3 border-t border-[#e5e7eb] pt-3">
+                        {advancedApprovalRows.map((row) => (
+                          <div
+                            key={row.id}
+                            className="flex flex-wrap items-end gap-3 p-3 rounded-[8px] border border-[#e5e7eb] bg-[#fafafa]"
+                          >
+                            <span className="text-[13px] font-medium text-[#0a0a0a] w-full sm:w-auto sm:min-w-[48px]">
+                              Where
+                            </span>
+                            <div className="flex flex-col gap-1 min-w-[140px] flex-1">
+                              <label className="text-[12px] font-normal text-[#4b535c]">Main column</label>
+                              <div className="relative">
+                                <select
+                                  value={row.mainColumn}
+                                  onChange={(e) => updateAdvancedApprovalRow(row.id, 'mainColumn', e.target.value)}
+                                  className="w-full h-10 pl-3 pr-9 rounded-[4px] border border-[#e9eaeb] bg-white text-[13px] text-[#0a0a0a] appearance-none"
+                                >
+                                  <option value="">Select</option>
+                                  {MAIN_COLUMN_OPTIONS.map((opt) => (
+                                    <option key={opt} value={opt}>{opt}</option>
+                                  ))}
+                                </select>
+                                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
+                                  <IconChevronDownSelect />
+                                </span>
+                              </div>
+                            </div>
+                            <div className="flex flex-col gap-1 min-w-[160px] flex-1">
+                              <label className="text-[12px] font-normal text-[#4b535c]">Condition</label>
+                              <div className="relative">
+                                <select
+                                  value={row.condition}
+                                  onChange={(e) => updateAdvancedApprovalRow(row.id, 'condition', e.target.value)}
+                                  className="w-full h-10 pl-3 pr-9 rounded-[4px] border border-[#e9eaeb] bg-white text-[13px] text-[#0a0a0a] appearance-none"
+                                >
+                                  <option value="">Select</option>
+                                  {CONDITION_OPTIONS.map((opt) => (
+                                    <option key={opt} value={opt}>{opt}</option>
+                                  ))}
+                                </select>
+                                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
+                                  <IconChevronDownSelect />
+                                </span>
+                              </div>
+                            </div>
+                            <div className="flex flex-col gap-1 min-w-[100px] flex-1">
+                              <label className="text-[12px] font-normal text-[#4b535c]">Enter a value</label>
+                              <input
+                                type="number"
+                                placeholder="Value"
+                                value={row.value}
+                                onChange={(e) => updateAdvancedApprovalRow(row.id, 'value', e.target.value)}
+                                className="w-full h-10 px-3 rounded-[4px] border border-[#e9eaeb] bg-white text-[13px] text-[#0a0a0a]"
+                              />
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => removeAdvancedApprovalRow(row.id)}
+                              className="h-10 w-10 flex items-center justify-center rounded-[4px] text-[#4b535c] hover:bg-[#e5e7eb] shrink-0"
+                              aria-label="Remove row"
+                            >
+                              <IconClose className="size-4" />
+                            </button>
+                          </div>
+                        ))}
+                        <button
+                          type="button"
+                          onClick={addAdvancedApprovalRow}
+                          className="self-start h-9 px-3 rounded-[4px] border border-[#0267ff] text-[13px] font-medium text-[#0267ff] hover:bg-[#ebf3ff] flex items-center gap-2"
+                        >
+                          <IconPlus className="size-4" />
+                          Add exception
+                        </button>
+                      </div>
+                    </section>
+
                     <section className="flex flex-col gap-2">
                       <div className="flex items-center justify-between">
                         <h3 className="text-[13px] font-semibold text-[#0a0a0a] uppercase tracking-[0.04em]">
@@ -1228,98 +1332,6 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                             </div>
                           )
                         })}
-                      </div>
-                    </section>
-
-                    <section className="flex flex-col gap-2">
-                      <div className="flex items-center justify-between">
-                        <h3 className="text-[13px] font-semibold text-[#0a0a0a] uppercase tracking-[0.04em]">
-                          Advanced
-                        </h3>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setAdvancedApprovalRows([{ id: 'adv-1', mainColumn: '', condition: '', value: '' }])
-                            setAdvancedRowNextId(2)
-                          }}
-                          className="text-[12px] font-medium text-[#4b535c] hover:text-[#0a0a0a]"
-                        >
-                          Clear all
-                        </button>
-                      </div>
-                      <div className="mt-1 flex flex-col gap-3 border-t border-[#e5e7eb] pt-3">
-                        {advancedApprovalRows.map((row) => (
-                          <div
-                            key={row.id}
-                            className="flex flex-wrap items-end gap-3 p-3 rounded-[8px] border border-[#e5e7eb] bg-[#fafafa]"
-                          >
-                            <span className="text-[13px] font-medium text-[#0a0a0a] w-full sm:w-auto sm:min-w-[48px]">
-                              Where
-                            </span>
-                            <div className="flex flex-col gap-1 min-w-[140px] flex-1">
-                              <label className="text-[12px] font-normal text-[#4b535c]">Main column</label>
-                              <div className="relative">
-                                <select
-                                  value={row.mainColumn}
-                                  onChange={(e) => updateAdvancedApprovalRow(row.id, 'mainColumn', e.target.value)}
-                                  className="w-full h-10 pl-3 pr-9 rounded-[4px] border border-[#e9eaeb] bg-white text-[13px] text-[#0a0a0a] appearance-none"
-                                >
-                                  <option value="">Select</option>
-                                  {MAIN_COLUMN_OPTIONS.map((opt) => (
-                                    <option key={opt} value={opt}>{opt}</option>
-                                  ))}
-                                </select>
-                                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
-                                  <IconChevronDownSelect />
-                                </span>
-                              </div>
-                            </div>
-                            <div className="flex flex-col gap-1 min-w-[160px] flex-1">
-                              <label className="text-[12px] font-normal text-[#4b535c]">Condition</label>
-                              <div className="relative">
-                                <select
-                                  value={row.condition}
-                                  onChange={(e) => updateAdvancedApprovalRow(row.id, 'condition', e.target.value)}
-                                  className="w-full h-10 pl-3 pr-9 rounded-[4px] border border-[#e9eaeb] bg-white text-[13px] text-[#0a0a0a] appearance-none"
-                                >
-                                  <option value="">Select</option>
-                                  {CONDITION_OPTIONS.map((opt) => (
-                                    <option key={opt} value={opt}>{opt}</option>
-                                  ))}
-                                </select>
-                                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
-                                  <IconChevronDownSelect />
-                                </span>
-                              </div>
-                            </div>
-                            <div className="flex flex-col gap-1 min-w-[100px] flex-1">
-                              <label className="text-[12px] font-normal text-[#4b535c]">Enter a value</label>
-                              <input
-                                type="number"
-                                placeholder="Value"
-                                value={row.value}
-                                onChange={(e) => updateAdvancedApprovalRow(row.id, 'value', e.target.value)}
-                                className="w-full h-10 px-3 rounded-[4px] border border-[#e9eaeb] bg-white text-[13px] text-[#0a0a0a]"
-                              />
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => removeAdvancedApprovalRow(row.id)}
-                              className="h-10 w-10 flex items-center justify-center rounded-[4px] text-[#4b535c] hover:bg-[#e5e7eb] shrink-0"
-                              aria-label="Remove row"
-                            >
-                              <IconClose className="size-4" />
-                            </button>
-                          </div>
-                        ))}
-                        <button
-                          type="button"
-                          onClick={addAdvancedApprovalRow}
-                          className="self-start h-9 px-3 rounded-[4px] border border-[#0267ff] text-[13px] font-medium text-[#0267ff] hover:bg-[#ebf3ff] flex items-center gap-2"
-                        >
-                          <IconPlus className="size-4" />
-                          Add exception
-                        </button>
                       </div>
                     </section>
                   </div>
