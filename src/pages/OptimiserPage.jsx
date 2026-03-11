@@ -201,6 +201,7 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
     { id: 'adv-1', mainColumn: '', condition: '', value: '' },
   ])
   const [advancedRowNextId, setAdvancedRowNextId] = useState(2)
+  const [matchRulesMode, setMatchRulesMode] = useState('or')
   const reviewStatusFilterOptions = [
     { id: 'in review', label: 'In review' },
     { id: 'upcoming', label: 'Upcoming' },
@@ -1080,11 +1081,39 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                         </button>
                       </div>
                       <div className="mt-1 flex flex-col gap-3 border-t border-[#e5e7eb] pt-3">
-                        {advancedApprovalRows.map((row) => (
-                          <div
-                            key={row.id}
-                            className="flex flex-wrap items-end gap-3 p-3 rounded-[8px] border border-[#e5e7eb] bg-[#fafafa]"
-                          >
+                        <div className="flex flex-col gap-2">
+                          <label className="text-[14px] font-normal text-[#4b535c]">Match rules using:</label>
+                          <div className="flex gap-1">
+                            <button
+                              type="button"
+                              onClick={() => setMatchRulesMode('or')}
+                              className={`px-3 py-1.5 rounded-[2px] text-[13px] font-medium ${matchRulesMode === 'or' ? 'bg-[#0267FF] text-white' : 'bg-[#F8F8F8] text-[#4B535C] hover:bg-[#eee]'}`}
+                            >
+                              Any (OR)
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setMatchRulesMode('and')}
+                              className={`px-3 py-1.5 rounded-[2px] text-[13px] font-medium ${matchRulesMode === 'and' ? 'bg-[#0267FF] text-white' : 'bg-[#F8F8F8] text-[#4B535C] hover:bg-[#eee]'}`}
+                            >
+                              All (AND)
+                            </button>
+                          </div>
+                          <p className="text-[12px] font-normal text-[#4b535c]">
+                            OR returns recommendations matching any rule. AND returns only recommendations matching all rules.
+                          </p>
+                        </div>
+                        <div className="flex flex-col gap-3">
+                        {advancedApprovalRows.map((row, idx) => (
+                          <div key={row.id} className="flex flex-col gap-3">
+                            {idx > 0 && advancedApprovalRows.length >= 2 && (
+                              <span className="text-[13px] font-medium text-[#4b535c]">
+                                {matchRulesMode === 'or' ? 'or' : 'and'}
+                              </span>
+                            )}
+                            <div
+                              className="flex flex-wrap items-end gap-3 p-3 rounded-[8px] border border-[#e5e7eb] bg-[#fafafa]"
+                            >
                             <span className="text-[13px] font-medium text-[#0a0a0a] w-full sm:w-auto sm:min-w-[48px]">
                               Where
                             </span>
@@ -1143,7 +1172,9 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                               <IconClose className="size-4" />
                             </button>
                           </div>
+                          </div>
                         ))}
+                        </div>
                         <button
                           type="button"
                           onClick={addAdvancedApprovalRow}
