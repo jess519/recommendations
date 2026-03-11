@@ -345,16 +345,16 @@ const EDITED_EXCEPTION_IDS = [3, 5]
 // Mock products for trip drilldown (keyed by trip id)
 const PRODUCTS_BY_TRIP = {
   1: [
-    { id: 1, name: 'Croi-sac zip l', sku: 'A1398810', colour: 'Noir', transfers: 3, transfersSub: 1, revenue: '€1.48K', recommended: 1, recommendedBadges: ['REV'], recommendedSub: 2, salesL7: 1, salesL30: 2, forecast: 1.87, stockouts: '0 -> 0', locations: '2 -> 2', overstocks: '4 -> 1', understocks: '8 -> 5', depth: '5.0 -> 5.0' },
+    { id: 1, name: 'Croi-sac zip l', sku: 'A1398810', colour: 'Noir', transfers: 3, transfersSub: 1, revenue: '€1.48K', recommended: 1, recommendedBadges: ['REV'], recommendedSub: 2, salesL7: 1, salesL30: 2, forecast: 1.87, stockouts: '0 -> 0', locations: '2 -> 2', overstocks: '4 -> 1', understocks: '8 -> 5', depth: '5.0 -> 5.0', approvalStatus: 'approved_by_system' },
     { id: 2, name: 'Pre-sac seau m', sku: 'A101080', colour: 'Bleu petrole', transfers: 2, transfersSub: 1, revenue: '€1.12K', recommended: 2, recommendedBadges: ['VIS'], recommendedSub: 1, salesL7: 2, salesL30: 3, forecast: 0.54, stockouts: '0 -> 1', locations: '2 -> 1', overstocks: '3 -> 0', understocks: '2 -> 0', depth: '3.0 -> 6.0' },
-    { id: 3, name: 'Ang-sac pte main m', sku: 'A1252810', colour: 'Figue', transfers: 3, transfersSub: 2, revenue: '€1.89K', recommended: 3, recommendedBadges: ['REV', 'VIS'], recommendedSub: 1, salesL7: 1, salesL30: 4, forecast: 2.1, stockouts: '1 -> 0', locations: '2 -> 2', overstocks: '5 -> 2', understocks: '6 -> 3', depth: '4.2 -> 4.8' },
-    { id: 4, name: 'Croi-sac zip s', sku: 'A1398811', colour: 'Noir', transfers: 1, transfersSub: 2, revenue: '€0.98K', recommended: 1, recommendedBadges: ['REV'], recommendedSub: 2, salesL7: 0, salesL30: 1, forecast: 0.32, stockouts: '0 -> 0', locations: '1 -> 2', overstocks: '2 -> 1', understocks: '4 -> 2', depth: '5.0 -> 5.0' },
+    { id: 3, name: 'Ang-sac pte main m', sku: 'A1252810', colour: 'Figue', transfers: 3, transfersSub: 2, revenue: '€1.89K', recommended: 3, recommendedBadges: ['REV', 'VIS'], recommendedSub: 1, salesL7: 1, salesL30: 4, forecast: 2.1, stockouts: '1 -> 0', locations: '2 -> 2', overstocks: '5 -> 2', understocks: '6 -> 3', depth: '4.2 -> 4.8', approvalStatus: 'edited_by_user', editedByUser: 'Csabi Toth' },
+    { id: 4, name: 'Croi-sac zip s', sku: 'A1398811', colour: 'Noir', transfers: 1, transfersSub: 2, revenue: '€0.98K', recommended: 1, recommendedBadges: ['REV'], recommendedSub: 2, salesL7: 0, salesL30: 1, forecast: 0.32, stockouts: '0 -> 0', locations: '1 -> 2', overstocks: '2 -> 1', understocks: '4 -> 2', depth: '5.0 -> 5.0', approvalStatus: 'approved_by_user', approvedByUser: 'Jess Briggs' },
     { id: 5, name: 'Pre-sac seau s', sku: 'A101081', colour: 'Bleu petrole', transfers: 2, transfersSub: 1, revenue: '€0.76K', recommended: 2, recommendedBadges: ['VIS'], recommendedSub: 1, salesL7: 1, salesL30: 2, forecast: 0.54, stockouts: '0 -> 1', locations: '2 -> 1', overstocks: '3 -> 0', understocks: '2 -> 0', depth: '3.0 -> 6.0' },
-    { id: 6, name: 'Ang-sac pte main s', sku: 'A1252811', colour: 'Figue', transfers: 1, transfersSub: 1, revenue: '€0.65K', recommended: 1, recommendedBadges: ['REV'], recommendedSub: 1, salesL7: 0, salesL30: 1, forecast: 0.21, stockouts: '0 -> 0', locations: '2 -> 2', overstocks: '4 -> 1', understocks: '3 -> 1', depth: '4.0 -> 4.5' },
+    { id: 6, name: 'Ang-sac pte main s', sku: 'A1252811', colour: 'Figue', transfers: 1, transfersSub: 1, revenue: '€0.65K', recommended: 1, recommendedBadges: ['REV'], recommendedSub: 1, salesL7: 0, salesL30: 1, forecast: 0.21, stockouts: '0 -> 0', locations: '2 -> 2', overstocks: '4 -> 1', understocks: '3 -> 1', depth: '4.0 -> 4.5', approvalStatus: 'approved_by_system' },
   ],
   2: [
-    { id: 7, name: 'Sac zip l', sku: 'B200001', colour: 'Noir', transfers: 2, transfersSub: 1, revenue: '€0.89K', recommended: 2, recommendedBadges: ['REV'], recommendedSub: 1, salesL7: 1, salesL30: 2, forecast: 0.45, stockouts: '0 -> 0', locations: '2 -> 2', overstocks: '2 -> 1', understocks: '5 -> 3', depth: '4.5 -> 5.0' },
-    { id: 8, name: 'Sac seau m', sku: 'B200002', colour: 'Noir', transfers: 1, transfersSub: 2, revenue: '€0.52K', recommended: 1, recommendedBadges: ['VIS'], recommendedSub: 2, salesL7: 0, salesL30: 1, forecast: 0.28, stockouts: '0 -> 1', locations: '1 -> 2', overstocks: '1 -> 0', understocks: '3 -> 1', depth: '3.6 -> 4.3' },
+    { id: 7, name: 'Sac zip l', sku: 'B200001', colour: 'Noir', transfers: 2, transfersSub: 1, revenue: '€0.89K', recommended: 2, recommendedBadges: ['REV'], recommendedSub: 1, salesL7: 1, salesL30: 2, forecast: 0.45, stockouts: '0 -> 0', locations: '2 -> 2', overstocks: '2 -> 1', understocks: '5 -> 3', depth: '4.5 -> 5.0', approvalStatus: 'approved_by_user', approvedByUser: 'Jess Briggs' },
+    { id: 8, name: 'Sac seau m', sku: 'B200002', colour: 'Noir', transfers: 1, transfersSub: 2, revenue: '€0.52K', recommended: 1, recommendedBadges: ['VIS'], recommendedSub: 2, salesL7: 0, salesL30: 1, forecast: 0.28, stockouts: '0 -> 1', locations: '1 -> 2', overstocks: '1 -> 0', understocks: '3 -> 1', depth: '3.6 -> 4.3', approvalStatus: 'edited_by_user', editedByUser: 'Csabi Toth' },
   ],
 }
 
@@ -917,7 +917,51 @@ function StockAnalysisDrilldown({ product, trip, onBack }) {
 
 function ProductsDrilldown({ trip, onBack, showBackButton = true }) {
   const [selectedProduct, setSelectedProduct] = useState(null)
+  const [approvedProducts, setApprovedProducts] = useState({})
+  const [selectedProductIds, setSelectedProductIds] = useState(new Set())
   const products = PRODUCTS_BY_TRIP[trip.id] || DEFAULT_PRODUCTS
+
+  const toggleProductSelection = (id) => {
+    setSelectedProductIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  const toggleAllProductsSelection = () => {
+    const allIds = products.map((p) => p.id)
+    const allSelected = allIds.every((id) => selectedProductIds.has(id))
+    setSelectedProductIds(allSelected ? new Set() : new Set(allIds))
+  }
+
+  const clearProductSelection = () => setSelectedProductIds(new Set())
+
+  const handleApproveProduct = (id) => {
+    setApprovedProducts((prev) => ({ ...prev, [id]: true }))
+  }
+
+  const handleApproveSelectedProducts = () => {
+    if (!selectedProductIds.size) return
+    setApprovedProducts((prev) => {
+      const next = { ...prev }
+      selectedProductIds.forEach((id) => {
+        next[id] = true
+      })
+      return next
+    })
+    setSelectedProductIds(new Set())
+  }
+
+  const handleExcludeSelectedProducts = () => {
+    setSelectedProductIds(new Set())
+  }
+
+  const showProductEditButton = (p) => {
+    const isApproved = !!approvedProducts[p.id]
+    return isApproved || p.approvalStatus === 'approved_by_system' || p.approvalStatus === 'approved_by_user'
+  }
 
   if (selectedProduct) {
     return (
@@ -995,7 +1039,13 @@ function ProductsDrilldown({ trip, onBack, showBackButton = true }) {
           <thead className="bg-[#F8F8F8]">
             <tr className="border-b border-[#E9EAEB]">
               <th className="w-12 py-3 px-4 text-left">
-                <input type="checkbox" className="size-4 rounded border-[#E9EAEB] text-[#0267ff]" aria-label="Select all" />
+                <input
+                  type="checkbox"
+                  className="size-4 rounded border-[#E9EAEB] text-[#0267ff]"
+                  aria-label="Select all"
+                  checked={products.length > 0 && products.every((p) => selectedProductIds.has(p.id))}
+                  onChange={toggleAllProductsSelection}
+                />
               </th>
               <th className="text-left py-3 px-4 font-medium text-[#00050A]">Product details</th>
               <th className="text-right py-3 px-4 font-medium text-[#00050A]">Transfers</th>
@@ -1064,7 +1114,13 @@ function ProductsDrilldown({ trip, onBack, showBackButton = true }) {
                 }}
               >
                 <td className="py-3 px-4" onClick={(e) => e.stopPropagation()}>
-                  <input type="checkbox" className="size-4 rounded border-[#E9EAEB] text-[#0267ff]" aria-label={`Select ${p.name}`} />
+                  <input
+                    type="checkbox"
+                    className="size-4 rounded border-[#E9EAEB] text-[#0267ff]"
+                    aria-label={`Select ${p.name}`}
+                    checked={selectedProductIds.has(p.id)}
+                    onChange={() => toggleProductSelection(p.id)}
+                  />
                 </td>
                 <td className="py-3 px-4">
                   <div className="flex items-center gap-4">
@@ -1109,19 +1165,66 @@ function ProductsDrilldown({ trip, onBack, showBackButton = true }) {
                 <td className="py-3 px-4 text-right text-[#0a0a0a]">{p.understocks}</td>
                 <td className="py-3 px-4 text-right text-[#0a0a0a]">{p.depth}</td>
                 <td className="py-3 px-4">
-                  {PRODUCTS_EDITED_IDS.includes(p.id) ? (
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-[2px] bg-[#FFF8E1] text-[11px] font-medium text-[#B8860B]">
-                      Edited
-                    </span>
-                  ) : null}
+                  {(() => {
+                    const isApproved = !!approvedProducts[p.id]
+                    if (isApproved) {
+                      return (
+                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-[#E4F4EF] text-[12px] font-medium text-[#08A16A]">
+                          <IconCheck className="size-4 shrink-0" />
+                          Approved by user: Jess Briggs
+                        </span>
+                      )
+                    }
+                    if (p.approvalStatus === 'approved_by_system') {
+                      return (
+                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-[#E4F4EF] text-[12px] font-medium text-[#08A16A]">
+                          <IconCheck className="size-4 shrink-0" />
+                          Approved by system
+                        </span>
+                      )
+                    }
+                    if (p.approvalStatus === 'approved_by_user') {
+                      return (
+                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-[#E4F4EF] text-[12px] font-medium text-[#08A16A]">
+                          <IconCheck className="size-4 shrink-0" />
+                          Approved by user: {p.approvedByUser || 'Jess Briggs'}
+                        </span>
+                      )
+                    }
+                    if (p.approvalStatus === 'edited_by_user') {
+                      return (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-[#FFF8E1] text-[12px] font-medium text-[#B8860B]">
+                          Last edited by: {p.editedByUser || 'Csabi Toth'}
+                        </span>
+                      )
+                    }
+                    return <span className="inline-block h-5" aria-hidden />
+                  })()}
                 </td>
                 <td className="py-3 px-4 text-right bg-white sticky right-0 shadow-[-4px_0_8px_-2px_rgba(0,0,0,0.05)]" onClick={(e) => e.stopPropagation()}>
-                  <button
-                    type="button"
-                    className="inline-flex items-center justify-center h-8 px-3 rounded-[4px] border border-[#E9EAEB] bg-white text-[12px] text-[#0a0a0a] hover:bg-[#f3f4f6]"
-                  >
-                    Approve
-                  </button>
+                  {showProductEditButton(p) ? (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setSelectedProduct(p)
+                      }}
+                      className="inline-flex items-center justify-center h-8 px-4 rounded-[4px] border border-[#E9EAEB] bg-white text-[13px] font-medium text-[#212B36] hover:bg-[#f9fafb] hover:border-[#9ca3af]"
+                    >
+                      Edit
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleApproveProduct(p.id)
+                      }}
+                      className="inline-flex items-center justify-center h-8 px-4 rounded-[4px] border border-[#d1d5db] bg-white text-[13px] font-medium text-[#212B36] hover:bg-[#f9fafb] hover:border-[#9ca3af]"
+                    >
+                      Approve
+                    </button>
+                  )}
                 </td>
               </tr>
             ))}
@@ -1142,6 +1245,39 @@ function ProductsDrilldown({ trip, onBack, showBackButton = true }) {
           </div>
         </div>
       </div>
+
+      {selectedProductIds.size > 0 && (
+        <div
+          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-4 rounded-[8px] px-6 py-3"
+          style={{ background: '#1A1A2E', boxShadow: '0 4px 12px rgba(0,0,0,0.25)' }}
+        >
+          <button
+            type="button"
+            onClick={clearProductSelection}
+            className="flex items-center justify-center size-8 rounded-[4px] text-white hover:bg-white/10"
+            aria-label="Close"
+          >
+            <IconClose className="size-4" />
+          </button>
+          <span className="text-[14px] font-medium text-white">
+            {selectedProductIds.size} selected
+          </span>
+          <button
+            type="button"
+            onClick={handleApproveSelectedProducts}
+            className="px-4 py-2 rounded-[4px] text-[14px] font-medium text-white hover:bg-white/10"
+          >
+            Approve all
+          </button>
+          <button
+            type="button"
+            onClick={handleExcludeSelectedProducts}
+            className="px-4 py-2 rounded-[4px] text-[14px] font-medium text-white hover:bg-white/10"
+          >
+            Exclude
+          </button>
+        </div>
+      )}
     </div>
   )
 }
