@@ -179,13 +179,8 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
     sendingLocations: false,
     receivingLocations: false,
   })
-  const [productFilterOpenApproval, setProductFilterOpenApproval] = useState({
-    departments: false,
-    subDepartments: false,
-    seasons: false,
-    events: false,
-  })
-  const [geoFilterOpenApproval, setGeoFilterOpenApproval] = useState({
+  const DEFAULT_PRODUCT_FILTER_OPEN = { departments: false, subDepartments: false, seasons: false, events: false }
+  const DEFAULT_GEO_FILTER_OPEN = {
     locationTypes: false,
     regions: false,
     countries: false,
@@ -194,12 +189,19 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
     locations: false,
     sendingLocations: false,
     receivingLocations: false,
-  })
-  const [advancedApprovalRows, setAdvancedApprovalRows] = useState(() => [
-    { id: 'adv-1', conditions: [{ id: 'cond-1', mainColumn: '', condition: '', value: '' }] },
+  }
+  const [exceptions, setExceptions] = useState(() => [
+    {
+      id: 'exc-1',
+      expanded: true,
+      advancedRows: [{ id: 'adv-1', conditions: [{ id: 'cond-1', mainColumn: '', condition: '', value: '' }] }],
+      productFilterOpen: { ...DEFAULT_PRODUCT_FILTER_OPEN },
+      geoFilterOpen: { ...DEFAULT_GEO_FILTER_OPEN },
+    },
   ])
   const [advancedRowNextId, setAdvancedRowNextId] = useState(2)
   const [advancedConditionNextId, setAdvancedConditionNextId] = useState(2)
+  const [exceptionNextId, setExceptionNextId] = useState(2)
   const [recurrenceRepeatEvery, setRecurrenceRepeatEvery] = useState(1)
   const [recurrenceRepeatUnit, setRecurrenceRepeatUnit] = useState('week')
   const [recurrenceSubmissionDayOfWeek, setRecurrenceSubmissionDayOfWeek] = useState(3)
@@ -458,61 +460,130 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
     }))
   }
 
-  const toggleProductFilterRowApproval = (key) => {
-    setProductFilterOpenApproval((prev) => ({
-      ...prev,
-      [key]: !prev[key],
-    }))
+  const toggleExceptionAccordion = (exceptionId) => {
+    setExceptions((prev) =>
+      prev.map((e) => (e.id === exceptionId ? { ...e, expanded: !e.expanded } : e))
+    )
   }
 
-  const toggleGeoFilterRowApproval = (key) => {
-    setGeoFilterOpenApproval((prev) => ({
-      ...prev,
-      [key]: !prev[key],
-    }))
+  const removeException = (exceptionId) => {
+    setExceptions((prev) => prev.filter((e) => e.id !== exceptionId))
   }
 
-  const addAdvancedApprovalRow = () => {
-    const id = `adv-${advancedRowNextId}`
+  const addException = () => {
+    const excId = `exc-${exceptionNextId}`
+    const advId = `adv-${advancedRowNextId}`
     const condId = `cond-${advancedConditionNextId}`
+    setExceptionNextId((n) => n + 1)
     setAdvancedRowNextId((n) => n + 1)
     setAdvancedConditionNextId((n) => n + 1)
-    setAdvancedApprovalRows((prev) => [...prev, { id, conditions: [{ id: condId, mainColumn: '', condition: '', value: '' }] }])
+    setExceptions((prev) => {
+      const withExpandedFalse = prev.map((e) => ({ ...e, expanded: false }))
+      return [
+        ...withExpandedFalse,
+        {
+          id: excId,
+          expanded: true,
+          advancedRows: [{ id: advId, conditions: [{ id: condId, mainColumn: '', condition: '', value: '' }] }],
+          productFilterOpen: { ...DEFAULT_PRODUCT_FILTER_OPEN },
+          geoFilterOpen: { ...DEFAULT_GEO_FILTER_OPEN },
+        },
+      ]
+    })
   }
 
-  const removeAdvancedApprovalRow = (id) => {
-    setAdvancedApprovalRows((prev) => prev.filter((r) => r.id !== id))
-  }
-
-  const addConditionToBox = (boxId) => {
-    const condId = `cond-${advancedConditionNextId}`
-    setAdvancedConditionNextId((n) => n + 1)
-    setAdvancedApprovalRows((prev) =>
-      prev.map((r) =>
-        r.id === boxId ? { ...r, conditions: [...r.conditions, { id: condId, mainColumn: '', condition: '', value: '' }] } : r
+  const toggleProductFilterRowForException = (exceptionId, key) => {
+    setExceptions((prev) =>
+      prev.map((e) =>
+        e.id === exceptionId
+          ? { ...e, productFilterOpen: { ...e.productFilterOpen, [key]: !e.productFilterOpen[key] } }
+          : e
       )
     )
   }
 
-  const removeConditionFromBox = (boxId, conditionId) => {
-    setAdvancedApprovalRows((prev) =>
-      prev
-        .map((r) => {
-          if (r.id !== boxId) return r
-          const newConditions = r.conditions.filter((c) => c.id !== conditionId)
-          if (newConditions.length === 0) return null
-          return { ...r, conditions: newConditions }
-        })
-        .filter(Boolean)
+  const toggleGeoFilterRowForException = (exceptionId, key) => {
+    setExceptions((prev) =>
+      prev.map((e) =>
+        e.id === exceptionId ? { ...e, geoFilterOpen: { ...e.geoFilterOpen, [key]: !e.geoFilterOpen[key] } } : e
+      )
     )
   }
 
-  const updateAdvancedApprovalCondition = (boxId, conditionId, field, value) => {
-    setAdvancedApprovalRows((prev) =>
-      prev.map((r) => {
-        if (r.id !== boxId) return r
-        return { ...r, conditions: r.conditions.map((c) => (c.id === conditionId ? { ...c, [field]: value } : c)) }
+  const addConditionToBox = (exceptionId, boxId) => {
+    const condId = `cond-${advancedConditionNextId}`
+    setAdvancedConditionNextId((n) => n + 1)
+    setExceptions((prev) =>
+      prev.map((e) =>
+        e.id === exceptionId
+          ? {
+              ...e,
+              advancedRows: e.advancedRows.map((r) =>
+                r.id === boxId ? { ...r, conditions: [...r.conditions, { id: condId, mainColumn: '', condition: '', value: '' }] } : r
+              ),
+            }
+          : e
+      )
+    )
+  }
+
+  const removeConditionFromBox = (exceptionId, boxId, conditionId) => {
+    setExceptions((prev) =>
+      prev.map((e) => {
+        if (e.id !== exceptionId) return e
+        return {
+          ...e,
+          advancedRows: e.advancedRows
+            .map((r) => {
+              if (r.id !== boxId) return r
+              const newConditions = r.conditions.filter((c) => c.id !== conditionId)
+              if (newConditions.length === 0) return null
+              return { ...r, conditions: newConditions }
+            })
+            .filter(Boolean),
+        }
       })
+    )
+  }
+
+  const updateAdvancedApprovalCondition = (exceptionId, boxId, conditionId, field, value) => {
+    setExceptions((prev) =>
+      prev.map((e) =>
+        e.id === exceptionId
+          ? {
+              ...e,
+              advancedRows: e.advancedRows.map((r) =>
+                r.id === boxId ? { ...r, conditions: r.conditions.map((c) => (c.id === conditionId ? { ...c, [field]: value } : c)) } : r
+              ),
+            }
+          : e
+      )
+    )
+  }
+
+  const clearAdvancedForException = (exceptionId) => {
+    const advId = `adv-${advancedRowNextId}`
+    const condId = `cond-${advancedConditionNextId}`
+    setAdvancedRowNextId((n) => n + 1)
+    setAdvancedConditionNextId((n) => n + 1)
+    setExceptions((prev) =>
+      prev.map((e) =>
+        e.id === exceptionId
+          ? { ...e, advancedRows: [{ id: advId, conditions: [{ id: condId, mainColumn: '', condition: '', value: '' }] }] }
+          : e
+      )
+    )
+  }
+
+  const clearProductFilterForException = (exceptionId) => {
+    setExceptions((prev) =>
+      prev.map((e) => (e.id === exceptionId ? { ...e, productFilterOpen: { ...DEFAULT_PRODUCT_FILTER_OPEN } } : e))
+    )
+  }
+
+  const clearGeoFilterForException = (exceptionId) => {
+    setExceptions((prev) =>
+      prev.map((e) => (e.id === exceptionId ? { ...e, geoFilterOpen: { ...DEFAULT_GEO_FILTER_OPEN } } : e))
     )
   }
 
@@ -1033,297 +1104,248 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
               />
             </button>
             {accordionOpen.exceptions && (
-              <div className="px-5 pb-6 pt-2 flex flex-col gap-6 border-t border-[#EAEAEA]">
-                <section className="flex flex-col gap-2">
-                      <div className="flex items-center justify-between">
-                        <h3 className="text-[13px] font-semibold text-[#0a0a0a] uppercase tracking-[0.04em]">
-                          Advanced
-                        </h3>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setAdvancedApprovalRows([{ id: 'adv-1', conditions: [{ id: 'cond-1', mainColumn: '', condition: '', value: '' }] }])
-                            setAdvancedRowNextId(2)
-                            setAdvancedConditionNextId(2)
-                          }}
-                          className="text-[12px] font-medium text-[#4b535c] hover:text-[#0a0a0a]"
-                        >
-                          Clear all
-                        </button>
-                      </div>
-                      <div className="mt-1 flex flex-col gap-4 border-t border-[#e5e7eb] pt-3">
+              <div className="px-5 pb-6 pt-2 flex flex-col gap-4 border-t border-[#EAEAEA]">
+                {exceptions.map((exc, excIdx) => (
+                  <div key={exc.id} className="border border-[#e5e7eb] rounded-[4px] bg-white overflow-hidden">
+                    <div className="flex items-center">
+                      <button
+                        type="button"
+                        onClick={() => toggleExceptionAccordion(exc.id)}
+                        className="flex-1 flex items-center justify-between px-4 py-3 text-left hover:bg-[#f8f8f8] transition-colors"
+                      >
+                        <span className="text-[14px] font-medium text-[#0a0a0a]">
+                          Exception {excIdx + 1}
+                        </span>
+                        <IconChevronDown
+                          className={`size-5 text-[#4b535c] transition-transform shrink-0 ${
+                            exc.expanded ? 'rotate-180' : ''
+                          }`}
+                        />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => removeException(exc.id)}
+                        className="h-10 w-10 flex items-center justify-center text-[#4b535c] hover:bg-[#e5e7eb] shrink-0"
+                        aria-label="Delete exception"
+                      >
+                        <IconClose className="size-4" />
+                      </button>
+                    </div>
+                    {exc.expanded && (
+                      <div className="px-4 pb-4 pt-0 flex flex-col gap-6 border-t border-[#e5e7eb]">
                         <div className="flex flex-col gap-4">
-                        {advancedApprovalRows.map((box) => (
-                          <div
-                            key={box.id}
-                            className="flex flex-col gap-2 p-3 rounded-[8px] border border-[#e5e7eb] bg-[#fafafa]"
-                          >
-                            {box.conditions.map((cond, condIdx) => (
-                              <div key={cond.id} className="flex flex-col gap-2">
-                                {condIdx > 0 && (
-                                  <span className="text-[12px] font-normal text-[#878D94]">and</span>
-                                )}
-                                <div className="flex flex-wrap items-end gap-3">
-                                  <span className="text-[13px] font-medium text-[#0a0a0a] w-full sm:w-auto sm:min-w-[48px]">
-                                    {condIdx === 0 ? 'Where' : ''}
-                                  </span>
-                                  <div className="flex flex-col gap-1 min-w-[140px] flex-1">
-                                    <label className="text-[12px] font-normal text-[#4b535c]">Main column</label>
-                                    <div className="relative">
-                                      <select
-                                        value={cond.mainColumn}
-                                        onChange={(e) => updateAdvancedApprovalCondition(box.id, cond.id, 'mainColumn', e.target.value)}
-                                        className="w-full h-10 pl-3 pr-9 rounded-[4px] border border-[#e9eaeb] bg-white text-[13px] text-[#0a0a0a] appearance-none"
-                                      >
-                                        <option value="">Select</option>
-                                        {MAIN_COLUMN_OPTIONS.map((opt) => (
-                                          <option key={opt} value={opt}>{opt}</option>
-                                        ))}
-                                      </select>
-                                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
-                                        <IconChevronDownSelect />
-                                      </span>
-                                    </div>
-                                  </div>
-                                  <div className="flex flex-col gap-1 min-w-[160px] flex-1">
-                                    <label className="text-[12px] font-normal text-[#4b535c]">Condition</label>
-                                    <div className="relative">
-                                      <select
-                                        value={cond.condition}
-                                        onChange={(e) => updateAdvancedApprovalCondition(box.id, cond.id, 'condition', e.target.value)}
-                                        className="w-full h-10 pl-3 pr-9 rounded-[4px] border border-[#e9eaeb] bg-white text-[13px] text-[#0a0a0a] appearance-none"
-                                      >
-                                        <option value="">Select</option>
-                                        {CONDITION_OPTIONS.map((opt) => (
-                                          <option key={opt} value={opt}>{opt}</option>
-                                        ))}
-                                      </select>
-                                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
-                                        <IconChevronDownSelect />
-                                      </span>
-                                    </div>
-                                  </div>
-                                  <div className="flex flex-col gap-1 min-w-[100px] flex-1">
-                                    <label className="text-[12px] font-normal text-[#4b535c]">Enter a value</label>
-                                    <input
-                                      type="number"
-                                      placeholder="Value"
-                                      value={cond.value}
-                                      onChange={(e) => updateAdvancedApprovalCondition(box.id, cond.id, 'value', e.target.value)}
-                                      className="w-full h-10 px-3 rounded-[4px] border border-[#e9eaeb] bg-white text-[13px] text-[#0a0a0a]"
-                                    />
-                                  </div>
-                                  <button
-                                    type="button"
-                                    onClick={() => removeConditionFromBox(box.id, cond.id)}
-                                    className="h-10 w-10 flex items-center justify-center rounded-[4px] text-[#4b535c] hover:bg-[#e5e7eb] shrink-0"
-                                    aria-label="Remove condition"
-                                  >
-                                    <IconClose className="size-4" />
-                                  </button>
-                                </div>
-                              </div>
-                            ))}
-                            <button
-                              type="button"
-                              onClick={() => addConditionToBox(box.id)}
-                              className="self-start text-[13px] font-medium text-[#0267FF] hover:underline"
+                          {exc.advancedRows.map((box) => (
+                            <div
+                              key={box.id}
+                              className="flex flex-col gap-2 p-3 rounded-[8px] border border-[#e5e7eb] bg-[#fafafa]"
                             >
-                              + Add condition
-                            </button>
-                          </div>
-                        ))}
-                        </div>
-                        <button
-                          type="button"
-                          onClick={addAdvancedApprovalRow}
-                          className="self-start h-9 px-3 rounded-[4px] border border-[#0267ff] text-[13px] font-medium text-[#0267ff] hover:bg-[#ebf3ff] flex items-center gap-2"
-                        >
-                          <IconPlus className="size-4" />
-                          Add exception
-                        </button>
-                      </div>
-                    </section>
-
-                    <section className="flex flex-col gap-2">
-                      <div className="flex items-center justify-between">
-                        <h3 className="text-[13px] font-semibold text-[#0a0a0a] uppercase tracking-[0.04em]">
-                          Product
-                        </h3>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setProductFilterOpenApproval({
-                              departments: false,
-                              subDepartments: false,
-                              seasons: false,
-                              events: false,
-                            })
-                          }
-                          className="text-[12px] font-medium text-[#4b535c] hover:text-[#0a0a0a]"
-                        >
-                          Clear all
-                        </button>
-                      </div>
-                      <div className="mt-1 flex flex-col border-t border-[#e5e7eb]">
-                        {[
-                          { id: 'departments', label: 'Departments' },
-                          { id: 'subDepartments', label: 'Sub-departments' },
-                          { id: 'seasons', label: 'Seasons' },
-                          { id: 'events', label: 'Events' },
-                        ].map((row) => {
-                          const isOpen = productFilterOpenApproval[row.id]
-                          return (
-                            <div key={row.id} className="border-b border-[#e5e7eb] last:border-b-0">
-                              <button
-                                type="button"
-                                onClick={() => toggleProductFilterRowApproval(row.id)}
-                                className="w-full flex items-center justify-between px-3 py-2.5 text-left hover:bg-[#f8f8f8]"
-                              >
-                                <span className="text-[13px] font-medium text-[#0a0a0a]">
-                                  {row.label}
-                                </span>
-                                <span
-                                  className={`inline-flex items-center justify-center size-5 text-[#4b535c] transition-transform ${
-                                    isOpen ? 'rotate-180' : ''
-                                  }`}
-                                >
-                                  <IconChevronDown className="size-4" />
-                                </span>
-                              </button>
-                              {isOpen && (
-                                <div className="px-3 pb-3 pt-1 flex flex-col gap-2 bg-[#fafafa]">
-                                  <div className="flex items-center justify-between gap-2">
-                                    <div className="relative flex-1">
+                              {box.conditions.map((cond, condIdx) => (
+                                <div key={cond.id} className="flex flex-col gap-2">
+                                  {condIdx > 0 && (
+                                    <span className="text-[12px] font-normal text-[#878D94]">and</span>
+                                  )}
+                                  <div className="flex items-end gap-3 w-full">
+                                    <span className="text-[14px] font-normal text-[#000000] opacity-[0.67] shrink-0 w-[48px]">
+                                      {condIdx === 0 ? 'Where' : ''}
+                                    </span>
+                                    <div className="flex flex-col gap-1 flex-1 min-w-0">
+                                      <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Main column</label>
+                                      <div className="relative">
+                                        <select
+                                          value={cond.mainColumn}
+                                          onChange={(e) => updateAdvancedApprovalCondition(exc.id, box.id, cond.id, 'mainColumn', e.target.value)}
+                                          className="w-full h-14 pl-4 pr-10 rounded-[4px] border border-[#EAEAEA] bg-white text-[16px] text-[#0a0a0a] appearance-none"
+                                        >
+                                          <option value="">Select</option>
+                                          {MAIN_COLUMN_OPTIONS.map((opt) => (
+                                            <option key={opt} value={opt}>{opt}</option>
+                                          ))}
+                                        </select>
+                                        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
+                                          <IconChevronDownSelect />
+                                        </span>
+                                      </div>
+                                    </div>
+                                    <div className="flex flex-col gap-1 flex-1 min-w-0">
+                                      <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Condition</label>
+                                      <div className="relative">
+                                        <select
+                                          value={cond.condition}
+                                          onChange={(e) => updateAdvancedApprovalCondition(exc.id, box.id, cond.id, 'condition', e.target.value)}
+                                          className="w-full h-14 pl-4 pr-10 rounded-[4px] border border-[#EAEAEA] bg-white text-[16px] text-[#0a0a0a] appearance-none"
+                                        >
+                                          <option value="">Select</option>
+                                          {CONDITION_OPTIONS.map((opt) => (
+                                            <option key={opt} value={opt}>{opt}</option>
+                                          ))}
+                                        </select>
+                                        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
+                                          <IconChevronDownSelect />
+                                        </span>
+                                      </div>
+                                    </div>
+                                    <div className="flex flex-col gap-1 flex-1 min-w-0">
+                                      <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Enter a value</label>
                                       <input
-                                        type="text"
-                                        placeholder="search..."
-                                        className="w-full h-9 px-3 rounded-[4px] border border-[#e5e7eb] bg-white text-[13px] text-[#0a0a0a] placeholder:text-[#9ca3af]"
+                                        type="number"
+                                        placeholder="Value"
+                                        value={cond.value}
+                                        onChange={(e) => updateAdvancedApprovalCondition(exc.id, box.id, cond.id, 'value', e.target.value)}
+                                        className="w-full h-14 px-4 rounded-[4px] border border-[#EAEAEA] bg-white text-[16px] text-[#0a0a0a]"
                                       />
                                     </div>
-                                    <button
-                                      type="button"
-                                      className="text-[12px] font-medium text-[#0267ff] hover:underline shrink-0"
-                                    >
-                                      Select all
-                                    </button>
-                                  </div>
-                                  <div className="flex flex-col gap-1.5 mt-1">
-                                    {['Cadeaux', 'Exotiques', 'Femme', 'Homme', 'Voyage'].map(
-                                      (name) => (
-                                        <label
-                                          key={name}
-                                          className="flex items-center gap-2 text-[13px] text-[#0a0a0a]"
-                                        >
-                                          <input
-                                            type="checkbox"
-                                            className="size-4 rounded border-[#d1d5db] text-[#0267ff] focus:ring-[#0267ff]"
-                                          />
-                                          <span>{name}</span>
-                                        </label>
-                                      ),
+                                    {box.conditions.length > 1 && (
+                                      <button
+                                        type="button"
+                                        onClick={() => removeConditionFromBox(exc.id, box.id, cond.id)}
+                                        className="h-14 w-14 flex items-center justify-center rounded-[4px] text-[#4b535c] hover:bg-[#e5e7eb] shrink-0"
+                                        aria-label="Remove condition"
+                                      >
+                                        <IconClose className="size-4" />
+                                      </button>
                                     )}
                                   </div>
                                 </div>
-                              )}
-                            </div>
-                          )
-                        })}
-                      </div>
-                    </section>
-
-                    <section className="flex flex-col gap-2">
-                      <div className="flex items-center justify-between">
-                        <h3 className="text-[13px] font-semibold text-[#0a0a0a] uppercase tracking-[0.04em]">
-                          Geographic
-                        </h3>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setGeoFilterOpenApproval({
-                              locationTypes: false,
-                              regions: false,
-                              countries: false,
-                              sendingCountries: false,
-                              receivingCountries: false,
-                              locations: false,
-                              sendingLocations: false,
-                              receivingLocations: false,
-                            })
-                          }
-                          className="text-[12px] font-medium text-[#4b535c] hover:text-[#0a0a0a]"
-                        >
-                          Clear all
-                        </button>
-                      </div>
-                      <div className="mt-1 flex flex-col border-t border-[#e5e7eb]">
-                        {[
-                          { id: 'locationTypes', label: 'Location Types' },
-                          { id: 'regions', label: 'Regions' },
-                          { id: 'countries', label: 'Countries' },
-                          { id: 'sendingCountries', label: 'Sending countries' },
-                          { id: 'receivingCountries', label: 'Receiving countries' },
-                          { id: 'locations', label: 'Locations' },
-                          { id: 'sendingLocations', label: 'Sending locations' },
-                          { id: 'receivingLocations', label: 'Receiving locations' },
-                        ].map((row) => {
-                          const isOpen = geoFilterOpenApproval[row.id]
-                          return (
-                            <div key={row.id} className="border-b border-[#e5e7eb] last:border-b-0">
+                              ))}
                               <button
                                 type="button"
-                                onClick={() => toggleGeoFilterRowApproval(row.id)}
-                                className="w-full flex items-center justify-between px-3 py-2.5 text-left hover:bg-[#f8f8f8]"
+                                onClick={() => addConditionToBox(exc.id, box.id)}
+                                className="self-start text-[13px] font-medium text-[#0267FF] hover:underline"
                               >
-                                <span className="text-[13px] font-medium text-[#0a0a0a]">
-                                  {row.label}
-                                </span>
-                                <span
-                                  className={`inline-flex items-center justify-center size-5 text-[#4b535c] transition-transform ${
-                                    isOpen ? 'rotate-180' : ''
-                                  }`}
-                                >
-                                  <IconChevronDown className="size-4" />
-                                </span>
+                                + Add
                               </button>
-                              {isOpen && (
-                                <div className="px-3 pb-3 pt-1 flex flex-col gap-2 bg-[#fafafa]">
-                                  <div className="flex items-center justify-between gap-2">
-                                    <div className="relative flex-1">
-                                      <input
-                                        type="text"
-                                        placeholder="search..."
-                                        className="w-full h-9 px-3 rounded-[4px] border border-[#e5e7eb] bg-white text-[13px] text-[#0a0a0a] placeholder:text-[#9ca3af]"
-                                      />
-                                    </div>
-                                    <button
-                                      type="button"
-                                      className="text-[12px] font-medium text-[#0267ff] hover:underline shrink-0"
-                                    >
-                                      Select all
-                                    </button>
-                                  </div>
-                                  <div className="flex flex-col gap-1.5 mt-1">
-                                    {['Alpha', 'Bravo', 'Charlie', 'Delta', 'Echo'].map((name) => (
-                                      <label
-                                        key={name}
-                                        className="flex items-center gap-2 text-[13px] text-[#0a0a0a]"
-                                      >
-                                        <input
-                                          type="checkbox"
-                                          className="size-4 rounded border-[#d1d5db] text-[#0267ff] focus:ring-[#0267ff]"
-                                        />
-                                        <span>{name}</span>
-                                      </label>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
                             </div>
-                          )
-                        })}
+                          ))}
+                        </div>
+
+                        <section className="flex flex-col gap-2">
+                          <div className="flex items-center justify-between">
+                            <h3 className="text-[13px] font-semibold text-[#0a0a0a] uppercase tracking-[0.04em]">
+                              Product
+                            </h3>
+                            <button
+                              type="button"
+                              onClick={() => clearProductFilterForException(exc.id)}
+                              className="text-[12px] font-medium text-[#4b535c] hover:text-[#0a0a0a]"
+                            >
+                              Clear all
+                            </button>
+                          </div>
+                          <div className="mt-1 flex flex-col border-t border-[#e5e7eb]">
+                            {[
+                              { id: 'departments', label: 'Departments' },
+                              { id: 'subDepartments', label: 'Sub-departments' },
+                              { id: 'seasons', label: 'Seasons' },
+                              { id: 'events', label: 'Events' },
+                            ].map((row) => {
+                              const isOpen = exc.productFilterOpen[row.id]
+                              return (
+                                <div key={row.id} className="border-b border-[#e5e7eb] last:border-b-0">
+                                  <button
+                                    type="button"
+                                    onClick={() => toggleProductFilterRowForException(exc.id, row.id)}
+                                    className="w-full flex items-center justify-between px-3 py-2.5 text-left hover:bg-[#f8f8f8]"
+                                  >
+                                    <span className="text-[13px] font-medium text-[#0a0a0a]">{row.label}</span>
+                                    <span className={`inline-flex items-center justify-center size-5 text-[#4b535c] transition-transform ${isOpen ? 'rotate-180' : ''}`}>
+                                      <IconChevronDown className="size-4" />
+                                    </span>
+                                  </button>
+                                  {isOpen && (
+                                    <div className="px-3 pb-3 pt-1 flex flex-col gap-2 bg-[#fafafa]">
+                                      <div className="flex items-center justify-between gap-2">
+                                        <div className="relative flex-1">
+                                          <input type="text" placeholder="search..." className="w-full h-9 px-3 rounded-[4px] border border-[#e5e7eb] bg-white text-[13px] text-[#0a0a0a] placeholder:text-[#9ca3af]" />
+                                        </div>
+                                        <button type="button" className="text-[12px] font-medium text-[#0267ff] hover:underline shrink-0">Select all</button>
+                                      </div>
+                                      <div className="flex flex-col gap-1.5 mt-1">
+                                        {['Cadeaux', 'Exotiques', 'Femme', 'Homme', 'Voyage'].map((name) => (
+                                          <label key={name} className="flex items-center gap-2 text-[13px] text-[#0a0a0a]">
+                                            <input type="checkbox" className="size-4 rounded border-[#d1d5db] text-[#0267ff] focus:ring-[#0267ff]" />
+                                            <span>{name}</span>
+                                          </label>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              )
+                            })}
+                          </div>
+                        </section>
+
+                        <section className="flex flex-col gap-2">
+                          <div className="flex items-center justify-between">
+                            <h3 className="text-[13px] font-semibold text-[#0a0a0a] uppercase tracking-[0.04em]">
+                              Geographic
+                            </h3>
+                            <button
+                              type="button"
+                              onClick={() => clearGeoFilterForException(exc.id)}
+                              className="text-[12px] font-medium text-[#4b535c] hover:text-[#0a0a0a]"
+                            >
+                              Clear all
+                            </button>
+                          </div>
+                          <div className="mt-1 flex flex-col border-t border-[#e5e7eb]">
+                            {[
+                              { id: 'locationTypes', label: 'Location Types' },
+                              { id: 'regions', label: 'Regions' },
+                              { id: 'countries', label: 'Countries' },
+                              { id: 'sendingCountries', label: 'Sending countries' },
+                              { id: 'receivingCountries', label: 'Receiving countries' },
+                              { id: 'locations', label: 'Locations' },
+                              { id: 'sendingLocations', label: 'Sending locations' },
+                              { id: 'receivingLocations', label: 'Receiving locations' },
+                            ].map((row) => {
+                              const isOpen = exc.geoFilterOpen[row.id]
+                              return (
+                                <div key={row.id} className="border-b border-[#e5e7eb] last:border-b-0">
+                                  <button
+                                    type="button"
+                                    onClick={() => toggleGeoFilterRowForException(exc.id, row.id)}
+                                    className="w-full flex items-center justify-between px-3 py-2.5 text-left hover:bg-[#f8f8f8]"
+                                  >
+                                    <span className="text-[13px] font-medium text-[#0a0a0a]">{row.label}</span>
+                                    <span className={`inline-flex items-center justify-center size-5 text-[#4b535c] transition-transform ${isOpen ? 'rotate-180' : ''}`}>
+                                      <IconChevronDown className="size-4" />
+                                    </span>
+                                  </button>
+                                  {isOpen && (
+                                    <div className="px-3 pb-3 pt-1 flex flex-col gap-2 bg-[#fafafa]">
+                                      <div className="flex items-center justify-between gap-2">
+                                        <div className="relative flex-1">
+                                          <input type="text" placeholder="search..." className="w-full h-9 px-3 rounded-[4px] border border-[#e5e7eb] bg-white text-[13px] text-[#0a0a0a] placeholder:text-[#9ca3af]" />
+                                        </div>
+                                        <button type="button" className="text-[12px] font-medium text-[#0267ff] hover:underline shrink-0">Select all</button>
+                                      </div>
+                                      <div className="flex flex-col gap-1.5 mt-1">
+                                        {['Alpha', 'Bravo', 'Charlie', 'Delta', 'Echo'].map((name) => (
+                                          <label key={name} className="flex items-center gap-2 text-[13px] text-[#0a0a0a]">
+                                            <input type="checkbox" className="size-4 rounded border-[#d1d5db] text-[#0267ff] focus:ring-[#0267ff]" />
+                                            <span>{name}</span>
+                                          </label>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              )
+                            })}
+                          </div>
+                        </section>
                       </div>
-                    </section>
+                    )}
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={addException}
+                  className="self-start text-[13px] font-medium text-[#0267FF] hover:underline"
+                >
+                  + Add exception
+                </button>
               </div>
             )}
           </div>
