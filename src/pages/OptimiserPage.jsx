@@ -1133,72 +1133,72 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                     </div>
                     {exc.expanded && (
                       <div className="px-4 pb-4 pt-0 flex flex-col gap-6 border-t border-[#e5e7eb]">
-                        <div className="flex flex-col gap-4">
+                        <div className="flex flex-col gap-3">
                           {exc.advancedRows.map((box) => (
                             <div
                               key={box.id}
-                              className="flex flex-col gap-2 p-3 rounded-[8px] border border-[#e5e7eb] bg-[#fafafa]"
+                              className="flex flex-col gap-2 p-2 rounded-[8px] border border-[#e5e7eb] bg-[#fafafa]"
                             >
                               {box.conditions.map((cond, condIdx) => (
-                                <div key={cond.id} className="flex flex-col gap-2">
+                                <div key={cond.id} className="flex flex-col gap-1">
                                   {condIdx > 0 && (
                                     <span className="text-[12px] font-normal text-[#878D94]">and</span>
                                   )}
-                                  <div className="flex items-end gap-3 w-full">
-                                    <span className="text-[14px] font-normal text-[#000000] opacity-[0.67] shrink-0 w-[48px]">
+                                  <div className="flex items-end gap-2 w-full">
+                                    <span className="text-[14px] font-medium text-[#0a0a0a] shrink-0 w-[48px]">
                                       {condIdx === 0 ? 'Where' : ''}
                                     </span>
-                                    <div className="flex flex-col gap-1 flex-1 min-w-0">
-                                      <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Main column</label>
+                                    <div className="flex flex-col gap-0.5 flex-1 min-w-0">
+                                      <label className="text-[12px] font-normal text-[#4b535c]">Main column</label>
                                       <div className="relative">
                                         <select
                                           value={cond.mainColumn}
                                           onChange={(e) => updateAdvancedApprovalCondition(exc.id, box.id, cond.id, 'mainColumn', e.target.value)}
-                                          className="w-full h-14 pl-4 pr-10 rounded-[4px] border border-[#EAEAEA] bg-white text-[16px] text-[#0a0a0a] appearance-none"
+                                          className="w-full h-10 py-2 pl-3 pr-9 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#0a0a0a] appearance-none"
                                         >
                                           <option value="">Select</option>
                                           {MAIN_COLUMN_OPTIONS.map((opt) => (
                                             <option key={opt} value={opt}>{opt}</option>
                                           ))}
                                         </select>
-                                        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
+                                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
                                           <IconChevronDownSelect />
                                         </span>
                                       </div>
                                     </div>
-                                    <div className="flex flex-col gap-1 flex-1 min-w-0">
-                                      <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Condition</label>
+                                    <div className="flex flex-col gap-0.5 flex-1 min-w-0">
+                                      <label className="text-[12px] font-normal text-[#4b535c]">Condition</label>
                                       <div className="relative">
                                         <select
                                           value={cond.condition}
                                           onChange={(e) => updateAdvancedApprovalCondition(exc.id, box.id, cond.id, 'condition', e.target.value)}
-                                          className="w-full h-14 pl-4 pr-10 rounded-[4px] border border-[#EAEAEA] bg-white text-[16px] text-[#0a0a0a] appearance-none"
+                                          className="w-full h-10 py-2 pl-3 pr-9 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#0a0a0a] appearance-none"
                                         >
                                           <option value="">Select</option>
                                           {CONDITION_OPTIONS.map((opt) => (
                                             <option key={opt} value={opt}>{opt}</option>
                                           ))}
                                         </select>
-                                        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
+                                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
                                           <IconChevronDownSelect />
                                         </span>
                                       </div>
                                     </div>
-                                    <div className="flex flex-col gap-1 flex-1 min-w-0">
-                                      <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Enter a value</label>
+                                    <div className="flex flex-col gap-0.5 flex-1 min-w-0">
+                                      <label className="text-[12px] font-normal text-[#4b535c]">Enter a value</label>
                                       <input
                                         type="number"
                                         placeholder="Value"
                                         value={cond.value}
                                         onChange={(e) => updateAdvancedApprovalCondition(exc.id, box.id, cond.id, 'value', e.target.value)}
-                                        className="w-full h-14 px-4 rounded-[4px] border border-[#EAEAEA] bg-white text-[16px] text-[#0a0a0a]"
+                                        className="w-full h-10 py-2 px-3 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#0a0a0a]"
                                       />
                                     </div>
                                     {box.conditions.length > 1 && (
                                       <button
                                         type="button"
                                         onClick={() => removeConditionFromBox(exc.id, box.id, cond.id)}
-                                        className="h-14 w-14 flex items-center justify-center rounded-[4px] text-[#4b535c] hover:bg-[#e5e7eb] shrink-0"
+                                        className="h-10 w-10 flex items-center justify-center rounded-[4px] text-[#4b535c] hover:bg-[#e5e7eb] shrink-0"
                                         aria-label="Remove condition"
                                       >
                                         <IconClose className="size-4" />
