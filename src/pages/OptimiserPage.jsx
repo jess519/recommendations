@@ -196,9 +196,10 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
     receivingLocations: false,
   })
   const [advancedApprovalRows, setAdvancedApprovalRows] = useState(() => [
-    { id: 'adv-1', mainColumn: '', condition: '', value: '' },
+    { id: 'adv-1', conditions: [{ id: 'cond-1', mainColumn: '', condition: '', value: '' }] },
   ])
   const [advancedRowNextId, setAdvancedRowNextId] = useState(2)
+  const [advancedConditionNextId, setAdvancedConditionNextId] = useState(2)
   const [recurrenceRepeatEvery, setRecurrenceRepeatEvery] = useState(1)
   const [recurrenceRepeatUnit, setRecurrenceRepeatUnit] = useState('week')
   const [recurrenceSubmissionDayOfWeek, setRecurrenceSubmissionDayOfWeek] = useState(3)
@@ -473,17 +474,45 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
 
   const addAdvancedApprovalRow = () => {
     const id = `adv-${advancedRowNextId}`
+    const condId = `cond-${advancedConditionNextId}`
     setAdvancedRowNextId((n) => n + 1)
-    setAdvancedApprovalRows((prev) => [...prev, { id, mainColumn: '', condition: '', value: '' }])
+    setAdvancedConditionNextId((n) => n + 1)
+    setAdvancedApprovalRows((prev) => [...prev, { id, conditions: [{ id: condId, mainColumn: '', condition: '', value: '' }] }])
   }
 
   const removeAdvancedApprovalRow = (id) => {
     setAdvancedApprovalRows((prev) => prev.filter((r) => r.id !== id))
   }
 
-  const updateAdvancedApprovalRow = (id, field, value) => {
+  const addConditionToBox = (boxId) => {
+    const condId = `cond-${advancedConditionNextId}`
+    setAdvancedConditionNextId((n) => n + 1)
     setAdvancedApprovalRows((prev) =>
-      prev.map((r) => (r.id === id ? { ...r, [field]: value } : r))
+      prev.map((r) =>
+        r.id === boxId ? { ...r, conditions: [...r.conditions, { id: condId, mainColumn: '', condition: '', value: '' }] } : r
+      )
+    )
+  }
+
+  const removeConditionFromBox = (boxId, conditionId) => {
+    setAdvancedApprovalRows((prev) =>
+      prev
+        .map((r) => {
+          if (r.id !== boxId) return r
+          const newConditions = r.conditions.filter((c) => c.id !== conditionId)
+          if (newConditions.length === 0) return null
+          return { ...r, conditions: newConditions }
+        })
+        .filter(Boolean)
+    )
+  }
+
+  const updateAdvancedApprovalCondition = (boxId, conditionId, field, value) => {
+    setAdvancedApprovalRows((prev) =>
+      prev.map((r) => {
+        if (r.id !== boxId) return r
+        return { ...r, conditions: r.conditions.map((c) => (c.id === conditionId ? { ...c, [field]: value } : c)) }
+      })
     )
   }
 
@@ -1013,8 +1042,9 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                         <button
                           type="button"
                           onClick={() => {
-                            setAdvancedApprovalRows([{ id: 'adv-1', mainColumn: '', condition: '', value: '' }])
+                            setAdvancedApprovalRows([{ id: 'adv-1', conditions: [{ id: 'cond-1', mainColumn: '', condition: '', value: '' }] }])
                             setAdvancedRowNextId(2)
+                            setAdvancedConditionNextId(2)
                           }}
                           className="text-[12px] font-medium text-[#4b535c] hover:text-[#0a0a0a]"
                         >
@@ -1023,67 +1053,83 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                       </div>
                       <div className="mt-1 flex flex-col gap-4 border-t border-[#e5e7eb] pt-3">
                         <div className="flex flex-col gap-4">
-                        {advancedApprovalRows.map((row) => (
+                        {advancedApprovalRows.map((box) => (
                           <div
-                            key={row.id}
-                              className="flex flex-wrap items-end gap-3 p-3 rounded-[8px] border border-[#e5e7eb] bg-[#fafafa]"
-                            >
-                            <span className="text-[13px] font-medium text-[#0a0a0a] w-full sm:w-auto sm:min-w-[48px]">
-                              Where
-                            </span>
-                            <div className="flex flex-col gap-1 min-w-[140px] flex-1">
-                              <label className="text-[12px] font-normal text-[#4b535c]">Main column</label>
-                              <div className="relative">
-                                <select
-                                  value={row.mainColumn}
-                                  onChange={(e) => updateAdvancedApprovalRow(row.id, 'mainColumn', e.target.value)}
-                                  className="w-full h-10 pl-3 pr-9 rounded-[4px] border border-[#e9eaeb] bg-white text-[13px] text-[#0a0a0a] appearance-none"
-                                >
-                                  <option value="">Select</option>
-                                  {MAIN_COLUMN_OPTIONS.map((opt) => (
-                                    <option key={opt} value={opt}>{opt}</option>
-                                  ))}
-                                </select>
-                                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
-                                  <IconChevronDownSelect />
-                                </span>
+                            key={box.id}
+                            className="flex flex-col gap-2 p-3 rounded-[8px] border border-[#e5e7eb] bg-[#fafafa]"
+                          >
+                            {box.conditions.map((cond, condIdx) => (
+                              <div key={cond.id} className="flex flex-col gap-2">
+                                {condIdx > 0 && (
+                                  <span className="text-[12px] font-normal text-[#878D94]">and</span>
+                                )}
+                                <div className="flex flex-wrap items-end gap-3">
+                                  <span className="text-[13px] font-medium text-[#0a0a0a] w-full sm:w-auto sm:min-w-[48px]">
+                                    {condIdx === 0 ? 'Where' : ''}
+                                  </span>
+                                  <div className="flex flex-col gap-1 min-w-[140px] flex-1">
+                                    <label className="text-[12px] font-normal text-[#4b535c]">Main column</label>
+                                    <div className="relative">
+                                      <select
+                                        value={cond.mainColumn}
+                                        onChange={(e) => updateAdvancedApprovalCondition(box.id, cond.id, 'mainColumn', e.target.value)}
+                                        className="w-full h-10 pl-3 pr-9 rounded-[4px] border border-[#e9eaeb] bg-white text-[13px] text-[#0a0a0a] appearance-none"
+                                      >
+                                        <option value="">Select</option>
+                                        {MAIN_COLUMN_OPTIONS.map((opt) => (
+                                          <option key={opt} value={opt}>{opt}</option>
+                                        ))}
+                                      </select>
+                                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
+                                        <IconChevronDownSelect />
+                                      </span>
+                                    </div>
+                                  </div>
+                                  <div className="flex flex-col gap-1 min-w-[160px] flex-1">
+                                    <label className="text-[12px] font-normal text-[#4b535c]">Condition</label>
+                                    <div className="relative">
+                                      <select
+                                        value={cond.condition}
+                                        onChange={(e) => updateAdvancedApprovalCondition(box.id, cond.id, 'condition', e.target.value)}
+                                        className="w-full h-10 pl-3 pr-9 rounded-[4px] border border-[#e9eaeb] bg-white text-[13px] text-[#0a0a0a] appearance-none"
+                                      >
+                                        <option value="">Select</option>
+                                        {CONDITION_OPTIONS.map((opt) => (
+                                          <option key={opt} value={opt}>{opt}</option>
+                                        ))}
+                                      </select>
+                                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
+                                        <IconChevronDownSelect />
+                                      </span>
+                                    </div>
+                                  </div>
+                                  <div className="flex flex-col gap-1 min-w-[100px] flex-1">
+                                    <label className="text-[12px] font-normal text-[#4b535c]">Enter a value</label>
+                                    <input
+                                      type="number"
+                                      placeholder="Value"
+                                      value={cond.value}
+                                      onChange={(e) => updateAdvancedApprovalCondition(box.id, cond.id, 'value', e.target.value)}
+                                      className="w-full h-10 px-3 rounded-[4px] border border-[#e9eaeb] bg-white text-[13px] text-[#0a0a0a]"
+                                    />
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={() => removeConditionFromBox(box.id, cond.id)}
+                                    className="h-10 w-10 flex items-center justify-center rounded-[4px] text-[#4b535c] hover:bg-[#e5e7eb] shrink-0"
+                                    aria-label="Remove condition"
+                                  >
+                                    <IconClose className="size-4" />
+                                  </button>
+                                </div>
                               </div>
-                            </div>
-                            <div className="flex flex-col gap-1 min-w-[160px] flex-1">
-                              <label className="text-[12px] font-normal text-[#4b535c]">Condition</label>
-                              <div className="relative">
-                                <select
-                                  value={row.condition}
-                                  onChange={(e) => updateAdvancedApprovalRow(row.id, 'condition', e.target.value)}
-                                  className="w-full h-10 pl-3 pr-9 rounded-[4px] border border-[#e9eaeb] bg-white text-[13px] text-[#0a0a0a] appearance-none"
-                                >
-                                  <option value="">Select</option>
-                                  {CONDITION_OPTIONS.map((opt) => (
-                                    <option key={opt} value={opt}>{opt}</option>
-                                  ))}
-                                </select>
-                                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
-                                  <IconChevronDownSelect />
-                                </span>
-                              </div>
-                            </div>
-                            <div className="flex flex-col gap-1 min-w-[100px] flex-1">
-                              <label className="text-[12px] font-normal text-[#4b535c]">Enter a value</label>
-                              <input
-                                type="number"
-                                placeholder="Value"
-                                value={row.value}
-                                onChange={(e) => updateAdvancedApprovalRow(row.id, 'value', e.target.value)}
-                                className="w-full h-10 px-3 rounded-[4px] border border-[#e9eaeb] bg-white text-[13px] text-[#0a0a0a]"
-                              />
-                            </div>
+                            ))}
                             <button
                               type="button"
-                              onClick={() => removeAdvancedApprovalRow(row.id)}
-                              className="h-10 w-10 flex items-center justify-center rounded-[4px] text-[#4b535c] hover:bg-[#e5e7eb] shrink-0"
-                              aria-label="Remove row"
+                              onClick={() => addConditionToBox(box.id)}
+                              className="self-start text-[13px] font-medium text-[#0267FF] hover:underline"
                             >
-                              <IconClose className="size-4" />
+                              + Add condition
                             </button>
                           </div>
                         ))}
