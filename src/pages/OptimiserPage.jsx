@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { IconCalendarSidebar, IconPlus, IconReplenishment, IconReorder, IconRebalancing, IconChevronDown, IconList, IconCalendarNote, IconTruck, IconTrendUp, IconLightbulb, IconEdit, IconClose, IconChevronDownSelect, IconArrowLeft } from '../components/icons'
+import { IconCalendarSidebar, IconPlus, IconReplenishment, IconReorder, IconRebalancing, IconChevronDown, IconList, IconCalendarNote, IconTruck, IconTrendUp, IconLightbulb, IconEdit, IconClose, IconChevronDownSelect, IconArrowLeft, IconFilterFunnel, IconSearch } from '../components/icons'
 
 const SAMPLE_CALENDAR_ENTRY = {
   id: 'entry-1',
@@ -190,6 +190,26 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
     sendingLocations: false,
     receivingLocations: false,
   }
+  const DEFAULT_PRODUCT_FILTER_SELECTED = { departments: [], subDepartments: [], seasons: [], events: [] }
+  const DEFAULT_GEO_FILTER_SELECTED = {
+    locationTypes: [], regions: [], countries: [], sendingCountries: [], receivingCountries: [],
+    locations: [], sendingLocations: [], receivingLocations: [],
+  }
+  const EXCEPTION_FILTER_OPTIONS = [
+    { id: 'advanced', label: 'Advanced filters', highlight: true },
+    { id: 'departments', label: 'Departments', options: ['Cadeaux', 'Exotiques', 'Femme', 'Homme', 'Voyage'] },
+    { id: 'subDepartments', label: 'Sub-departments', options: ['Alpha', 'Bravo', 'Charlie', 'Delta', 'Echo'] },
+    { id: 'seasons', label: 'Seasons', options: ['25E', '25S', '25W', '26E', '26S'] },
+    { id: 'events', label: 'Events', options: ['Sale', 'New arrivals', 'Promo'] },
+    { id: 'locationTypes', label: 'Location Types', options: ['Alpha', 'Bravo', 'Charlie', 'Delta', 'Echo'] },
+    { id: 'regions', label: 'Regions', options: ['Alpha', 'Bravo', 'Charlie', 'Delta', 'Echo'] },
+    { id: 'countries', label: 'Countries', options: ['Alpha', 'Bravo', 'Charlie', 'Delta', 'Echo'] },
+    { id: 'sendingCountries', label: 'Sending countries', options: ['Alpha', 'Bravo', 'Charlie', 'Delta', 'Echo'] },
+    { id: 'receivingCountries', label: 'Receiving countries', options: ['Alpha', 'Bravo', 'Charlie', 'Delta', 'Echo'] },
+    { id: 'locations', label: 'Locations', options: ['Alpha', 'Bravo', 'Charlie', 'Delta', 'Echo'] },
+    { id: 'sendingLocations', label: 'Sending locations', options: ['Alpha', 'Bravo', 'Charlie', 'Delta', 'Echo'] },
+    { id: 'receivingLocations', label: 'Receiving locations', options: ['Alpha', 'Bravo', 'Charlie', 'Delta', 'Echo'] },
+  ]
   const [exceptions, setExceptions] = useState(() => [
     {
       id: 'exc-1',
@@ -197,6 +217,12 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
       advancedRows: [{ id: 'adv-1', conditions: [{ id: 'cond-1', mainColumn: '', condition: '', value: '' }] }],
       productFilterOpen: { ...DEFAULT_PRODUCT_FILTER_OPEN },
       geoFilterOpen: { ...DEFAULT_GEO_FILTER_OPEN },
+      productFilterSelected: { ...DEFAULT_PRODUCT_FILTER_SELECTED },
+      geoFilterSelected: { ...DEFAULT_GEO_FILTER_SELECTED },
+      filtersDropdownOpen: false,
+      openFilterPopover: null,
+      activeFilterTypes: [],
+      filterSearchQuery: '',
     },
   ])
   const [advancedRowNextId, setAdvancedRowNextId] = useState(2)
@@ -478,6 +504,12 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
           advancedRows: [{ id: advId, conditions: [{ id: condId, mainColumn: '', condition: '', value: '' }] }],
           productFilterOpen: { ...DEFAULT_PRODUCT_FILTER_OPEN },
           geoFilterOpen: { ...DEFAULT_GEO_FILTER_OPEN },
+          productFilterSelected: { ...DEFAULT_PRODUCT_FILTER_SELECTED },
+          geoFilterSelected: { ...DEFAULT_GEO_FILTER_SELECTED },
+          filtersDropdownOpen: false,
+          openFilterPopover: null,
+          activeFilterTypes: [],
+          filterSearchQuery: '',
         },
       ]
     })
@@ -519,20 +551,19 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
   }
 
   const removeConditionFromBox = (exceptionId, boxId, conditionId) => {
+    const condId = `cond-${advancedConditionNextId}`
+    setAdvancedConditionNextId((n) => n + 1)
     setExceptions((prev) =>
       prev.map((e) => {
         if (e.id !== exceptionId) return e
-        return {
-          ...e,
-          advancedRows: e.advancedRows
-            .map((r) => {
-              if (r.id !== boxId) return r
-              const newConditions = r.conditions.filter((c) => c.id !== conditionId)
-              if (newConditions.length === 0) return null
-              return { ...r, conditions: newConditions }
-            })
-            .filter(Boolean),
-        }
+        const newRows = e.advancedRows
+          .map((r) => {
+            if (r.id !== boxId) return r
+            const newConditions = r.conditions.filter((c) => c.id !== conditionId)
+            if (newConditions.length === 0) return { ...r, conditions: [{ id: condId, mainColumn: '', condition: '', value: '' }] }
+            return { ...r, conditions: newConditions }
+          })
+        return { ...e, advancedRows: newRows }
       })
     )
   }
@@ -576,6 +607,129 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
     setExceptions((prev) =>
       prev.map((e) => (e.id === exceptionId ? { ...e, geoFilterOpen: { ...DEFAULT_GEO_FILTER_OPEN } } : e))
     )
+  }
+
+  const setExceptionFiltersDropdownOpen = (exceptionId, open) => {
+    setExceptions((prev) =>
+      prev.map((e) => (e.id === exceptionId ? { ...e, filtersDropdownOpen: open, filterSearchQuery: open ? (e.filterSearchQuery || '') : '' } : e))
+    )
+  }
+
+  const setExceptionFilterSearchQuery = (exceptionId, query) => {
+    setExceptions((prev) =>
+      prev.map((e) => (e.id === exceptionId ? { ...e, filterSearchQuery: query } : e))
+    )
+  }
+
+  const addFilterToException = (exceptionId, filterId) => {
+    setExceptions((prev) =>
+      prev.map((e) => {
+        if (e.id !== exceptionId) return e
+        const alreadyActive = e.activeFilterTypes?.includes(filterId)
+        if (alreadyActive) return e
+        return {
+          ...e,
+          filtersDropdownOpen: false,
+          activeFilterTypes: [...(e.activeFilterTypes || []), filterId],
+        }
+      })
+    )
+  }
+
+  const removeFilterFromException = (exceptionId, filterId) => {
+    setExceptions((prev) =>
+      prev.map((e) => {
+        if (e.id !== exceptionId) return e
+        const newActive = (e.activeFilterTypes || []).filter((t) => t !== filterId)
+        let updates = { ...e, activeFilterTypes: newActive, openFilterPopover: e.openFilterPopover === filterId ? null : e.openFilterPopover }
+        if (filterId === 'advanced') {
+          const advId = `adv-${advancedRowNextId}`
+          const condId = `cond-${advancedConditionNextId}`
+          setAdvancedRowNextId((n) => n + 1)
+          setAdvancedConditionNextId((n) => n + 1)
+          updates = { ...updates, advancedRows: [{ id: advId, conditions: [{ id: condId, mainColumn: '', condition: '', value: '' }] }] }
+        } else if (EXCEPTION_FILTER_OPTIONS.find((o) => o.id === filterId)) {
+          const opt = EXCEPTION_FILTER_OPTIONS.find((o) => o.id === filterId)
+          if (opt && ['departments', 'subDepartments', 'seasons', 'events'].includes(filterId)) {
+            updates = { ...updates, productFilterSelected: { ...e.productFilterSelected, [filterId]: [] } }
+          } else if (opt) {
+            updates = { ...updates, geoFilterSelected: { ...e.geoFilterSelected, [filterId]: [] } }
+          }
+        }
+        return updates
+      })
+    )
+  }
+
+  const setExceptionOpenFilterPopover = (exceptionId, filterId) => {
+    setExceptions((prev) =>
+      prev.map((e) => (e.id === exceptionId ? { ...e, openFilterPopover: filterId } : e))
+    )
+  }
+
+  const toggleFilterOptionForException = (exceptionId, filterId, optionValue) => {
+    setExceptions((prev) =>
+      prev.map((e) => {
+        if (e.id !== exceptionId) return e
+        const isProduct = ['departments', 'subDepartments', 'seasons', 'events'].includes(filterId)
+        const sel = isProduct ? e.productFilterSelected : e.geoFilterSelected
+        const key = filterId
+        const arr = sel[key] || []
+        const has = arr.includes(optionValue)
+        const newArr = has ? arr.filter((v) => v !== optionValue) : [...arr, optionValue]
+        return {
+          ...e,
+          [isProduct ? 'productFilterSelected' : 'geoFilterSelected']: { ...sel, [key]: newArr },
+        }
+      })
+    )
+  }
+
+  const selectAllFilterOptionsForException = (exceptionId, filterId, selectAll) => {
+    const opt = EXCEPTION_FILTER_OPTIONS.find((o) => o.id === filterId)
+    if (!opt?.options) return
+    setExceptions((prev) =>
+      prev.map((e) => {
+        if (e.id !== exceptionId) return e
+        const isProduct = ['departments', 'subDepartments', 'seasons', 'events'].includes(filterId)
+        const sel = isProduct ? e.productFilterSelected : e.geoFilterSelected
+        return {
+          ...e,
+          [isProduct ? 'productFilterSelected' : 'geoFilterSelected']: {
+            ...sel,
+            [filterId]: selectAll ? [...opt.options] : [],
+          },
+        }
+      })
+    )
+  }
+
+  const clearAllFiltersForException = (exceptionId) => {
+    const advId = `adv-${advancedRowNextId}`
+    const condId = `cond-${advancedConditionNextId}`
+    setAdvancedRowNextId((n) => n + 1)
+    setAdvancedConditionNextId((n) => n + 1)
+    setExceptions((prev) =>
+      prev.map((e) =>
+        e.id === exceptionId
+          ? {
+              ...e,
+              activeFilterTypes: [],
+              filtersDropdownOpen: false,
+              openFilterPopover: null,
+              advancedRows: [{ id: advId, conditions: [{ id: condId, mainColumn: '', condition: '', value: '' }] }],
+              productFilterSelected: { ...DEFAULT_PRODUCT_FILTER_SELECTED },
+              geoFilterSelected: { ...DEFAULT_GEO_FILTER_SELECTED },
+            }
+          : e
+      )
+    )
+  }
+
+  const getAdvancedFilterSummary = (exc) => {
+    const first = exc.advancedRows?.[0]?.conditions?.[0]
+    if (!first || !first.mainColumn || !first.condition || !first.value) return null
+    return `${first.mainColumn} ${first.condition.toLowerCase()} ${first.value}`
   }
 
   const MAIN_COLUMN_OPTIONS = [
@@ -1074,7 +1228,7 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
             )}
           </div>
 
-          <div className="border border-[#EAEAEA] rounded-[4px] bg-white overflow-hidden">
+          <div className="border border-[#EAEAEA] rounded-[4px] bg-white overflow-visible">
             <button
               type="button"
               onClick={() => toggleAccordion('exceptions')}
@@ -1097,7 +1251,7 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
             {accordionOpen.exceptions && (
               <div className="px-5 pb-6 pt-2 flex flex-col gap-4 border-t border-[#EAEAEA]">
                 {exceptions.map((exc, excIdx) => (
-                  <div key={exc.id} className="border border-[#e5e7eb] rounded-[4px] bg-white overflow-hidden">
+                  <div key={exc.id} className="border border-[#e5e7eb] rounded-[4px] bg-white overflow-visible">
                     <div className="flex items-center">
                       <button
                         type="button"
@@ -1123,209 +1277,242 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                       </button>
                     </div>
                     {exc.expanded && (
-                      <div className="px-4 pb-4 pt-0 flex flex-col gap-6 border-t border-[#e5e7eb]">
-                        <div className="flex flex-col gap-3">
-                          {exc.advancedRows.map((box) => (
-                            <div
-                              key={box.id}
-                              className="flex flex-col gap-2 p-2 rounded-[8px] border border-[#e5e7eb] bg-[#fafafa]"
+                      <div className="px-4 pb-4 pt-0 flex flex-col gap-4 border-t border-[#e5e7eb]">
+                        <div className="flex flex-wrap items-center gap-2 mt-4">
+                          <div className="relative">
+                            <button
+                              type="button"
+                              onClick={() => setExceptionFiltersDropdownOpen(exc.id, !exc.filtersDropdownOpen)}
+                              className="h-10 px-4 py-2 flex items-center gap-2 rounded-[4px] border border-[#E9EAEB] bg-white text-[14px] font-medium text-[#0a0a0a] hover:bg-[#f8f8f8]"
                             >
-                              {box.conditions.map((cond, condIdx) => (
-                                <div key={cond.id} className="flex flex-col gap-1">
-                                  {condIdx > 0 && (
-                                    <span className="text-[12px] font-normal text-[#878D94]">and</span>
-                                  )}
-                                  <div className="flex items-end gap-2 w-full">
-                                    <span className="text-[14px] font-medium text-[#0a0a0a] shrink-0 w-[48px]">
-                                      {condIdx === 0 ? 'Where' : ''}
-                                    </span>
-                                    <div className="flex flex-col gap-0.5 flex-1 min-w-0">
-                                      <label className="text-[12px] font-normal text-[#4b535c]">Main column</label>
-                                      <div className="relative">
-                                        <select
-                                          value={cond.mainColumn}
-                                          onChange={(e) => updateAdvancedApprovalCondition(exc.id, box.id, cond.id, 'mainColumn', e.target.value)}
-                                          className="w-full h-10 py-2 pl-3 pr-9 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#0a0a0a] appearance-none"
-                                        >
-                                          <option value="">Select</option>
-                                          {MAIN_COLUMN_OPTIONS.map((opt) => (
-                                            <option key={opt} value={opt}>{opt}</option>
-                                          ))}
-                                        </select>
-                                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
-                                          <IconChevronDownSelect />
-                                        </span>
-                                      </div>
-                                    </div>
-                                    <div className="flex flex-col gap-0.5 flex-1 min-w-0">
-                                      <label className="text-[12px] font-normal text-[#4b535c]">Condition</label>
-                                      <div className="relative">
-                                        <select
-                                          value={cond.condition}
-                                          onChange={(e) => updateAdvancedApprovalCondition(exc.id, box.id, cond.id, 'condition', e.target.value)}
-                                          className="w-full h-10 py-2 pl-3 pr-9 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#0a0a0a] appearance-none"
-                                        >
-                                          <option value="">Select</option>
-                                          {CONDITION_OPTIONS.map((opt) => (
-                                            <option key={opt} value={opt}>{opt}</option>
-                                          ))}
-                                        </select>
-                                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
-                                          <IconChevronDownSelect />
-                                        </span>
-                                      </div>
-                                    </div>
-                                    <div className="flex flex-col gap-0.5 flex-1 min-w-0">
-                                      <label className="text-[12px] font-normal text-[#4b535c]">Enter a value</label>
+                              <IconFilterFunnel />
+                              Filters
+                            </button>
+                            {exc.filtersDropdownOpen && (
+                              <>
+                                <div
+                                  className="fixed inset-0 z-[9]"
+                                  aria-hidden
+                                  onClick={() => setExceptionFiltersDropdownOpen(exc.id, false)}
+                                />
+                                <div
+                                  className="absolute left-0 top-full mt-1 z-10 w-[220px] rounded-[4px] border border-[#E9EAEB] bg-white shadow-lg overflow-hidden"
+                                  style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                                >
+                                  <div className="p-2 border-b border-[#e5e7eb]">
+                                    <div className="relative">
+                                      <IconSearch className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-[#9ca3af]" />
                                       <input
-                                        type="number"
-                                        placeholder="Value"
-                                        value={cond.value}
-                                        onChange={(e) => updateAdvancedApprovalCondition(exc.id, box.id, cond.id, 'value', e.target.value)}
-                                        className="w-full h-10 py-2 px-3 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#0a0a0a]"
+                                        type="text"
+                                        placeholder="Search"
+                                        value={exc.filterSearchQuery || ''}
+                                        onChange={(e) => setExceptionFilterSearchQuery(exc.id, e.target.value)}
+                                        className="w-full h-9 pl-9 pr-3 rounded-[4px] border border-[#e5e7eb] bg-white text-[13px] text-[#0a0a0a] placeholder:text-[#9ca3af]"
                                       />
                                     </div>
-                                    {box.conditions.length > 1 && (
+                                  </div>
+                                  <div className="max-h-[240px] overflow-y-auto py-1">
+                                    {EXCEPTION_FILTER_OPTIONS.filter((o) =>
+                                      !(exc.filterSearchQuery || '').trim() ||
+                                      o.label.toLowerCase().includes((exc.filterSearchQuery || '').toLowerCase())
+                                    ).map((opt) => (
                                       <button
+                                        key={opt.id}
                                         type="button"
-                                        onClick={() => removeConditionFromBox(exc.id, box.id, cond.id)}
-                                        className="h-10 w-10 flex items-center justify-center rounded-[4px] text-[#4b535c] hover:bg-[#e5e7eb] shrink-0"
-                                        aria-label="Remove condition"
+                                        onClick={() => addFilterToException(exc.id, opt.id)}
+                                        className={`w-full px-3 py-2 text-left text-[13px] font-medium text-[#0a0a0a] hover:bg-[#f8f8f8] ${opt.highlight ? 'bg-[#E8F0FE]' : ''}`}
                                       >
-                                        <IconClose className="size-4" />
+                                        {opt.label}
                                       </button>
-                                    )}
+                                    ))}
                                   </div>
                                 </div>
-                              ))}
+                              </>
+                            )}
+                          </div>
+                          {(exc.activeFilterTypes || []).map((filterId) => {
+                            const opt = EXCEPTION_FILTER_OPTIONS.find((o) => o.id === filterId)
+                            const label = opt?.label || filterId
+                            const isProduct = ['departments', 'subDepartments', 'seasons', 'events'].includes(filterId)
+                            const sel = isProduct ? (exc.productFilterSelected || {}) : (exc.geoFilterSelected || {})
+                            const selected = sel[filterId] || []
+                            const summary = filterId === 'advanced'
+                              ? (getAdvancedFilterSummary(exc) || '')
+                              : selected.length > 0
+                                ? selected.join(', ')
+                                : ''
+                            const chipLabel = summary ? `${label}: ${summary}` : `${label}:`
+                            const isPopoverOpen = exc.openFilterPopover === filterId
+                            return (
+                              <div key={filterId} className="relative">
+                                <button
+                                  type="button"
+                                  onClick={() => filterId === 'advanced' ? null : setExceptionOpenFilterPopover(exc.id, isPopoverOpen ? null : filterId)}
+                                  className="h-10 px-3 py-2 flex items-center gap-1.5 rounded-[4px] border border-[#E9EAEB] bg-white text-[13px] font-medium text-[#0a0a0a] hover:bg-[#f8f8f8]"
+                                >
+                                  <span className="max-w-[180px] truncate">{chipLabel}</span>
+                                  <span
+                                    role="button"
+                                    tabIndex={0}
+                                    onClick={(e) => { e.stopPropagation(); e.preventDefault(); removeFilterFromException(exc.id, filterId) }}
+                                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); removeFilterFromException(exc.id, filterId) } }}
+                                    className="inline-flex shrink-0 text-[#4b535c] hover:text-[#0a0a0a]"
+                                  >
+                                    <IconClose className="size-4" />
+                                  </span>
+                                </button>
+                                {filterId !== 'advanced' && isPopoverOpen && (
+                                  <>
+                                    <div
+                                      className="fixed inset-0 z-[9]"
+                                      aria-hidden
+                                      onClick={() => setExceptionOpenFilterPopover(exc.id, null)}
+                                    />
+                                    <div
+                                      className="absolute left-0 top-full mt-1 z-10 w-[220px] rounded-[4px] border border-[#E9EAEB] bg-white shadow-lg overflow-hidden"
+                                      style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                                      onClick={(e) => e.stopPropagation()}
+                                    >
+                                      <div className="p-2 border-b border-[#e5e7eb]">
+                                        <div className="relative">
+                                          <IconSearch className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-[#9ca3af] pointer-events-none" />
+                                          <input
+                                            type="text"
+                                            placeholder="Search"
+                                            className="w-full h-9 pl-9 pr-3 rounded-[4px] border border-[#e5e7eb] bg-white text-[13px] text-[#0a0a0a] placeholder:text-[#9ca3af]"
+                                          />
+                                        </div>
+                                      </div>
+                                      <div className="p-2 flex items-center justify-between">
+                                        <button
+                                          type="button"
+                                          onClick={() => selectAllFilterOptionsForException(exc.id, filterId, selected.length < (opt?.options?.length || 0))}
+                                          className="text-[12px] font-medium text-[#0267ff] hover:underline"
+                                        >
+                                          Select all
+                                        </button>
+                                      </div>
+                                      <div className="max-h-[180px] overflow-y-auto py-1 px-2 flex flex-col gap-1.5">
+                                        {(opt?.options || []).map((name) => (
+                                          <label key={name} className="flex items-center gap-2 text-[13px] text-[#0a0a0a] cursor-pointer">
+                                            <input
+                                              type="checkbox"
+                                              checked={selected.includes(name)}
+                                              onChange={() => toggleFilterOptionForException(exc.id, filterId, name)}
+                                              className="size-4 rounded border-[#d1d5db] text-[#0267ff] focus:ring-[#0267ff]"
+                                            />
+                                            <span>{name}</span>
+                                          </label>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  </>
+                                )}
+                              </div>
+                            )
+                          })}
+                          {((exc.activeFilterTypes || []).length > 0) && (
+                            <button
+                              type="button"
+                              onClick={() => clearAllFiltersForException(exc.id)}
+                              className="text-[13px] font-medium text-[#4b535c] hover:text-[#0a0a0a] hover:underline"
+                            >
+                              Clear filters
+                            </button>
+                          )}
+                        </div>
+                        {(exc.activeFilterTypes || []).includes('advanced') && (
+                          <div className="flex flex-col gap-3 p-4 rounded-[4px] border border-[#E9EAEB] bg-white shadow-sm">
+                            {exc.advancedRows.map((box) => (
+                              <div key={box.id} className="flex flex-col gap-2">
+                                {box.conditions.map((cond, condIdx) => (
+                                  <div key={cond.id} className="flex flex-col gap-1">
+                                    {condIdx > 0 && (
+                                      <span className="text-[12px] font-normal text-[#878D94]">and</span>
+                                    )}
+                                    <div className="flex items-end gap-2 w-full">
+                                      <span className="text-[14px] font-medium text-[#0a0a0a] shrink-0 w-[48px]">
+                                        {condIdx === 0 ? 'Where' : ''}
+                                      </span>
+                                      <div className="flex flex-col gap-0.5 flex-1 min-w-0">
+                                        <label className="text-[12px] font-normal text-[#4b535c]">Main column</label>
+                                        <div className="relative">
+                                          <select
+                                            value={cond.mainColumn}
+                                            onChange={(e) => updateAdvancedApprovalCondition(exc.id, box.id, cond.id, 'mainColumn', e.target.value)}
+                                            className="w-full h-10 py-2 pl-3 pr-9 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#0a0a0a] appearance-none"
+                                          >
+                                            <option value="">Select</option>
+                                            {MAIN_COLUMN_OPTIONS.map((o) => (
+                                              <option key={o} value={o}>{o}</option>
+                                            ))}
+                                          </select>
+                                          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
+                                            <IconChevronDownSelect />
+                                          </span>
+                                        </div>
+                                      </div>
+                                      <div className="flex flex-col gap-0.5 flex-1 min-w-0">
+                                        <label className="text-[12px] font-normal text-[#4b535c]">Condition</label>
+                                        <div className="relative">
+                                          <select
+                                            value={cond.condition}
+                                            onChange={(e) => updateAdvancedApprovalCondition(exc.id, box.id, cond.id, 'condition', e.target.value)}
+                                            className="w-full h-10 py-2 pl-3 pr-9 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#0a0a0a] appearance-none"
+                                          >
+                                            <option value="">Select</option>
+                                            {CONDITION_OPTIONS.map((o) => (
+                                              <option key={o} value={o}>{o}</option>
+                                            ))}
+                                          </select>
+                                          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
+                                            <IconChevronDownSelect />
+                                          </span>
+                                        </div>
+                                      </div>
+                                      <div className="flex flex-col gap-0.5 flex-1 min-w-0">
+                                        <label className="text-[12px] font-normal text-[#4b535c]">Enter a value</label>
+                                        <input
+                                          type="text"
+                                          placeholder="Enter a value"
+                                          value={cond.value}
+                                          onChange={(e) => updateAdvancedApprovalCondition(exc.id, box.id, cond.id, 'value', e.target.value)}
+                                          className="w-full h-10 py-2 px-3 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#0a0a0a]"
+                                        />
+                                      </div>
+                                      {box.conditions.length > 1 && (
+                                        <button
+                                          type="button"
+                                          onClick={() => removeConditionFromBox(exc.id, box.id, cond.id)}
+                                          className="h-10 w-10 flex items-center justify-center rounded-[4px] text-[#4b535c] hover:bg-[#e5e7eb] shrink-0"
+                                          aria-label="Remove condition"
+                                        >
+                                          <IconClose className="size-4" />
+                                        </button>
+                                      )}
+                                    </div>
+                                  </div>
+                                ))}
+                                <button
+                                  type="button"
+                                  onClick={() => addConditionToBox(exc.id, box.id)}
+                                  className="self-start text-[13px] font-medium text-[#0267FF] hover:underline"
+                                >
+                                  + Add row
+                                </button>
+                              </div>
+                            ))}
+                            <div className="flex justify-end">
                               <button
                                 type="button"
-                                onClick={() => addConditionToBox(exc.id, box.id)}
-                                className="self-start text-[13px] font-medium text-[#0267FF] hover:underline"
+                                onClick={() => clearAdvancedForException(exc.id)}
+                                className="h-9 px-4 rounded-[4px] border border-[#E9EAEB] bg-white text-[13px] font-medium text-[#0a0a0a] hover:bg-[#f8f8f8]"
                               >
-                                + Add
+                                Clear
                               </button>
                             </div>
-                          ))}
-                        </div>
-
-                        <section className="flex flex-col gap-2">
-                          <div className="flex items-center justify-between">
-                            <h3 className="text-[13px] font-semibold text-[#0a0a0a] uppercase tracking-[0.04em]">
-                              Product
-                            </h3>
-                            <button
-                              type="button"
-                              onClick={() => clearProductFilterForException(exc.id)}
-                              className="text-[12px] font-medium text-[#4b535c] hover:text-[#0a0a0a]"
-                            >
-                              Clear all
-                            </button>
                           </div>
-                          <div className="mt-1 flex flex-col border-t border-[#e5e7eb]">
-                            {[
-                              { id: 'departments', label: 'Departments' },
-                              { id: 'subDepartments', label: 'Sub-departments' },
-                              { id: 'seasons', label: 'Seasons' },
-                              { id: 'events', label: 'Events' },
-                            ].map((row) => {
-                              const isOpen = exc.productFilterOpen[row.id]
-                              return (
-                                <div key={row.id} className="border-b border-[#e5e7eb] last:border-b-0">
-                                  <button
-                                    type="button"
-                                    onClick={() => toggleProductFilterRowForException(exc.id, row.id)}
-                                    className="w-full flex items-center justify-between px-3 py-2.5 text-left hover:bg-[#f8f8f8]"
-                                  >
-                                    <span className="text-[13px] font-medium text-[#0a0a0a]">{row.label}</span>
-                                    <span className={`inline-flex items-center justify-center size-5 text-[#4b535c] transition-transform ${isOpen ? 'rotate-180' : ''}`}>
-                                      <IconChevronDown className="size-4" />
-                                    </span>
-                                  </button>
-                                  {isOpen && (
-                                    <div className="px-3 pb-3 pt-1 flex flex-col gap-2 bg-[#fafafa]">
-                                      <div className="flex items-center justify-between gap-2">
-                                        <div className="relative flex-1">
-                                          <input type="text" placeholder="search..." className="w-full h-9 px-3 rounded-[4px] border border-[#e5e7eb] bg-white text-[13px] text-[#0a0a0a] placeholder:text-[#9ca3af]" />
-                                        </div>
-                                        <button type="button" className="text-[12px] font-medium text-[#0267ff] hover:underline shrink-0">Select all</button>
-                                      </div>
-                                      <div className="flex flex-col gap-1.5 mt-1">
-                                        {['Cadeaux', 'Exotiques', 'Femme', 'Homme', 'Voyage'].map((name) => (
-                                          <label key={name} className="flex items-center gap-2 text-[13px] text-[#0a0a0a]">
-                                            <input type="checkbox" className="size-4 rounded border-[#d1d5db] text-[#0267ff] focus:ring-[#0267ff]" />
-                                            <span>{name}</span>
-                                          </label>
-                                        ))}
-                                      </div>
-                                    </div>
-                                  )}
-                                </div>
-                              )
-                            })}
-                          </div>
-                        </section>
-
-                        <section className="flex flex-col gap-2">
-                          <div className="flex items-center justify-between">
-                            <h3 className="text-[13px] font-semibold text-[#0a0a0a] uppercase tracking-[0.04em]">
-                              Geographic
-                            </h3>
-                            <button
-                              type="button"
-                              onClick={() => clearGeoFilterForException(exc.id)}
-                              className="text-[12px] font-medium text-[#4b535c] hover:text-[#0a0a0a]"
-                            >
-                              Clear all
-                            </button>
-                          </div>
-                          <div className="mt-1 flex flex-col border-t border-[#e5e7eb]">
-                            {[
-                              { id: 'locationTypes', label: 'Location Types' },
-                              { id: 'regions', label: 'Regions' },
-                              { id: 'countries', label: 'Countries' },
-                              { id: 'sendingCountries', label: 'Sending countries' },
-                              { id: 'receivingCountries', label: 'Receiving countries' },
-                              { id: 'locations', label: 'Locations' },
-                              { id: 'sendingLocations', label: 'Sending locations' },
-                              { id: 'receivingLocations', label: 'Receiving locations' },
-                            ].map((row) => {
-                              const isOpen = exc.geoFilterOpen[row.id]
-                              return (
-                                <div key={row.id} className="border-b border-[#e5e7eb] last:border-b-0">
-                                  <button
-                                    type="button"
-                                    onClick={() => toggleGeoFilterRowForException(exc.id, row.id)}
-                                    className="w-full flex items-center justify-between px-3 py-2.5 text-left hover:bg-[#f8f8f8]"
-                                  >
-                                    <span className="text-[13px] font-medium text-[#0a0a0a]">{row.label}</span>
-                                    <span className={`inline-flex items-center justify-center size-5 text-[#4b535c] transition-transform ${isOpen ? 'rotate-180' : ''}`}>
-                                      <IconChevronDown className="size-4" />
-                                    </span>
-                                  </button>
-                                  {isOpen && (
-                                    <div className="px-3 pb-3 pt-1 flex flex-col gap-2 bg-[#fafafa]">
-                                      <div className="flex items-center justify-between gap-2">
-                                        <div className="relative flex-1">
-                                          <input type="text" placeholder="search..." className="w-full h-9 px-3 rounded-[4px] border border-[#e5e7eb] bg-white text-[13px] text-[#0a0a0a] placeholder:text-[#9ca3af]" />
-                                        </div>
-                                        <button type="button" className="text-[12px] font-medium text-[#0267ff] hover:underline shrink-0">Select all</button>
-                                      </div>
-                                      <div className="flex flex-col gap-1.5 mt-1">
-                                        {['Alpha', 'Bravo', 'Charlie', 'Delta', 'Echo'].map((name) => (
-                                          <label key={name} className="flex items-center gap-2 text-[13px] text-[#0a0a0a]">
-                                            <input type="checkbox" className="size-4 rounded border-[#d1d5db] text-[#0267ff] focus:ring-[#0267ff]" />
-                                            <span>{name}</span>
-                                          </label>
-                                        ))}
-                                      </div>
-                                    </div>
-                                  )}
-                                </div>
-                              )
-                            })}
-                          </div>
-                        </section>
+                        )}
                       </div>
                     )}
                   </div>

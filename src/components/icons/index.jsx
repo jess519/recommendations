@@ -10,6 +10,11 @@ export const IconInsightsChevron = () => (
   </svg>
 )
 /* Search icon – inside search box (Figma 116:1577): dark grey outline magnifying glass */
+export const IconFilterFunnel = () => (
+  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="shrink-0" aria-hidden>
+    <path d="M2 4h16l-5 7v5l-4 2v-7L2 4z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+)
 export const IconSearch = () => (
   <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="shrink-0" aria-hidden>
     <circle cx="9" cy="9" r="5" stroke="currentColor" strokeWidth="1.5" />
