@@ -119,7 +119,7 @@ const MODULE_OPTIONS = [
   { id: 'rebalancing', label: 'Rebalancing' },
 ]
 
-export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob, resetToUpcoming, openCreateSchedulePage, onOpenScheduleDetail }) {
+export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob, resetToUpcoming, openCreateSchedulePage, resetToRecommendationsLanding, onOpenScheduleDetail }) {
   const [scheduleDrawerOpen, setScheduleDrawerOpen] = useState(false)
   const [editingScheduleEntry, setEditingScheduleEntry] = useState(null)
   const [drawerForm, setDrawerForm] = useState(DEFAULT_DRAWER_FORM)
@@ -437,6 +437,11 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
     if (!openCreateSchedulePage) return
     setIsCreateSchedulePage(true)
   }, [openCreateSchedulePage])
+
+  useEffect(() => {
+    if (!resetToRecommendationsLanding) return
+    setIsCreateSchedulePage(false)
+  }, [resetToRecommendationsLanding])
 
   const toggleAccordion = (key) => {
     setAccordionOpen({

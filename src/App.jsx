@@ -39,6 +39,7 @@ export default function App() {
   const [openAddJobSignal, setOpenAddJobSignal] = useState(0)
   const [resetToUpcomingSignal, setResetToUpcomingSignal] = useState(0)
   const [openCreateSchedulePageSignal, setOpenCreateSchedulePageSignal] = useState(0)
+  const [resetToRecommendationsLandingSignal, setResetToRecommendationsLandingSignal] = useState(0)
 
   return (
     <div className="h-screen bg-[#f5f5f5] flex text-[#0a0a0a] overflow-hidden">
@@ -92,7 +93,7 @@ export default function App() {
           <div className="flex flex-col gap-[var(--spacing-xs,6px)] w-full shrink-0">
             <button
               type="button"
-              onClick={() => { setActiveView('optimiser'); setOptimiserSubView(null); setOptimiserOpen((o) => !o); }}
+              onClick={() => { setActiveView('optimiser'); setOptimiserSubView(null); setResetToRecommendationsLandingSignal((n) => n + 1); setOptimiserOpen((o) => !o); }}
               className={`h-10 w-full flex items-center gap-[var(--spacing-m,12px)] px-[var(--spacing-l,16px)] py-[var(--spacing-s,8px)] rounded-[var(--border-radius-s,4px)] text-left text-[14px] shrink-0 ${activeView === 'optimiser' ? 'bg-[#0267ff] text-white font-medium' : 'font-normal text-white hover:bg-white/5'}`}
               aria-expanded={optimiserOpen}
               data-name="Sidebar element"
@@ -248,6 +249,7 @@ export default function App() {
                 openAddJob={openAddJobSignal}
                 resetToUpcoming={resetToUpcomingSignal}
                 openCreateSchedulePage={openCreateSchedulePageSignal}
+                resetToRecommendationsLanding={resetToRecommendationsLandingSignal}
                 onOpenScheduleDetail={() => setOptimiserSubView('schedule-detail')}
               />
             </div>
