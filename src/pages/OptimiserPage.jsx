@@ -204,6 +204,7 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
   const [recurrenceSubmissionDayOfWeek, setRecurrenceSubmissionDayOfWeek] = useState(3)
   const [recurrenceSubmissionDayOfMonth, setRecurrenceSubmissionDayOfMonth] = useState(1)
   const [recurrenceSubmissionDateYear, setRecurrenceSubmissionDateYear] = useState('')
+  const [recurrenceSubmissionTime, setRecurrenceSubmissionTime] = useState('09:00')
   const reviewStatusFilterOptions = [
     { id: 'in review', label: 'In review' },
     { id: 'upcoming', label: 'Upcoming' },
@@ -682,20 +683,19 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                   )}
 
                   <div className="flex flex-col gap-2">
-                    <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Time zone</label>
+                    <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Submission time</label>
                     <div className="relative max-w-[200px]">
                       <select
-                        value={drawerForm.timeZone}
-                        onChange={(ev) =>
-                          setDrawerForm((f) => ({
-                            ...f,
-                            timeZone: ev.target.value,
-                          }))
-                        }
-                        className="w-full h-14 pl-4 pr-10 rounded-[4px] border border-[#EAEAEA] bg-white text-[16px] text-[#0a0a0a] appearance-none"
+                        value={recurrenceSubmissionTime}
+                        onChange={(e) => setRecurrenceSubmissionTime(e.target.value)}
+                        className="w-full h-12 py-3 px-4 pr-10 rounded-[4px] border border-[#E9EAEB] bg-white text-[16px] text-[#0a0a0a] appearance-none"
                       >
-                        <option value="pst">PST</option>
-                        <option value="gmt+1">(GMT +1) Central Europe</option>
+                        {Array.from({ length: 48 }, (_, i) => {
+                          const h = Math.floor(i / 2)
+                          const m = (i % 2) * 30
+                          const label = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
+                          return <option key={label} value={label}>{label}</option>
+                        })}
                       </select>
                       <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
                         <IconChevronDownSelect />
@@ -709,16 +709,17 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                       const unit = recurrenceRepeatUnit === 'week' ? 'weeks' : recurrenceRepeatUnit === 'month' ? 'months' : recurrenceRepeatUnit === 'year' ? 'years' : 'days'
                       const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
                       const dayName = dayNames[recurrenceSubmissionDayOfWeek]
+                      const timeStr = ` at ${recurrenceSubmissionTime}`
                       if (recurrenceRepeatUnit === 'week') {
-                        return `${recurrenceRepeatEvery} ${recurrenceRepeatEvery === 1 ? unit.slice(0, -1) : unit} on ${dayName}`
+                        return `${recurrenceRepeatEvery} ${recurrenceRepeatEvery === 1 ? unit.slice(0, -1) : unit} on ${dayName}${timeStr}`
                       }
                       if (recurrenceRepeatUnit === 'month') {
-                        return `${recurrenceRepeatEvery} ${recurrenceRepeatEvery === 1 ? 'month' : unit} on day ${recurrenceSubmissionDayOfMonth}`
+                        return `${recurrenceRepeatEvery} ${recurrenceRepeatEvery === 1 ? 'month' : unit} on day ${recurrenceSubmissionDayOfMonth}${timeStr}`
                       }
                       if (recurrenceRepeatUnit === 'year') {
-                        return recurrenceSubmissionDateYear ? `${recurrenceRepeatEvery} ${recurrenceRepeatEvery === 1 ? 'year' : unit} on ${recurrenceSubmissionDateYear}` : `${recurrenceRepeatEvery} ${recurrenceRepeatEvery === 1 ? 'year' : unit}`
+                        return recurrenceSubmissionDateYear ? `${recurrenceRepeatEvery} ${recurrenceRepeatEvery === 1 ? 'year' : unit} on ${recurrenceSubmissionDateYear}${timeStr}` : `${recurrenceRepeatEvery} ${recurrenceRepeatEvery === 1 ? 'year' : unit}`
                       }
-                      return `${recurrenceRepeatEvery} ${recurrenceRepeatEvery === 1 ? 'day' : unit}`
+                      return `${recurrenceRepeatEvery} ${recurrenceRepeatEvery === 1 ? 'day' : unit}${timeStr}`
                     })()}
                   </p>
                 </section>
