@@ -783,13 +783,15 @@ function StockAnalysisDrilldown({ product, trip, onBack }) {
       </p>
 
       <div className="flex flex-row flex-nowrap items-center gap-[8px]">
-        <div className="relative shrink-0">
-          <IconSearch className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-[#9ca3af] pointer-events-none" />
+        <div className="flex items-center h-12 rounded-[4px] border border-[#E9EAEB] bg-white w-[200px] shrink-0">
           <input
             type="text"
             placeholder="Stock after"
-            className="h-12 pl-10 pr-4 rounded-[4px] border border-[#E9EAEB] bg-white text-[14px] text-[#0a0a0a] placeholder:text-[#9ca3af] w-[200px]"
+            className="flex-1 min-w-0 h-full pl-4 pr-2 border-0 bg-transparent rounded-[4px] text-[14px] text-[#0a0a0a] placeholder:text-[#9ca3af] focus:outline-none focus:ring-0"
           />
+          <span className="pr-3 shrink-0 text-[#9ca3af]">
+            <IconSearch className="size-4" />
+          </span>
         </div>
         <div className="relative">
           <select className="h-12 pl-4 pr-10 rounded-[4px] border border-[#E9EAEB] bg-white text-[14px] text-[#0a0a0a] appearance-none min-w-[160px]">
@@ -847,10 +849,10 @@ function StockAnalysisDrilldown({ product, trip, onBack }) {
               <th className="w-10 max-w-[40px] py-2 px-2" />
               <th className="py-2 px-4" />
               <th className="py-2 px-4" />
-              <th className="py-2 px-4 text-[12px] font-semibold text-[#0a0a0a] text-right">
+              <th className="py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right">
                 {summaryStock.before} → {summaryStock.after}
               </th>
-              <th className="py-2 px-4 text-[12px] font-semibold text-[#0a0a0a] text-right">
+              <th className="py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right">
                 {summaryTU.before} → {summaryTU.after}
               </th>
               <th className="py-2 px-4 text-[12px] font-normal text-[#4b535c] text-right">—</th>
@@ -1127,13 +1129,15 @@ function ProductsDrilldown({ trip, onBack, showBackButton = true, showChangedSin
       </div>
 
       <div className="flex flex-row flex-nowrap items-center gap-[8px]">
-        <div className="relative shrink-0">
-          <IconSearch className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-[#9ca3af] pointer-events-none" />
+        <div className="flex items-center h-12 rounded-[4px] border border-[#E9EAEB] bg-white w-[200px] shrink-0">
           <input
             type="text"
             placeholder="Revenue increase"
-            className="h-12 pl-10 pr-4 rounded-[4px] border border-[#E9EAEB] bg-white text-[14px] text-[#0a0a0a] placeholder:text-[#9ca3af] w-[200px]"
+            className="flex-1 min-w-0 h-full pl-4 pr-2 border-0 bg-transparent rounded-[4px] text-[14px] text-[#0a0a0a] placeholder:text-[#9ca3af] focus:outline-none focus:ring-0"
           />
+          <span className="pr-3 shrink-0 text-[#9ca3af]">
+            <IconSearch className="size-4" />
+          </span>
         </div>
         <div className="relative">
           <select className="h-12 pl-4 pr-10 rounded-[4px] border border-[#E9EAEB] bg-white text-[14px] text-[#0a0a0a] appearance-none min-w-[160px]">
@@ -1202,9 +1206,9 @@ function ProductsDrilldown({ trip, onBack, showBackButton = true, showChangedSin
             <tr className="border-b border-[#E9EAEB] bg-[#F8F8F8]">
               <th className="py-2 px-4" />
               <th className="py-2 px-4 text-[12px] font-normal text-[#4b535c]" />
-              <th className="py-2 px-4 text-[12px] font-semibold text-[#0a0a0a] text-right">{summaryTransfers} units</th>
-              <th className="py-2 px-4 text-[12px] font-semibold text-[#0a0a0a] text-right">€{summaryRevenue.toFixed(1)}K</th>
-              <th className="py-2 px-4 text-[12px] font-semibold text-[#0a0a0a] text-right">{summaryRecommended} units</th>
+              <th className="py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right">{summaryTransfers} units</th>
+              <th className="py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right">€{summaryRevenue.toFixed(1)}K</th>
+              <th className="py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right">{summaryRecommended} units</th>
               <th className="py-2 px-4 text-[12px] font-normal text-[#4b535c] text-right">—</th>
               <th className="py-2 px-4 text-[12px] font-normal text-[#4b535c] text-right">—</th>
               <th className="py-2 px-4 text-[12px] font-normal text-[#4b535c] text-right">—</th>
@@ -1537,7 +1541,7 @@ export default function ScheduleDetailPage() {
 
       <div className="rounded-[4px] border border-[#fde047] bg-[#fef9c3] px-4 py-3 text-[14px] text-[#713f12] flex items-start justify-between gap-3">
         <div className="flex flex-col gap-1">
-          <span className="font-semibold text-[#713f12]">12 exceptions still to approve</span>
+          <span className="font-medium text-[#713f12]">12 exceptions still to approve</span>
           <span className="text-[#92400e]">The next scheduled recommendations are the UK weekly replenishment running on 10/03/2026.</span>
         </div>
         <button
@@ -1644,13 +1648,15 @@ export default function ScheduleDetailPage() {
           ) : (
           <div className="flex flex-col gap-4">
             <div className="flex flex-wrap items-center gap-2">
-              <div className="relative flex-1 min-w-[200px] max-w-[280px]">
-                <IconSearch className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-[#9ca3af] pointer-events-none" />
+              <div className="flex items-center h-10 rounded-[4px] border border-[#e9eaeb] bg-white flex-1 min-w-[200px] max-w-[280px]">
                 <input
                   type="text"
                   placeholder="Revenue increase"
-                  className="h-10 w-full pl-9 pr-4 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#0a0a0a] placeholder:text-[#9ca3af]"
+                  className="flex-1 min-w-0 h-full pl-4 pr-2 border-0 bg-transparent rounded-[4px] text-[14px] text-[#0a0a0a] placeholder:text-[#9ca3af] focus:outline-none focus:ring-0"
                 />
+                <span className="pr-3 shrink-0 text-[#9ca3af]">
+                  <IconSearch className="size-4" />
+                </span>
               </div>
               <button
                 type="button"
@@ -1665,13 +1671,6 @@ export default function ScheduleDetailPage() {
                 aria-label="Sort order"
               >
                 <IconSortOrder />
-              </button>
-              <button
-                type="button"
-                className="h-10 w-10 flex items-center justify-center rounded-[4px] border border-[#e9eaeb] bg-white text-[#22272f] hover:bg-[#f3f4f6] shrink-0"
-                aria-label="Search"
-              >
-                <IconSearch className="size-4" />
               </button>
               <button
                 type="button"
@@ -1770,9 +1769,9 @@ export default function ScheduleDetailPage() {
                     <th className="py-2 px-3 text-[12px] font-normal text-[#4b535c]" />
                     <th className="py-2 px-3 text-[12px] font-normal text-[#4b535c]" />
                     <th className="py-2 px-3 text-[12px] font-normal text-[#4b535c]" />
-                    <th className="py-2 px-3 text-[12px] font-semibold text-[#0a0a0a]">{summaryTransfers}</th>
-                    <th className="py-2 px-3 text-[12px] font-semibold text-[#0a0a0a]">{summaryRevenue}</th>
-                    <th className="py-2 px-3 text-[12px] font-semibold text-[#0a0a0a]">{summaryRecommended}</th>
+                    <th className="py-2 px-3 text-[12px] font-medium text-[#0a0a0a]">{summaryTransfers}</th>
+                    <th className="py-2 px-3 text-[12px] font-medium text-[#0a0a0a]">{summaryRevenue}</th>
+                    <th className="py-2 px-3 text-[12px] font-medium text-[#0a0a0a]">{summaryRecommended}</th>
                     <th className="py-2 px-3 text-[12px] font-normal text-[#4b535c]">—</th>
                     <th className="py-2 px-3 text-[12px] font-normal text-[#4b535c]">N/A</th>
                     <th className="py-2 px-3" />

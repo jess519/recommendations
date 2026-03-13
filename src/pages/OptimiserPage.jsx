@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
+import { ChevronRight } from 'lucide-react'
 import { IconCalendarSidebar, IconPlus, IconReplenishment, IconReorder, IconRebalancing, IconChevronDown, IconList, IconCalendarNote, IconTruck, IconTrendUp, IconLightbulb, IconEdit, IconClose, IconChevronDownSelect, IconArrowLeft, IconFilterFunnel, IconSearch } from '../components/icons'
 
 const SAMPLE_CALENDAR_ENTRY = {
@@ -1021,7 +1022,7 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                       className="mt-1 size-4 shrink-0 border-[#e5e7eb] text-[#0267ff] focus:ring-[#0267ff]"
                     />
                     <div className="flex flex-col gap-1 min-w-0">
-                      <span className="text-[14px] font-semibold text-[#0a0a0a]">Include all recommendations</span>
+                      <span className="text-[14px] font-medium text-[#0a0a0a]">Include all recommendations</span>
                       <span className="text-[12px] font-normal text-[#4b535c]">Applies the full optimised recommendation set for maximum impact.</span>
                     </div>
                   </label>
@@ -1035,7 +1036,7 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                       className="mt-1 size-4 shrink-0 border-[#e5e7eb] text-[#0267ff] focus:ring-[#0267ff]"
                     />
                     <div className="flex flex-col gap-1 min-w-0">
-                      <span className="text-[14px] font-semibold text-[#0a0a0a]">Filter recommendations</span>
+                      <span className="text-[14px] font-medium text-[#0a0a0a]">Filter recommendations</span>
                       <span className="text-[12px] font-normal text-[#4b535c]">Narrow recommendations to specific products, locations, or criteria.</span>
                     </div>
                   </label>
@@ -1045,7 +1046,7 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                   <div className="mt-1 flex flex-col gap-6">
                     <section className="flex flex-col gap-2">
                       <div className="flex items-center justify-between">
-                        <h3 className="text-[13px] font-semibold text-[#0a0a0a] uppercase tracking-[0.04em]">
+                        <h3 className="text-[13px] font-medium text-[#0a0a0a] uppercase tracking-[0.04em]">
                           Product
                         </h3>
                         <button
@@ -1132,7 +1133,7 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
 
                     <section className="flex flex-col gap-2">
                       <div className="flex items-center justify-between">
-                        <h3 className="text-[13px] font-semibold text-[#0a0a0a] uppercase tracking-[0.04em]">
+                        <h3 className="text-[13px] font-medium text-[#0a0a0a] uppercase tracking-[0.04em]">
                           Geographic
                         </h3>
                         <button
@@ -1576,39 +1577,9 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
       {activeStatusTab === 'upcoming' ? (
         <>
           <div className="flex flex-col gap-6" data-name="Optimiser" data-node-id="174:2696">
-            <div className="bg-[#f3f4f6] border border-[#ebf3ff] rounded-[14px] p-6 flex flex-col gap-5" data-name="Calendar container" data-node-id="174:2767">
-              <div className="flex items-center justify-between gap-4 flex-wrap">
-                <div className="flex items-center gap-2">
-                  <IconCalendarSidebar className="text-[#22272f] size-6 shrink-0" />
-                  <div>
-                    <p className="text-[16px] font-medium text-[#0a0a0a] leading-tight">Optimiser Schedule & jobs</p>
-                    <p className="text-[14px] font-normal text-[#4b535c]">Perform all job and schedule actions for all your upcoming inventory</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  <button
-                    type="button"
-                    onClick={(e) => { e.preventDefault(); onAddJob?.() }}
-                    className="h-10 px-4 rounded-[4px] bg-[#0267ff] text-white text-[16px] font-medium flex items-center gap-2 shrink-0"
-                  >
-                    <IconPlus />
-                    Add Job
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setEditingScheduleEntry(null)
-                      setDrawerForm(DEFAULT_DRAWER_FORM)
-                      setScheduleDrawerDays({ Wed: true, Sat: true })
-                      setScheduleDrawerOpen(true)
-                    }}
-                    className="h-10 px-4 rounded-[4px] bg-[#0267ff] text-white text-[16px] font-medium flex items-center gap-2 shrink-0"
-                  >
-                    <IconPlus />
-                    Add Schedule
-                  </button>
-                </div>
-              </div>
+            <div>
+              <p className="text-[16px] font-medium text-[#0a0a0a] leading-tight">Optimiser Schedule & jobs</p>
+              <p className="text-[14px] font-normal text-[#4b535c]">Perform all job and schedule actions for all your upcoming inventory</p>
             </div>
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div className="bg-white border border-[#e9eaeb] flex gap-[var(--spacing-s,8px)] items-center p-[var(--spacing-xxs,4px)] rounded-[var(--border-radius-s,4px)] shrink-0 h-12" data-name="segment-control" data-node-id="202:3165">
@@ -1731,7 +1702,7 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                                         setViewDate(new Date(cell.fullDate.getFullYear(), cell.fullDate.getMonth(), 1))
                                         setEventDatePickerOpen(false)
                                       }}
-                                      className={`size-10 flex items-center justify-center rounded-[2px] text-[14px] ${selected ? 'bg-[#0267ff] text-white font-bold' : inMonth ? 'text-[#0a0a0a] hover:bg-[#f3f4f6]' : 'text-[#4b535c] opacity-50 hover:bg-[#f3f4f6]'}`}
+                                      className={`size-10 flex items-center justify-center rounded-[2px] text-[14px] ${selected ? 'bg-[#0267ff] text-white font-medium' : inMonth ? 'text-[#0a0a0a] hover:bg-[#f3f4f6]' : 'text-[#4b535c] opacity-50 hover:bg-[#f3f4f6]'}`}
                                     >
                                       {cell.date}
                                     </button>
@@ -1995,10 +1966,13 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
               className="bg-white border border-[#EAEAEA] border-l-4 border-l-[#0267FF] rounded-[3.42px] p-5 flex flex-col gap-4 w-full hover:border-[#0267FF]/30 hover:shadow-sm transition-shadow"
             >
               <div
-                className="flex flex-wrap items-center justify-between gap-2 cursor-pointer"
+                className="group flex flex-wrap items-center justify-between gap-2 cursor-pointer"
                 onClick={() => onOpenScheduleDetail && onOpenScheduleDetail(schedule)}
               >
-                <h2 className="text-xl md:text-2xl font-semibold text-[#0a0a0a]">{schedule.name}</h2>
+                <span className="inline-flex items-center gap-1.5">
+                  <h2 className="text-xl md:text-2xl font-medium text-[#0a0a0a] group-hover:text-[#0267ff]">{schedule.name}</h2>
+                  <ChevronRight className="size-4 shrink-0 text-current group-hover:text-[#0267ff]" aria-hidden />
+                </span>
                 <button
                   type="button"
                   onClick={(e) => {
@@ -2047,7 +2021,7 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                       key={metric.label}
                       className={`rounded-[4px] border border-[#EAEAEA] px-4 py-3 flex flex-col ${bgClass}`}
                     >
-                      <span className="text-xl md:text-2xl font-semibold tracking-tight text-[#0a0a0a]">
+                      <span className="text-xl md:text-2xl font-medium tracking-tight text-[#0a0a0a]">
                       {metric.value}
                     </span>
                       <span className="mt-1 text-[11px] text-[#4b535c]">

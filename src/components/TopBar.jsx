@@ -1,4 +1,4 @@
-import { IconArrowLeft, IconEllipsisVertical } from './icons'
+import { IconArrowLeft, IconEllipsisVertical, IconPlus } from './icons'
 
 export default function TopBar({
   title = 'Team',
@@ -33,18 +33,20 @@ export default function TopBar({
           <button
             type="button"
             onClick={onUseLatestRecommendations}
-            className="h-14 px-6 rounded-[6px] bg-[#0267FF] text-white text-[18px] font-medium flex items-center gap-2 shrink-0 hover:bg-[#0252cc]"
+            className="h-10 px-4 rounded-[4px] bg-[#0267ff] text-white text-[16px] font-medium flex items-center gap-2 shrink-0 hover:bg-[#0252cc]"
           >
-            +Use latest recommendations
+            <IconPlus />
+            Use latest recommendations
           </button>
         )}
         {onCreateSchedule && (
           <button
             type="button"
             onClick={onCreateSchedule}
-            className="h-14 px-6 rounded-[6px] bg-[#0267FF] text-white text-[18px] font-medium flex items-center gap-2 shrink-0 hover:bg-[#0252cc]"
+            className="h-10 px-4 rounded-[4px] bg-[#0267ff] text-white text-[16px] font-medium flex items-center gap-2 shrink-0 hover:bg-[#0252cc]"
           >
-            +Create schedule
+            <IconPlus />
+            Create schedule
           </button>
         )}
         {showMenuButton && (
