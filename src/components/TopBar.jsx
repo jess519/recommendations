@@ -33,9 +33,13 @@ export default function TopBar({
           <button
             type="button"
             onClick={onUseLatestRecommendations}
-            className="h-10 px-4 rounded-[4px] bg-[#0267ff] text-white text-[16px] font-medium flex items-center gap-2 shrink-0 hover:bg-[#0252cc]"
+            className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-[4px] bg-[#0267ff] px-4 py-0 text-[16px] font-medium text-white transition-colors hover:bg-[#0252cc]"
+            data-name="Button"
+            data-node-id="12027:34023"
           >
-            <IconPlus />
+            <span className="flex size-4 shrink-0 items-center justify-center text-white" aria-hidden>
+              <IconPlus />
+            </span>
             Use latest recommendations
           </button>
         )}
@@ -43,9 +47,13 @@ export default function TopBar({
           <button
             type="button"
             onClick={onCreateSchedule}
-            className="h-10 px-4 rounded-[4px] bg-[#0267ff] text-white text-[16px] font-medium flex items-center gap-2 shrink-0 hover:bg-[#0252cc]"
+            className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-[4px] bg-[#0267ff] px-4 py-0 text-[16px] font-medium text-white transition-colors hover:bg-[#0252cc]"
+            data-name="Button"
+            data-node-id="12027:34023"
           >
-            <IconPlus />
+            <span className="flex size-4 shrink-0 items-center justify-center text-white" aria-hidden>
+              <IconPlus />
+            </span>
             Create schedule
           </button>
         )}

@@ -137,7 +137,7 @@ export default function App() {
                 <span>Events</span>
               </button>
               <button type="button" className="h-10 w-full flex items-center gap-[var(--spacing-m,12px)] px-[var(--spacing-l,16px)] py-[var(--spacing-s,8px)] rounded-[var(--border-radius-s,4px)] text-left text-[14px] font-normal text-white hover:bg-white/5 shrink-0" data-name="Sidebar element">
-                <IconGears className="text-[#22272f] size-6 shrink-0" aria-hidden />
+                <IconGears className="text-white size-6 shrink-0" aria-hidden />
                 <span>Parameters</span>
               </button>
               <button type="button" className="h-10 w-full flex items-center gap-[var(--spacing-m,12px)] px-[var(--spacing-l,16px)] py-[var(--spacing-s,8px)] rounded-[var(--border-radius-s,4px)] text-left text-[14px] font-normal text-white hover:bg-white/5 shrink-0" data-name="Sidebar element">
@@ -168,15 +168,49 @@ export default function App() {
             <IconFlagUK className="size-6 shrink-0" aria-hidden />
             <span className="min-w-0 flex-1">English</span>
           </button>
-          <button type="button" className="flex w-full shrink-0 items-center gap-[var(--spacing-s,8px)] rounded-[var(--border-radius-l,8px)] py-0 pl-0 pr-[var(--spacing-l,16px)] text-left shadow-[0px_8px_25px_0px_rgba(0,0,0,0.03)] hover:bg-white/5" data-name="user-avatar" data-node-id="145:941">
-            <div className="relative size-[40px] shrink-0 overflow-hidden rounded-[var(--border-radius-l,8px)]" data-name="Avatar">
-              <img src="/avatar-user.jpg" alt="" className="absolute inset-0 size-full object-cover pointer-events-none" />
+          <button
+            type="button"
+            className="flex h-[40px] w-full shrink-0 items-center rounded-[var(--border-radius-l,8px)] py-0 pl-0 pr-[var(--spacing-l,16px)] text-left shadow-[0px_8px_25px_0px_rgba(0,0,0,0.03)] hover:bg-white/5"
+            data-name="user-avatar"
+            data-node-id="12718:9271"
+          >
+            <div className="flex h-full w-full min-w-0 items-center justify-between rounded-[12px]">
+              <div className="flex min-w-0 flex-1 items-center gap-[var(--spacing-s,8px)]" data-node-id="I12718:9271;12206:42129">
+                <div
+                  className="relative shrink-0 size-[40px] overflow-hidden rounded-full"
+                  data-name="Avatar"
+                  data-node-id="I12718:9271;12206:42130"
+                >
+                  <img
+                    src="/sidebar-avatar.jpg"
+                    alt=""
+                    className="pointer-events-none absolute inset-0 size-full rounded-full object-cover"
+                    data-name="Image"
+                    data-node-id="I12718:9271;12206:42130;12134:33222"
+                  />
+                </div>
+                <div
+                  className="flex min-w-0 flex-1 flex-col gap-[2px] items-start text-left leading-[normal]"
+                  data-node-id="I12718:9271;12206:42131"
+                >
+                  <p
+                    className="w-full truncate text-[16px] font-medium text-white"
+                    data-node-id="I12718:9271;12206:42132"
+                  >
+                    Charles Morenno
+                  </p>
+                  <p
+                    className="w-full truncate text-[10px] font-normal text-[#878d94]"
+                    data-node-id="I12718:9271;12206:42133"
+                  >
+                    charlesmorenno@gmail.com
+                  </p>
+                </div>
+              </div>
+              <span className="inline-flex size-5 shrink-0 items-center justify-center text-white/80" data-name="icon" data-node-id="I12718:9271;12206:42134" aria-hidden>
+                <IconChevronRight className="size-5" />
+              </span>
             </div>
-            <div className="flex min-w-0 flex-1 flex-col gap-[2px] items-start text-left" data-node-id="I145:941;12206:42131">
-              <p className="truncate w-full font-sans text-[16px] font-medium font-normal leading-normal tracking-[0] text-white" data-node-id="I145:941;12206:42132">Charles Morenno</p>
-              <p className="truncate w-full font-sans text-[10px] font-normal leading-normal tracking-[0] text-[#878D94]" data-node-id="I145:941;12206:42133">charlesmorenno@gmail.com</p>
-            </div>
-            <IconChevronRight className="text-[#22272f] size-5 shrink-0" aria-hidden />
           </button>
         </div>
         </div>
