@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { ChevronRight } from 'lucide-react'
+import { Truck, Network, TrendingUp, ShieldCheck } from 'lucide-react'
 import { IconCalendarSidebar, IconPlus, IconReplenishment, IconReorder, IconRebalancing, IconChevronDown, IconList, IconCalendarNote, IconTruck, IconTrendUp, IconLightbulb, IconEdit, IconClose, IconChevronDownSelect, IconArrowLeft, IconFilterFunnel, IconSearch } from '../components/icons'
 
 const SAMPLE_CALENDAR_ENTRY = {
@@ -249,11 +249,13 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
       status: 'Ready to review',
       exceptions: '12',
       approved: '96',
-      metrics: [
-        { label: 'Revenue increase', value: '€501.1K' },
-        { label: 'Stockouts', value: '1,013 → 559' },
-        { label: 'Recommended transfers', value: '2,308' },
-        { label: 'Unique trips', value: '113' },
+      pending: '25',
+      reviewProgress: { percent: 79, reviewed: 96, total: 121 },
+      metricTiles: [
+        { kind: 'trips', value: '113', title: 'Unique trips', subtitle: 'Across 8 routes' },
+        { kind: 'transfers', value: '2,308', title: 'Recommended transfers', subtitle: '94% auto-approved' },
+        { kind: 'revenue', value: '€501.1K', title: 'Revenue increase', subtitle: '+4.2% vs last run', subtitleAccent: true },
+        { kind: 'stockouts', value: '1,013 → 559', title: 'Stockouts resolved', subtitle: '-44.8% reduction', subtitleAccent: true },
       ],
       exceptionsTotal: 2,
       exceptionsList: [
@@ -269,11 +271,13 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
       status: 'Ready to review',
       exceptions: '5',
       approved: '42',
-      metrics: [
-        { label: 'Revenue increase', value: '€210.4K' },
-        { label: 'Stockouts', value: '512 → 304' },
-        { label: 'Recommended transfers', value: '1,120' },
-        { label: 'Unique trips', value: '48' },
+      pending: '18',
+      reviewProgress: { percent: 45, reviewed: 38, total: 84 },
+      metricTiles: [
+        { kind: 'trips', value: '48', title: 'Unique trips', subtitle: 'Across 5 routes' },
+        { kind: 'transfers', value: '1,120', title: 'Recommended transfers', subtitle: '88% auto-approved' },
+        { kind: 'revenue', value: '€210.4K', title: 'Revenue increase', subtitle: '+2.1% vs last run', subtitleAccent: true },
+        { kind: 'stockouts', value: '512 → 304', title: 'Stockouts resolved', subtitle: '-40.6% reduction', subtitleAccent: true },
       ],
     },
   ]
@@ -1558,27 +1562,25 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
       {pinnedHoverEntryId && activeStatusTab === 'upcoming' && (
         <div role="presentation" className="fixed inset-0 z-40" onClick={() => { setPinnedHoverEntryId(null); setPinnedHoverCellKey(null) }} aria-hidden />
       )}
-      <div className="border-b border-[#e5e7eb]">
-        <nav className="flex items-center gap-6 h-11">
-          {statusTabs.map((tab) => {
-            const isActive = activeStatusTab === tab.id
-            return (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => setActiveStatusTab(tab.id)}
-                className={`pb-2 text-[14px] font-medium border-b-2 ${
-                  isActive
-                    ? 'text-[#0a0a0a] border-[#0267ff]'
-                    : 'text-[#4b535c] border-transparent hover:text-[#0a0a0a]'
-                }`}
-              >
-                {tab.label}
-              </button>
-            )
-          })}
-        </nav>
-      </div>
+      <nav className="flex items-center gap-6 h-11">
+        {statusTabs.map((tab) => {
+          const isActive = activeStatusTab === tab.id
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setActiveStatusTab(tab.id)}
+              className={`pb-2 text-[14px] font-medium border-b-2 ${
+                isActive
+                  ? 'text-[#0a0a0a] border-[#0267ff]'
+                  : 'text-[#4b535c] border-transparent hover:text-[#0a0a0a]'
+              }`}
+            >
+              {tab.label}
+            </button>
+          )
+        })}
+      </nav>
       {activeStatusTab === 'upcoming' ? (
         <>
           <div className="flex flex-col gap-6" data-name="Optimiser" data-node-id="174:2696">
@@ -1882,7 +1884,7 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                                     </div>
                                     <div className="flex justify-between text-[13px]">
                                       <span className="text-[#4b535c]">Revenue increase</span>
-                                      <span className="font-medium text-[#059669]">${entry.revenueIncrease}</span>
+                                      <span className="font-medium text-[#08A16A]">${entry.revenueIncrease}</span>
                                     </div>
                                   </div>
                                   <div className="h-px bg-[#e9eaeb]" />
@@ -1963,112 +1965,178 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
             const deadlineDate = parseDate(schedule.deadline)
             const isDeadlinePast = deadlineDate < today
             const deadlineBadgeClass = isDeadlinePast
-              ? 'bg-[#fee2e2] text-[#b91c1c]'
-              : 'bg-[#fef3c7] text-[#92400e]'
+              ? 'bg-[#fee2e2] text-[#E30D3C]'
+              : schedule.id === 'uk-weekly-replen'
+                ? 'bg-[#fef3c7] text-[#92400e]'
+                : 'bg-[#fce7f3] text-[#9d174d]'
+            const rp = schedule.reviewProgress ?? { percent: 0, reviewed: 0, total: 0 }
+            const tiles = schedule.metricTiles ?? []
+            const renderTileIcon = (kind) => {
+              const iconClass = 'size-[18px] shrink-0'
+              const iconBox = (bgClass, icon) => (
+                <div
+                  className={`flex size-10 shrink-0 items-center justify-center rounded-[8px] ${bgClass}`}
+                  aria-hidden
+                >
+                  {icon}
+                </div>
+              )
+              switch (kind) {
+                case 'trips':
+                  return iconBox(
+                    'bg-[#eff6ff]',
+                    <Truck className={`${iconClass} text-[#3b82f6]`} strokeWidth={1.75} aria-hidden />
+                  )
+                case 'transfers':
+                  return iconBox(
+                    'bg-[#f5f3ff]',
+                    <Network className={`${iconClass} text-[#7c3aed]`} strokeWidth={1.75} aria-hidden />
+                  )
+                case 'revenue':
+                  return iconBox(
+                    'bg-[#ecfdf5]',
+                    <TrendingUp className={`${iconClass} text-[#08A16A]`} strokeWidth={1.75} aria-hidden />
+                  )
+                case 'stockouts':
+                  return iconBox(
+                    'bg-[#ecfdf5]',
+                    <ShieldCheck className={`${iconClass} text-[#08A16A]`} strokeWidth={1.75} aria-hidden />
+                  )
+                default:
+                  return null
+              }
+            }
             return (
             <div
               key={schedule.id}
               className="bg-white border border-[#EAEAEA] rounded-[3.42px] p-5 flex flex-col gap-4 w-full"
             >
-              <div
-                className="group flex flex-wrap items-center justify-between gap-2 cursor-pointer"
-                onClick={() => onOpenScheduleDetail && onOpenScheduleDetail(schedule)}
-              >
-                <span className="inline-flex items-center gap-1.5">
-                  <h2 className="text-xl md:text-2xl font-medium text-[#0a0a0a] group-hover:text-[#0267ff]">{schedule.name}</h2>
-                  <ChevronRight className="size-4 shrink-0 text-current group-hover:text-[#0267ff]" aria-hidden />
-                </span>
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div
+                  className="group flex flex-wrap items-center gap-2 min-w-0 cursor-pointer"
+                  onClick={() => onOpenScheduleDetail && onOpenScheduleDetail(schedule)}
+                >
+                  <h2 className="text-lg md:text-xl font-medium text-[#0a0a0a] group-hover:text-[#3b82f6]">
+                    {schedule.name}
+                  </h2>
+                  <span className="inline-flex items-center rounded-full bg-[#ecfdf5] text-[#047857] text-[12px] font-medium px-2.5 py-0.5">
+                    {schedule.status}
+                  </span>
+                </div>
                 <button
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation()
-                    // submit handler can be wired here later
                   }}
-                  className="h-9 px-4 rounded-[4px] border border-[#0267ff] text-sm font-medium text-[#0267ff] bg-white hover:bg-[#ebf3ff]"
+                  className="inline-flex h-10 shrink-0 items-center justify-center rounded-[4px] border border-solid border-[#e9eaeb] bg-white px-4 py-0 text-[16px] font-medium text-[#00050a] transition-colors hover:bg-[#f9fafb]"
+                  data-name="Button"
+                  data-node-id="12027:34155"
                 >
                   Submit
                 </button>
               </div>
-              <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-[#4b535c]">
-                <span className="flex items-center gap-2">
-                  <span>Submission deadline:</span>
-                  <span className={`px-2 py-[3px] rounded-[2px] text-[14px] font-medium ${deadlineBadgeClass}`}>
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-[#4b535c]">
+                <span className="inline-flex items-center gap-2 flex-wrap">
+                  <span className="text-[#4b535c]">Submission deadline:</span>
+                  <span className={`px-2.5 py-0.5 rounded-full text-[13px] font-medium ${deadlineBadgeClass}`}>
                     {schedule.deadline}
                   </span>
                 </span>
-                <span>Created: {schedule.created}</span>
-              </div>
-              <div className="flex flex-wrap items-center justify-between gap-3 text-sm">
-                <span className="inline-flex items-center px-2 py-[3px] rounded-[2px] bg-[#00A195] text-white text-[14px] font-medium">
-                  {schedule.status}
+                <span>
+                  Created <span className="text-[#0a0a0a]">{schedule.created}</span>
                 </span>
-                <div className="flex flex-wrap items-center gap-4 text-sm text-[#4b535c]">
-                  <span>
-                    <span className="font-medium text-[#0a0a0a]">Total transfer exceptions:</span> {schedule.exceptions}
-                  </span>
-                  <span>
-                    <span className="font-medium text-[#0a0a0a]">Total approved:</span> {schedule.approved}
+              </div>
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                {tiles.map((tile) => (
+                  <div
+                    key={tile.kind}
+                    className="flex min-w-0 flex-row items-start gap-3 rounded-[4px] border border-[#EAEAEA] bg-white px-3 py-3"
+                  >
+                    {renderTileIcon(tile.kind)}
+                    <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                      <span className="text-xl font-medium leading-tight tracking-tight text-[#0a0a0a]">
+                        {tile.value}
+                      </span>
+                      <span className="text-[12px] font-medium leading-snug text-[#0a0a0a]">{tile.title}</span>
+                      <span
+                        className={`flex items-center gap-1.5 text-[11px] leading-snug ${
+                          tile.subtitleAccent ? 'font-medium text-[#08A16A]' : 'text-[#6b7280]'
+                        }`}
+                      >
+                        {tile.subtitleAccent && (
+                          <span className="size-1.5 shrink-0 rounded-full bg-[#08A16A]" aria-hidden />
+                        )}
+                        {tile.subtitle}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="flex flex-col gap-2">
+                <div className="flex flex-wrap items-baseline justify-between gap-2 text-[13px]">
+                  <span className="font-medium text-[#0a0a0a]">Review progress</span>
+                  <span className="text-[#0a0a0a] tabular-nums">
+                    {rp.percent}%{' '}
+                    <span className="text-[#6b7280] font-normal">
+                      ({rp.reviewed} of {rp.total} transfers reviewed)
+                    </span>
                   </span>
                 </div>
+                <div className="h-2 w-full rounded-full bg-[#e5e7eb] overflow-hidden" role="progressbar" aria-valuenow={rp.percent} aria-valuemin={0} aria-valuemax={100}>
+                  <div
+                    className="h-full rounded-full bg-[#3b82f6] transition-[width] duration-300"
+                    style={{ width: `${Math.min(100, Math.max(0, rp.percent))}%` }}
+                  />
+                </div>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                {schedule.metrics.map((metric) => {
-                  const bgClass =
-                    metric.label === 'Unique trips'
-                      ? 'bg-[#dbeafe]'
-                      : metric.label === 'Recommended transfers'
-                        ? 'bg-[#ede9fe]'
-                        : metric.label === 'Revenue increase'
-                          ? 'bg-[#d1fae5]'
-                          : 'bg-[#fef9c3]'
-                  return (
-                    <div
-                      key={metric.label}
-                      className={`rounded-[4px] border border-[#EAEAEA] px-4 py-3 flex flex-col ${bgClass}`}
-                    >
-                      <span className="text-xl md:text-2xl font-medium tracking-tight text-[#0a0a0a]">
-                      {metric.value}
-                    </span>
-                      <span className="mt-1 text-[11px] text-[#4b535c]">
-                      {metric.label}
-                    </span>
-                    </div>
-                  )
-                })}
-              </div>
-              {schedule.exceptionsList && (
-                <div className="mt-2 space-y-2">
-                  {(() => {
-                    const totalExceptions = schedule.exceptionsTotal ?? schedule.exceptionsList.length
-                    return (
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      setExpandedExceptionsScheduleId((prev) =>
-                        prev === schedule.id ? null : schedule.id
-                      )
-                    }}
-                    className="text-xs font-medium text-[#0267ff] hover:underline"
-                  >
-                      {expandedExceptionsScheduleId === schedule.id
-                        ? `Hide exceptions (${totalExceptions})`
-                        : `Show exceptions (${totalExceptions})`}
-                  </button>
-                    )
-                  })()}
-                  {expandedExceptionsScheduleId === schedule.id && (
-                    <div className="space-y-2">
-                      {schedule.exceptionsList.map((ex, idx) => (
-                        <div
-                          key={`${schedule.id}-ex-${idx}`}
-                          className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border border-[#e5e7eb] rounded-[8px] px-3 py-2 bg-[#f9fafb] text-xs text-[#0a0a0a]"
+              <div className="flex flex-wrap items-center justify-between gap-3 pt-0.5 border-t border-[#f3f4f6]">
+                <div className="min-h-[1.25rem]">
+                  {schedule.exceptionsList ? (
+                    (() => {
+                      const totalExceptions = schedule.exceptionsTotal ?? schedule.exceptionsList.length
+                      return (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setExpandedExceptionsScheduleId((prev) =>
+                              prev === schedule.id ? null : schedule.id
+                            )
+                          }}
+                          className="text-[13px] font-medium text-[#3b82f6] hover:underline"
                         >
-                          <span className="text-[#4b535c]">{ex.description}</span>
-                        </div>
-                      ))}
-                    </div>
+                          {expandedExceptionsScheduleId === schedule.id
+                            ? `Hide exceptions (${totalExceptions})`
+                            : `Show exceptions (${totalExceptions})`}
+                        </button>
+                      )
+                    })()
+                  ) : null}
+                </div>
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px] text-[#6b7280]">
+                  <span>
+                    Transfer exceptions: <span className="font-medium text-[#0a0a0a]">{schedule.exceptions}</span>
+                  </span>
+                  <span>
+                    Total approved: <span className="font-medium text-[#0a0a0a]">{schedule.approved}</span>
+                  </span>
+                  {schedule.pending != null && (
+                    <span>
+                      Pending: <span className="font-medium text-[#0a0a0a]">{schedule.pending}</span>
+                    </span>
                   )}
+                </div>
+              </div>
+              {schedule.exceptionsList && expandedExceptionsScheduleId === schedule.id && (
+                <div className="space-y-2 -mt-1">
+                  {schedule.exceptionsList.map((ex, idx) => (
+                    <div
+                      key={`${schedule.id}-ex-${idx}`}
+                      className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border border-[#e5e7eb] rounded-[8px] px-3 py-2 bg-[#f9fafb] text-xs text-[#0a0a0a]"
+                    >
+                      <span className="text-[#4b535c]">{ex.description}</span>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>

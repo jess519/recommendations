@@ -1,4 +1,4 @@
-import { IconArrowLeft, IconEllipsisVertical, IconPlus } from './icons'
+import { IconArrowLeft, IconEllipsisVertical, IconPlus, IconChevronRight } from './icons'
 
 export default function TopBar({
   title = 'Team',
@@ -11,6 +11,9 @@ export default function TopBar({
   headerActions,
   onCreateSchedule,
   onUseLatestRecommendations,
+  recommendationsButtonLabel = 'Use latest recommendations',
+  onCreateGoal,
+  createGoalLabel = 'Create goal (AI-guided)',
 }) {
   return (
     <header className="bg-[#12171e] flex items-center justify-between p-6 shrink-0" data-name="Top bar" data-node-id="12301:65733">
@@ -29,23 +32,48 @@ export default function TopBar({
       </div>
       <div className="flex flex-1 gap-2 items-center justify-end min-w-0 shrink-0">
         {headerActions}
+        {onCreateGoal && (
+          <button
+            type="button"
+            onClick={onCreateGoal}
+            className="inline-flex h-10 max-w-full shrink-0 items-center justify-center gap-2 rounded-[4px] bg-[#0267ff] px-4 py-0 text-[15px] font-medium text-white transition-colors hover:bg-[#0252cc]"
+            data-name="Button"
+            data-node-id="inventory-goals:create-goal"
+          >
+            <span className="flex size-4 shrink-0 items-center justify-center text-white" aria-hidden>
+              <IconPlus />
+            </span>
+            <span className="min-w-0 truncate">{createGoalLabel}</span>
+            <span className="flex size-4 shrink-0 items-center justify-center text-white opacity-90" aria-hidden>
+              <IconChevronRight />
+            </span>
+          </button>
+        )}
         {onUseLatestRecommendations && (
           <button
             type="button"
             onClick={onUseLatestRecommendations}
-            className="h-10 px-4 rounded-[4px] bg-[#0267ff] text-white text-[16px] font-medium flex items-center gap-2 shrink-0 hover:bg-[#0252cc]"
+            className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-[4px] bg-[#0267ff] px-4 py-0 text-[16px] font-medium text-white transition-colors hover:bg-[#0252cc]"
+            data-name="Button"
+            data-node-id="12027:34023"
           >
-            <IconPlus />
-            Use latest recommendations
+            <span className="flex size-4 shrink-0 items-center justify-center text-white" aria-hidden>
+              <IconPlus />
+            </span>
+            {recommendationsButtonLabel}
           </button>
         )}
         {onCreateSchedule && (
           <button
             type="button"
             onClick={onCreateSchedule}
-            className="h-10 px-4 rounded-[4px] bg-[#0267ff] text-white text-[16px] font-medium flex items-center gap-2 shrink-0 hover:bg-[#0252cc]"
+            className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-[4px] bg-[#0267ff] px-4 py-0 text-[16px] font-medium text-white transition-colors hover:bg-[#0252cc]"
+            data-name="Button"
+            data-node-id="12027:34023"
           >
-            <IconPlus />
+            <span className="flex size-4 shrink-0 items-center justify-center text-white" aria-hidden>
+              <IconPlus />
+            </span>
             Create schedule
           </button>
         )}
