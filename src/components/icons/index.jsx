@@ -3,6 +3,27 @@ export const IconChevronDown = () => (
     <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
   </svg>
 )
+/** Icon=arrow-down-short — DS 2.0 single select (Figma 4605:28166 / 12664:4045), 24×24 */
+export const IconArrowDownShort = () => (
+  <svg
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    className="shrink-0"
+    aria-hidden
+    data-name="Icon=arrow-down-short"
+    data-node-id="4605:28166"
+  >
+    <path
+      d="M6 9l6 6 6-6"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+)
 /* Insights nav item chevron (20×20, white stroke) */
 export const IconInsightsChevron = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none" className="shrink-0">
@@ -15,32 +36,102 @@ export const IconFilterFunnel = () => (
     <path d="M2 4h16l-5 7v5l-4 2v-7L2 4z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
   </svg>
 )
-export const IconSearch = () => (
-  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="shrink-0" aria-hidden>
+/** Icon=search — DS 2.0 (Figma 4605:27828); default 20×20, pass e.g. `w-4 h-4` for 16px field */
+export const IconSearch = ({ className = 'w-5 h-5' }) => (
+  <svg
+    viewBox="0 0 20 20"
+    fill="none"
+    className={`shrink-0 ${className}`}
+    aria-hidden
+    data-name="Icon=search"
+    data-node-id="4605:27828"
+  >
     <circle cx="9" cy="9" r="5" stroke="currentColor" strokeWidth="1.5" />
     <path d="M14 14l3.5 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
   </svg>
 )
-/* Notification icon – Figma 115:945: bell outline + 8px red dot top-right */
-export const IconBell = () => (
-  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="shrink-0" aria-hidden>
-    <path d="M10 3.5a3.5 3.5 0 00-3.5 3.5v2.2c0 .35-.12.7-.32.95L4.5 13v1.2c0 .4.3.8.8.8h9.4c.5 0 .8-.4.8-.8V13l-1.68-2.85a2.5 2.5 0 01-.32-.95V7a3.5 3.5 0 00-3.5-3.5z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
-    <path d="M8 15.2a2 2 0 004 0" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
-    <path d="M9.5 14.2v.8" stroke="currentColor" strokeWidth="1" strokeLinecap="round" />
+/** Icon=bell — DS 2.0 (Figma 14152:100 / frame 14152:1486), 24×24 outline, Base #22272F via currentColor */
+export const IconBell = ({ className = 'w-6 h-6' }) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    fill="none"
+    className={`shrink-0 ${className}`}
+    aria-hidden
+    data-name="Icon=bell"
+    data-node-id="14152:100"
+  >
+    <path
+      d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M10.3 21a1.94 1.94 0 0 0 3.4 0"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
   </svg>
 )
 export const NotificationButton = () => (
-  <button type="button" className="relative rounded-[10px] w-9 h-9 flex items-center justify-center hover:bg-gray-100 shrink-0" aria-label="Notifications">
-    <span className="absolute left-2 top-2 text-[#4a5565]">
+  <button
+    type="button"
+    className="relative rounded-[10px] w-9 h-9 flex items-center justify-center hover:bg-gray-100 shrink-0"
+    aria-label="Notifications"
+    data-node-id="14152:1486"
+  >
+    <span className="text-[#22272F] flex items-center justify-center pointer-events-none" aria-hidden>
       <IconBell />
     </span>
-    <span className="absolute left-6 top-1 w-2 h-2 rounded-full bg-[#fb2c36]" aria-hidden />
+    <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-[#fb2c36]" aria-hidden />
   </button>
 )
-export const IconCalendar = () => (
-  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="shrink-0">
-    <rect x="2" y="4" width="16" height="14" rx="2" stroke="currentColor" strokeWidth="1.5" />
-    <path d="M2 8h16M6 2v4M14 2v4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+/* Icon=calendar-dates — DS 2.0 (Figma 14152:1138 / 14152:89), 20×20 viewBox */
+export const IconCalendar = ({ className = '' }) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="20"
+    height="20"
+    viewBox="0 0 20 20"
+    fill="none"
+    className={`shrink-0 ${className}`}
+    data-name="Icon=calendar-dates"
+    data-node-id="14152:1138"
+    aria-hidden
+  >
+    <defs>
+      <clipPath id="clip0_IconCalendar">
+        <rect width="20" height="20" fill="white" />
+      </clipPath>
+    </defs>
+    <g clipPath="url(#clip0_IconCalendar)">
+      <g transform="translate(1 1)">
+        <rect
+          x="1.5"
+          y="1.5"
+          width="15"
+          height="15"
+          rx="6"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <path d="M6 0.75L6 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M12 0.75L12 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M12.75 6H5.25" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        <rect x="5.25" y="9" width="1.5" height="1.5" rx="0.2" fill="currentColor" />
+        <rect x="8.25" y="9" width="1.5" height="1.5" rx="0.2" fill="currentColor" />
+        <rect x="11.25" y="9" width="1.5" height="1.5" rx="0.2" fill="currentColor" />
+        <rect x="5.25" y="12" width="1.5" height="1.5" rx="0.2" fill="currentColor" />
+        <rect x="8.25" y="12" width="1.5" height="1.5" rx="0.2" fill="currentColor" />
+        <rect x="11.25" y="12" width="1.5" height="1.5" rx="0.2" fill="currentColor" />
+      </g>
+    </g>
   </svg>
 )
 export const IconPlus = () => (
@@ -48,8 +139,9 @@ export const IconPlus = () => (
     <path d="M8 3v10M3 8h10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
   </svg>
 )
-export const IconClose = () => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="shrink-0" aria-hidden>
+/** Icon=cancel — DS 2.0 (Figma 4605:27834); default 24×24 */
+export const IconClose = ({ className = 'w-6 h-6' }) => (
+  <svg viewBox="0 0 24 24" fill="none" className={`shrink-0 ${className}`} aria-hidden data-name="Icon=cancel" data-node-id="4605:27834">
     <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
   </svg>
 )
@@ -77,6 +169,27 @@ export const IconWarning = () => (
   <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="shrink-0">
     <path d="M6 1l5 9H1L6 1z" stroke="currentColor" strokeWidth="1.2" fill="currentColor" fillOpacity="0.2" />
     <path d="M6 4v3M6 8v1" stroke="currentColor" strokeWidth="1" strokeLinecap="round" />
+  </svg>
+)
+/** Icon=alert-octogonal — DS 2.0 destructive alert (Figma 12239:53645 / 13693:313), 24×24 */
+export const IconAlertOctagonal = ({ className = 'w-6 h-6' }) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    fill="none"
+    className={`shrink-0 ${className}`}
+    aria-hidden
+    data-name="Icon=alert-octogonal"
+    data-node-id="12239:53645"
+  >
+    <path
+      d="M7.86 2h8.28L22 7.86v8.28L16.14 22H7.86L2 16.14V7.86L7.86 2z"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinejoin="round"
+    />
+    <path d="M12 8v5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    <path d="M12 16h.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
   </svg>
 )
 export const IconClock = () => (
@@ -142,8 +255,8 @@ export const IconLock = () => (
     <path d="M6 8V5a4 4 0 018 0v3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
   </svg>
 )
-export const IconSparkle = () => (
-  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="shrink-0">
+export const IconSparkle = ({ className = '' }) => (
+  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className={`shrink-0 ${className}`} aria-hidden>
     <path d="M10 2l1.2 3.6 3.8.2-2.8 2.4 1 3.6L10 10.4l-2.2 2.4 1-3.6L6 5.8l3.8-.2L10 2z" fill="currentColor" />
   </svg>
 )
@@ -290,12 +403,12 @@ export const IconCalendarSidebar = () => (
       <path d="M6 0.75L6 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
       <path d="M12 0.75L12 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
       <path d="M12.75 6H5.25" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-      <circle cx="6" cy="9.75" r="0.75" fill="currentColor" />
-      <circle cx="6" cy="12.75" r="0.75" fill="currentColor" />
-      <circle cx="9" cy="12.75" r="0.75" fill="currentColor" />
-      <circle cx="12" cy="12.75" r="0.75" fill="currentColor" />
-      <circle cx="9" cy="9.75" r="0.75" fill="currentColor" />
-      <circle cx="12" cy="9.75" r="0.75" fill="currentColor" />
+      <rect x="5.25" y="9" width="1.5" height="1.5" rx="0.2" fill="currentColor" />
+      <rect x="8.25" y="9" width="1.5" height="1.5" rx="0.2" fill="currentColor" />
+      <rect x="11.25" y="9" width="1.5" height="1.5" rx="0.2" fill="currentColor" />
+      <rect x="5.25" y="12" width="1.5" height="1.5" rx="0.2" fill="currentColor" />
+      <rect x="8.25" y="12" width="1.5" height="1.5" rx="0.2" fill="currentColor" />
+      <rect x="11.25" y="12" width="1.5" height="1.5" rx="0.2" fill="currentColor" />
     </g>
   </svg>
 )
@@ -432,6 +545,25 @@ export const IconOutlet = () => (
     <circle cx="7.5" cy="7.5" r="1.5" stroke="currentColor" strokeWidth="1.5" />
     <circle cx="12.5" cy="12.5" r="1.5" stroke="currentColor" strokeWidth="1.5" />
     <path d="M13 7l-6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+  </svg>
+)
+
+/** Sidebar — Inventory goals (target / KPI, distinct from warehouse building) */
+export const IconInventoryGoals = ({ className = '' }) => (
+  <svg
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    className={`shrink-0 ${className}`}
+    aria-hidden
+    data-name="Icon=inventory-goals"
+  >
+    <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.5" />
+    <circle cx="12" cy="12" r="5.5" stroke="currentColor" strokeWidth="1.5" />
+    <circle cx="12" cy="12" r="2" fill="currentColor" />
+    <path d="M12 3v3M12 18v3M3 12h3M18 12h3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
   </svg>
 )
 

@@ -18,7 +18,7 @@ import {
   IconChat,
   IconDollar,
   IconFlagUK,
-  IconWarehouse,
+  IconInventoryGoals,
 } from './components/icons'
 import OverviewPage from './pages/OverviewPage'
 import InsightsPage from './pages/InsightsPage'
@@ -174,7 +174,7 @@ export default function App() {
             data-name="Sidebar element"
             data-node-id="14404:inventory-goals"
           >
-            <IconWarehouse className="size-6 text-white" aria-hidden />
+            <IconInventoryGoals className="size-6 text-white" aria-hidden />
             {!sidebarCollapsed && <span>Inventory goals</span>}
           </button>
           <div className={`flex flex-col gap-[var(--spacing-xs,6px)] shrink-0 ${sidebarCollapsed ? 'w-full items-center' : 'w-full'}`}>

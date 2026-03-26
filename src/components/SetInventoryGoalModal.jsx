@@ -169,7 +169,7 @@ export default function SetInventoryGoalModal({ open, onClose, onCreate }) {
 
           <section className="mt-8 flex flex-col gap-4 border-t border-[#f3f4f6] pt-8">
             <div className="flex items-center gap-2 text-[15px] font-medium text-[#0a0a0a]">
-              <Flag className="size-5 shrink-0 text-red-500" strokeWidth={1.75} aria-hidden />
+              <Flag className="size-5 shrink-0 text-[#E30D3C]" strokeWidth={1.75} aria-hidden />
               2. Set targets &amp; preferences
             </div>
 
