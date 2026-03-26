@@ -435,8 +435,8 @@ export const IconOutlet = () => (
   </svg>
 )
 
-export const IconWarehouse = () => (
-  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="shrink-0" aria-hidden>
+export const IconWarehouse = ({ className = '' }) => (
+  <svg width="24" height="24" viewBox="0 0 20 20" fill="none" className={`shrink-0 ${className}`} aria-hidden>
     <path d="M2 8l8-5 8 5v9H2V8z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
     <path d="M10 3v14M2 10h16M2 13h16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
     <rect x="7" y="13" width="6" height="4" rx="1" stroke="currentColor" strokeWidth="1.5" />

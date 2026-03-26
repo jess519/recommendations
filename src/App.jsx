@@ -18,6 +18,7 @@ import {
   IconChat,
   IconDollar,
   IconFlagUK,
+  IconWarehouse,
 } from './components/icons'
 import OverviewPage from './pages/OverviewPage'
 import InsightsPage from './pages/InsightsPage'
@@ -28,6 +29,8 @@ import ForecastInspectorPage from './pages/ForecastInspectorPage'
 import OptimiserPage from './pages/OptimiserPage'
 import ScopePage from './pages/ScopePage'
 import ScheduleDetailPage from './pages/ScheduleDetailPage'
+import InventoryGoalsPage from './pages/InventoryGoalsPage'
+import SetInventoryGoalModal from './components/SetInventoryGoalModal'
 
 export default function App() {
   const [assignee, setAssignee] = useState({})
@@ -42,6 +45,13 @@ export default function App() {
   const [openCreateSchedulePageSignal, setOpenCreateSchedulePageSignal] = useState(0)
   const [resetToRecommendationsLandingSignal, setResetToRecommendationsLandingSignal] = useState(0)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [inventoryGoalModalOpen, setInventoryGoalModalOpen] = useState(false)
+
+  const handleInventoryCreateGoal = () => setInventoryGoalModalOpen(true)
+
+  useEffect(() => {
+    if (activeView !== 'inventory-goals') setInventoryGoalModalOpen(false)
+  }, [activeView])
 
   useEffect(() => {
     if (sidebarCollapsed) {
@@ -154,6 +164,19 @@ export default function App() {
               </div>
             )}
           </div>
+          <button
+            type="button"
+            onClick={() => {
+              setActiveView('inventory-goals')
+              setOptimiserOpen(false)
+            }}
+            className={`${navItemBase} ${sidebarCollapsed ? navItemCollapsed : `${navItemExpanded} text-left font-normal`} ${activeView === 'inventory-goals' ? 'bg-[#0267ff] text-white font-medium' : 'text-white hover:bg-white/5'}`}
+            data-name="Sidebar element"
+            data-node-id="14404:inventory-goals"
+          >
+            <IconWarehouse className="size-6 text-white" aria-hidden />
+            {!sidebarCollapsed && <span>Inventory goals</span>}
+          </button>
           <div className={`flex flex-col gap-[var(--spacing-xs,6px)] shrink-0 ${sidebarCollapsed ? 'w-full items-center' : 'w-full'}`}>
             <button
               type="button"
@@ -339,9 +362,11 @@ export default function App() {
                   ? 'Schedule detail'
                   : activeView === 'optimiser'
                     ? 'Recommendations'
-                    : activeView === 'insights'
-                      ? 'Insights'
-                      : 'Overview'
+                    : activeView === 'inventory-goals'
+                      ? 'Inventory goals'
+                      : activeView === 'insights'
+                        ? 'Insights'
+                        : 'Overview'
             }
             subtitle={
               activeView === 'optimiser' && optimiserSubView === 'scope'
@@ -350,9 +375,11 @@ export default function App() {
                   ? null
                   : activeView === 'optimiser'
                     ? 'Automate replenishment, reordering, and rebalancing with scheduled inventory optimisation.'
-                    : activeView === 'insights'
-                      ? 'Analytics and statistics for your sales performance.'
-                      : "Overview area, your 'morning check-in' to prioritise and manage inventory, scheduling and more"
+                    : activeView === 'inventory-goals'
+                      ? 'Set targets and track progress for inventory across your network.'
+                      : activeView === 'insights'
+                        ? 'Analytics and statistics for your sales performance.'
+                        : "Overview area, your 'morning check-in' to prioritise and manage inventory, scheduling and more"
             }
             primaryButtonLabel={undefined}
             showMenuButton={activeView === 'insights'}
@@ -368,15 +395,13 @@ export default function App() {
                 : undefined
             }
             headerActions={undefined}
+            recommendationsButtonLabel="Use latest recommendations"
+            onCreateGoal={activeView === 'inventory-goals' ? handleInventoryCreateGoal : undefined}
             onUseLatestRecommendations={
-              activeView === 'optimiser'
-                ? () => setOpenAddJobSignal((n) => n + 1)
-                : undefined
+              activeView === 'optimiser' ? () => setOpenAddJobSignal((n) => n + 1) : undefined
             }
             onCreateSchedule={
-              activeView === 'optimiser'
-                ? () => setOpenCreateSchedulePageSignal((n) => n + 1)
-                : undefined
+              activeView === 'optimiser' ? () => setOpenCreateSchedulePageSignal((n) => n + 1) : undefined
             }
           />
         </div>
@@ -400,6 +425,10 @@ export default function App() {
                 onOpenScheduleDetail={() => setOptimiserSubView('schedule-detail')}
               />
             </div>
+          ) : activeView === 'inventory-goals' ? (
+            <div className="pt-6">
+              <InventoryGoalsPage onCreateGoal={handleInventoryCreateGoal} />
+            </div>
           ) : activeView === 'insights' ? (
             <div>
               {insightSubView === 'buying' && <BuyingPage />}
@@ -413,6 +442,12 @@ export default function App() {
           )}
         </main>
       </div>
+
+      <SetInventoryGoalModal
+        open={inventoryGoalModalOpen}
+        onClose={() => setInventoryGoalModalOpen(false)}
+        onCreate={() => {}}
+      />
     </div>
   )
 }
