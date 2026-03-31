@@ -243,6 +243,23 @@ export const IconInfo = () => (
     <path d="M10 9v4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
   </svg>
 )
+/** Icon=circle-check — DS 2.0 (Figma 4605:28231), 24×24 */
+export const IconCircleCheck = ({ className = 'w-6 h-6' }) => (
+  <svg
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    className={`shrink-0 ${className}`}
+    aria-hidden
+    data-name="Icon=circle-check"
+    data-node-id="4605:28231"
+  >
+    <circle cx="12" cy="12" r="8" stroke="currentColor" strokeWidth="1.5" />
+    <path d="M8.5 12.5 10.8 15 15.5 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+)
 export const IconEye = () => (
   <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="shrink-0">
     <path d="M10 4c-4 0-7 3-9 6 2 3 5 6 9 6s7-3 9-6c-2-3-5-6-9-6z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
@@ -445,6 +462,28 @@ export const IconCalendarNote = () => (
       <path d="M10.6666 0.666626L10.6666 2.66663" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
       <path d="M11.3333 5.33337H4.66663" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
     </g>
+  </svg>
+)
+/** Globe — org-wide / global configuration (24×24, matches sidebar stroke weight) */
+export const IconGlobe = ({ className = '' }) => (
+  <svg
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    className={`shrink-0 ${className}`}
+    aria-hidden
+    data-name="Icon=globe"
+  >
+    <circle cx="12" cy="12" r="8" stroke="currentColor" strokeWidth="1.5" />
+    <path d="M4 12h16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    <path
+      d="M12 4c2.2 2.8 2.2 14.2 0 16M12 4c-2.2 2.8 -2.2 14.2 0 16"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+    />
   </svg>
 )
 /* Parameters — Figma Icon=settings / sliders-horiz (12972:26099, DS 2.0 sidebar 12718:10114) */

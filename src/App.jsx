@@ -12,6 +12,7 @@ import {
   IconGridDots,
   IconCalendarSidebar,
   IconGears,
+  IconGlobe,
   IconTeam,
   IconClockSidebar,
   IconChevronRight,
@@ -30,6 +31,7 @@ import OptimiserPage from './pages/OptimiserPage'
 import ScopePage from './pages/ScopePage'
 import ScheduleDetailPage from './pages/ScheduleDetailPage'
 import InventoryGoalsPage from './pages/InventoryGoalsPage'
+import GlobalConfigurationPage from './pages/GlobalConfigurationPage'
 import SetInventoryGoalModal from './components/SetInventoryGoalModal'
 
 export default function App() {
@@ -164,6 +166,26 @@ export default function App() {
               </div>
             )}
           </div>
+          <button
+            type="button"
+            onClick={() => {
+              setActiveView('global-configuration')
+              setOptimiserOpen(false)
+            }}
+            className={`${navItemBase} ${sidebarCollapsed ? navItemCollapsed : `${navItemExpanded} text-left font-normal`} ${activeView === 'global-configuration' ? 'bg-[#0267ff] text-white font-medium' : 'text-white hover:bg-white/5'}`}
+            data-name="Sidebar element"
+            data-node-id="14404:global-configuration"
+          >
+            <IconGlobe
+              className={`size-6 shrink-0 text-white transition-[filter] duration-200 ${
+                activeView === 'global-configuration'
+                  ? '[filter:brightness(1.06)_drop-shadow(0_1px_2px_rgba(0,0,0,0.22))]'
+                  : '[filter:drop-shadow(0_1px_1px_rgba(0,0,0,0.45))]'
+              }`}
+              aria-hidden
+            />
+            {!sidebarCollapsed && <span>Global Configuration</span>}
+          </button>
           <button
             type="button"
             onClick={() => {
@@ -362,11 +384,13 @@ export default function App() {
                   ? 'Schedule detail'
                   : activeView === 'optimiser'
                     ? 'Recommendations'
-                    : activeView === 'inventory-goals'
-                      ? 'Inventory goals'
-                      : activeView === 'insights'
-                        ? 'Insights'
-                        : 'Overview'
+                    : activeView === 'global-configuration'
+                      ? 'Global Configuration'
+                      : activeView === 'inventory-goals'
+                        ? 'Inventory goals'
+                        : activeView === 'insights'
+                          ? 'Insights'
+                          : 'Overview'
             }
             subtitle={
               activeView === 'optimiser' && optimiserSubView === 'scope'
@@ -375,11 +399,13 @@ export default function App() {
                   ? null
                   : activeView === 'optimiser'
                     ? 'Automate replenishment, reordering, and rebalancing with scheduled inventory optimisation.'
-                    : activeView === 'inventory-goals'
-                      ? 'Set targets and track progress for inventory across your network.'
-                      : activeView === 'insights'
-                        ? 'Analytics and statistics for your sales performance.'
-                        : "Overview area, your 'morning check-in' to prioritise and manage inventory, scheduling and more"
+                    : activeView === 'global-configuration'
+                      ? 'Configure the rules and priorities that guide how your data is interpreted and how decisions are made across the platform.'
+                      : activeView === 'inventory-goals'
+                        ? 'Set targets and track progress for inventory across your network.'
+                        : activeView === 'insights'
+                          ? 'Analytics and statistics for your sales performance.'
+                          : "Overview area, your 'morning check-in' to prioritise and manage inventory, scheduling and more"
             }
             primaryButtonLabel={undefined}
             showMenuButton={activeView === 'insights'}
@@ -424,6 +450,10 @@ export default function App() {
                 resetToRecommendationsLanding={resetToRecommendationsLandingSignal}
                 onOpenScheduleDetail={() => setOptimiserSubView('schedule-detail')}
               />
+            </div>
+          ) : activeView === 'global-configuration' ? (
+            <div className="pt-6">
+              <GlobalConfigurationPage />
             </div>
           ) : activeView === 'inventory-goals' ? (
             <div className="pt-6">
