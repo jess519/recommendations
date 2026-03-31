@@ -26,7 +26,7 @@ export default function TopBar({
         <div className="flex flex-col gap-1 min-w-0">
           <h1 className="font-sans text-2xl font-medium text-white leading-tight">{title}</h1>
           {subtitle != null && subtitle !== '' && (
-            <p className="font-sans text-sm font-normal text-[#878d94] leading-tight whitespace-nowrap">{subtitle}</p>
+            <p className="font-sans text-sm font-normal text-[#878d94] leading-snug whitespace-normal min-w-0">{subtitle}</p>
           )}
         </div>
       </div>
