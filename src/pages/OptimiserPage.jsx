@@ -310,6 +310,56 @@ function getAdvancedBoxReadableSummary(box) {
   return parts.length > 0 ? parts.join(' and ') : null
 }
 
+const ADVANCED_CONDITION_SYMBOLS = {
+  'Equal to': '=',
+  'Greater than': '>',
+  'Lower than': '<',
+  'Greater than or equal to': '≥',
+  'Lower than or equal to': '≤',
+}
+
+/** Compact readable advanced clause for titles, e.g. "Forecast < 10" */
+function getAdvancedConditionCompact(cond) {
+  if (!cond?.mainColumn || !cond.condition || !cond.value) return null
+  const sym = ADVANCED_CONDITION_SYMBOLS[cond.condition]
+  if (sym) return `${cond.mainColumn} ${sym} ${cond.value}`
+  return `${cond.mainColumn} ${cond.condition.toLowerCase()} ${cond.value}`
+}
+
+function formatScopeClauseForExceptionTitle(categoryLabel, selected) {
+  if (!Array.isArray(selected) || selected.length === 0) return null
+  if (selected.length === 1) return `${categoryLabel} is ${selected[0]}`
+  if (selected.length <= 3) return `${categoryLabel} in ${selected.join(', ')}`
+  return `${categoryLabel} matches ${selected.length} values`
+}
+
+/** Natural-language filter clauses in UI order (scope product→geo, then advanced). */
+function collectExceptionFilterClausesForTitle(exc) {
+  const levelKey = exc.applyAt
+  if (!levelKey) return []
+  const { product, geographic } = buildExceptionFilterGroups(levelKey)
+  const clauses = []
+  for (const opt of [...product, ...geographic]) {
+    const c = formatScopeClauseForExceptionTitle(opt.label, exc.filterSelections?.[opt.id])
+    if (c) clauses.push(c)
+  }
+  const onlyOneAdvBox = (exc.advancedRows?.length ?? 0) === 1
+  exc.advancedRows?.forEach((box, bi) => {
+    if (!advancedBoxHasDisplayableContent(box, onlyOneAdvBox && bi === 0)) return
+    for (const cond of box.conditions || []) {
+      const compact = getAdvancedConditionCompact(cond)
+      if (compact) {
+        clauses.push(compact)
+        continue
+      }
+      const readable = getAdvancedConditionReadable(cond)
+      if (readable) clauses.push(readable)
+      else if (cond.mainColumn) clauses.push(`${cond.mainColumn}…`)
+    }
+  })
+  return clauses
+}
+
 function getAllExceptionLevelFilters(applyAt) {
   const { scope, advanced } = getExceptionLevelConfig(applyAt)
   return [...scope, ...advanced]
@@ -343,12 +393,6 @@ const APPLY_AT_DISPLAY_LABELS = {
   product: 'Product',
   sending_location: 'Sending location',
   receiving_location: 'Receiving location',
-}
-
-function truncateExceptionDisplayName(str, maxLen = 80) {
-  if (str.length <= maxLen) return str
-  const ellipsis = '...'
-  return str.slice(0, maxLen - ellipsis.length) + ellipsis
 }
 
 /* Optimiser page – Figma 174:2696 (Optimiser-Concepts) */
@@ -1033,37 +1077,17 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
     )
   }
 
-  const getAdvancedFilterSummary = (exc) => {
-    const first = exc.advancedRows?.[0]?.conditions?.[0]
-    if (!first || !first.mainColumn || !first.condition || !first.value) return null
-    return `${first.mainColumn} ${first.condition.toLowerCase()} ${first.value}`
-  }
-
-  const getExceptionDisplayName = (exc) => {
+  /** Full exception title: "Exception [n]", "Exception [n]: [Level]", or "Exception [n]: [Level] — where …". */
+  const getExceptionDisplayName = (exc, excIdx) => {
+    const n = excIdx + 1
+    const prefix = `Exception ${n}`
     const levelKey = exc.applyAt
-    const levelLabel = levelKey ? APPLY_AT_DISPLAY_LABELS[levelKey] : null
-    if (!levelLabel) return null
+    if (!levelKey) return prefix
 
-    const filterParts = []
-    const { scope } = getExceptionLevelConfig(levelKey)
-    for (const opt of scope) {
-      const selected = (exc.filterSelections || {})[opt.id]
-      if (!Array.isArray(selected) || selected.length === 0) continue
-      if (selected.length === 1) {
-        filterParts.push(`${opt.label}: ${selected[0]}`)
-      } else {
-        filterParts.push(`${opt.label}: ${selected.length} selected`)
-      }
-    }
-
-    for (const box of exc.advancedRows || []) {
-      const bs = getAdvancedBoxReadableSummary(box)
-      if (bs) filterParts.push(bs)
-    }
-
-    const body =
-      filterParts.length > 0 ? `${levelLabel} · ${filterParts.join(' · ')}` : levelLabel
-    return truncateExceptionDisplayName(body)
+    const levelLabel = APPLY_AT_DISPLAY_LABELS[levelKey] ?? levelKey
+    const clauses = collectExceptionFilterClausesForTitle(exc)
+    if (clauses.length === 0) return `${prefix}: ${levelLabel}`
+    return `${prefix}: ${levelLabel} — where ${clauses.join(' and ')}`
   }
 
   const CONDITION_OPTIONS = [
@@ -1564,16 +1588,21 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
             </button>
             {accordionOpen.exceptions && (
               <div className="px-5 pb-6 pt-2 flex flex-col gap-4 border-t border-[#EAEAEA]">
-                {exceptions.map((exc, excIdx) => (
+                {exceptions.map((exc, excIdx) => {
+                  const exceptionTitle = getExceptionDisplayName(exc, excIdx)
+                  return (
                   <div key={exc.id} className="border border-[#e5e7eb] rounded-[4px] bg-white overflow-visible">
-                    <div className="flex items-center">
+                    <div className="flex items-center min-w-0">
                       <button
                         type="button"
                         onClick={() => toggleExceptionAccordion(exc.id)}
-                        className="flex-1 flex items-center justify-between px-4 py-3 text-left hover:bg-[#f8f8f8] transition-colors"
+                        className="flex-1 flex items-center justify-between gap-2 min-w-0 px-4 py-3 text-left hover:bg-[#f8f8f8] transition-colors"
                       >
-                        <span className="text-[14px] font-medium text-[#0a0a0a]">
-                          {getExceptionDisplayName(exc) ?? `Exception ${excIdx + 1}`}
+                        <span
+                          className="text-[14px] font-medium text-[#0a0a0a] truncate min-w-0 max-w-[90ch] text-left"
+                          title={exceptionTitle}
+                        >
+                          {exceptionTitle}
                         </span>
                         <IconChevronDown
                           className={`size-5 text-[#4b535c] transition-transform shrink-0 ${
@@ -1939,7 +1968,8 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                       </div>
                     )}
                   </div>
-                ))}
+                  )
+                })}
                 <button
                   type="button"
                   onClick={addException}
