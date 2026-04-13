@@ -213,6 +213,7 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
       openFilterPopover: null,
       activeFilterTypes: [],
       filterSearchQuery: '',
+      applyAt: '',
     },
   ])
   const [advancedRowNextId, setAdvancedRowNextId] = useState(2)
@@ -504,9 +505,34 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
           openFilterPopover: null,
           activeFilterTypes: [],
           filterSearchQuery: '',
+          applyAt: '',
         },
       ]
     })
+  }
+
+  const setExceptionApplyAt = (exceptionId, value) => {
+    const advId = `adv-${advancedRowNextId}`
+    const condId = `cond-${advancedConditionNextId}`
+    setAdvancedRowNextId((n) => n + 1)
+    setAdvancedConditionNextId((n) => n + 1)
+    setExceptions((prev) =>
+      prev.map((e) =>
+        e.id === exceptionId
+          ? {
+              ...e,
+              applyAt: value,
+              activeFilterTypes: [],
+              filtersDropdownOpen: false,
+              openFilterPopover: null,
+              filterSearchQuery: '',
+              advancedRows: [{ id: advId, conditions: [{ id: condId, mainColumn: '', condition: '', value: '' }] }],
+              productFilterSelected: { ...DEFAULT_PRODUCT_FILTER_SELECTED },
+              geoFilterSelected: { ...DEFAULT_GEO_FILTER_SELECTED },
+            }
+          : e
+      )
+    )
   }
 
   const toggleProductFilterRowForException = (exceptionId, key) => {
@@ -1288,7 +1314,32 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                     </div>
                     {exc.expanded && (
                       <div className="px-4 pb-4 pt-0 flex flex-col gap-4 border-t border-[#e5e7eb]">
-                        <div className="flex flex-wrap items-center gap-2 mt-4">
+                        <div className="flex flex-col gap-2 mt-4">
+                          <span className="text-[14px] font-medium text-[#0a0a0a]">Apply this exception at</span>
+                          <div className="relative w-full max-w-md">
+                            <select
+                              value={exc.applyAt ?? ''}
+                              onChange={(e) => setExceptionApplyAt(exc.id, e.target.value)}
+                              className="w-full h-10 py-2 pl-3 pr-9 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#0a0a0a] appearance-none"
+                            >
+                              <option value="" disabled>
+                                Select level...
+                              </option>
+                              <option value="trip">Trip</option>
+                              <option value="product">Product</option>
+                              <option value="sending_location">Sending location</option>
+                              <option value="receiving_location">Receiving location</option>
+                            </select>
+                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
+                              <IconChevronDownSelect />
+                            </span>
+                          </div>
+                          {!exc.applyAt && (
+                            <p className="text-[13px] text-[#9ca3af] italic">Select a level to configure filters</p>
+                          )}
+                        </div>
+                        {exc.applyAt && (
+                        <div className="flex flex-wrap items-center gap-2">
                           <div className="relative">
                             <button
                               type="button"
@@ -1431,7 +1482,8 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                             </button>
                           )}
                         </div>
-                        {(exc.activeFilterTypes || []).includes('advanced') && (
+                        )}
+                        {exc.applyAt && (exc.activeFilterTypes || []).includes('advanced') && (
                           <div className="flex flex-col gap-3 p-4 rounded-[4px] border border-[#E9EAEB] bg-white shadow-sm">
                             {exc.advancedRows.map((box) => (
                               <div key={box.id} className="flex flex-col gap-2">
