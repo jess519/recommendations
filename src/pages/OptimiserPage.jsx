@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { Truck, Network, TrendingUp, ShieldCheck } from 'lucide-react'
+import { Truck, Network, TrendingUp, ShieldCheck, Download, Upload } from 'lucide-react'
 import { IconCalendarSidebar, IconPlus, IconReplenishment, IconReorder, IconRebalancing, IconChevronDown, IconList, IconCalendarNote, IconTruck, IconTrendUp, IconLightbulb, IconEdit, IconClose, IconChevronDownSelect, IconArrowLeft, IconSearch } from '../components/icons'
 
 const SAMPLE_CALENDAR_ENTRY = {
@@ -131,6 +131,25 @@ const FILTER_SAMPLE_VALUES = {
   collectionTypes: ['Permanent', 'Seasonal', 'Limited edition', 'Capsule'],
   currentWarehouse: ['WH Paris', 'WH Lyon', 'WH London'],
 }
+
+/** Additional filters — Products list (Create schedule scope) */
+const ADDITIONAL_SCOPE_PRODUCT_NAMES = [
+  'Walk Ico Blason Eco',
+  'Rock Ii Grained Leather',
+  'Zadig Woven Bracelet',
+  'Angel Tote Xs Cow Burnish',
+  'Flame Of Love Lighter',
+  'Angel Tote Monogram',
+  'Alys Hc Photo Wild Ride',
+  'Cloe Hc Happy Mouse Strass',
+  'Alys Hc Voltaire Paris',
+  'Rock Earring',
+  'Cloe Hc Somebody Loves Strass',
+  'LWBA04320_BROWNIE',
+  'LWBA04065_ROAD',
+  'Angel Pouch Denim Monogram',
+  'Angel Pouch Grained Leather',
+]
 
 const ADV_FILTER_OPTION_SAMPLES = ['10', '50', '100', '500']
 
@@ -601,6 +620,9 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
     countries: false,
     locations: false,
   })
+  const [additionalProductsOpen, setAdditionalProductsOpen] = useState(false)
+  const [additionalProductsSelected, setAdditionalProductsSelected] = useState([])
+  const [additionalProductsSearch, setAdditionalProductsSearch] = useState('')
   const DEFAULT_PRODUCT_FILTER_OPEN = { departments: false, subDepartments: false, seasons: false, events: false, productGroups: false }
   const DEFAULT_GEO_FILTER_OPEN = {
     locationTypes: false,
@@ -1504,6 +1526,97 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                             </div>
                           )
                         })}
+                      </div>
+                    </section>
+
+                    <section className="flex flex-col gap-2">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-[12px] font-semibold uppercase tracking-wider text-[#4b535c]">
+                          Additional filters
+                        </h3>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setAdditionalProductsSelected([])
+                            setAdditionalProductsSearch('')
+                          }}
+                          className="text-[12px] font-medium text-[#4b535c] hover:text-[#0a0a0a]"
+                        >
+                          Clear all
+                        </button>
+                      </div>
+                      <div className="mt-1 flex flex-col border-t border-[#e5e7eb]">
+                        <div className="border-b border-[#e5e7eb] last:border-b-0">
+                          <button
+                            type="button"
+                            onClick={() => setAdditionalProductsOpen((o) => !o)}
+                            className="w-full flex items-center justify-between px-3 py-2.5 text-left hover:bg-[#f8f8f8]"
+                          >
+                            <span className="text-[13px] font-medium text-[#0a0a0a]">Products</span>
+                            <span
+                              className={`inline-flex items-center justify-center size-5 text-[#4b535c] transition-transform ${
+                                additionalProductsOpen ? 'rotate-180' : ''
+                              }`}
+                            >
+                              <IconChevronDown className="size-4" />
+                            </span>
+                          </button>
+                          {additionalProductsOpen && (
+                            <div className="px-3 pb-3 pt-1 flex flex-col gap-2 bg-[#fafafa]">
+                              <div className="flex items-center gap-2">
+                                <div className="relative flex-1 min-w-0">
+                                  <IconSearch className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-[#9ca3af] pointer-events-none" />
+                                  <input
+                                    type="text"
+                                    placeholder="search..."
+                                    value={additionalProductsSearch}
+                                    onChange={(e) => setAdditionalProductsSearch(e.target.value)}
+                                    className="w-full h-9 pl-9 pr-3 rounded-[4px] border border-[#e5e7eb] bg-white text-[13px] text-[#0a0a0a] placeholder:text-[#9ca3af]"
+                                  />
+                                </div>
+                                <button
+                                  type="button"
+                                  aria-label="Download"
+                                  className="h-9 w-9 shrink-0 flex items-center justify-center rounded-[4px] border border-[#e5e7eb] bg-white text-[#4b535c] hover:bg-[#f8f8f8]"
+                                >
+                                  <Download className="size-4" strokeWidth={1.5} />
+                                </button>
+                                <button
+                                  type="button"
+                                  aria-label="Upload"
+                                  className="h-9 w-9 shrink-0 flex items-center justify-center rounded-[4px] border border-[#e5e7eb] bg-white text-[#4b535c] hover:bg-[#f8f8f8]"
+                                >
+                                  <Upload className="size-4" strokeWidth={1.5} />
+                                </button>
+                              </div>
+                              <div className="flex flex-col gap-1.5 mt-1 max-h-[300px] overflow-y-auto min-h-0 pr-0.5">
+                                {ADDITIONAL_SCOPE_PRODUCT_NAMES.filter((name) => {
+                                  const q = additionalProductsSearch.trim().toLowerCase()
+                                  return !q || name.toLowerCase().includes(q)
+                                }).map((name) => (
+                                  <label
+                                    key={name}
+                                    className="flex items-center gap-2 text-[13px] text-[#0a0a0a] cursor-pointer"
+                                  >
+                                    <input
+                                      type="checkbox"
+                                      checked={additionalProductsSelected.includes(name)}
+                                      onChange={() =>
+                                        setAdditionalProductsSelected((prev) =>
+                                          prev.includes(name)
+                                            ? prev.filter((n) => n !== name)
+                                            : [...prev, name]
+                                        )
+                                      }
+                                      className="size-4 rounded border-[#d1d5db] text-[#0267ff] focus:ring-[#0267ff]"
+                                    />
+                                    <span>{name}</span>
+                                  </label>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </section>
                   </div>
