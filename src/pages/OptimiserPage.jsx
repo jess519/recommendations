@@ -269,6 +269,19 @@ const SCOPE_ACCORDION_GEO_KEYS = {
   locations: 'location',
 }
 
+const APPLY_AT_DISPLAY_LABELS = {
+  trip: 'Trip',
+  product: 'Product',
+  sending_location: 'Sending location',
+  receiving_location: 'Receiving location',
+}
+
+function truncateExceptionDisplayName(str, maxLen = 80) {
+  if (str.length <= maxLen) return str
+  const ellipsis = '...'
+  return str.slice(0, maxLen - ellipsis.length) + ellipsis
+}
+
 /* Optimiser page – Figma 174:2696 (Optimiser-Concepts) */
 const DEFAULT_DRAWER_FORM = {
   module: '',
@@ -900,19 +913,30 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
   }
 
   const getExceptionDisplayName = (exc) => {
-    const parts = []
-    const { scope } = getExceptionLevelConfig(exc.applyAt)
+    const levelKey = exc.applyAt
+    const levelLabel = levelKey ? APPLY_AT_DISPLAY_LABELS[levelKey] : null
+    if (!levelLabel) return null
+
+    const filterParts = []
+    const { scope } = getExceptionLevelConfig(levelKey)
     for (const opt of scope) {
       const selected = (exc.filterSelections || {})[opt.id]
-      if (Array.isArray(selected) && selected.length > 0) {
-        parts.push(formatExceptionScopeChipLabel(opt.label, selected))
+      if (!Array.isArray(selected) || selected.length === 0) continue
+      if (selected.length === 1) {
+        filterParts.push(`${opt.label}: ${selected[0]}`)
+      } else {
+        filterParts.push(`${opt.label}: ${selected.length} selected`)
       }
     }
+
     if (exc.advancedModeActive) {
-      const summary = getAdvancedFilterSummary(exc)
-      parts.push(summary ? `Advanced: ${summary}` : 'Advanced')
+      const advSummary = getAdvancedFilterSummary(exc)
+      if (advSummary) filterParts.push(advSummary)
     }
-    return parts.length > 0 ? parts.join(', ') : null
+
+    const body =
+      filterParts.length > 0 ? `${levelLabel} · ${filterParts.join(' · ')}` : levelLabel
+    return truncateExceptionDisplayName(body)
   }
 
   const CONDITION_OPTIONS = [
