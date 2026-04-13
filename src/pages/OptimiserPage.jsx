@@ -1288,10 +1288,10 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
             >
               <div className="flex flex-col gap-1">
                 <span className="text-[20px] font-medium text-[#212B36] leading-[150%]">
-                  Scope
+                  Auto-approval scope
                 </span>
                 <span className="text-[14px] font-normal text-[#4b535c]">
-                  Define which products and locations are included in this schedule
+                  The solver evaluates your entire network. Define which recommendations follow your auto-approval and exception rules.
                 </span>
               </div>
               <IconChevronDown
@@ -1313,8 +1313,8 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                       className="mt-1 size-4 shrink-0 border-[#e5e7eb] text-[#0267ff] focus:ring-[#0267ff]"
                     />
                     <div className="flex flex-col gap-1 min-w-0">
-                      <span className="text-[14px] font-medium text-[#0a0a0a]">Include all recommendations</span>
-                      <span className="text-[12px] font-normal text-[#4b535c]">Applies the full optimised recommendation set for maximum impact.</span>
+                      <span className="text-[14px] font-medium text-[#0a0a0a]">All recommendations</span>
+                      <span className="text-[12px] font-normal text-[#4b535c]">Auto-approve all recommendations that pass your exception rules. Anything flagged by an exception requires manual review before submission.</span>
                     </div>
                   </label>
                   <label className="flex items-start gap-3 p-4 rounded-[10px] border border-[#e5e7eb] bg-white cursor-pointer hover:border-[#0267ff]/40 has-[:checked]:border-[#0267ff]">
@@ -1327,8 +1327,8 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                       className="mt-1 size-4 shrink-0 border-[#e5e7eb] text-[#0267ff] focus:ring-[#0267ff]"
                     />
                     <div className="flex flex-col gap-1 min-w-0">
-                      <span className="text-[14px] font-medium text-[#0a0a0a]">Filter recommendations</span>
-                      <span className="text-[12px] font-normal text-[#4b535c]">Narrow recommendations to specific products, locations, or criteria.</span>
+                      <span className="text-[14px] font-medium text-[#0a0a0a]">Selected recommendations</span>
+                      <span className="text-[12px] font-normal text-[#4b535c]">Auto-approve only recommendations matching the criteria you set here. Flagged exceptions still require manual review. All other recommendations remain visible and submittable, but default to manual review.</span>
                     </div>
                   </label>
                 </div>
