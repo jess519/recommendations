@@ -160,8 +160,16 @@ const EXC_SCOPE_PRODUCT = [
   fe('collectionTypes', 'Collection types', FILTER_SAMPLE_VALUES.collectionTypes),
 ]
 const EXC_SCOPE_SEND_RECV = [
-  ...EXC_SCOPE_TRIP,
+  ...EXC_SCOPE_TRIP.slice(0, 8),
   fe('collectionTypes', 'Collection types', FILTER_SAMPLE_VALUES.collectionTypes),
+  fe('brand', 'Brand', FILTER_SAMPLE_VALUES.brand),
+  fe('articles', 'Articles', FILTER_SAMPLE_VALUES.articles),
+  fe('region', 'Region', FILTER_SAMPLE_VALUES.region),
+  fe('locationType', 'Location type', FILTER_SAMPLE_VALUES.locationType),
+  fe('sendingLocations', 'Sending locations', FILTER_SAMPLE_VALUES.location),
+  fe('receivingLocations', 'Receiving locations', FILTER_SAMPLE_VALUES.location),
+  fe('sendingCountries', 'Sending countries', FILTER_SAMPLE_VALUES.countries),
+  fe('receivingCountries', 'Receiving countries', FILTER_SAMPLE_VALUES.countries),
 ]
 
 const EXC_ADV_TRIP = [fe('transferUnits', 'Transfer units', ADV_FILTER_OPTION_SAMPLES)]
@@ -238,6 +246,44 @@ function getExceptionLevelConfig(applyAt) {
   return EXCEPTION_FILTER_OPTIONS_BY_LEVEL[applyAt]
 }
 
+/** Order for exception filter popover — Product vs Geographic groupings */
+const EXCEPTION_PRODUCT_SCOPE_IDS = [
+  'class',
+  'department',
+  'gender',
+  'product',
+  'season',
+  'style',
+  'subDepartment',
+  'events',
+  'size',
+  'collectionTypes',
+  'manufacturer',
+  'brand',
+  'articles',
+]
+const EXCEPTION_GEO_SCOPE_IDS_TRIP = ['location', 'region', 'locationType', 'countries']
+const EXCEPTION_GEO_SCOPE_IDS_SEND_RECV = [
+  'region',
+  'locationType',
+  'sendingLocations',
+  'receivingLocations',
+  'sendingCountries',
+  'receivingCountries',
+]
+
+function buildExceptionFilterGroups(applyAt) {
+  const { scope, advanced } = getExceptionLevelConfig(applyAt)
+  const byId = Object.fromEntries(scope.map((f) => [f.id, f]))
+  const product = EXCEPTION_PRODUCT_SCOPE_IDS.map((id) => byId[id]).filter(Boolean)
+  const geoIds =
+    applyAt === 'sending_location' || applyAt === 'receiving_location'
+      ? EXCEPTION_GEO_SCOPE_IDS_SEND_RECV
+      : EXCEPTION_GEO_SCOPE_IDS_TRIP
+  const geographic = geoIds.map((id) => byId[id]).filter(Boolean)
+  return { product, geographic, advanced }
+}
+
 function getAllExceptionLevelFilters(applyAt) {
   const { scope, advanced } = getExceptionLevelConfig(applyAt)
   return [...scope, ...advanced]
@@ -251,9 +297,6 @@ function isExceptionAdvancedFilterId(applyAt, filterId) {
   if (!applyAt || !filterId) return false
   return getExceptionLevelConfig(applyAt).advanced.some((f) => f.id === filterId)
 }
-
-/** Left-column sentinel for unified "Advanced" category (not a scope filter id) */
-const EXCEPTION_ADVANCED_CATEGORY_KEY = 'advanced'
 
 const SCOPE_ACCORDION_PRODUCT_KEYS = {
   departments: 'department',
@@ -765,8 +808,8 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
         if (!open) {
           return { ...e, filtersDropdownOpen: false, filterValueSearchQuery: '' }
         }
-        const { scope, advanced } = getExceptionLevelConfig(e.applyAt)
-        const defaultCat = scope[0]?.id ?? (advanced.length > 0 ? EXCEPTION_ADVANCED_CATEGORY_KEY : null)
+        const { product, geographic, advanced } = buildExceptionFilterGroups(e.applyAt)
+        const defaultCat = product[0]?.id ?? geographic[0]?.id ?? advanced[0]?.id ?? null
         return {
           ...e,
           filtersDropdownOpen: true,
@@ -791,7 +834,6 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
           ...e,
           filtersPanelCategory: categoryId,
           filterValueSearchQuery: '',
-          ...(categoryId === EXCEPTION_ADVANCED_CATEGORY_KEY ? { advancedModeActive: true } : {}),
         }
       })
     )
@@ -819,7 +861,7 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
           ? {
               ...e,
               advancedModeActive: false,
-              filtersPanelCategory: e.filtersPanelCategory === EXCEPTION_ADVANCED_CATEGORY_KEY ? null : e.filtersPanelCategory,
+              filtersPanelCategory: null,
               advancedRows: [{ id: advId, conditions: [{ id: condId, mainColumn: '', condition: '', value: '' }] }],
             }
           : e
@@ -836,7 +878,28 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
           filtersDropdownOpen: true,
           filtersPanelCategory: categoryId,
           filterValueSearchQuery: '',
-          ...(categoryId === EXCEPTION_ADVANCED_CATEGORY_KEY ? { advancedModeActive: true } : {}),
+        }
+      })
+    )
+  }
+
+  const addAdvancedMetricForException = (exceptionId, mainColumnLabel) => {
+    const advId = `adv-${advancedRowNextId}`
+    const condId = `cond-${advancedConditionNextId}`
+    setAdvancedRowNextId((n) => n + 1)
+    setAdvancedConditionNextId((n) => n + 1)
+    setExceptions((prev) =>
+      prev.map((e) => {
+        if (e.id !== exceptionId) return e
+        return {
+          ...e,
+          filtersDropdownOpen: false,
+          filterValueSearchQuery: '',
+          advancedModeActive: true,
+          advancedRows: [
+            ...e.advancedRows,
+            { id: advId, conditions: [{ id: condId, mainColumn: mainColumnLabel, condition: '', value: '' }] },
+          ],
         }
       })
     )
@@ -1508,64 +1571,77 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                                   onClick={() => setExceptionFiltersDropdownOpen(exc.id, false)}
                                 />
                                 <div
-                                  className="absolute left-0 top-full mt-1 z-10 w-[320px] max-h-[400px] rounded-[4px] border border-[#E9EAEB] bg-white shadow-lg overflow-hidden flex"
+                                  className="absolute left-0 top-full mt-1 z-10 min-w-[480px] max-w-[calc(100vw-2rem)] max-h-[400px] rounded-[4px] border border-[#E9EAEB] bg-white shadow-lg overflow-hidden flex"
                                   style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
                                   onClick={(e) => e.stopPropagation()}
                                 >
                                   {(() => {
-                                    const { scope: scopeOpts, advanced: advOpts } = getExceptionLevelConfig(exc.applyAt)
+                                    const { product: productOpts, geographic: geoOpts, advanced: advOpts } = buildExceptionFilterGroups(exc.applyAt)
                                     const cat = exc.filtersPanelCategory
-                                    const scopeDef = cat && cat !== EXCEPTION_ADVANCED_CATEGORY_KEY ? getExceptionLevelFilterDef(exc.applyAt, cat) : null
+                                    const isScopeCategory = Boolean(
+                                      cat && !isExceptionAdvancedFilterId(exc.applyAt, cat) && getExceptionLevelFilterDef(exc.applyAt, cat)?.options
+                                    )
+                                    const scopeDef = isScopeCategory ? getExceptionLevelFilterDef(exc.applyAt, cat) : null
                                     const selectedVals = scopeDef?.options || []
                                     const q = (exc.filterValueSearchQuery || '').trim().toLowerCase()
                                     const filteredVals = selectedVals.filter((name) => !q || name.toLowerCase().includes(q))
                                     const selForCat = (exc.filterSelections || {})[cat] || []
+                                    const renderScopeRow = (opt) => {
+                                      const count = ((exc.filterSelections || {})[opt.id] || []).length
+                                      return (
+                                        <button
+                                          key={opt.id}
+                                          type="button"
+                                          onClick={() => selectExceptionFilterPanelCategory(exc.id, opt.id)}
+                                          className={`w-full flex items-center gap-1.5 text-left text-[13px] text-[#0a0a0a] py-2 px-3 rounded-[4px] hover:bg-[#f3f4f6] ${cat === opt.id ? 'bg-[#E8F0FE]' : ''}`}
+                                        >
+                                          <span className="truncate flex-1 min-w-0">{opt.label}</span>
+                                          {count > 0 && (
+                                            <span className="shrink-0 min-w-[18px] h-[18px] rounded-full bg-[#0267ff] text-white text-[10px] font-semibold flex items-center justify-center px-1">
+                                              {count}
+                                            </span>
+                                          )}
+                                        </button>
+                                      )
+                                    }
                                     return (
                                       <>
-                                        <div className="w-[132px] shrink-0 border-r border-[#e5e7eb] overflow-y-auto max-h-[400px] flex flex-col py-1">
-                                          <div className="text-[11px] uppercase text-[#9ca3af] px-2.5 py-1">Scope</div>
-                                          {scopeOpts.map((opt) => (
-                                            <button
-                                              key={opt.id}
-                                              type="button"
-                                              onClick={() => selectExceptionFilterPanelCategory(exc.id, opt.id)}
-                                              className={`w-full text-left text-[13px] font-medium px-2.5 py-2 text-[#0a0a0a] hover:bg-[#f8f8f8] ${cat === opt.id ? 'bg-[#E8F0FE]' : ''}`}
-                                            >
-                                              {opt.label}
-                                            </button>
-                                          ))}
+                                        <div className="min-w-[160px] w-[160px] shrink-0 border-r border-[#e5e7eb] overflow-y-auto max-h-[400px] flex flex-col py-2 px-1.5">
+                                          <div className="border-b border-[#e5e7eb] pb-2 mb-0">
+                                            <div className="text-[13px] font-semibold text-[#0a0a0a] uppercase tracking-wide mb-1 mt-0">
+                                              Product
+                                            </div>
+                                            {productOpts.map((opt) => renderScopeRow(opt))}
+                                          </div>
+                                          <div className="border-b border-[#e5e7eb] pb-2">
+                                            <div className="text-[13px] font-semibold text-[#0a0a0a] uppercase tracking-wide mb-1 mt-3">
+                                              Geographic
+                                            </div>
+                                            {geoOpts.map((opt) => renderScopeRow(opt))}
+                                          </div>
                                           {advOpts.length > 0 && (
-                                            <>
-                                              <div className="text-[11px] uppercase text-[#9ca3af] px-2.5 py-1 mt-1 border-t border-[#e5e7eb] pt-2">
+                                            <div className="border-b border-[#e5e7eb] pb-2 last:border-b-0">
+                                              <div className="text-[13px] font-semibold text-[#0a0a0a] uppercase tracking-wide mb-1 mt-3">
                                                 Advanced
                                               </div>
-                                              <button
-                                                type="button"
-                                                onClick={() => selectExceptionFilterPanelCategory(exc.id, EXCEPTION_ADVANCED_CATEGORY_KEY)}
-                                                className={`w-full text-left text-[13px] font-medium px-2.5 py-2 text-[#0a0a0a] hover:bg-[#f8f8f8] ${cat === EXCEPTION_ADVANCED_CATEGORY_KEY ? 'bg-[#E8F0FE]' : ''}`}
-                                              >
-                                                Advanced
-                                              </button>
-                                            </>
+                                              {advOpts.map((opt) => (
+                                                <button
+                                                  key={opt.id}
+                                                  type="button"
+                                                  onClick={() => addAdvancedMetricForException(exc.id, opt.label)}
+                                                  className="w-full text-left text-[13px] text-[#0a0a0a] py-2 px-3 rounded-[4px] hover:bg-[#f3f4f6]"
+                                                >
+                                                  {opt.label}
+                                                </button>
+                                              ))}
+                                            </div>
                                           )}
                                         </div>
                                         <div className="flex-1 min-w-0 flex flex-col min-h-0 max-h-[400px]">
-                                          {cat && cat !== EXCEPTION_ADVANCED_CATEGORY_KEY && scopeDef && (
-                                            <>
-                                              <div className="p-2 border-b border-[#e5e7eb] shrink-0">
-                                                <div className="relative">
-                                                  <IconSearch className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-[#9ca3af] pointer-events-none" />
-                                                  <input
-                                                    type="text"
-                                                    placeholder="Search"
-                                                    value={exc.filterValueSearchQuery || ''}
-                                                    onChange={(e) => setExceptionFilterValueSearchQuery(exc.id, e.target.value)}
-                                                    className="w-full h-9 pl-9 pr-3 rounded-[4px] border border-[#e5e7eb] bg-white text-[13px] text-[#0a0a0a] placeholder:text-[#9ca3af]"
-                                                  />
-                                                </div>
-                                              </div>
-                                              <div className="px-2 py-1.5 flex items-center justify-between shrink-0 border-b border-[#e5e7eb]">
-                                                <span className="text-[12px] font-medium text-[#4b535c] truncate pr-2">{scopeDef.label}</span>
+                                          {cat && scopeDef && (
+                                            <div className="flex flex-col flex-1 min-h-0 p-3">
+                                              <div className="flex items-center justify-between gap-2 shrink-0 mb-3">
+                                                <span className="text-[13px] font-semibold text-[#0a0a0a] truncate">{scopeDef.label}</span>
                                                 <button
                                                   type="button"
                                                   onClick={() =>
@@ -1580,7 +1656,17 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                                                   Select all
                                                 </button>
                                               </div>
-                                              <div className="flex-1 overflow-y-auto min-h-0 px-2 py-2 flex flex-col gap-1.5">
+                                              <div className="relative shrink-0 mb-3">
+                                                <IconSearch className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-[#9ca3af] pointer-events-none" />
+                                                <input
+                                                  type="text"
+                                                  placeholder="Search"
+                                                  value={exc.filterValueSearchQuery || ''}
+                                                  onChange={(e) => setExceptionFilterValueSearchQuery(exc.id, e.target.value)}
+                                                  className="w-full h-9 pl-9 pr-3 rounded-[4px] border border-[#e5e7eb] bg-white text-[13px] text-[#0a0a0a] placeholder:text-[#9ca3af]"
+                                                />
+                                              </div>
+                                              <div className="flex-1 overflow-y-auto min-h-0 flex flex-col gap-1.5">
                                                 {filteredVals.map((name) => (
                                                   <label key={name} className="flex items-center gap-2 text-[13px] text-[#0a0a0a] cursor-pointer">
                                                     <input
@@ -1593,15 +1679,12 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                                                   </label>
                                                 ))}
                                               </div>
-                                            </>
-                                          )}
-                                          {cat === EXCEPTION_ADVANCED_CATEGORY_KEY && (
-                                            <div className="p-3 text-[13px] text-[#4b535c] leading-snug">
-                                              Configure conditions in the panel below.
                                             </div>
                                           )}
-                                          {!cat && (
-                                            <div className="p-3 text-[13px] text-[#9ca3af]">Select a category</div>
+                                          {(!cat || !scopeDef) && (
+                                            <div className="p-3 text-[13px] text-[#9ca3af] flex flex-1 items-center justify-center min-h-[120px]">
+                                              Select a category
+                                            </div>
                                           )}
                                         </div>
                                       </>
@@ -1653,7 +1736,10 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                             <div className="relative">
                               <button
                                 type="button"
-                                onClick={() => openExceptionFiltersPanelToCategory(exc.id, EXCEPTION_ADVANCED_CATEGORY_KEY)}
+                                onClick={() => {
+                                  const { product, geographic } = buildExceptionFilterGroups(exc.applyAt)
+                                  openExceptionFiltersPanelToCategory(exc.id, product[0]?.id ?? geographic[0]?.id ?? null)
+                                }}
                                 className="h-10 px-3 py-2 flex items-center gap-1.5 rounded-[4px] border border-[#E9EAEB] bg-white text-[13px] font-medium text-[#0a0a0a] hover:bg-[#f8f8f8]"
                               >
                                 <span className="max-w-[200px] truncate">
