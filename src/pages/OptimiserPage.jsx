@@ -509,25 +509,40 @@ function scopeCategoryLabelForTitle(applyAt, scopeCategoryId) {
   return def?.label ?? scopeCategoryId
 }
 
-/** Readable fragment for Create Schedule exception header from one condition row. */
-function conditionPartForExceptionTitle(cond, fallbackApplyAt) {
-  const applyAt = cond.applyAt || fallbackApplyAt
-  const vals = cond.scopeValues
-  const hasScopeValues = Array.isArray(vals) && vals.length > 0 && Boolean(cond.scopeCategory)
+function applyAtLabelForExceptionTitle(applyAtKey) {
+  if (!applyAtKey) return ''
+  return APPLY_AT_DISPLAY_LABELS[applyAtKey] ?? applyAtKey
+}
+
+/** Single condition summary for exception header (per-condition Apply at level). */
+function buildExceptionConditionSummaryPart(cond) {
+  const level = applyAtLabelForExceptionTitle(cond.applyAt)
+  if (!level) return null
 
   if (cond.filterType === 'advanced') {
-    const p = [cond.advancedColumn, cond.advancedCondition, cond.advancedValue].filter(Boolean)
-    return p.length ? p.join(' ') : null
+    if (!cond.advancedColumn || !cond.advancedCondition || cond.advancedValue === undefined || cond.advancedValue === '') {
+      return null
+    }
+    return `${level} ${cond.advancedColumn} ${cond.advancedCondition.toLowerCase()} ${cond.advancedValue}`
   }
-  if (cond.filterType === 'scope' || (hasScopeValues && cond.filterType !== 'advanced')) {
-    if (!hasScopeValues) return null
-    const cat = scopeCategoryLabelForTitle(applyAt, cond.scopeCategory)
-    if (vals.length === 1) return `${cat} is ${vals[0]}`
-    return `${cat}: ${vals.length} values`
+
+  if (cond.filterType === 'scope' && cond.scopeCategory) {
+    const vals = Array.isArray(cond.scopeValues) ? cond.scopeValues : []
+    if (vals.length === 0) return null
+    const cat = scopeCategoryLabelForTitle(cond.applyAt, cond.scopeCategory)
+    if (!cat) return null
+    if (vals.length === 1) return `${level} ${cat} is ${vals[0]}`
+    if (vals.length <= 3) return `${level} ${cat} in ${vals.join(', ')}`
+    return `${level} ${cat}: ${vals.length} values`
   }
-  const advParts = [cond.advancedColumn, cond.advancedCondition, cond.advancedValue].filter(Boolean)
-  if (advParts.length) return advParts.join(' ')
+
   return null
+}
+
+function truncateExceptionTitleDisplay(str, maxLen = 100) {
+  if (str.length <= maxLen) return str
+  const ellipsis = '...'
+  return str.slice(0, Math.max(0, maxLen - ellipsis.length)) + ellipsis
 }
 
 function createEmptyExceptionCondition(id) {
@@ -1050,20 +1065,13 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
     )
   }
 
-  /** Exception [n], optionally first condition's level + filter fragments from all conditions. */
+  /** Full exception header: "Exception [n]" or "Exception [n]: [part] and [part] ..." (one part per configured condition, each includes its Apply at level). */
   const getExceptionDisplayName = (exc, excIdx) => {
     const n = excIdx + 1
     const prefix = `Exception ${n}`
-    const conditions = exc.conditions || []
-    const firstApplyAt = conditions[0]?.applyAt
-    const levelLabel = firstApplyAt ? (APPLY_AT_DISPLAY_LABELS[firstApplyAt] ?? firstApplyAt) : ''
-
-    const parts = conditions.map((c) => conditionPartForExceptionTitle(c, firstApplyAt)).filter(Boolean)
-
-    if (parts.length === 0 && !levelLabel) return prefix
-    if (parts.length === 0) return `${prefix}: ${levelLabel}`
-    if (!levelLabel) return `${prefix}: ${parts.join(' and ')}`
-    return `${prefix}: ${levelLabel} — ${parts.join(' and ')}`
+    const parts = (exc.conditions || []).map(buildExceptionConditionSummaryPart).filter(Boolean)
+    if (parts.length === 0) return prefix
+    return `${prefix}: ${parts.join(' and ')}`
   }
 
   if (isCreateSchedulePage) {
@@ -1648,7 +1656,8 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
             {accordionOpen.exceptions && (
               <div className="px-5 pb-6 pt-2 flex flex-col gap-4 border-t border-[#EAEAEA]">
                 {exceptions.map((exc, excIdx) => {
-                  const exceptionTitle = getExceptionDisplayName(exc, excIdx)
+                  const exceptionTitleFull = getExceptionDisplayName(exc, excIdx)
+                  const exceptionTitleDisplay = truncateExceptionTitleDisplay(exceptionTitleFull)
                   return (
                   <div key={exc.id} className="border border-[#e5e7eb] rounded-[4px] bg-white overflow-visible">
                     <div className="flex items-center min-w-0">
@@ -1658,10 +1667,10 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                         className="flex-1 flex items-center justify-between gap-2 min-w-0 px-4 py-3 text-left hover:bg-[#f8f8f8] transition-colors"
                       >
                         <span
-                          className="text-[14px] font-medium text-[#0a0a0a] truncate min-w-0 max-w-[90ch] text-left"
-                          title={exceptionTitle}
+                          className="text-[14px] font-medium text-[#0a0a0a] truncate min-w-0 text-left"
+                          title={exceptionTitleFull}
                         >
-                          {exceptionTitle}
+                          {exceptionTitleDisplay}
                         </span>
                         <IconChevronDown
                           className={`size-5 text-[#4b535c] transition-transform shrink-0 ${
