@@ -100,6 +100,177 @@ const CALENDAR_ENTRIES = [
   SAMPLE_CALENDAR_ENTRY_REBALANCING_3,
 ]
 
+/** Shared sample values for Create schedule scope filters + exception scope filters */
+const FILTER_SAMPLE_VALUES = {
+  class: ['Accessories', 'Bags', 'Shoes', 'Ready-to-wear', 'Leather goods'],
+  department: ['Accessories Men', 'Accessories Women'],
+  gender: ['Men', 'Women', 'Unisex'],
+  product: ['A1252810', 'A12528YY', 'A13314YY', 'B2045100', 'C3091522'],
+  season: ['Fw16', 'Fw18', 'Fw19', 'Ss20', 'Fw24', 'Ss25'],
+  style: [
+    'Angel Pouch Denim Monogram',
+    'Angel Pouch Grained Leather',
+    'Angel Pouch Wings Cow Burnish',
+    'Angel Pouch Wrinkled Patent',
+    'Angel Tote Denim Monogram',
+    'Angel Tote Monogram',
+    'Angel Tote Voltaire',
+    'Angel Tote Wings Cow Burnish',
+    'Angel Tote Wrinkled Patent',
+  ],
+  subDepartment: ['Leather Good', 'Other Acc', 'Perfume Cosmet', 'Shoes'],
+  events: ['25w Carry Over', 'Fw24 Access Out', 'Fw24 Carry Out', 'Fw24 Stc Out', 'Fw25 Drop 1a', 'Fw25 Drop 2a', 'Fw25 Drop 3a', 'Fw25 Drop 4a'],
+  location: ['Opéra', 'Cannes', 'G.I cap 3000', 'Printemps toulon', 'Marais'],
+  region: ['Europe', 'North America', 'Asia Pacific'],
+  locationType: ['Boutique', 'Outlet', 'Department store', 'E-commerce'],
+  countries: ['France', 'Italy', 'UK', 'Germany', 'Spain'],
+  articles: ['ART-001', 'ART-002', 'ART-003', 'ART-004', 'ART-005'],
+  brand: ['Brand A', 'Brand B', 'Brand C'],
+  size: ['XS', 'S', 'M', 'L', 'XL'],
+  manufacturer: ['Manufacturer A', 'Manufacturer B', 'Manufacturer C'],
+  collectionTypes: ['Permanent', 'Seasonal', 'Limited edition', 'Capsule'],
+  currentWarehouse: ['WH Paris', 'WH Lyon', 'WH London'],
+}
+
+const ADV_FILTER_OPTION_SAMPLES = ['10', '50', '100', '500']
+
+const fe = (id, label, options) => ({ id, label, options })
+
+const EXC_SCOPE_TRIP = [
+  fe('class', 'Class', FILTER_SAMPLE_VALUES.class),
+  fe('department', 'Department', FILTER_SAMPLE_VALUES.department),
+  fe('gender', 'Gender', FILTER_SAMPLE_VALUES.gender),
+  fe('product', 'Product', FILTER_SAMPLE_VALUES.product),
+  fe('season', 'Season', FILTER_SAMPLE_VALUES.season),
+  fe('style', 'Style', FILTER_SAMPLE_VALUES.style),
+  fe('subDepartment', 'Sub-department', FILTER_SAMPLE_VALUES.subDepartment),
+  fe('events', 'Events', FILTER_SAMPLE_VALUES.events),
+  fe('location', 'Location', FILTER_SAMPLE_VALUES.location),
+  fe('region', 'Region', FILTER_SAMPLE_VALUES.region),
+  fe('locationType', 'Location type', FILTER_SAMPLE_VALUES.locationType),
+  fe('countries', 'Countries', FILTER_SAMPLE_VALUES.countries),
+  fe('articles', 'Articles', FILTER_SAMPLE_VALUES.articles),
+  fe('brand', 'Brand', FILTER_SAMPLE_VALUES.brand),
+]
+const EXC_SCOPE_PRODUCT = [
+  ...EXC_SCOPE_TRIP.slice(0, 8),
+  fe('size', 'Size', FILTER_SAMPLE_VALUES.size),
+  ...EXC_SCOPE_TRIP.slice(8),
+  fe('manufacturer', 'Manufacturer', FILTER_SAMPLE_VALUES.manufacturer),
+  fe('collectionTypes', 'Collection types', FILTER_SAMPLE_VALUES.collectionTypes),
+]
+const EXC_SCOPE_SEND_RECV = [
+  ...EXC_SCOPE_TRIP,
+  fe('collectionTypes', 'Collection types', FILTER_SAMPLE_VALUES.collectionTypes),
+]
+
+const EXC_ADV_TRIP = [fe('transferUnits', 'Transfer units', ADV_FILTER_OPTION_SAMPLES)]
+
+const EXC_ADV_PRODUCT = [
+  fe('currentUnits', 'Current units', ADV_FILTER_OPTION_SAMPLES),
+  fe('forecast', 'Forecast', ADV_FILTER_OPTION_SAMPLES),
+  fe('transferUnits', 'Transfer units', ADV_FILTER_OPTION_SAMPLES),
+  fe('currentWarehouse', 'Current warehouse', FILTER_SAMPLE_VALUES.currentWarehouse),
+  fe('last7DaysSales', 'Last 7 days sales', ADV_FILTER_OPTION_SAMPLES),
+  fe('last30DaysSales', 'Last 30 days sales', ADV_FILTER_OPTION_SAMPLES),
+  fe('understocksBefore', 'Understocks before', ADV_FILTER_OPTION_SAMPLES),
+  fe('understocksAfter', 'Understocks after', ADV_FILTER_OPTION_SAMPLES),
+  fe('overstocksBefore', 'Overstocks before', ADV_FILTER_OPTION_SAMPLES),
+  fe('overstocksAfter', 'Overstocks after', ADV_FILTER_OPTION_SAMPLES),
+  fe('salesUplift', 'Sales uplift', ADV_FILTER_OPTION_SAMPLES),
+]
+
+const EXC_ADV_SENDING = EXC_ADV_PRODUCT.filter((f) => f.id !== 'currentWarehouse')
+
+const EXC_ADV_RECEIVING = EXC_ADV_PRODUCT
+
+const EXCEPTION_FILTER_OPTIONS_BY_LEVEL = {
+  trip: { scope: EXC_SCOPE_TRIP, advanced: EXC_ADV_TRIP },
+  product: { scope: EXC_SCOPE_PRODUCT, advanced: EXC_ADV_PRODUCT },
+  sending_location: { scope: EXC_SCOPE_SEND_RECV, advanced: EXC_ADV_SENDING },
+  receiving_location: { scope: EXC_SCOPE_SEND_RECV, advanced: EXC_ADV_RECEIVING },
+}
+
+const MAIN_COLUMN_OPTIONS_BY_LEVEL = {
+  trip: ['Transfer units'],
+  product: [
+    'Current units',
+    'Forecast',
+    'Transfer units',
+    'Current warehouse',
+    'Last 7 days sales',
+    'Last 30 days sales',
+    'Understocks before',
+    'Understocks after',
+    'Overstocks before',
+    'Overstocks after',
+    'Sales uplift',
+  ],
+  sending_location: [
+    'Current units',
+    'Forecast',
+    'Transfer units',
+    'Last 7 days sales',
+    'Last 30 days sales',
+    'Understocks before',
+    'Understocks after',
+    'Overstocks before',
+    'Overstocks after',
+    'Sales uplift',
+  ],
+  receiving_location: [
+    'Current units',
+    'Forecast',
+    'Transfer units',
+    'Current warehouse',
+    'Last 7 days sales',
+    'Last 30 days sales',
+    'Understocks before',
+    'Understocks after',
+    'Overstocks before',
+    'Overstocks after',
+    'Sales uplift',
+  ],
+}
+
+function getExceptionLevelConfig(applyAt) {
+  if (!applyAt || !EXCEPTION_FILTER_OPTIONS_BY_LEVEL[applyAt]) return { scope: [], advanced: [] }
+  return EXCEPTION_FILTER_OPTIONS_BY_LEVEL[applyAt]
+}
+
+function getAllExceptionLevelFilters(applyAt) {
+  const { scope, advanced } = getExceptionLevelConfig(applyAt)
+  return [...scope, ...advanced]
+}
+
+function getExceptionLevelFilterDef(applyAt, filterId) {
+  return getAllExceptionLevelFilters(applyAt).find((f) => f.id === filterId)
+}
+
+function isExceptionAdvancedFilterId(applyAt, filterId) {
+  if (!applyAt || !filterId) return false
+  return getExceptionLevelConfig(applyAt).advanced.some((f) => f.id === filterId)
+}
+
+function exceptionHasActiveAdvancedFilter(applyAt, activeFilterTypes) {
+  if (!applyAt || !activeFilterTypes?.length) return false
+  return activeFilterTypes.some((fid) => isExceptionAdvancedFilterId(applyAt, fid))
+}
+
+const SCOPE_ACCORDION_PRODUCT_KEYS = {
+  departments: 'department',
+  subDepartments: 'subDepartment',
+  seasons: 'season',
+  events: 'events',
+  productGroups: 'product',
+}
+const SCOPE_ACCORDION_GEO_KEYS = {
+  locationTypes: 'locationType',
+  regions: 'region',
+  countries: 'countries',
+  locations: 'location',
+}
+
 /* Optimiser page – Figma 174:2696 (Optimiser-Concepts) */
 const DEFAULT_DRAWER_FORM = {
   module: '',
@@ -184,31 +355,12 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
     countries: false,
     locations: false,
   }
-  const DEFAULT_PRODUCT_FILTER_SELECTED = { departments: [], subDepartments: [], seasons: [], events: [], productGroups: [] }
-  const DEFAULT_GEO_FILTER_SELECTED = {
-    locationTypes: [], regions: [], countries: [], locations: [],
-  }
-  const EXCEPTION_FILTER_OPTIONS = [
-    { id: 'advanced', label: 'Advanced filters', highlight: true },
-    { id: 'departments', label: 'Departments', options: ['Cadeaux', 'Exotiques', 'Femme', 'Homme', 'Voyage'] },
-    { id: 'subDepartments', label: 'Sub-departments', options: ['Alpha', 'Bravo', 'Charlie', 'Delta', 'Echo'] },
-    { id: 'seasons', label: 'Seasons', options: ['25E', '25S', '25W', '26E', '26S'] },
-    { id: 'events', label: 'Events', options: ['Sale', 'New arrivals', 'Promo'] },
-    { id: 'productGroups', label: 'Product groups', options: ['Alpha', 'Bravo', 'Charlie', 'Delta', 'Echo'] },
-    { id: 'locationTypes', label: 'Location Types', options: ['Alpha', 'Bravo', 'Charlie', 'Delta', 'Echo'] },
-    { id: 'regions', label: 'Regions', options: ['Alpha', 'Bravo', 'Charlie', 'Delta', 'Echo'] },
-    { id: 'countries', label: 'Countries', options: ['Alpha', 'Bravo', 'Charlie', 'Delta', 'Echo'] },
-    { id: 'locations', label: 'Locations', options: ['Alpha', 'Bravo', 'Charlie', 'Delta', 'Echo'] },
-  ]
   const [exceptions, setExceptions] = useState(() => [
     {
       id: 'exc-1',
       expanded: true,
       advancedRows: [{ id: 'adv-1', conditions: [{ id: 'cond-1', mainColumn: '', condition: '', value: '' }] }],
-      productFilterOpen: { ...DEFAULT_PRODUCT_FILTER_OPEN },
-      geoFilterOpen: { ...DEFAULT_GEO_FILTER_OPEN },
-      productFilterSelected: { ...DEFAULT_PRODUCT_FILTER_SELECTED },
-      geoFilterSelected: { ...DEFAULT_GEO_FILTER_SELECTED },
+      filterSelections: {},
       filtersDropdownOpen: false,
       openFilterPopover: null,
       activeFilterTypes: [],
@@ -497,10 +649,7 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
           id: excId,
           expanded: true,
           advancedRows: [{ id: advId, conditions: [{ id: condId, mainColumn: '', condition: '', value: '' }] }],
-          productFilterOpen: { ...DEFAULT_PRODUCT_FILTER_OPEN },
-          geoFilterOpen: { ...DEFAULT_GEO_FILTER_OPEN },
-          productFilterSelected: { ...DEFAULT_PRODUCT_FILTER_SELECTED },
-          geoFilterSelected: { ...DEFAULT_GEO_FILTER_SELECTED },
+          filterSelections: {},
           filtersDropdownOpen: false,
           openFilterPopover: null,
           activeFilterTypes: [],
@@ -527,28 +676,9 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
               openFilterPopover: null,
               filterSearchQuery: '',
               advancedRows: [{ id: advId, conditions: [{ id: condId, mainColumn: '', condition: '', value: '' }] }],
-              productFilterSelected: { ...DEFAULT_PRODUCT_FILTER_SELECTED },
-              geoFilterSelected: { ...DEFAULT_GEO_FILTER_SELECTED },
+              filterSelections: {},
             }
           : e
-      )
-    )
-  }
-
-  const toggleProductFilterRowForException = (exceptionId, key) => {
-    setExceptions((prev) =>
-      prev.map((e) =>
-        e.id === exceptionId
-          ? { ...e, productFilterOpen: { ...e.productFilterOpen, [key]: !e.productFilterOpen[key] } }
-          : e
-      )
-    )
-  }
-
-  const toggleGeoFilterRowForException = (exceptionId, key) => {
-    setExceptions((prev) =>
-      prev.map((e) =>
-        e.id === exceptionId ? { ...e, geoFilterOpen: { ...e.geoFilterOpen, [key]: !e.geoFilterOpen[key] } } : e
       )
     )
   }
@@ -617,18 +747,6 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
     )
   }
 
-  const clearProductFilterForException = (exceptionId) => {
-    setExceptions((prev) =>
-      prev.map((e) => (e.id === exceptionId ? { ...e, productFilterOpen: { ...DEFAULT_PRODUCT_FILTER_OPEN } } : e))
-    )
-  }
-
-  const clearGeoFilterForException = (exceptionId) => {
-    setExceptions((prev) =>
-      prev.map((e) => (e.id === exceptionId ? { ...e, geoFilterOpen: { ...DEFAULT_GEO_FILTER_OPEN } } : e))
-    )
-  }
-
   const setExceptionFiltersDropdownOpen = (exceptionId, open) => {
     setExceptions((prev) =>
       prev.map((e) => (e.id === exceptionId ? { ...e, filtersDropdownOpen: open, filterSearchQuery: open ? (e.filterSearchQuery || '') : '' } : e))
@@ -645,6 +763,7 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
     setExceptions((prev) =>
       prev.map((e) => {
         if (e.id !== exceptionId) return e
+        if (!getExceptionLevelFilterDef(e.applyAt, filterId)) return e
         const alreadyActive = e.activeFilterTypes?.includes(filterId)
         if (alreadyActive) return e
         return {
@@ -662,19 +781,16 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
         if (e.id !== exceptionId) return e
         const newActive = (e.activeFilterTypes || []).filter((t) => t !== filterId)
         let updates = { ...e, activeFilterTypes: newActive, openFilterPopover: e.openFilterPopover === filterId ? null : e.openFilterPopover }
-        if (filterId === 'advanced') {
+        if (isExceptionAdvancedFilterId(e.applyAt, filterId)) {
           const advId = `adv-${advancedRowNextId}`
           const condId = `cond-${advancedConditionNextId}`
           setAdvancedRowNextId((n) => n + 1)
           setAdvancedConditionNextId((n) => n + 1)
           updates = { ...updates, advancedRows: [{ id: advId, conditions: [{ id: condId, mainColumn: '', condition: '', value: '' }] }] }
-        } else if (EXCEPTION_FILTER_OPTIONS.find((o) => o.id === filterId)) {
-          const opt = EXCEPTION_FILTER_OPTIONS.find((o) => o.id === filterId)
-          if (opt && ['departments', 'subDepartments', 'seasons', 'events', 'productGroups'].includes(filterId)) {
-            updates = { ...updates, productFilterSelected: { ...e.productFilterSelected, [filterId]: [] } }
-          } else if (opt) {
-            updates = { ...updates, geoFilterSelected: { ...e.geoFilterSelected, [filterId]: [] } }
-          }
+        } else if (getExceptionLevelFilterDef(e.applyAt, filterId)) {
+          const fs = { ...(e.filterSelections || {}) }
+          fs[filterId] = []
+          updates = { ...updates, filterSelections: fs }
         }
         return updates
       })
@@ -691,33 +807,32 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
     setExceptions((prev) =>
       prev.map((e) => {
         if (e.id !== exceptionId) return e
-        const isProduct = ['departments', 'subDepartments', 'seasons', 'events', 'productGroups'].includes(filterId)
-        const sel = isProduct ? (e.productFilterSelected || {}) : (e.geoFilterSelected || {})
-        const key = filterId
-        const arr = Array.isArray(sel[key]) ? sel[key] : []
+        if (isExceptionAdvancedFilterId(e.applyAt, filterId)) return e
+        const sel = e.filterSelections || {}
+        const arr = Array.isArray(sel[filterId]) ? sel[filterId] : []
         const has = arr.includes(optionValue)
         const newArr = has ? arr.filter((v) => v !== optionValue) : [...arr, optionValue]
         return {
           ...e,
-          [isProduct ? 'productFilterSelected' : 'geoFilterSelected']: { ...sel, [key]: newArr },
+          filterSelections: { ...sel, [filterId]: newArr },
         }
       })
     )
   }
 
   const selectAllFilterOptionsForException = (exceptionId, filterId, selectAll) => {
-    const opt = EXCEPTION_FILTER_OPTIONS.find((o) => o.id === filterId)
-    if (!opt?.options) return
     setExceptions((prev) =>
       prev.map((e) => {
         if (e.id !== exceptionId) return e
-        const isProduct = ['departments', 'subDepartments', 'seasons', 'events', 'productGroups'].includes(filterId)
-        const sel = isProduct ? (e.productFilterSelected || {}) : (e.geoFilterSelected || {})
+        if (isExceptionAdvancedFilterId(e.applyAt, filterId)) return e
+        const def = getExceptionLevelFilterDef(e.applyAt, filterId)
+        if (!def?.options) return e
+        const sel = e.filterSelections || {}
         return {
           ...e,
-          [isProduct ? 'productFilterSelected' : 'geoFilterSelected']: {
+          filterSelections: {
             ...sel,
-            [filterId]: selectAll ? [...opt.options] : [],
+            [filterId]: selectAll ? [...def.options] : [],
           },
         }
       })
@@ -738,8 +853,7 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
               filtersDropdownOpen: false,
               openFilterPopover: null,
               advancedRows: [{ id: advId, conditions: [{ id: condId, mainColumn: '', condition: '', value: '' }] }],
-              productFilterSelected: { ...DEFAULT_PRODUCT_FILTER_SELECTED },
-              geoFilterSelected: { ...DEFAULT_GEO_FILTER_SELECTED },
+              filterSelections: {},
             }
           : e
       )
@@ -755,37 +869,31 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
   const getExceptionDisplayName = (exc) => {
     const parts = []
     const activeTypes = exc.activeFilterTypes || []
+    let advancedSummaryHandled = false
     for (const filterId of activeTypes) {
-      const opt = EXCEPTION_FILTER_OPTIONS.find((o) => o.id === filterId)
-      const label = opt?.label || filterId
-      const isProduct = ['departments', 'subDepartments', 'seasons', 'events', 'productGroups'].includes(filterId)
-      if (filterId === 'advanced') {
-        const summary = getAdvancedFilterSummary(exc)
-        if (summary) parts.push(summary)
-      } else {
-        const sel = isProduct ? (exc.productFilterSelected || {}) : (exc.geoFilterSelected || {})
-        const raw = sel[filterId]
-        const selected = Array.isArray(raw) ? raw : (raw != null ? [String(raw)] : [])
-        if (selected.length > 0) {
-          parts.push(`${label}: ${selected.join(', ')}`)
+      if (isExceptionAdvancedFilterId(exc.applyAt, filterId)) {
+        if (!advancedSummaryHandled) {
+          advancedSummaryHandled = true
+          const summary = getAdvancedFilterSummary(exc)
+          const labels = activeTypes
+            .filter((fid) => isExceptionAdvancedFilterId(exc.applyAt, fid))
+            .map((fid) => getExceptionLevelFilterDef(exc.applyAt, fid)?.label || fid)
+            .join(', ')
+          if (labels) parts.push(summary ? `${labels}: ${summary}` : labels)
         }
+        continue
+      }
+      const opt = getExceptionLevelFilterDef(exc.applyAt, filterId)
+      const label = opt?.label || filterId
+      const raw = (exc.filterSelections || {})[filterId]
+      const selected = Array.isArray(raw) ? raw : raw != null ? [String(raw)] : []
+      if (selected.length > 0) {
+        parts.push(`${label}: ${selected.join(', ')}`)
       }
     }
     return parts.length > 0 ? parts.join(', ') : null
   }
 
-  const MAIN_COLUMN_OPTIONS = [
-    'L30D sales',
-    'Understocks',
-    'Transfer units',
-    'Understocks after rebalance',
-    'Overstocks',
-    'Overstocks after rebalance',
-    'Sales uplift',
-    'Sales uplift units',
-    'L7D sales',
-    'Forecast sales rate',
-  ]
   const CONDITION_OPTIONS = [
     'Equal to',
     'Greater than',
@@ -1151,20 +1259,18 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                                     </button>
                                   </div>
                                   <div className="flex flex-col gap-1.5 mt-1">
-                                    {(EXCEPTION_FILTER_OPTIONS.find((f) => f.id === row.id)?.options ?? []).map(
-                                      (name) => (
-                                        <label
-                                          key={name}
-                                          className="flex items-center gap-2 text-[13px] text-[#0a0a0a]"
-                                        >
-                                          <input
-                                            type="checkbox"
-                                            className="size-4 rounded border-[#d1d5db] text-[#0267ff] focus:ring-[#0267ff]"
-                                          />
-                                          <span>{name}</span>
-                                        </label>
-                                      ),
-                                    )}
+                                    {(FILTER_SAMPLE_VALUES[SCOPE_ACCORDION_PRODUCT_KEYS[row.id]] ?? []).map((name) => (
+                                      <label
+                                        key={name}
+                                        className="flex items-center gap-2 text-[13px] text-[#0a0a0a]"
+                                      >
+                                        <input
+                                          type="checkbox"
+                                          className="size-4 rounded border-[#d1d5db] text-[#0267ff] focus:ring-[#0267ff]"
+                                        />
+                                        <span>{name}</span>
+                                      </label>
+                                    ))}
                                   </div>
                                 </div>
                               )}
@@ -1238,7 +1344,7 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                                     </button>
                                   </div>
                                   <div className="flex flex-col gap-1.5 mt-1">
-                                    {['Alpha', 'Bravo', 'Charlie', 'Delta', 'Echo'].map((name) => (
+                                    {(FILTER_SAMPLE_VALUES[SCOPE_ACCORDION_GEO_KEYS[row.id]] ?? []).map((name) => (
                                       <label
                                         key={name}
                                         className="flex items-center gap-2 text-[13px] text-[#0a0a0a]"
@@ -1357,7 +1463,7 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                                   onClick={() => setExceptionFiltersDropdownOpen(exc.id, false)}
                                 />
                                 <div
-                                  className="absolute left-0 top-full mt-1 z-10 w-[220px] rounded-[4px] border border-[#E9EAEB] bg-white shadow-lg overflow-hidden"
+                                  className="absolute left-0 top-full mt-1 z-10 min-w-[260px] max-w-[320px] rounded-[4px] border border-[#E9EAEB] bg-white shadow-lg overflow-hidden"
                                   style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
                                 >
                                   <div className="p-2 border-b border-[#e5e7eb]">
@@ -1372,32 +1478,62 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                                       />
                                     </div>
                                   </div>
-                                  <div className="max-h-[240px] overflow-y-auto py-1">
-                                    {EXCEPTION_FILTER_OPTIONS.filter((o) =>
-                                      !(exc.filterSearchQuery || '').trim() ||
-                                      o.label.toLowerCase().includes((exc.filterSearchQuery || '').toLowerCase())
-                                    ).map((opt) => (
-                                      <button
-                                        key={opt.id}
-                                        type="button"
-                                        onClick={() => addFilterToException(exc.id, opt.id)}
-                                        className={`w-full px-3 py-2 text-left text-[13px] font-medium text-[#0a0a0a] hover:bg-[#f8f8f8] ${opt.highlight ? 'bg-[#E8F0FE]' : ''}`}
-                                      >
-                                        {opt.label}
-                                      </button>
-                                    ))}
+                                  <div className="max-h-[280px] overflow-y-auto py-1 flex flex-col">
+                                    {(() => {
+                                      const q = (exc.filterSearchQuery || '').trim().toLowerCase()
+                                      const { scope: scopeOpts, advanced: advOpts } = getExceptionLevelConfig(exc.applyAt)
+                                      const match = (o) => !q || o.label.toLowerCase().includes(q)
+                                      const scopeFiltered = scopeOpts.filter(match)
+                                      const advFiltered = advOpts.filter(match)
+                                      return (
+                                        <>
+                                          {scopeFiltered.length > 0 && (
+                                            <>
+                                              <div className="text-[11px] uppercase text-[#9ca3af] px-3 py-1">Scope filters</div>
+                                              {scopeFiltered.map((opt) => (
+                                                <button
+                                                  key={opt.id}
+                                                  type="button"
+                                                  onClick={() => addFilterToException(exc.id, opt.id)}
+                                                  className="w-full px-3 py-2 text-left text-[13px] font-medium text-[#0a0a0a] hover:bg-[#f8f8f8]"
+                                                >
+                                                  {opt.label}
+                                                </button>
+                                              ))}
+                                            </>
+                                          )}
+                                          {scopeFiltered.length > 0 && advFiltered.length > 0 && (
+                                            <div className="border-t border-[#e5e7eb] my-1" aria-hidden />
+                                          )}
+                                          {advFiltered.length > 0 && (
+                                            <>
+                                              <div className="text-[11px] uppercase text-[#9ca3af] px-3 py-1">Advanced</div>
+                                              {advFiltered.map((opt) => (
+                                                <button
+                                                  key={opt.id}
+                                                  type="button"
+                                                  onClick={() => addFilterToException(exc.id, opt.id)}
+                                                  className="w-full px-3 py-2 text-left text-[13px] font-medium text-[#0a0a0a] hover:bg-[#f8f8f8]"
+                                                >
+                                                  {opt.label}
+                                                </button>
+                                              ))}
+                                            </>
+                                          )}
+                                        </>
+                                      )
+                                    })()}
                                   </div>
                                 </div>
                               </>
                             )}
                           </div>
                           {(exc.activeFilterTypes || []).map((filterId) => {
-                            const opt = EXCEPTION_FILTER_OPTIONS.find((o) => o.id === filterId)
+                            const opt = getExceptionLevelFilterDef(exc.applyAt, filterId)
                             const label = opt?.label || filterId
-                            const isProduct = ['departments', 'subDepartments', 'seasons', 'events', 'productGroups'].includes(filterId)
-                            const sel = isProduct ? (exc.productFilterSelected || {}) : (exc.geoFilterSelected || {})
-                            const selected = sel[filterId] || []
-                            const summary = filterId === 'advanced'
+                            const isAdv = isExceptionAdvancedFilterId(exc.applyAt, filterId)
+                            const selected = (exc.filterSelections || {})[filterId] || []
+                            const summary = isAdv
                               ? (getAdvancedFilterSummary(exc) || '')
                               : selected.length > 0
                                 ? selected.join(', ')
@@ -1408,7 +1544,7 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                               <div key={filterId} className="relative">
                                 <button
                                   type="button"
-                                  onClick={() => filterId === 'advanced' ? null : setExceptionOpenFilterPopover(exc.id, isPopoverOpen ? null : filterId)}
+                                  onClick={() => (isAdv ? null : setExceptionOpenFilterPopover(exc.id, isPopoverOpen ? null : filterId))}
                                   className="h-10 px-3 py-2 flex items-center gap-1.5 rounded-[4px] border border-[#E9EAEB] bg-white text-[13px] font-medium text-[#0a0a0a] hover:bg-[#f8f8f8]"
                                 >
                                   <span className="max-w-[180px] truncate">{chipLabel}</span>
@@ -1422,7 +1558,7 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                                     <IconClose className="size-4" />
                                   </span>
                                 </button>
-                                {filterId !== 'advanced' && isPopoverOpen && (
+                                {!isAdv && isPopoverOpen && (
                                   <>
                                     <div
                                       className="fixed inset-0 z-[9]"
@@ -1483,7 +1619,7 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                           )}
                         </div>
                         )}
-                        {exc.applyAt && (exc.activeFilterTypes || []).includes('advanced') && (
+                        {exc.applyAt && exceptionHasActiveAdvancedFilter(exc.applyAt, exc.activeFilterTypes) && (
                           <div className="flex flex-col gap-3 p-4 rounded-[4px] border border-[#E9EAEB] bg-white shadow-sm">
                             {exc.advancedRows.map((box) => (
                               <div key={box.id} className="flex flex-col gap-2">
@@ -1505,7 +1641,7 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                                             className="w-full h-10 py-2 pl-3 pr-9 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#0a0a0a] appearance-none"
                                           >
                                             <option value="">Select</option>
-                                            {MAIN_COLUMN_OPTIONS.map((o) => (
+                                            {(MAIN_COLUMN_OPTIONS_BY_LEVEL[exc.applyAt] || []).map((o) => (
                                               <option key={o} value={o}>{o}</option>
                                             ))}
                                           </select>
