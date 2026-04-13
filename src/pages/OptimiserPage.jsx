@@ -284,6 +284,32 @@ function buildExceptionFilterGroups(applyAt) {
   return { product, geographic, advanced }
 }
 
+function formatScopeConditionValuesText(selected) {
+  if (!Array.isArray(selected) || selected.length === 0) return ''
+  if (selected.length === 1) return selected[0]
+  if (selected.length <= 3) return selected.join(', ')
+  return `${selected.length} values selected`
+}
+
+/** Hide the default single empty box; show once user has edited or multiple boxes/conditions */
+function advancedBoxHasDisplayableContent(box, isOnlyBoxInException) {
+  if (!box?.conditions?.length) return false
+  if (box.conditions.length > 1) return true
+  const c = box.conditions[0]
+  if (c.mainColumn || c.condition || c.value) return true
+  return !isOnlyBoxInException
+}
+
+function getAdvancedConditionReadable(cond) {
+  if (!cond?.mainColumn || !cond.condition || !cond.value) return null
+  return `${cond.mainColumn} ${cond.condition.toLowerCase()} ${cond.value}`
+}
+
+function getAdvancedBoxReadableSummary(box) {
+  const parts = (box.conditions || []).map(getAdvancedConditionReadable).filter(Boolean)
+  return parts.length > 0 ? parts.join(' and ') : null
+}
+
 function getAllExceptionLevelFilters(applyAt) {
   const { scope, advanced } = getExceptionLevelConfig(applyAt)
   return [...scope, ...advanced]
@@ -419,6 +445,7 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
       filtersPanelCategory: null,
       filterValueSearchQuery: '',
       advancedModeActive: false,
+      expandedAdvancedBoxId: null,
       applyAt: '',
     },
   ])
@@ -708,6 +735,7 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
           filtersPanelCategory: null,
           filterValueSearchQuery: '',
           advancedModeActive: false,
+          expandedAdvancedBoxId: null,
           applyAt: '',
         },
       ]
@@ -729,6 +757,7 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
               filtersPanelCategory: null,
               filterValueSearchQuery: '',
               advancedModeActive: false,
+              expandedAdvancedBoxId: null,
               advancedRows: [{ id: advId, conditions: [{ id: condId, mainColumn: '', condition: '', value: '' }] }],
               filterSelections: {},
             }
@@ -795,7 +824,7 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
     setExceptions((prev) =>
       prev.map((e) =>
         e.id === exceptionId
-          ? { ...e, advancedRows: [{ id: advId, conditions: [{ id: condId, mainColumn: '', condition: '', value: '' }] }] }
+          ? { ...e, advancedRows: [{ id: advId, conditions: [{ id: condId, mainColumn: '', condition: '', value: '' }] }], expandedAdvancedBoxId: null }
           : e
       )
     )
@@ -862,6 +891,7 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
               ...e,
               advancedModeActive: false,
               filtersPanelCategory: null,
+              expandedAdvancedBoxId: null,
               advancedRows: [{ id: advId, conditions: [{ id: condId, mainColumn: '', condition: '', value: '' }] }],
             }
           : e
@@ -896,10 +926,49 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
           filtersDropdownOpen: false,
           filterValueSearchQuery: '',
           advancedModeActive: true,
+          expandedAdvancedBoxId: advId,
           advancedRows: [
             ...e.advancedRows,
             { id: advId, conditions: [{ id: condId, mainColumn: mainColumnLabel, condition: '', value: '' }] },
           ],
+        }
+      })
+    )
+  }
+
+  const toggleExceptionExpandedAdvancedBox = (exceptionId, boxId) => {
+    setExceptions((prev) =>
+      prev.map((e) => {
+        if (e.id !== exceptionId) return e
+        return {
+          ...e,
+          expandedAdvancedBoxId: e.expandedAdvancedBoxId === boxId ? null : boxId,
+        }
+      })
+    )
+  }
+
+  const removeAdvancedBoxFromException = (exceptionId, boxId) => {
+    const advId = `adv-${advancedRowNextId}`
+    const condId = `cond-${advancedConditionNextId}`
+    setAdvancedRowNextId((n) => n + 1)
+    setAdvancedConditionNextId((n) => n + 1)
+    setExceptions((prev) =>
+      prev.map((e) => {
+        if (e.id !== exceptionId) return e
+        const filtered = e.advancedRows.filter((b) => b.id !== boxId)
+        if (filtered.length === 0) {
+          return {
+            ...e,
+            advancedRows: [{ id: advId, conditions: [{ id: condId, mainColumn: '', condition: '', value: '' }] }],
+            advancedModeActive: false,
+            expandedAdvancedBoxId: null,
+          }
+        }
+        return {
+          ...e,
+          advancedRows: filtered,
+          expandedAdvancedBoxId: e.expandedAdvancedBoxId === boxId ? null : e.expandedAdvancedBoxId,
         }
       })
     )
@@ -955,6 +1024,7 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
               filtersPanelCategory: null,
               filterValueSearchQuery: '',
               advancedModeActive: false,
+              expandedAdvancedBoxId: null,
               advancedRows: [{ id: advId, conditions: [{ id: condId, mainColumn: '', condition: '', value: '' }] }],
               filterSelections: {},
             }
@@ -967,12 +1037,6 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
     const first = exc.advancedRows?.[0]?.conditions?.[0]
     if (!first || !first.mainColumn || !first.condition || !first.value) return null
     return `${first.mainColumn} ${first.condition.toLowerCase()} ${first.value}`
-  }
-
-  const formatExceptionScopeChipLabel = (categoryLabel, selected) => {
-    if (!selected?.length) return categoryLabel
-    if (selected.length === 1) return `${categoryLabel}: ${selected[0]}`
-    return `${categoryLabel}: ${selected.length}`
   }
 
   const getExceptionDisplayName = (exc) => {
@@ -992,9 +1056,9 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
       }
     }
 
-    if (exc.advancedModeActive) {
-      const advSummary = getAdvancedFilterSummary(exc)
-      if (advSummary) filterParts.push(advSummary)
+    for (const box of exc.advancedRows || []) {
+      const bs = getAdvancedBoxReadableSummary(box)
+      if (bs) filterParts.push(bs)
     }
 
     const body =
@@ -1553,8 +1617,8 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                           )}
                         </div>
                         {exc.applyAt && (
-                        <div className="flex flex-wrap items-center gap-2">
-                          <div className="relative">
+                        <div className="flex flex-col gap-3 w-full">
+                          <div className="relative self-start">
                             <button
                               type="button"
                               onClick={() => setExceptionFiltersDropdownOpen(exc.id, !exc.filtersDropdownOpen)}
@@ -1694,186 +1758,183 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                               </>
                             )}
                           </div>
-                          {exc.applyAt &&
-                            getExceptionLevelConfig(exc.applyAt).scope
-                              .filter((opt) => ((exc.filterSelections || {})[opt.id] || []).length > 0)
-                              .map((opt) => {
-                                const selected = (exc.filterSelections || {})[opt.id] || []
-                                const chipLabel = formatExceptionScopeChipLabel(opt.label, selected)
-                                return (
-                                  <div key={opt.id} className="relative">
+                          {(() => {
+                            const { product, geographic } = buildExceptionFilterGroups(exc.applyAt)
+                            const onlyOneAdvBox = (exc.advancedRows?.length ?? 0) === 1
+                            const unifiedItems = []
+                            for (const opt of [...product, ...geographic]) {
+                              const sel = exc.filterSelections?.[opt.id]
+                              if (Array.isArray(sel) && sel.length > 0) {
+                                unifiedItems.push({ kind: 'scope', scopeId: opt.id, label: opt.label, selected: sel })
+                              }
+                            }
+                            exc.advancedRows?.forEach((box, bi) => {
+                              if (advancedBoxHasDisplayableContent(box, onlyOneAdvBox && bi === 0)) {
+                                unifiedItems.push({ kind: 'advanced', box })
+                              }
+                            })
+                            const hasClearable = unifiedItems.length > 0
+                            return (
+                              <>
+                                {hasClearable && (
+                                  <div className="flex flex-col w-full">
+                                    {unifiedItems.map((item, idx) => (
+                                      <div key={item.kind === 'scope' ? `scope-${item.scopeId}` : `adv-${item.box.id}`} className="w-full">
+                                        {idx > 0 && (
+                                          <div className="text-center py-1 text-[11px] font-medium text-[#9ca3af] uppercase tracking-wider">
+                                            AND
+                                          </div>
+                                        )}
+                                        {item.kind === 'scope' ? (
+                                          <div
+                                            role="button"
+                                            tabIndex={0}
+                                            onClick={() => openExceptionFiltersPanelToCategory(exc.id, item.scopeId)}
+                                            onKeyDown={(e) => {
+                                              if (e.key === 'Enter' || e.key === ' ') openExceptionFiltersPanelToCategory(exc.id, item.scopeId)
+                                            }}
+                                            className="flex items-start gap-3 rounded-[4px] border border-[#e5e7eb] bg-[#fafafa] px-4 py-3 cursor-pointer hover:bg-[#f4f4f4] transition-colors"
+                                          >
+                                            <span className="text-[13px] font-medium text-[#4b535c] shrink-0 w-[130px]">{item.label}</span>
+                                            <span className="text-[13px] text-[#0a0a0a] flex-1 min-w-0 break-words">
+                                              {formatScopeConditionValuesText(item.selected)}
+                                            </span>
+                                            <button
+                                              type="button"
+                                              className="shrink-0 h-8 w-8 flex items-center justify-center rounded-[4px] text-[#4b535c] hover:bg-[#e5e7eb] hover:text-[#0a0a0a]"
+                                              aria-label="Remove filter"
+                                              onClick={(e) => {
+                                                e.stopPropagation()
+                                                clearExceptionScopeCategorySelections(exc.id, item.scopeId)
+                                              }}
+                                            >
+                                              <IconClose className="size-4" />
+                                            </button>
+                                          </div>
+                                        ) : (
+                                          <div className="rounded-[4px] border border-[#e5e7eb] bg-[#fafafa] overflow-hidden">
+                                            <div
+                                              role="button"
+                                              tabIndex={0}
+                                              onClick={() => toggleExceptionExpandedAdvancedBox(exc.id, item.box.id)}
+                                              onKeyDown={(e) => {
+                                                if (e.key === 'Enter' || e.key === ' ') toggleExceptionExpandedAdvancedBox(exc.id, item.box.id)
+                                              }}
+                                              className="flex items-start gap-3 px-4 py-3 cursor-pointer hover:bg-[#f4f4f4] transition-colors"
+                                            >
+                                              <span className="text-[13px] font-medium text-[#4b535c] shrink-0 w-[130px]">Where</span>
+                                              <span className="text-[13px] text-[#0a0a0a] flex-1 min-w-0 break-words">
+                                                {getAdvancedBoxReadableSummary(item.box) ||
+                                                  (item.box.conditions[0]?.mainColumn ? `${item.box.conditions[0].mainColumn}…` : '—')}
+                                              </span>
+                                              <button
+                                                type="button"
+                                                className="shrink-0 h-8 w-8 flex items-center justify-center rounded-[4px] text-[#4b535c] hover:bg-[#e5e7eb] hover:text-[#0a0a0a]"
+                                                aria-label="Remove condition"
+                                                onClick={(e) => {
+                                                  e.stopPropagation()
+                                                  removeAdvancedBoxFromException(exc.id, item.box.id)
+                                                }}
+                                              >
+                                                <IconClose className="size-4" />
+                                              </button>
+                                            </div>
+                                            {exc.expandedAdvancedBoxId === item.box.id && (
+                                              <div className="border-t border-[#e5e7eb] bg-white px-4 pb-4 pt-3 space-y-4">
+                                                {item.box.conditions.map((cond, condIdx) => (
+                                                  <div key={cond.id} className="flex flex-col gap-2">
+                                                    {condIdx > 0 && (
+                                                      <span className="text-[12px] font-normal text-[#878D94]">and</span>
+                                                    )}
+                                                    <div className="flex flex-wrap gap-2 items-end">
+                                                      <div className="flex flex-col gap-0.5 flex-1 min-w-[140px]">
+                                                        <label className="text-[12px] font-normal text-[#4b535c]">Main column</label>
+                                                        <div className="relative">
+                                                          <select
+                                                            value={cond.mainColumn}
+                                                            onChange={(e) =>
+                                                              updateAdvancedApprovalCondition(exc.id, item.box.id, cond.id, 'mainColumn', e.target.value)
+                                                            }
+                                                            className="w-full h-10 py-2 pl-3 pr-9 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#0a0a0a] appearance-none"
+                                                          >
+                                                            <option value="">Select</option>
+                                                            {(MAIN_COLUMN_OPTIONS_BY_LEVEL[exc.applyAt] || []).map((o) => (
+                                                              <option key={o} value={o}>
+                                                                {o}
+                                                              </option>
+                                                            ))}
+                                                          </select>
+                                                          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
+                                                            <IconChevronDownSelect />
+                                                          </span>
+                                                        </div>
+                                                      </div>
+                                                      <div className="flex flex-col gap-0.5 flex-1 min-w-[140px]">
+                                                        <label className="text-[12px] font-normal text-[#4b535c]">Condition</label>
+                                                        <div className="relative">
+                                                          <select
+                                                            value={cond.condition}
+                                                            onChange={(e) =>
+                                                              updateAdvancedApprovalCondition(exc.id, item.box.id, cond.id, 'condition', e.target.value)
+                                                            }
+                                                            className="w-full h-10 py-2 pl-3 pr-9 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#0a0a0a] appearance-none"
+                                                          >
+                                                            <option value="">Select</option>
+                                                            {CONDITION_OPTIONS.map((o) => (
+                                                              <option key={o} value={o}>
+                                                                {o}
+                                                              </option>
+                                                            ))}
+                                                          </select>
+                                                          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
+                                                            <IconChevronDownSelect />
+                                                          </span>
+                                                        </div>
+                                                      </div>
+                                                      <div className="flex flex-col gap-0.5 flex-1 min-w-[120px]">
+                                                        <label className="text-[12px] font-normal text-[#4b535c]">Enter a value</label>
+                                                        <input
+                                                          type="text"
+                                                          placeholder="Enter a value"
+                                                          value={cond.value}
+                                                          onChange={(e) =>
+                                                            updateAdvancedApprovalCondition(exc.id, item.box.id, cond.id, 'value', e.target.value)
+                                                          }
+                                                          className="w-full h-10 py-2 px-3 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#0a0a0a]"
+                                                        />
+                                                      </div>
+                                                      {item.box.conditions.length > 1 && (
+                                                        <button
+                                                          type="button"
+                                                          onClick={() => removeConditionFromBox(exc.id, item.box.id, cond.id)}
+                                                          className="h-10 w-10 flex items-center justify-center rounded-[4px] text-[#4b535c] hover:bg-[#e5e7eb] shrink-0 mb-0.5"
+                                                          aria-label="Remove condition"
+                                                        >
+                                                          <IconClose className="size-4" />
+                                                        </button>
+                                                      )}
+                                                    </div>
+                                                  </div>
+                                                ))}
+                                              </div>
+                                            )}
+                                          </div>
+                                        )}
+                                      </div>
+                                    ))}
                                     <button
                                       type="button"
-                                      onClick={() => openExceptionFiltersPanelToCategory(exc.id, opt.id)}
-                                      className="h-10 px-3 py-2 flex items-center gap-1.5 rounded-[4px] border border-[#E9EAEB] bg-white text-[13px] font-medium text-[#0a0a0a] hover:bg-[#f8f8f8]"
+                                      onClick={() => clearAllFiltersForException(exc.id)}
+                                      className="self-start text-[13px] font-medium text-[#4b535c] hover:text-[#0a0a0a] hover:underline mt-1"
                                     >
-                                      <span className="max-w-[200px] truncate">{chipLabel}</span>
-                                      <span
-                                        role="button"
-                                        tabIndex={0}
-                                        onClick={(e) => {
-                                          e.stopPropagation()
-                                          e.preventDefault()
-                                          clearExceptionScopeCategorySelections(exc.id, opt.id)
-                                        }}
-                                        onKeyDown={(e) => {
-                                          if (e.key === 'Enter' || e.key === ' ') {
-                                            e.stopPropagation()
-                                            clearExceptionScopeCategorySelections(exc.id, opt.id)
-                                          }
-                                        }}
-                                        className="inline-flex shrink-0 text-[#4b535c] hover:text-[#0a0a0a]"
-                                      >
-                                        <IconClose className="size-4" />
-                                      </span>
+                                      Clear filters
                                     </button>
                                   </div>
-                                )
-                              })}
-                          {exc.applyAt && exc.advancedModeActive && (() => {
-                            const advSummary = getAdvancedFilterSummary(exc)
-                            return (
-                            <div className="relative">
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  const { product, geographic } = buildExceptionFilterGroups(exc.applyAt)
-                                  openExceptionFiltersPanelToCategory(exc.id, product[0]?.id ?? geographic[0]?.id ?? null)
-                                }}
-                                className="h-10 px-3 py-2 flex items-center gap-1.5 rounded-[4px] border border-[#E9EAEB] bg-white text-[13px] font-medium text-[#0a0a0a] hover:bg-[#f8f8f8]"
-                              >
-                                <span className="max-w-[200px] truncate">
-                                  {advSummary ? `Advanced: ${advSummary}` : 'Advanced'}
-                                </span>
-                                <span
-                                  role="button"
-                                  tabIndex={0}
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    e.preventDefault()
-                                    clearExceptionAdvancedBuilder(exc.id)
-                                  }}
-                                  onKeyDown={(e) => {
-                                    if (e.key === 'Enter' || e.key === ' ') {
-                                      e.stopPropagation()
-                                      clearExceptionAdvancedBuilder(exc.id)
-                                    }
-                                  }}
-                                  className="inline-flex shrink-0 text-[#4b535c] hover:text-[#0a0a0a]"
-                                >
-                                  <IconClose className="size-4" />
-                                </span>
-                              </button>
-                            </div>
+                                )}
+                              </>
                             )
                           })()}
-                          {exc.applyAt &&
-                            (() => {
-                              const { scope: sc } = getExceptionLevelConfig(exc.applyAt)
-                              const hasScopeChip = sc.some((o) => ((exc.filterSelections || {})[o.id] || []).length > 0)
-                              return (hasScopeChip || exc.advancedModeActive) ? (
-                            <button
-                              type="button"
-                              onClick={() => clearAllFiltersForException(exc.id)}
-                              className="text-[13px] font-medium text-[#4b535c] hover:text-[#0a0a0a] hover:underline"
-                            >
-                              Clear filters
-                            </button>
-                              ) : null
-                            })()}
                         </div>
-                        )}
-                        {exc.applyAt && exc.advancedModeActive && (
-                          <div className="flex flex-col gap-3 p-4 rounded-[4px] border border-[#E9EAEB] bg-white shadow-sm">
-                            {exc.advancedRows.map((box) => (
-                              <div key={box.id} className="flex flex-col gap-2">
-                                {box.conditions.map((cond, condIdx) => (
-                                  <div key={cond.id} className="flex flex-col gap-1">
-                                    {condIdx > 0 && (
-                                      <span className="text-[12px] font-normal text-[#878D94]">and</span>
-                                    )}
-                                    <div className="flex items-end gap-2 w-full">
-                                      <span className="text-[14px] font-medium text-[#0a0a0a] shrink-0 w-[48px]">
-                                        {condIdx === 0 ? 'Where' : ''}
-                                      </span>
-                                      <div className="flex flex-col gap-0.5 flex-1 min-w-0">
-                                        <label className="text-[12px] font-normal text-[#4b535c]">Main column</label>
-                                        <div className="relative">
-                                          <select
-                                            value={cond.mainColumn}
-                                            onChange={(e) => updateAdvancedApprovalCondition(exc.id, box.id, cond.id, 'mainColumn', e.target.value)}
-                                            className="w-full h-10 py-2 pl-3 pr-9 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#0a0a0a] appearance-none"
-                                          >
-                                            <option value="">Select</option>
-                                            {(MAIN_COLUMN_OPTIONS_BY_LEVEL[exc.applyAt] || []).map((o) => (
-                                              <option key={o} value={o}>{o}</option>
-                                            ))}
-                                          </select>
-                                          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
-                                            <IconChevronDownSelect />
-                                          </span>
-                                        </div>
-                                      </div>
-                                      <div className="flex flex-col gap-0.5 flex-1 min-w-0">
-                                        <label className="text-[12px] font-normal text-[#4b535c]">Condition</label>
-                                        <div className="relative">
-                                          <select
-                                            value={cond.condition}
-                                            onChange={(e) => updateAdvancedApprovalCondition(exc.id, box.id, cond.id, 'condition', e.target.value)}
-                                            className="w-full h-10 py-2 pl-3 pr-9 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#0a0a0a] appearance-none"
-                                          >
-                                            <option value="">Select</option>
-                                            {CONDITION_OPTIONS.map((o) => (
-                                              <option key={o} value={o}>{o}</option>
-                                            ))}
-                                          </select>
-                                          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
-                                            <IconChevronDownSelect />
-                                          </span>
-                                        </div>
-                                      </div>
-                                      <div className="flex flex-col gap-0.5 flex-1 min-w-0">
-                                        <label className="text-[12px] font-normal text-[#4b535c]">Enter a value</label>
-                                        <input
-                                          type="text"
-                                          placeholder="Enter a value"
-                                          value={cond.value}
-                                          onChange={(e) => updateAdvancedApprovalCondition(exc.id, box.id, cond.id, 'value', e.target.value)}
-                                          className="w-full h-10 py-2 px-3 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#0a0a0a]"
-                                        />
-                                      </div>
-                                      {box.conditions.length > 1 && (
-                                        <button
-                                          type="button"
-                                          onClick={() => removeConditionFromBox(exc.id, box.id, cond.id)}
-                                          className="h-10 w-10 flex items-center justify-center rounded-[4px] text-[#4b535c] hover:bg-[#e5e7eb] shrink-0"
-                                          aria-label="Remove condition"
-                                        >
-                                          <IconClose className="size-4" />
-                                        </button>
-                                      )}
-                                    </div>
-                                  </div>
-                                ))}
-                                <button
-                                  type="button"
-                                  onClick={() => addConditionToBox(exc.id, box.id)}
-                                  className="self-start text-[13px] font-medium text-[#0267FF] hover:underline"
-                                >
-                                  + Add row
-                                </button>
-                              </div>
-                            ))}
-                            <div className="flex justify-end">
-                              <button
-                                type="button"
-                                onClick={() => clearAdvancedForException(exc.id)}
-                                className="h-9 px-4 rounded-[4px] border border-[#E9EAEB] bg-white text-[13px] font-medium text-[#0a0a0a] hover:bg-[#f8f8f8]"
-                              >
-                                Clear
-                              </button>
-                            </div>
-                          </div>
                         )}
                       </div>
                     )}
