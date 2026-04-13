@@ -465,10 +465,13 @@ function classifyFilterSelection(cfg, filterId) {
   return null
 }
 
-function formatScopeValueTriggerText(values) {
-  if (!values?.length) return 'Click to select...'
-  if (values.length <= 2) return values.join(', ')
-  return `${values.length} selected`
+/** Closed-row summary for scope value trigger; selected text uses text-[#0a0a0a], placeholder uses muted italic. */
+function getScopeValuesTriggerDisplay(values) {
+  const v = Array.isArray(values) ? values : []
+  if (v.length === 0) return { text: 'Click to select...', isPlaceholder: true }
+  if (v.length === 1) return { text: v[0], isPlaceholder: false }
+  if (v.length === 2) return { text: `${v[0]}, ${v[1]}`, isPlaceholder: false }
+  return { text: `${v.length} values selected`, isPlaceholder: false }
 }
 
 function getConditionFilterSelectValue(cond, cfg) {
@@ -614,8 +617,13 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
   ])
   const [exceptionConditionNextId, setExceptionConditionNextId] = useState(2)
   const [exceptionNextId, setExceptionNextId] = useState(2)
-  const [scopeValuesPopoverKey, setScopeValuesPopoverKey] = useState(null)
-  const [scopeValuesPopoverSearch, setScopeValuesPopoverSearch] = useState('')
+  const [openPopover, setOpenPopover] = useState(null)
+  /** Search for scope value popover; resets when `openPopover` changes (see useEffect below). */
+  const [scopePopoverSearch, setScopePopoverSearch] = useState('')
+
+  useEffect(() => {
+    setScopePopoverSearch('')
+  }, [openPopover])
   const [recurrenceRepeatEvery, setRecurrenceRepeatEvery] = useState(1)
   const [recurrenceRepeatUnit, setRecurrenceRepeatUnit] = useState('week')
   const [recurrenceSubmissionDayOfWeek, setRecurrenceSubmissionDayOfWeek] = useState(3)
@@ -948,38 +956,6 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
     )
   }
 
-  const toggleScopeValueForCondition = (exceptionId, conditionId, optionValue) => {
-    setExceptions((prev) =>
-      prev.map((e) => {
-        if (e.id !== exceptionId) return e
-        return {
-          ...e,
-          conditions: e.conditions.map((c) => {
-            if (c.id !== conditionId) return c
-            const arr = Array.isArray(c.scopeValues) ? [...c.scopeValues] : []
-            const has = arr.includes(optionValue)
-            const next = has ? arr.filter((v) => v !== optionValue) : [...arr, optionValue]
-            return { ...c, scopeValues: next }
-          }),
-        }
-      })
-    )
-  }
-
-  const setAllScopeValuesForCondition = (exceptionId, conditionId, allOptionValues, selectAll) => {
-    setExceptions((prev) =>
-      prev.map((e) => {
-        if (e.id !== exceptionId) return e
-        return {
-          ...e,
-          conditions: e.conditions.map((c) =>
-            c.id === conditionId ? { ...c, scopeValues: selectAll ? [...allOptionValues] : [] } : c
-          ),
-        }
-      })
-    )
-  }
-
   const onConditionFilterSelectChange = (exceptionId, condition, filtersCfg, filterId) => {
     if (!filtersCfg) return
     if (!filterId) {
@@ -991,7 +967,7 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
         advancedCondition: '',
         advancedValue: '',
       })
-      setScopeValuesPopoverKey(null)
+      setOpenPopover(null)
       return
     }
     const cls = classifyFilterSelection(filtersCfg, filterId)
@@ -1015,7 +991,7 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
         advancedValue: '',
       })
     }
-    setScopeValuesPopoverKey(null)
+    setOpenPopover(null)
   }
 
   const resetConditionFilters = (exceptionId, conditionId) => {
@@ -1046,8 +1022,7 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
   const clearAllConditionsForException = (exceptionId) => {
     const freshId = `cond-${exceptionConditionNextId}`
     setExceptionConditionNextId((n) => n + 1)
-    setScopeValuesPopoverKey(null)
-    setScopeValuesPopoverSearch('')
+    setOpenPopover(null)
     setExceptions((prev) =>
       prev.map((e) => (e.id === exceptionId ? { ...e, conditions: [createEmptyExceptionCondition(freshId)] } : e))
     )
@@ -1601,9 +1576,9 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                                 ? [...filtersCfg.product, ...filtersCfg.geographic].find((f) => f.id === cond.scopeCategory)
                                 : null
                             const scopeOptions = scopeDef?.options ?? []
-                            const popKey = `${exc.id}:${cond.id}`
-                            const popoverOpen = scopeValuesPopoverKey === popKey
-                            const searchQ = (scopeValuesPopoverSearch || '').trim().toLowerCase()
+                            const popoverId = `${exc.id}__${cond.id}`
+                            const popoverOpen = openPopover === popoverId
+                            const searchQ = (scopePopoverSearch || '').trim().toLowerCase()
                             const filteredScopeOptions = scopeOptions.filter(
                               (name) => !searchQ || name.toLowerCase().includes(searchQ)
                             )
@@ -1612,6 +1587,7 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                               scopeOptions.length > 0 &&
                               selectedScopeVals.length === scopeOptions.length &&
                               scopeOptions.every((o) => selectedScopeVals.includes(o))
+                            const scopeTrigger = getScopeValuesTriggerDisplay(cond.scopeValues)
 
                             return (
                               <div key={cond.id} className="w-full">
@@ -1632,8 +1608,7 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                                           const value = e.target.value
                                           updateConditionField(exc.id, cond.id, 'applyAt', value)
                                           resetConditionFilters(exc.id, cond.id)
-                                          setScopeValuesPopoverKey(null)
-                                          setScopeValuesPopoverSearch('')
+                                          setOpenPopover(null)
                                         }}
                                         className="h-9 w-[170px] py-0 pl-3 pr-9 rounded-[4px] border border-[#e9eaeb] bg-white text-[13px] text-[#0a0a0a] appearance-none"
                                       >
@@ -1696,67 +1671,79 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                                           <div className="relative flex-1 min-w-[120px] max-w-[280px]">
                                             <button
                                               type="button"
-                                              onClick={() => {
-                                                setScopeValuesPopoverKey((prev) => (prev === popKey ? null : popKey))
-                                                setScopeValuesPopoverSearch('')
-                                              }}
-                                              className="w-full min-h-9 px-2 rounded-[4px] border border-[#e9eaeb] bg-white text-left text-[13px] text-[#0a0a0a] hover:bg-[#f9fafb] truncate"
+                                              onClick={() =>
+                                                setOpenPopover((prev) => (prev === popoverId ? null : popoverId))
+                                              }
+                                              className={`w-full min-h-9 px-2 rounded-[4px] border border-[#e9eaeb] bg-white text-left text-[13px] hover:bg-[#f9fafb] truncate ${
+                                                scopeTrigger.isPlaceholder
+                                                  ? 'text-[#9ca3af] italic'
+                                                  : 'text-[#0a0a0a]'
+                                              }`}
                                             >
-                                              {formatScopeValueTriggerText(cond.scopeValues)}
+                                              {scopeTrigger.text}
                                             </button>
                                             {popoverOpen && (
                                               <>
                                                 <div
-                                                  className="fixed inset-0 z-[28]"
+                                                  className="fixed inset-0 z-[19]"
                                                   aria-hidden
-                                                  onClick={() => setScopeValuesPopoverKey(null)}
+                                                  onClick={() => setOpenPopover(null)}
                                                 />
                                                 <div
-                                                  className="absolute left-0 top-full mt-1 z-30 w-[280px] rounded-[4px] border border-[#e9eaeb] bg-white shadow-lg p-3"
-                                                  style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                                                  className="absolute left-0 top-full z-20 mt-1 w-[280px] rounded-[4px] border border-[#e5e7eb] bg-white p-3 shadow-lg"
                                                   onClick={(e) => e.stopPropagation()}
+                                                  role="presentation"
                                                 >
-                                                  <div className="flex items-center justify-between gap-2 shrink-0 mb-3">
-                                                    <div className="relative flex-1 min-w-0">
-                                                      <IconSearch className="absolute left-2.5 top-1/2 -translate-y-1/2 size-4 text-[#9ca3af] pointer-events-none" />
-                                                      <input
-                                                        type="text"
-                                                        placeholder="Search"
-                                                        value={scopeValuesPopoverSearch}
-                                                        onChange={(e) => setScopeValuesPopoverSearch(e.target.value)}
-                                                        className="w-full h-9 pl-9 pr-2 rounded-[4px] border border-[#e5e7eb] bg-white text-[13px] text-[#0a0a0a] placeholder:text-[#9ca3af]"
-                                                      />
-                                                    </div>
+                                                  <div className="flex items-start justify-between gap-2 mb-2">
+                                                    <span className="text-[13px] font-semibold text-[#0a0a0a] leading-tight">
+                                                      {scopeDef.label}
+                                                    </span>
                                                     <button
                                                       type="button"
                                                       onClick={() =>
-                                                        setAllScopeValuesForCondition(
-                                                          exc.id,
-                                                          cond.id,
-                                                          scopeOptions,
-                                                          !allScopeSelected
-                                                        )
+                                                        allScopeSelected
+                                                          ? updateConditionField(exc.id, cond.id, 'scopeValues', [])
+                                                          : updateConditionField(
+                                                              exc.id,
+                                                              cond.id,
+                                                              'scopeValues',
+                                                              [...scopeOptions]
+                                                            )
                                                       }
-                                                      className="text-[12px] font-medium text-[#0267ff] hover:underline shrink-0"
+                                                      className="text-[12px] text-[#0267ff] hover:underline shrink-0"
                                                     >
-                                                      Select all
+                                                      {allScopeSelected ? 'Deselect all' : 'Select all'}
                                                     </button>
                                                   </div>
-                                                  <div className="flex flex-col gap-1.5 max-h-[220px] overflow-y-auto min-h-0">
+                                                  <div className="relative mb-2">
+                                                    <IconSearch className="absolute left-2.5 top-1/2 -translate-y-1/2 size-4 text-[#9ca3af] pointer-events-none" />
+                                                    <input
+                                                      type="text"
+                                                      placeholder="Search"
+                                                      value={scopePopoverSearch}
+                                                      onChange={(e) => setScopePopoverSearch(e.target.value)}
+                                                      className="w-full h-8 pl-9 pr-2 rounded-[4px] border border-[#e5e7eb] bg-white text-[13px] text-[#0a0a0a] placeholder:text-[#9ca3af]"
+                                                    />
+                                                  </div>
+                                                  <div className="flex flex-col max-h-[200px] overflow-y-auto min-h-0 -mx-1">
                                                     {filteredScopeOptions.map((name) => (
                                                       <label
                                                         key={name}
-                                                        className="flex items-center gap-2 text-[13px] text-[#0a0a0a] cursor-pointer"
+                                                        className="flex items-center gap-2 py-1.5 px-2 rounded text-[13px] text-[#0a0a0a] cursor-pointer hover:bg-[#f3f4f6]"
                                                       >
                                                         <input
                                                           type="checkbox"
                                                           checked={selectedScopeVals.includes(name)}
-                                                          onChange={() =>
-                                                            toggleScopeValueForCondition(exc.id, cond.id, name)
-                                                          }
-                                                          className="size-4 rounded border-[#d1d5db] text-[#0267ff] focus:ring-[#0267ff]"
+                                                          onChange={() => {
+                                                            const arr = [...selectedScopeVals]
+                                                            const next = arr.includes(name)
+                                                              ? arr.filter((v) => v !== name)
+                                                              : [...arr, name]
+                                                            updateConditionField(exc.id, cond.id, 'scopeValues', next)
+                                                          }}
+                                                          className="size-4 shrink-0 rounded border-[#d1d5db] text-[#0267ff] focus:ring-[#0267ff]"
                                                         />
-                                                        <span>{name}</span>
+                                                        <span className="min-w-0 break-words">{name}</span>
                                                       </label>
                                                     ))}
                                                   </div>
@@ -1810,7 +1797,7 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                                       aria-label="Remove condition"
                                       onClick={() => {
                                         removeConditionFromException(exc.id, cond.id)
-                                        setScopeValuesPopoverKey((prev) => (prev === popKey ? null : prev))
+                                        setOpenPopover((prev) => (prev === popoverId ? null : prev))
                                       }}
                                     >
                                       <IconClose className="size-4" />
