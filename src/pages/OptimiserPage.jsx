@@ -711,6 +711,14 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
     )
   }
 
+  const clearAllConditionsForException = (exceptionId) => {
+    const freshId = `cond-${exceptionConditionNextId}`
+    setExceptionConditionNextId((n) => n + 1)
+    setExceptions((prev) =>
+      prev.map((e) => (e.id === exceptionId ? { ...e, conditions: [createEmptyExceptionCondition(freshId)] } : e))
+    )
+  }
+
   /** Exception [n], optionally first condition's level + filter fragments from all conditions. */
   const getExceptionDisplayName = (exc, excIdx) => {
     const n = excIdx + 1
@@ -1249,8 +1257,72 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                       </button>
                     </div>
                     {exc.expanded && (
-                      <div className="px-4 pb-4 pt-0 flex flex-col gap-4 border-t border-[#e5e7eb]">
-                        <p className="text-[13px] text-[#9ca3af] mt-4">Conditions will be rendered here</p>
+                      <div className="px-4 pb-4 pt-0 flex flex-col border-t border-[#e5e7eb]">
+                        <div className="flex flex-col w-full mt-4">
+                          {(exc.conditions || []).map((cond, condIdx) => (
+                            <div key={cond.id} className="w-full">
+                              {condIdx > 0 && (
+                                <div className="flex justify-center py-1">
+                                  <span className="text-[11px] font-medium text-[#9ca3af] uppercase tracking-wider">
+                                    AND
+                                  </span>
+                                </div>
+                              )}
+                              <div className="rounded-[4px] border border-[#e5e7eb] bg-[#fafafa] px-3 py-2">
+                                <div className="flex items-center gap-2 min-w-0">
+                                  <span className="text-[12px] text-[#4b535c] shrink-0">Apply at</span>
+                                  <div className="relative shrink-0">
+                                    <select
+                                      value={cond.applyAt ?? ''}
+                                      onChange={(e) => {
+                                        const value = e.target.value
+                                        updateConditionField(exc.id, cond.id, 'applyAt', value)
+                                        resetConditionFilters(exc.id, cond.id)
+                                      }}
+                                      className="h-9 w-[170px] py-0 pl-3 pr-9 rounded-[4px] border border-[#e9eaeb] bg-white text-[13px] text-[#0a0a0a] appearance-none"
+                                    >
+                                      <option value="" disabled>
+                                        Select level...
+                                      </option>
+                                      <option value="trip">Trip</option>
+                                      <option value="product">Product</option>
+                                      <option value="sending_location">Sending location</option>
+                                      <option value="receiving_location">Receiving location</option>
+                                    </select>
+                                    <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
+                                      <IconChevronDownSelect />
+                                    </span>
+                                  </div>
+                                  <span className="text-[13px] text-[#9ca3af] italic flex-1 min-w-0 truncate">
+                                    Select a filter →
+                                  </span>
+                                  <button
+                                    type="button"
+                                    className="shrink-0 h-8 w-8 flex items-center justify-center rounded-[4px] text-[#4b535c] hover:bg-[#e5e7eb] hover:text-[#0a0a0a]"
+                                    aria-label="Remove condition"
+                                    onClick={() => removeConditionFromException(exc.id, cond.id)}
+                                  >
+                                    <IconClose className="size-4" />
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => addConditionToException(exc.id)}
+                          className="self-start text-[13px] font-medium text-[#0267FF] hover:underline mt-2"
+                        >
+                          + Add condition
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => clearAllConditionsForException(exc.id)}
+                          className="self-start text-[13px] font-medium text-[#4b535c] hover:text-[#0a0a0a] hover:underline mt-1"
+                        >
+                          Clear filters
+                        </button>
                       </div>
                     )}
                   </div>
