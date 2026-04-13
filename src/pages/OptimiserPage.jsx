@@ -252,10 +252,8 @@ function isExceptionAdvancedFilterId(applyAt, filterId) {
   return getExceptionLevelConfig(applyAt).advanced.some((f) => f.id === filterId)
 }
 
-function exceptionHasActiveAdvancedFilter(applyAt, activeFilterTypes) {
-  if (!applyAt || !activeFilterTypes?.length) return false
-  return activeFilterTypes.some((fid) => isExceptionAdvancedFilterId(applyAt, fid))
-}
+/** Left-column sentinel for unified "Advanced" category (not a scope filter id) */
+const EXCEPTION_ADVANCED_CATEGORY_KEY = 'advanced'
 
 const SCOPE_ACCORDION_PRODUCT_KEYS = {
   departments: 'department',
@@ -362,9 +360,9 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
       advancedRows: [{ id: 'adv-1', conditions: [{ id: 'cond-1', mainColumn: '', condition: '', value: '' }] }],
       filterSelections: {},
       filtersDropdownOpen: false,
-      openFilterPopover: null,
-      activeFilterTypes: [],
-      filterSearchQuery: '',
+      filtersPanelCategory: null,
+      filterValueSearchQuery: '',
+      advancedModeActive: false,
       applyAt: '',
     },
   ])
@@ -651,9 +649,9 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
           advancedRows: [{ id: advId, conditions: [{ id: condId, mainColumn: '', condition: '', value: '' }] }],
           filterSelections: {},
           filtersDropdownOpen: false,
-          openFilterPopover: null,
-          activeFilterTypes: [],
-          filterSearchQuery: '',
+          filtersPanelCategory: null,
+          filterValueSearchQuery: '',
+          advancedModeActive: false,
           applyAt: '',
         },
       ]
@@ -671,10 +669,10 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
           ? {
               ...e,
               applyAt: value,
-              activeFilterTypes: [],
               filtersDropdownOpen: false,
-              openFilterPopover: null,
-              filterSearchQuery: '',
+              filtersPanelCategory: null,
+              filterValueSearchQuery: '',
+              advancedModeActive: false,
               advancedRows: [{ id: advId, conditions: [{ id: condId, mainColumn: '', condition: '', value: '' }] }],
               filterSelections: {},
             }
@@ -749,57 +747,85 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
 
   const setExceptionFiltersDropdownOpen = (exceptionId, open) => {
     setExceptions((prev) =>
-      prev.map((e) => (e.id === exceptionId ? { ...e, filtersDropdownOpen: open, filterSearchQuery: open ? (e.filterSearchQuery || '') : '' } : e))
-    )
-  }
-
-  const setExceptionFilterSearchQuery = (exceptionId, query) => {
-    setExceptions((prev) =>
-      prev.map((e) => (e.id === exceptionId ? { ...e, filterSearchQuery: query } : e))
-    )
-  }
-
-  const addFilterToException = (exceptionId, filterId) => {
-    setExceptions((prev) =>
       prev.map((e) => {
         if (e.id !== exceptionId) return e
-        if (!getExceptionLevelFilterDef(e.applyAt, filterId)) return e
-        const alreadyActive = e.activeFilterTypes?.includes(filterId)
-        if (alreadyActive) return e
+        if (!open) {
+          return { ...e, filtersDropdownOpen: false, filterValueSearchQuery: '' }
+        }
+        const { scope, advanced } = getExceptionLevelConfig(e.applyAt)
+        const defaultCat = scope[0]?.id ?? (advanced.length > 0 ? EXCEPTION_ADVANCED_CATEGORY_KEY : null)
         return {
           ...e,
-          filtersDropdownOpen: false,
-          activeFilterTypes: [...(e.activeFilterTypes || []), filterId],
+          filtersDropdownOpen: true,
+          filtersPanelCategory: e.filtersPanelCategory ?? defaultCat,
+          filterValueSearchQuery: '',
         }
       })
     )
   }
 
-  const removeFilterFromException = (exceptionId, filterId) => {
+  const setExceptionFilterValueSearchQuery = (exceptionId, query) => {
+    setExceptions((prev) =>
+      prev.map((e) => (e.id === exceptionId ? { ...e, filterValueSearchQuery: query } : e))
+    )
+  }
+
+  const selectExceptionFilterPanelCategory = (exceptionId, categoryId) => {
     setExceptions((prev) =>
       prev.map((e) => {
         if (e.id !== exceptionId) return e
-        const newActive = (e.activeFilterTypes || []).filter((t) => t !== filterId)
-        let updates = { ...e, activeFilterTypes: newActive, openFilterPopover: e.openFilterPopover === filterId ? null : e.openFilterPopover }
-        if (isExceptionAdvancedFilterId(e.applyAt, filterId)) {
-          const advId = `adv-${advancedRowNextId}`
-          const condId = `cond-${advancedConditionNextId}`
-          setAdvancedRowNextId((n) => n + 1)
-          setAdvancedConditionNextId((n) => n + 1)
-          updates = { ...updates, advancedRows: [{ id: advId, conditions: [{ id: condId, mainColumn: '', condition: '', value: '' }] }] }
-        } else if (getExceptionLevelFilterDef(e.applyAt, filterId)) {
-          const fs = { ...(e.filterSelections || {}) }
-          fs[filterId] = []
-          updates = { ...updates, filterSelections: fs }
+        return {
+          ...e,
+          filtersPanelCategory: categoryId,
+          filterValueSearchQuery: '',
+          ...(categoryId === EXCEPTION_ADVANCED_CATEGORY_KEY ? { advancedModeActive: true } : {}),
         }
-        return updates
       })
     )
   }
 
-  const setExceptionOpenFilterPopover = (exceptionId, filterId) => {
+  const clearExceptionScopeCategorySelections = (exceptionId, filterId) => {
     setExceptions((prev) =>
-      prev.map((e) => (e.id === exceptionId ? { ...e, openFilterPopover: filterId } : e))
+      prev.map((e) => {
+        if (e.id !== exceptionId) return e
+        const fs = { ...(e.filterSelections || {}) }
+        fs[filterId] = []
+        return { ...e, filterSelections: fs }
+      })
+    )
+  }
+
+  const clearExceptionAdvancedBuilder = (exceptionId) => {
+    const advId = `adv-${advancedRowNextId}`
+    const condId = `cond-${advancedConditionNextId}`
+    setAdvancedRowNextId((n) => n + 1)
+    setAdvancedConditionNextId((n) => n + 1)
+    setExceptions((prev) =>
+      prev.map((e) =>
+        e.id === exceptionId
+          ? {
+              ...e,
+              advancedModeActive: false,
+              filtersPanelCategory: e.filtersPanelCategory === EXCEPTION_ADVANCED_CATEGORY_KEY ? null : e.filtersPanelCategory,
+              advancedRows: [{ id: advId, conditions: [{ id: condId, mainColumn: '', condition: '', value: '' }] }],
+            }
+          : e
+      )
+    )
+  }
+
+  const openExceptionFiltersPanelToCategory = (exceptionId, categoryId) => {
+    setExceptions((prev) =>
+      prev.map((e) => {
+        if (e.id !== exceptionId) return e
+        return {
+          ...e,
+          filtersDropdownOpen: true,
+          filtersPanelCategory: categoryId,
+          filterValueSearchQuery: '',
+          ...(categoryId === EXCEPTION_ADVANCED_CATEGORY_KEY ? { advancedModeActive: true } : {}),
+        }
+      })
     )
   }
 
@@ -849,9 +875,10 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
         e.id === exceptionId
           ? {
               ...e,
-              activeFilterTypes: [],
               filtersDropdownOpen: false,
-              openFilterPopover: null,
+              filtersPanelCategory: null,
+              filterValueSearchQuery: '',
+              advancedModeActive: false,
               advancedRows: [{ id: advId, conditions: [{ id: condId, mainColumn: '', condition: '', value: '' }] }],
               filterSelections: {},
             }
@@ -866,30 +893,24 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
     return `${first.mainColumn} ${first.condition.toLowerCase()} ${first.value}`
   }
 
+  const formatExceptionScopeChipLabel = (categoryLabel, selected) => {
+    if (!selected?.length) return categoryLabel
+    if (selected.length === 1) return `${categoryLabel}: ${selected[0]}`
+    return `${categoryLabel}: ${selected.length}`
+  }
+
   const getExceptionDisplayName = (exc) => {
     const parts = []
-    const activeTypes = exc.activeFilterTypes || []
-    let advancedSummaryHandled = false
-    for (const filterId of activeTypes) {
-      if (isExceptionAdvancedFilterId(exc.applyAt, filterId)) {
-        if (!advancedSummaryHandled) {
-          advancedSummaryHandled = true
-          const summary = getAdvancedFilterSummary(exc)
-          const labels = activeTypes
-            .filter((fid) => isExceptionAdvancedFilterId(exc.applyAt, fid))
-            .map((fid) => getExceptionLevelFilterDef(exc.applyAt, fid)?.label || fid)
-            .join(', ')
-          if (labels) parts.push(summary ? `${labels}: ${summary}` : labels)
-        }
-        continue
+    const { scope } = getExceptionLevelConfig(exc.applyAt)
+    for (const opt of scope) {
+      const selected = (exc.filterSelections || {})[opt.id]
+      if (Array.isArray(selected) && selected.length > 0) {
+        parts.push(formatExceptionScopeChipLabel(opt.label, selected))
       }
-      const opt = getExceptionLevelFilterDef(exc.applyAt, filterId)
-      const label = opt?.label || filterId
-      const raw = (exc.filterSelections || {})[filterId]
-      const selected = Array.isArray(raw) ? raw : raw != null ? [String(raw)] : []
-      if (selected.length > 0) {
-        parts.push(`${label}: ${selected.join(', ')}`)
-      }
+    }
+    if (exc.advancedModeActive) {
+      const summary = getAdvancedFilterSummary(exc)
+      parts.push(summary ? `Advanced: ${summary}` : 'Advanced')
     }
     return parts.length > 0 ? parts.join(', ') : null
   }
@@ -1463,152 +1484,184 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                                   onClick={() => setExceptionFiltersDropdownOpen(exc.id, false)}
                                 />
                                 <div
-                                  className="absolute left-0 top-full mt-1 z-10 min-w-[260px] max-w-[320px] rounded-[4px] border border-[#E9EAEB] bg-white shadow-lg overflow-hidden"
+                                  className="absolute left-0 top-full mt-1 z-10 w-[320px] max-h-[400px] rounded-[4px] border border-[#E9EAEB] bg-white shadow-lg overflow-hidden flex"
                                   style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                                  onClick={(e) => e.stopPropagation()}
                                 >
-                                  <div className="p-2 border-b border-[#e5e7eb]">
-                                    <div className="relative">
-                                      <IconSearch className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-[#9ca3af]" />
-                                      <input
-                                        type="text"
-                                        placeholder="Search"
-                                        value={exc.filterSearchQuery || ''}
-                                        onChange={(e) => setExceptionFilterSearchQuery(exc.id, e.target.value)}
-                                        className="w-full h-9 pl-9 pr-3 rounded-[4px] border border-[#e5e7eb] bg-white text-[13px] text-[#0a0a0a] placeholder:text-[#9ca3af]"
-                                      />
-                                    </div>
-                                  </div>
-                                  <div className="max-h-[280px] overflow-y-auto py-1 flex flex-col">
-                                    {(() => {
-                                      const q = (exc.filterSearchQuery || '').trim().toLowerCase()
-                                      const { scope: scopeOpts, advanced: advOpts } = getExceptionLevelConfig(exc.applyAt)
-                                      const match = (o) => !q || o.label.toLowerCase().includes(q)
-                                      const scopeFiltered = scopeOpts.filter(match)
-                                      const advFiltered = advOpts.filter(match)
-                                      return (
-                                        <>
-                                          {scopeFiltered.length > 0 && (
+                                  {(() => {
+                                    const { scope: scopeOpts, advanced: advOpts } = getExceptionLevelConfig(exc.applyAt)
+                                    const cat = exc.filtersPanelCategory
+                                    const scopeDef = cat && cat !== EXCEPTION_ADVANCED_CATEGORY_KEY ? getExceptionLevelFilterDef(exc.applyAt, cat) : null
+                                    const selectedVals = scopeDef?.options || []
+                                    const q = (exc.filterValueSearchQuery || '').trim().toLowerCase()
+                                    const filteredVals = selectedVals.filter((name) => !q || name.toLowerCase().includes(q))
+                                    const selForCat = (exc.filterSelections || {})[cat] || []
+                                    return (
+                                      <>
+                                        <div className="w-[132px] shrink-0 border-r border-[#e5e7eb] overflow-y-auto max-h-[400px] flex flex-col py-1">
+                                          <div className="text-[11px] uppercase text-[#9ca3af] px-2.5 py-1">Scope</div>
+                                          {scopeOpts.map((opt) => (
+                                            <button
+                                              key={opt.id}
+                                              type="button"
+                                              onClick={() => selectExceptionFilterPanelCategory(exc.id, opt.id)}
+                                              className={`w-full text-left text-[13px] font-medium px-2.5 py-2 text-[#0a0a0a] hover:bg-[#f8f8f8] ${cat === opt.id ? 'bg-[#E8F0FE]' : ''}`}
+                                            >
+                                              {opt.label}
+                                            </button>
+                                          ))}
+                                          {advOpts.length > 0 && (
                                             <>
-                                              <div className="text-[11px] uppercase text-[#9ca3af] px-3 py-1">Scope filters</div>
-                                              {scopeFiltered.map((opt) => (
-                                                <button
-                                                  key={opt.id}
-                                                  type="button"
-                                                  onClick={() => addFilterToException(exc.id, opt.id)}
-                                                  className="w-full px-3 py-2 text-left text-[13px] font-medium text-[#0a0a0a] hover:bg-[#f8f8f8]"
-                                                >
-                                                  {opt.label}
-                                                </button>
-                                              ))}
+                                              <div className="text-[11px] uppercase text-[#9ca3af] px-2.5 py-1 mt-1 border-t border-[#e5e7eb] pt-2">
+                                                Advanced
+                                              </div>
+                                              <button
+                                                type="button"
+                                                onClick={() => selectExceptionFilterPanelCategory(exc.id, EXCEPTION_ADVANCED_CATEGORY_KEY)}
+                                                className={`w-full text-left text-[13px] font-medium px-2.5 py-2 text-[#0a0a0a] hover:bg-[#f8f8f8] ${cat === EXCEPTION_ADVANCED_CATEGORY_KEY ? 'bg-[#E8F0FE]' : ''}`}
+                                              >
+                                                Advanced
+                                              </button>
                                             </>
                                           )}
-                                          {scopeFiltered.length > 0 && advFiltered.length > 0 && (
-                                            <div className="border-t border-[#e5e7eb] my-1" aria-hidden />
-                                          )}
-                                          {advFiltered.length > 0 && (
+                                        </div>
+                                        <div className="flex-1 min-w-0 flex flex-col min-h-0 max-h-[400px]">
+                                          {cat && cat !== EXCEPTION_ADVANCED_CATEGORY_KEY && scopeDef && (
                                             <>
-                                              <div className="text-[11px] uppercase text-[#9ca3af] px-3 py-1">Advanced</div>
-                                              {advFiltered.map((opt) => (
+                                              <div className="p-2 border-b border-[#e5e7eb] shrink-0">
+                                                <div className="relative">
+                                                  <IconSearch className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-[#9ca3af] pointer-events-none" />
+                                                  <input
+                                                    type="text"
+                                                    placeholder="Search"
+                                                    value={exc.filterValueSearchQuery || ''}
+                                                    onChange={(e) => setExceptionFilterValueSearchQuery(exc.id, e.target.value)}
+                                                    className="w-full h-9 pl-9 pr-3 rounded-[4px] border border-[#e5e7eb] bg-white text-[13px] text-[#0a0a0a] placeholder:text-[#9ca3af]"
+                                                  />
+                                                </div>
+                                              </div>
+                                              <div className="px-2 py-1.5 flex items-center justify-between shrink-0 border-b border-[#e5e7eb]">
+                                                <span className="text-[12px] font-medium text-[#4b535c] truncate pr-2">{scopeDef.label}</span>
                                                 <button
-                                                  key={opt.id}
                                                   type="button"
-                                                  onClick={() => addFilterToException(exc.id, opt.id)}
-                                                  className="w-full px-3 py-2 text-left text-[13px] font-medium text-[#0a0a0a] hover:bg-[#f8f8f8]"
+                                                  onClick={() =>
+                                                    selectAllFilterOptionsForException(
+                                                      exc.id,
+                                                      cat,
+                                                      selForCat.length < (scopeDef.options?.length || 0)
+                                                    )
+                                                  }
+                                                  className="text-[12px] font-medium text-[#0267ff] hover:underline shrink-0"
                                                 >
-                                                  {opt.label}
+                                                  Select all
                                                 </button>
-                                              ))}
+                                              </div>
+                                              <div className="flex-1 overflow-y-auto min-h-0 px-2 py-2 flex flex-col gap-1.5">
+                                                {filteredVals.map((name) => (
+                                                  <label key={name} className="flex items-center gap-2 text-[13px] text-[#0a0a0a] cursor-pointer">
+                                                    <input
+                                                      type="checkbox"
+                                                      checked={selForCat.includes(name)}
+                                                      onChange={() => toggleFilterOptionForException(exc.id, cat, name)}
+                                                      className="size-4 rounded border-[#d1d5db] text-[#0267ff] focus:ring-[#0267ff]"
+                                                    />
+                                                    <span>{name}</span>
+                                                  </label>
+                                                ))}
+                                              </div>
                                             </>
                                           )}
-                                        </>
-                                      )
-                                    })()}
-                                  </div>
+                                          {cat === EXCEPTION_ADVANCED_CATEGORY_KEY && (
+                                            <div className="p-3 text-[13px] text-[#4b535c] leading-snug">
+                                              Configure conditions in the panel below.
+                                            </div>
+                                          )}
+                                          {!cat && (
+                                            <div className="p-3 text-[13px] text-[#9ca3af]">Select a category</div>
+                                          )}
+                                        </div>
+                                      </>
+                                    )
+                                  })()}
                                 </div>
                               </>
                             )}
                           </div>
-                          {(exc.activeFilterTypes || []).map((filterId) => {
-                            const opt = getExceptionLevelFilterDef(exc.applyAt, filterId)
-                            const label = opt?.label || filterId
-                            const isAdv = isExceptionAdvancedFilterId(exc.applyAt, filterId)
-                            const selected = (exc.filterSelections || {})[filterId] || []
-                            const summary = isAdv
-                              ? (getAdvancedFilterSummary(exc) || '')
-                              : selected.length > 0
-                                ? selected.join(', ')
-                                : ''
-                            const chipLabel = summary ? `${label}: ${summary}` : `${label}:`
-                            const isPopoverOpen = exc.openFilterPopover === filterId
-                            return (
-                              <div key={filterId} className="relative">
-                                <button
-                                  type="button"
-                                  onClick={() => (isAdv ? null : setExceptionOpenFilterPopover(exc.id, isPopoverOpen ? null : filterId))}
-                                  className="h-10 px-3 py-2 flex items-center gap-1.5 rounded-[4px] border border-[#E9EAEB] bg-white text-[13px] font-medium text-[#0a0a0a] hover:bg-[#f8f8f8]"
-                                >
-                                  <span className="max-w-[180px] truncate">{chipLabel}</span>
-                                  <span
-                                    role="button"
-                                    tabIndex={0}
-                                    onClick={(e) => { e.stopPropagation(); e.preventDefault(); removeFilterFromException(exc.id, filterId) }}
-                                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); removeFilterFromException(exc.id, filterId) } }}
-                                    className="inline-flex shrink-0 text-[#4b535c] hover:text-[#0a0a0a]"
-                                  >
-                                    <IconClose className="size-4" />
-                                  </span>
-                                </button>
-                                {!isAdv && isPopoverOpen && (
-                                  <>
-                                    <div
-                                      className="fixed inset-0 z-[9]"
-                                      aria-hidden
-                                      onClick={() => setExceptionOpenFilterPopover(exc.id, null)}
-                                    />
-                                    <div
-                                      className="absolute left-0 top-full mt-1 z-10 w-[220px] rounded-[4px] border border-[#E9EAEB] bg-white shadow-lg overflow-hidden"
-                                      style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
-                                      onClick={(e) => e.stopPropagation()}
+                          {exc.applyAt &&
+                            getExceptionLevelConfig(exc.applyAt).scope
+                              .filter((opt) => ((exc.filterSelections || {})[opt.id] || []).length > 0)
+                              .map((opt) => {
+                                const selected = (exc.filterSelections || {})[opt.id] || []
+                                const chipLabel = formatExceptionScopeChipLabel(opt.label, selected)
+                                return (
+                                  <div key={opt.id} className="relative">
+                                    <button
+                                      type="button"
+                                      onClick={() => openExceptionFiltersPanelToCategory(exc.id, opt.id)}
+                                      className="h-10 px-3 py-2 flex items-center gap-1.5 rounded-[4px] border border-[#E9EAEB] bg-white text-[13px] font-medium text-[#0a0a0a] hover:bg-[#f8f8f8]"
                                     >
-                                      <div className="p-2 border-b border-[#e5e7eb]">
-                                        <div className="relative">
-                                          <IconSearch className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-[#9ca3af] pointer-events-none" />
-                                          <input
-                                            type="text"
-                                            placeholder="Search"
-                                            className="w-full h-9 pl-9 pr-3 rounded-[4px] border border-[#e5e7eb] bg-white text-[13px] text-[#0a0a0a] placeholder:text-[#9ca3af]"
-                                          />
-                                        </div>
-                                      </div>
-                                      <div className="p-2 flex items-center justify-between">
-                                        <button
-                                          type="button"
-                                          onClick={() => selectAllFilterOptionsForException(exc.id, filterId, selected.length < (opt?.options?.length || 0))}
-                                          className="text-[12px] font-medium text-[#0267ff] hover:underline"
-                                        >
-                                          Select all
-                                        </button>
-                                      </div>
-                                      <div className="max-h-[180px] overflow-y-auto py-1 px-2 flex flex-col gap-1.5">
-                                        {(opt?.options || []).map((name) => (
-                                          <label key={name} className="flex items-center gap-2 text-[13px] text-[#0a0a0a] cursor-pointer">
-                                            <input
-                                              type="checkbox"
-                                              checked={selected.includes(name)}
-                                              onChange={() => toggleFilterOptionForException(exc.id, filterId, name)}
-                                              className="size-4 rounded border-[#d1d5db] text-[#0267ff] focus:ring-[#0267ff]"
-                                            />
-                                            <span>{name}</span>
-                                          </label>
-                                        ))}
-                                      </div>
-                                    </div>
-                                  </>
-                                )}
-                              </div>
+                                      <span className="max-w-[200px] truncate">{chipLabel}</span>
+                                      <span
+                                        role="button"
+                                        tabIndex={0}
+                                        onClick={(e) => {
+                                          e.stopPropagation()
+                                          e.preventDefault()
+                                          clearExceptionScopeCategorySelections(exc.id, opt.id)
+                                        }}
+                                        onKeyDown={(e) => {
+                                          if (e.key === 'Enter' || e.key === ' ') {
+                                            e.stopPropagation()
+                                            clearExceptionScopeCategorySelections(exc.id, opt.id)
+                                          }
+                                        }}
+                                        className="inline-flex shrink-0 text-[#4b535c] hover:text-[#0a0a0a]"
+                                      >
+                                        <IconClose className="size-4" />
+                                      </span>
+                                    </button>
+                                  </div>
+                                )
+                              })}
+                          {exc.applyAt && exc.advancedModeActive && (() => {
+                            const advSummary = getAdvancedFilterSummary(exc)
+                            return (
+                            <div className="relative">
+                              <button
+                                type="button"
+                                onClick={() => openExceptionFiltersPanelToCategory(exc.id, EXCEPTION_ADVANCED_CATEGORY_KEY)}
+                                className="h-10 px-3 py-2 flex items-center gap-1.5 rounded-[4px] border border-[#E9EAEB] bg-white text-[13px] font-medium text-[#0a0a0a] hover:bg-[#f8f8f8]"
+                              >
+                                <span className="max-w-[200px] truncate">
+                                  {advSummary ? `Advanced: ${advSummary}` : 'Advanced'}
+                                </span>
+                                <span
+                                  role="button"
+                                  tabIndex={0}
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    e.preventDefault()
+                                    clearExceptionAdvancedBuilder(exc.id)
+                                  }}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter' || e.key === ' ') {
+                                      e.stopPropagation()
+                                      clearExceptionAdvancedBuilder(exc.id)
+                                    }
+                                  }}
+                                  className="inline-flex shrink-0 text-[#4b535c] hover:text-[#0a0a0a]"
+                                >
+                                  <IconClose className="size-4" />
+                                </span>
+                              </button>
+                            </div>
                             )
-                          })}
-                          {((exc.activeFilterTypes || []).length > 0) && (
+                          })()}
+                          {exc.applyAt &&
+                            (() => {
+                              const { scope: sc } = getExceptionLevelConfig(exc.applyAt)
+                              const hasScopeChip = sc.some((o) => ((exc.filterSelections || {})[o.id] || []).length > 0)
+                              return (hasScopeChip || exc.advancedModeActive) ? (
                             <button
                               type="button"
                               onClick={() => clearAllFiltersForException(exc.id)}
@@ -1616,10 +1669,11 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                             >
                               Clear filters
                             </button>
-                          )}
+                              ) : null
+                            })()}
                         </div>
                         )}
-                        {exc.applyAt && exceptionHasActiveAdvancedFilter(exc.applyAt, exc.activeFilterTypes) && (
+                        {exc.applyAt && exc.advancedModeActive && (
                           <div className="flex flex-col gap-3 p-4 rounded-[4px] border border-[#E9EAEB] bg-white shadow-sm">
                             {exc.advancedRows.map((box) => (
                               <div key={box.id} className="flex flex-col gap-2">
