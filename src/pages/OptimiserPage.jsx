@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { Truck, Network, TrendingUp, ShieldCheck } from 'lucide-react'
-import { IconCalendarSidebar, IconPlus, IconReplenishment, IconReorder, IconRebalancing, IconChevronDown, IconList, IconCalendarNote, IconTruck, IconTrendUp, IconLightbulb, IconEdit, IconClose, IconChevronDownSelect, IconArrowLeft, IconFilterFunnel, IconSearch } from '../components/icons'
+import { IconCalendarSidebar, IconPlus, IconReplenishment, IconReorder, IconRebalancing, IconChevronDown, IconList, IconCalendarNote, IconTruck, IconTrendUp, IconLightbulb, IconEdit, IconClose, IconChevronDownSelect, IconArrowLeft } from '../components/icons'
 
 const SAMPLE_CALENDAR_ENTRY = {
   id: 'entry-1',
@@ -199,165 +199,9 @@ const EXCEPTION_FILTER_OPTIONS_BY_LEVEL = {
   receiving_location: { scope: EXC_SCOPE_SEND_RECV, advanced: EXC_ADV_RECEIVING },
 }
 
-const MAIN_COLUMN_OPTIONS_BY_LEVEL = {
-  trip: ['Transfer units'],
-  product: [
-    'Current units',
-    'Forecast',
-    'Transfer units',
-    'Current warehouse',
-    'Last 7 days sales',
-    'Last 30 days sales',
-    'Understocks before',
-    'Understocks after',
-    'Overstocks before',
-    'Overstocks after',
-    'Sales uplift',
-  ],
-  sending_location: [
-    'Current units',
-    'Forecast',
-    'Transfer units',
-    'Last 7 days sales',
-    'Last 30 days sales',
-    'Understocks before',
-    'Understocks after',
-    'Overstocks before',
-    'Overstocks after',
-    'Sales uplift',
-  ],
-  receiving_location: [
-    'Current units',
-    'Forecast',
-    'Transfer units',
-    'Current warehouse',
-    'Last 7 days sales',
-    'Last 30 days sales',
-    'Understocks before',
-    'Understocks after',
-    'Overstocks before',
-    'Overstocks after',
-    'Sales uplift',
-  ],
-}
-
 function getExceptionLevelConfig(applyAt) {
   if (!applyAt || !EXCEPTION_FILTER_OPTIONS_BY_LEVEL[applyAt]) return { scope: [], advanced: [] }
   return EXCEPTION_FILTER_OPTIONS_BY_LEVEL[applyAt]
-}
-
-/** Order for exception filter popover — Product vs Geographic groupings */
-const EXCEPTION_PRODUCT_SCOPE_IDS = [
-  'class',
-  'department',
-  'gender',
-  'product',
-  'season',
-  'style',
-  'subDepartment',
-  'events',
-  'size',
-  'collectionTypes',
-  'manufacturer',
-  'brand',
-  'articles',
-]
-const EXCEPTION_GEO_SCOPE_IDS_TRIP = ['location', 'region', 'locationType', 'countries']
-const EXCEPTION_GEO_SCOPE_IDS_SEND_RECV = [
-  'region',
-  'locationType',
-  'sendingLocations',
-  'receivingLocations',
-  'sendingCountries',
-  'receivingCountries',
-]
-
-function buildExceptionFilterGroups(applyAt) {
-  const { scope, advanced } = getExceptionLevelConfig(applyAt)
-  const byId = Object.fromEntries(scope.map((f) => [f.id, f]))
-  const product = EXCEPTION_PRODUCT_SCOPE_IDS.map((id) => byId[id]).filter(Boolean)
-  const geoIds =
-    applyAt === 'sending_location' || applyAt === 'receiving_location'
-      ? EXCEPTION_GEO_SCOPE_IDS_SEND_RECV
-      : EXCEPTION_GEO_SCOPE_IDS_TRIP
-  const geographic = geoIds.map((id) => byId[id]).filter(Boolean)
-  return { product, geographic, advanced }
-}
-
-function formatScopeConditionValuesText(selected) {
-  if (!Array.isArray(selected) || selected.length === 0) return ''
-  if (selected.length === 1) return selected[0]
-  if (selected.length <= 3) return selected.join(', ')
-  return `${selected.length} values selected`
-}
-
-/** Hide the default single empty box; show once user has edited or multiple boxes/conditions */
-function advancedBoxHasDisplayableContent(box, isOnlyBoxInException) {
-  if (!box?.conditions?.length) return false
-  if (box.conditions.length > 1) return true
-  const c = box.conditions[0]
-  if (c.mainColumn || c.condition || c.value) return true
-  return !isOnlyBoxInException
-}
-
-function getAdvancedConditionReadable(cond) {
-  if (!cond?.mainColumn || !cond.condition || !cond.value) return null
-  return `${cond.mainColumn} ${cond.condition.toLowerCase()} ${cond.value}`
-}
-
-function getAdvancedBoxReadableSummary(box) {
-  const parts = (box.conditions || []).map(getAdvancedConditionReadable).filter(Boolean)
-  return parts.length > 0 ? parts.join(' and ') : null
-}
-
-const ADVANCED_CONDITION_SYMBOLS = {
-  'Equal to': '=',
-  'Greater than': '>',
-  'Lower than': '<',
-  'Greater than or equal to': '≥',
-  'Lower than or equal to': '≤',
-}
-
-/** Compact readable advanced clause for titles, e.g. "Forecast < 10" */
-function getAdvancedConditionCompact(cond) {
-  if (!cond?.mainColumn || !cond.condition || !cond.value) return null
-  const sym = ADVANCED_CONDITION_SYMBOLS[cond.condition]
-  if (sym) return `${cond.mainColumn} ${sym} ${cond.value}`
-  return `${cond.mainColumn} ${cond.condition.toLowerCase()} ${cond.value}`
-}
-
-function formatScopeClauseForExceptionTitle(categoryLabel, selected) {
-  if (!Array.isArray(selected) || selected.length === 0) return null
-  if (selected.length === 1) return `${categoryLabel} is ${selected[0]}`
-  if (selected.length <= 3) return `${categoryLabel} in ${selected.join(', ')}`
-  return `${categoryLabel} matches ${selected.length} values`
-}
-
-/** Natural-language filter clauses in UI order (scope product→geo, then advanced). */
-function collectExceptionFilterClausesForTitle(exc) {
-  const levelKey = exc.applyAt
-  if (!levelKey) return []
-  const { product, geographic } = buildExceptionFilterGroups(levelKey)
-  const clauses = []
-  for (const opt of [...product, ...geographic]) {
-    const c = formatScopeClauseForExceptionTitle(opt.label, exc.filterSelections?.[opt.id])
-    if (c) clauses.push(c)
-  }
-  const onlyOneAdvBox = (exc.advancedRows?.length ?? 0) === 1
-  exc.advancedRows?.forEach((box, bi) => {
-    if (!advancedBoxHasDisplayableContent(box, onlyOneAdvBox && bi === 0)) return
-    for (const cond of box.conditions || []) {
-      const compact = getAdvancedConditionCompact(cond)
-      if (compact) {
-        clauses.push(compact)
-        continue
-      }
-      const readable = getAdvancedConditionReadable(cond)
-      if (readable) clauses.push(readable)
-      else if (cond.mainColumn) clauses.push(`${cond.mainColumn}…`)
-    }
-  })
-  return clauses
 }
 
 function getAllExceptionLevelFilters(applyAt) {
@@ -367,11 +211,6 @@ function getAllExceptionLevelFilters(applyAt) {
 
 function getExceptionLevelFilterDef(applyAt, filterId) {
   return getAllExceptionLevelFilters(applyAt).find((f) => f.id === filterId)
-}
-
-function isExceptionAdvancedFilterId(applyAt, filterId) {
-  if (!applyAt || !filterId) return false
-  return getExceptionLevelConfig(applyAt).advanced.some((f) => f.id === filterId)
 }
 
 const SCOPE_ACCORDION_PRODUCT_KEYS = {
@@ -393,6 +232,46 @@ const APPLY_AT_DISPLAY_LABELS = {
   product: 'Product',
   sending_location: 'Sending location',
   receiving_location: 'Receiving location',
+}
+
+function scopeCategoryLabelForTitle(applyAt, scopeCategoryId) {
+  if (!scopeCategoryId) return ''
+  const def = getExceptionLevelFilterDef(applyAt, scopeCategoryId)
+  return def?.label ?? scopeCategoryId
+}
+
+/** Readable fragment for Create Schedule exception header from one condition row. */
+function conditionPartForExceptionTitle(cond, fallbackApplyAt) {
+  const applyAt = cond.applyAt || fallbackApplyAt
+  const vals = cond.scopeValues
+  const hasScopeValues = Array.isArray(vals) && vals.length > 0 && Boolean(cond.scopeCategory)
+
+  if (cond.filterType === 'advanced') {
+    const p = [cond.advancedColumn, cond.advancedCondition, cond.advancedValue].filter(Boolean)
+    return p.length ? p.join(' ') : null
+  }
+  if (cond.filterType === 'scope' || (hasScopeValues && cond.filterType !== 'advanced')) {
+    if (!hasScopeValues) return null
+    const cat = scopeCategoryLabelForTitle(applyAt, cond.scopeCategory)
+    if (vals.length === 1) return `${cat} is ${vals[0]}`
+    return `${cat}: ${vals.length} values`
+  }
+  const advParts = [cond.advancedColumn, cond.advancedCondition, cond.advancedValue].filter(Boolean)
+  if (advParts.length) return advParts.join(' ')
+  return null
+}
+
+function createEmptyExceptionCondition(id) {
+  return {
+    id,
+    applyAt: '',
+    filterType: '',
+    scopeCategory: '',
+    scopeValues: [],
+    advancedColumn: '',
+    advancedCondition: '',
+    advancedValue: '',
+  }
 }
 
 /* Optimiser page – Figma 174:2696 (Optimiser-Concepts) */
@@ -483,18 +362,10 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
     {
       id: 'exc-1',
       expanded: true,
-      advancedRows: [{ id: 'adv-1', conditions: [{ id: 'cond-1', mainColumn: '', condition: '', value: '' }] }],
-      filterSelections: {},
-      filtersDropdownOpen: false,
-      filtersPanelCategory: null,
-      filterValueSearchQuery: '',
-      advancedModeActive: false,
-      expandedAdvancedBoxId: null,
-      applyAt: '',
+      conditions: [createEmptyExceptionCondition('cond-1')],
     },
   ])
-  const [advancedRowNextId, setAdvancedRowNextId] = useState(2)
-  const [advancedConditionNextId, setAdvancedConditionNextId] = useState(2)
+  const [exceptionConditionNextId, setExceptionConditionNextId] = useState(2)
   const [exceptionNextId, setExceptionNextId] = useState(2)
   const [recurrenceRepeatEvery, setRecurrenceRepeatEvery] = useState(1)
   const [recurrenceRepeatUnit, setRecurrenceRepeatUnit] = useState('week')
@@ -761,11 +632,9 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
 
   const addException = () => {
     const excId = `exc-${exceptionNextId}`
-    const advId = `adv-${advancedRowNextId}`
-    const condId = `cond-${advancedConditionNextId}`
+    const condId = `cond-${exceptionConditionNextId}`
     setExceptionNextId((n) => n + 1)
-    setAdvancedRowNextId((n) => n + 1)
-    setAdvancedConditionNextId((n) => n + 1)
+    setExceptionConditionNextId((n) => n + 1)
     setExceptions((prev) => {
       const withExpandedFalse = prev.map((e) => ({ ...e, expanded: false }))
       return [
@@ -773,330 +642,90 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
         {
           id: excId,
           expanded: true,
-          advancedRows: [{ id: advId, conditions: [{ id: condId, mainColumn: '', condition: '', value: '' }] }],
-          filterSelections: {},
-          filtersDropdownOpen: false,
-          filtersPanelCategory: null,
-          filterValueSearchQuery: '',
-          advancedModeActive: false,
-          expandedAdvancedBoxId: null,
-          applyAt: '',
+          conditions: [createEmptyExceptionCondition(condId)],
         },
       ]
     })
   }
 
-  const setExceptionApplyAt = (exceptionId, value) => {
-    const advId = `adv-${advancedRowNextId}`
-    const condId = `cond-${advancedConditionNextId}`
-    setAdvancedRowNextId((n) => n + 1)
-    setAdvancedConditionNextId((n) => n + 1)
+  const addConditionToException = (exceptionId) => {
+    const newId = `cond-${exceptionConditionNextId}`
+    setExceptionConditionNextId((n) => n + 1)
     setExceptions((prev) =>
       prev.map((e) =>
-        e.id === exceptionId
-          ? {
-              ...e,
-              applyAt: value,
-              filtersDropdownOpen: false,
-              filtersPanelCategory: null,
-              filterValueSearchQuery: '',
-              advancedModeActive: false,
-              expandedAdvancedBoxId: null,
-              advancedRows: [{ id: advId, conditions: [{ id: condId, mainColumn: '', condition: '', value: '' }] }],
-              filterSelections: {},
-            }
-          : e
+        e.id === exceptionId ? { ...e, conditions: [...e.conditions, createEmptyExceptionCondition(newId)] } : e
       )
     )
   }
 
-  const addConditionToBox = (exceptionId, boxId) => {
-    const condId = `cond-${advancedConditionNextId}`
-    setAdvancedConditionNextId((n) => n + 1)
-    setExceptions((prev) =>
-      prev.map((e) =>
-        e.id === exceptionId
-          ? {
-              ...e,
-              advancedRows: e.advancedRows.map((r) =>
-                r.id === boxId ? { ...r, conditions: [...r.conditions, { id: condId, mainColumn: '', condition: '', value: '' }] } : r
-              ),
-            }
-          : e
-      )
-    )
-  }
-
-  const removeConditionFromBox = (exceptionId, boxId, conditionId) => {
-    const condId = `cond-${advancedConditionNextId}`
-    setAdvancedConditionNextId((n) => n + 1)
+  const removeConditionFromException = (exceptionId, conditionId) => {
+    const freshId = `cond-${exceptionConditionNextId}`
+    setExceptionConditionNextId((n) => n + 1)
     setExceptions((prev) =>
       prev.map((e) => {
         if (e.id !== exceptionId) return e
-        const newRows = e.advancedRows
-          .map((r) => {
-            if (r.id !== boxId) return r
-            const newConditions = r.conditions.filter((c) => c.id !== conditionId)
-            if (newConditions.length === 0) return { ...r, conditions: [{ id: condId, mainColumn: '', condition: '', value: '' }] }
-            return { ...r, conditions: newConditions }
-          })
-        return { ...e, advancedRows: newRows }
-      })
-    )
-  }
-
-  const updateAdvancedApprovalCondition = (exceptionId, boxId, conditionId, field, value) => {
-    setExceptions((prev) =>
-      prev.map((e) =>
-        e.id === exceptionId
-          ? {
-              ...e,
-              advancedRows: e.advancedRows.map((r) =>
-                r.id === boxId ? { ...r, conditions: r.conditions.map((c) => (c.id === conditionId ? { ...c, [field]: value } : c)) } : r
-              ),
-            }
-          : e
-      )
-    )
-  }
-
-  const clearAdvancedForException = (exceptionId) => {
-    const advId = `adv-${advancedRowNextId}`
-    const condId = `cond-${advancedConditionNextId}`
-    setAdvancedRowNextId((n) => n + 1)
-    setAdvancedConditionNextId((n) => n + 1)
-    setExceptions((prev) =>
-      prev.map((e) =>
-        e.id === exceptionId
-          ? { ...e, advancedRows: [{ id: advId, conditions: [{ id: condId, mainColumn: '', condition: '', value: '' }] }], expandedAdvancedBoxId: null }
-          : e
-      )
-    )
-  }
-
-  const setExceptionFiltersDropdownOpen = (exceptionId, open) => {
-    setExceptions((prev) =>
-      prev.map((e) => {
-        if (e.id !== exceptionId) return e
-        if (!open) {
-          return { ...e, filtersDropdownOpen: false, filterValueSearchQuery: '' }
-        }
-        const { product, geographic, advanced } = buildExceptionFilterGroups(e.applyAt)
-        const defaultCat = product[0]?.id ?? geographic[0]?.id ?? advanced[0]?.id ?? null
-        return {
-          ...e,
-          filtersDropdownOpen: true,
-          filtersPanelCategory: e.filtersPanelCategory ?? defaultCat,
-          filterValueSearchQuery: '',
-        }
-      })
-    )
-  }
-
-  const setExceptionFilterValueSearchQuery = (exceptionId, query) => {
-    setExceptions((prev) =>
-      prev.map((e) => (e.id === exceptionId ? { ...e, filterValueSearchQuery: query } : e))
-    )
-  }
-
-  const selectExceptionFilterPanelCategory = (exceptionId, categoryId) => {
-    setExceptions((prev) =>
-      prev.map((e) => {
-        if (e.id !== exceptionId) return e
-        return {
-          ...e,
-          filtersPanelCategory: categoryId,
-          filterValueSearchQuery: '',
-        }
-      })
-    )
-  }
-
-  const clearExceptionScopeCategorySelections = (exceptionId, filterId) => {
-    setExceptions((prev) =>
-      prev.map((e) => {
-        if (e.id !== exceptionId) return e
-        const fs = { ...(e.filterSelections || {}) }
-        fs[filterId] = []
-        return { ...e, filterSelections: fs }
-      })
-    )
-  }
-
-  const clearExceptionAdvancedBuilder = (exceptionId) => {
-    const advId = `adv-${advancedRowNextId}`
-    const condId = `cond-${advancedConditionNextId}`
-    setAdvancedRowNextId((n) => n + 1)
-    setAdvancedConditionNextId((n) => n + 1)
-    setExceptions((prev) =>
-      prev.map((e) =>
-        e.id === exceptionId
-          ? {
-              ...e,
-              advancedModeActive: false,
-              filtersPanelCategory: null,
-              expandedAdvancedBoxId: null,
-              advancedRows: [{ id: advId, conditions: [{ id: condId, mainColumn: '', condition: '', value: '' }] }],
-            }
-          : e
-      )
-    )
-  }
-
-  const openExceptionFiltersPanelToCategory = (exceptionId, categoryId) => {
-    setExceptions((prev) =>
-      prev.map((e) => {
-        if (e.id !== exceptionId) return e
-        return {
-          ...e,
-          filtersDropdownOpen: true,
-          filtersPanelCategory: categoryId,
-          filterValueSearchQuery: '',
-        }
-      })
-    )
-  }
-
-  const addAdvancedMetricForException = (exceptionId, mainColumnLabel) => {
-    const advId = `adv-${advancedRowNextId}`
-    const condId = `cond-${advancedConditionNextId}`
-    setAdvancedRowNextId((n) => n + 1)
-    setAdvancedConditionNextId((n) => n + 1)
-    setExceptions((prev) =>
-      prev.map((e) => {
-        if (e.id !== exceptionId) return e
-        return {
-          ...e,
-          filtersDropdownOpen: false,
-          filterValueSearchQuery: '',
-          advancedModeActive: true,
-          expandedAdvancedBoxId: advId,
-          advancedRows: [
-            ...e.advancedRows,
-            { id: advId, conditions: [{ id: condId, mainColumn: mainColumnLabel, condition: '', value: '' }] },
-          ],
-        }
-      })
-    )
-  }
-
-  const toggleExceptionExpandedAdvancedBox = (exceptionId, boxId) => {
-    setExceptions((prev) =>
-      prev.map((e) => {
-        if (e.id !== exceptionId) return e
-        return {
-          ...e,
-          expandedAdvancedBoxId: e.expandedAdvancedBoxId === boxId ? null : boxId,
-        }
-      })
-    )
-  }
-
-  const removeAdvancedBoxFromException = (exceptionId, boxId) => {
-    const advId = `adv-${advancedRowNextId}`
-    const condId = `cond-${advancedConditionNextId}`
-    setAdvancedRowNextId((n) => n + 1)
-    setAdvancedConditionNextId((n) => n + 1)
-    setExceptions((prev) =>
-      prev.map((e) => {
-        if (e.id !== exceptionId) return e
-        const filtered = e.advancedRows.filter((b) => b.id !== boxId)
+        const filtered = e.conditions.filter((c) => c.id !== conditionId)
         if (filtered.length === 0) {
-          return {
-            ...e,
-            advancedRows: [{ id: advId, conditions: [{ id: condId, mainColumn: '', condition: '', value: '' }] }],
-            advancedModeActive: false,
-            expandedAdvancedBoxId: null,
-          }
+          return { ...e, conditions: [createEmptyExceptionCondition(freshId)] }
         }
-        return {
-          ...e,
-          advancedRows: filtered,
-          expandedAdvancedBoxId: e.expandedAdvancedBoxId === boxId ? null : e.expandedAdvancedBoxId,
-        }
+        return { ...e, conditions: filtered }
       })
     )
   }
 
-  const toggleFilterOptionForException = (exceptionId, filterId, optionValue) => {
-    setExceptions((prev) =>
-      prev.map((e) => {
-        if (e.id !== exceptionId) return e
-        if (isExceptionAdvancedFilterId(e.applyAt, filterId)) return e
-        const sel = e.filterSelections || {}
-        const arr = Array.isArray(sel[filterId]) ? sel[filterId] : []
-        const has = arr.includes(optionValue)
-        const newArr = has ? arr.filter((v) => v !== optionValue) : [...arr, optionValue]
-        return {
-          ...e,
-          filterSelections: { ...sel, [filterId]: newArr },
-        }
-      })
-    )
-  }
-
-  const selectAllFilterOptionsForException = (exceptionId, filterId, selectAll) => {
-    setExceptions((prev) =>
-      prev.map((e) => {
-        if (e.id !== exceptionId) return e
-        if (isExceptionAdvancedFilterId(e.applyAt, filterId)) return e
-        const def = getExceptionLevelFilterDef(e.applyAt, filterId)
-        if (!def?.options) return e
-        const sel = e.filterSelections || {}
-        return {
-          ...e,
-          filterSelections: {
-            ...sel,
-            [filterId]: selectAll ? [...def.options] : [],
-          },
-        }
-      })
-    )
-  }
-
-  const clearAllFiltersForException = (exceptionId) => {
-    const advId = `adv-${advancedRowNextId}`
-    const condId = `cond-${advancedConditionNextId}`
-    setAdvancedRowNextId((n) => n + 1)
-    setAdvancedConditionNextId((n) => n + 1)
+  const updateConditionField = (exceptionId, conditionId, field, value) => {
     setExceptions((prev) =>
       prev.map((e) =>
         e.id === exceptionId
           ? {
               ...e,
-              filtersDropdownOpen: false,
-              filtersPanelCategory: null,
-              filterValueSearchQuery: '',
-              advancedModeActive: false,
-              expandedAdvancedBoxId: null,
-              advancedRows: [{ id: advId, conditions: [{ id: condId, mainColumn: '', condition: '', value: '' }] }],
-              filterSelections: {},
+              conditions: e.conditions.map((c) => (c.id === conditionId ? { ...c, [field]: value } : c)),
             }
           : e
       )
     )
   }
 
-  /** Full exception title: "Exception [n]", "Exception [n]: [Level]", or "Exception [n]: [Level] — where …". */
+  const resetConditionFilters = (exceptionId, conditionId) => {
+    setExceptions((prev) =>
+      prev.map((e) =>
+        e.id === exceptionId
+          ? {
+              ...e,
+              conditions: e.conditions.map((c) =>
+                c.id === conditionId
+                  ? {
+                      ...c,
+                      filterType: '',
+                      scopeCategory: '',
+                      scopeValues: [],
+                      advancedColumn: '',
+                      advancedCondition: '',
+                      advancedValue: '',
+                    }
+                  : c
+              ),
+            }
+          : e
+      )
+    )
+  }
+
+  /** Exception [n], optionally first condition's level + filter fragments from all conditions. */
   const getExceptionDisplayName = (exc, excIdx) => {
     const n = excIdx + 1
     const prefix = `Exception ${n}`
-    const levelKey = exc.applyAt
-    if (!levelKey) return prefix
+    const conditions = exc.conditions || []
+    const firstApplyAt = conditions[0]?.applyAt
+    const levelLabel = firstApplyAt ? (APPLY_AT_DISPLAY_LABELS[firstApplyAt] ?? firstApplyAt) : ''
 
-    const levelLabel = APPLY_AT_DISPLAY_LABELS[levelKey] ?? levelKey
-    const clauses = collectExceptionFilterClausesForTitle(exc)
-    if (clauses.length === 0) return `${prefix}: ${levelLabel}`
-    return `${prefix}: ${levelLabel} — where ${clauses.join(' and ')}`
+    const parts = conditions.map((c) => conditionPartForExceptionTitle(c, firstApplyAt)).filter(Boolean)
+
+    if (parts.length === 0 && !levelLabel) return prefix
+    if (parts.length === 0) return `${prefix}: ${levelLabel}`
+    if (!levelLabel) return `${prefix}: ${parts.join(' and ')}`
+    return `${prefix}: ${levelLabel} — ${parts.join(' and ')}`
   }
-
-  const CONDITION_OPTIONS = [
-    'Equal to',
-    'Greater than',
-    'Lower than',
-    'Greater than or equal to',
-    'Lower than or equal to',
-  ]
 
   if (isCreateSchedulePage) {
     return (
@@ -1621,350 +1250,7 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                     </div>
                     {exc.expanded && (
                       <div className="px-4 pb-4 pt-0 flex flex-col gap-4 border-t border-[#e5e7eb]">
-                        <div className="flex flex-col gap-2 mt-4">
-                          <span className="text-[14px] font-medium text-[#0a0a0a]">Apply this exception at</span>
-                          <div className="relative w-full max-w-md">
-                            <select
-                              value={exc.applyAt ?? ''}
-                              onChange={(e) => setExceptionApplyAt(exc.id, e.target.value)}
-                              className="w-full h-10 py-2 pl-3 pr-9 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#0a0a0a] appearance-none"
-                            >
-                              <option value="" disabled>
-                                Select level...
-                              </option>
-                              <option value="trip">Trip</option>
-                              <option value="product">Product</option>
-                              <option value="sending_location">Sending location</option>
-                              <option value="receiving_location">Receiving location</option>
-                            </select>
-                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
-                              <IconChevronDownSelect />
-                            </span>
-                          </div>
-                          {!exc.applyAt && (
-                            <p className="text-[13px] text-[#9ca3af] italic">Select a level to configure filters</p>
-                          )}
-                        </div>
-                        {exc.applyAt && (
-                        <div className="flex flex-col gap-3 w-full">
-                          <div className="relative self-start">
-                            <button
-                              type="button"
-                              onClick={() => setExceptionFiltersDropdownOpen(exc.id, !exc.filtersDropdownOpen)}
-                              className="h-10 px-4 py-2 flex items-center gap-2 rounded-[4px] border border-[#E9EAEB] bg-white text-[14px] font-medium text-[#0a0a0a] hover:bg-[#f8f8f8]"
-                            >
-                              <IconFilterFunnel />
-                              Filters
-                            </button>
-                            {exc.filtersDropdownOpen && (
-                              <>
-                                <div
-                                  className="fixed inset-0 z-[9]"
-                                  aria-hidden
-                                  onClick={() => setExceptionFiltersDropdownOpen(exc.id, false)}
-                                />
-                                <div
-                                  className="absolute left-0 top-full mt-1 z-10 min-w-[480px] max-w-[calc(100vw-2rem)] max-h-[400px] rounded-[4px] border border-[#E9EAEB] bg-white shadow-lg overflow-hidden flex"
-                                  style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
-                                  onClick={(e) => e.stopPropagation()}
-                                >
-                                  {(() => {
-                                    const { product: productOpts, geographic: geoOpts, advanced: advOpts } = buildExceptionFilterGroups(exc.applyAt)
-                                    const cat = exc.filtersPanelCategory
-                                    const isScopeCategory = Boolean(
-                                      cat && !isExceptionAdvancedFilterId(exc.applyAt, cat) && getExceptionLevelFilterDef(exc.applyAt, cat)?.options
-                                    )
-                                    const scopeDef = isScopeCategory ? getExceptionLevelFilterDef(exc.applyAt, cat) : null
-                                    const selectedVals = scopeDef?.options || []
-                                    const q = (exc.filterValueSearchQuery || '').trim().toLowerCase()
-                                    const filteredVals = selectedVals.filter((name) => !q || name.toLowerCase().includes(q))
-                                    const selForCat = (exc.filterSelections || {})[cat] || []
-                                    const renderScopeRow = (opt) => {
-                                      const count = ((exc.filterSelections || {})[opt.id] || []).length
-                                      return (
-                                        <button
-                                          key={opt.id}
-                                          type="button"
-                                          onClick={() => selectExceptionFilterPanelCategory(exc.id, opt.id)}
-                                          className={`w-full flex items-center gap-1.5 text-left text-[13px] text-[#0a0a0a] py-2 px-3 rounded-[4px] hover:bg-[#f3f4f6] ${cat === opt.id ? 'bg-[#E8F0FE]' : ''}`}
-                                        >
-                                          <span className="truncate flex-1 min-w-0">{opt.label}</span>
-                                          {count > 0 && (
-                                            <span className="shrink-0 min-w-[18px] h-[18px] rounded-full bg-[#0267ff] text-white text-[10px] font-semibold flex items-center justify-center px-1">
-                                              {count}
-                                            </span>
-                                          )}
-                                        </button>
-                                      )
-                                    }
-                                    return (
-                                      <>
-                                        <div className="min-w-[160px] w-[160px] shrink-0 border-r border-[#e5e7eb] overflow-y-auto max-h-[400px] flex flex-col py-2 px-1.5">
-                                          <div className="border-b border-[#e5e7eb] pb-2 mb-0">
-                                            <div className="text-[13px] font-semibold text-[#0a0a0a] uppercase tracking-wide mb-1 mt-0">
-                                              Product
-                                            </div>
-                                            {productOpts.map((opt) => renderScopeRow(opt))}
-                                          </div>
-                                          <div className="border-b border-[#e5e7eb] pb-2">
-                                            <div className="text-[13px] font-semibold text-[#0a0a0a] uppercase tracking-wide mb-1 mt-3">
-                                              Geographic
-                                            </div>
-                                            {geoOpts.map((opt) => renderScopeRow(opt))}
-                                          </div>
-                                          {advOpts.length > 0 && (
-                                            <div className="border-b border-[#e5e7eb] pb-2 last:border-b-0">
-                                              <div className="text-[13px] font-semibold text-[#0a0a0a] uppercase tracking-wide mb-1 mt-3">
-                                                Advanced
-                                              </div>
-                                              {advOpts.map((opt) => (
-                                                <button
-                                                  key={opt.id}
-                                                  type="button"
-                                                  onClick={() => addAdvancedMetricForException(exc.id, opt.label)}
-                                                  className="w-full text-left text-[13px] text-[#0a0a0a] py-2 px-3 rounded-[4px] hover:bg-[#f3f4f6]"
-                                                >
-                                                  {opt.label}
-                                                </button>
-                                              ))}
-                                            </div>
-                                          )}
-                                        </div>
-                                        <div className="flex-1 min-w-0 flex flex-col min-h-0 max-h-[400px]">
-                                          {cat && scopeDef && (
-                                            <div className="flex flex-col flex-1 min-h-0 p-3">
-                                              <div className="flex items-center justify-between gap-2 shrink-0 mb-3">
-                                                <span className="text-[13px] font-semibold text-[#0a0a0a] truncate">{scopeDef.label}</span>
-                                                <button
-                                                  type="button"
-                                                  onClick={() =>
-                                                    selectAllFilterOptionsForException(
-                                                      exc.id,
-                                                      cat,
-                                                      selForCat.length < (scopeDef.options?.length || 0)
-                                                    )
-                                                  }
-                                                  className="text-[12px] font-medium text-[#0267ff] hover:underline shrink-0"
-                                                >
-                                                  Select all
-                                                </button>
-                                              </div>
-                                              <div className="relative shrink-0 mb-3">
-                                                <IconSearch className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-[#9ca3af] pointer-events-none" />
-                                                <input
-                                                  type="text"
-                                                  placeholder="Search"
-                                                  value={exc.filterValueSearchQuery || ''}
-                                                  onChange={(e) => setExceptionFilterValueSearchQuery(exc.id, e.target.value)}
-                                                  className="w-full h-9 pl-9 pr-3 rounded-[4px] border border-[#e5e7eb] bg-white text-[13px] text-[#0a0a0a] placeholder:text-[#9ca3af]"
-                                                />
-                                              </div>
-                                              <div className="flex-1 overflow-y-auto min-h-0 flex flex-col gap-1.5">
-                                                {filteredVals.map((name) => (
-                                                  <label key={name} className="flex items-center gap-2 text-[13px] text-[#0a0a0a] cursor-pointer">
-                                                    <input
-                                                      type="checkbox"
-                                                      checked={selForCat.includes(name)}
-                                                      onChange={() => toggleFilterOptionForException(exc.id, cat, name)}
-                                                      className="size-4 rounded border-[#d1d5db] text-[#0267ff] focus:ring-[#0267ff]"
-                                                    />
-                                                    <span>{name}</span>
-                                                  </label>
-                                                ))}
-                                              </div>
-                                            </div>
-                                          )}
-                                          {(!cat || !scopeDef) && (
-                                            <div className="p-3 text-[13px] text-[#9ca3af] flex flex-1 items-center justify-center min-h-[120px]">
-                                              Select a category
-                                            </div>
-                                          )}
-                                        </div>
-                                      </>
-                                    )
-                                  })()}
-                                </div>
-                              </>
-                            )}
-                          </div>
-                          {(() => {
-                            const { product, geographic } = buildExceptionFilterGroups(exc.applyAt)
-                            const onlyOneAdvBox = (exc.advancedRows?.length ?? 0) === 1
-                            const unifiedItems = []
-                            for (const opt of [...product, ...geographic]) {
-                              const sel = exc.filterSelections?.[opt.id]
-                              if (Array.isArray(sel) && sel.length > 0) {
-                                unifiedItems.push({ kind: 'scope', scopeId: opt.id, label: opt.label, selected: sel })
-                              }
-                            }
-                            exc.advancedRows?.forEach((box, bi) => {
-                              if (advancedBoxHasDisplayableContent(box, onlyOneAdvBox && bi === 0)) {
-                                unifiedItems.push({ kind: 'advanced', box })
-                              }
-                            })
-                            const hasClearable = unifiedItems.length > 0
-                            return (
-                              <>
-                                {hasClearable && (
-                                  <div className="flex flex-col w-full">
-                                    {unifiedItems.map((item, idx) => (
-                                      <div key={item.kind === 'scope' ? `scope-${item.scopeId}` : `adv-${item.box.id}`} className="w-full">
-                                        {idx > 0 && (
-                                          <div className="text-center py-1 text-[11px] font-medium text-[#9ca3af] uppercase tracking-wider">
-                                            AND
-                                          </div>
-                                        )}
-                                        {item.kind === 'scope' ? (
-                                          <div
-                                            role="button"
-                                            tabIndex={0}
-                                            onClick={() => openExceptionFiltersPanelToCategory(exc.id, item.scopeId)}
-                                            onKeyDown={(e) => {
-                                              if (e.key === 'Enter' || e.key === ' ') openExceptionFiltersPanelToCategory(exc.id, item.scopeId)
-                                            }}
-                                            className="flex items-start gap-3 rounded-[4px] border border-[#e5e7eb] bg-[#fafafa] px-4 py-3 cursor-pointer hover:bg-[#f4f4f4] transition-colors"
-                                          >
-                                            <span className="text-[13px] font-medium text-[#4b535c] shrink-0 w-[130px]">{item.label}</span>
-                                            <span className="text-[13px] text-[#0a0a0a] flex-1 min-w-0 break-words">
-                                              {formatScopeConditionValuesText(item.selected)}
-                                            </span>
-                                            <button
-                                              type="button"
-                                              className="shrink-0 h-8 w-8 flex items-center justify-center rounded-[4px] text-[#4b535c] hover:bg-[#e5e7eb] hover:text-[#0a0a0a]"
-                                              aria-label="Remove filter"
-                                              onClick={(e) => {
-                                                e.stopPropagation()
-                                                clearExceptionScopeCategorySelections(exc.id, item.scopeId)
-                                              }}
-                                            >
-                                              <IconClose className="size-4" />
-                                            </button>
-                                          </div>
-                                        ) : (
-                                          <div className="rounded-[4px] border border-[#e5e7eb] bg-[#fafafa] overflow-hidden">
-                                            <div
-                                              role="button"
-                                              tabIndex={0}
-                                              onClick={() => toggleExceptionExpandedAdvancedBox(exc.id, item.box.id)}
-                                              onKeyDown={(e) => {
-                                                if (e.key === 'Enter' || e.key === ' ') toggleExceptionExpandedAdvancedBox(exc.id, item.box.id)
-                                              }}
-                                              className="flex items-start gap-3 px-4 py-3 cursor-pointer hover:bg-[#f4f4f4] transition-colors"
-                                            >
-                                              <span className="text-[13px] font-medium text-[#4b535c] shrink-0 w-[130px]">Where</span>
-                                              <span className="text-[13px] text-[#0a0a0a] flex-1 min-w-0 break-words">
-                                                {getAdvancedBoxReadableSummary(item.box) ||
-                                                  (item.box.conditions[0]?.mainColumn ? `${item.box.conditions[0].mainColumn}…` : '—')}
-                                              </span>
-                                              <button
-                                                type="button"
-                                                className="shrink-0 h-8 w-8 flex items-center justify-center rounded-[4px] text-[#4b535c] hover:bg-[#e5e7eb] hover:text-[#0a0a0a]"
-                                                aria-label="Remove condition"
-                                                onClick={(e) => {
-                                                  e.stopPropagation()
-                                                  removeAdvancedBoxFromException(exc.id, item.box.id)
-                                                }}
-                                              >
-                                                <IconClose className="size-4" />
-                                              </button>
-                                            </div>
-                                            {exc.expandedAdvancedBoxId === item.box.id && (
-                                              <div className="border-t border-[#e5e7eb] bg-white px-4 pb-4 pt-3 space-y-4">
-                                                {item.box.conditions.map((cond, condIdx) => (
-                                                  <div key={cond.id} className="flex flex-col gap-2">
-                                                    {condIdx > 0 && (
-                                                      <span className="text-[12px] font-normal text-[#878D94]">and</span>
-                                                    )}
-                                                    <div className="flex flex-wrap gap-2 items-end">
-                                                      <div className="flex flex-col gap-0.5 flex-1 min-w-[140px]">
-                                                        <label className="text-[12px] font-normal text-[#4b535c]">Main column</label>
-                                                        <div className="relative">
-                                                          <select
-                                                            value={cond.mainColumn}
-                                                            onChange={(e) =>
-                                                              updateAdvancedApprovalCondition(exc.id, item.box.id, cond.id, 'mainColumn', e.target.value)
-                                                            }
-                                                            className="w-full h-10 py-2 pl-3 pr-9 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#0a0a0a] appearance-none"
-                                                          >
-                                                            <option value="">Select</option>
-                                                            {(MAIN_COLUMN_OPTIONS_BY_LEVEL[exc.applyAt] || []).map((o) => (
-                                                              <option key={o} value={o}>
-                                                                {o}
-                                                              </option>
-                                                            ))}
-                                                          </select>
-                                                          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
-                                                            <IconChevronDownSelect />
-                                                          </span>
-                                                        </div>
-                                                      </div>
-                                                      <div className="flex flex-col gap-0.5 flex-1 min-w-[140px]">
-                                                        <label className="text-[12px] font-normal text-[#4b535c]">Condition</label>
-                                                        <div className="relative">
-                                                          <select
-                                                            value={cond.condition}
-                                                            onChange={(e) =>
-                                                              updateAdvancedApprovalCondition(exc.id, item.box.id, cond.id, 'condition', e.target.value)
-                                                            }
-                                                            className="w-full h-10 py-2 pl-3 pr-9 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#0a0a0a] appearance-none"
-                                                          >
-                                                            <option value="">Select</option>
-                                                            {CONDITION_OPTIONS.map((o) => (
-                                                              <option key={o} value={o}>
-                                                                {o}
-                                                              </option>
-                                                            ))}
-                                                          </select>
-                                                          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
-                                                            <IconChevronDownSelect />
-                                                          </span>
-                                                        </div>
-                                                      </div>
-                                                      <div className="flex flex-col gap-0.5 flex-1 min-w-[120px]">
-                                                        <label className="text-[12px] font-normal text-[#4b535c]">Enter a value</label>
-                                                        <input
-                                                          type="text"
-                                                          placeholder="Enter a value"
-                                                          value={cond.value}
-                                                          onChange={(e) =>
-                                                            updateAdvancedApprovalCondition(exc.id, item.box.id, cond.id, 'value', e.target.value)
-                                                          }
-                                                          className="w-full h-10 py-2 px-3 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#0a0a0a]"
-                                                        />
-                                                      </div>
-                                                      {item.box.conditions.length > 1 && (
-                                                        <button
-                                                          type="button"
-                                                          onClick={() => removeConditionFromBox(exc.id, item.box.id, cond.id)}
-                                                          className="h-10 w-10 flex items-center justify-center rounded-[4px] text-[#4b535c] hover:bg-[#e5e7eb] shrink-0 mb-0.5"
-                                                          aria-label="Remove condition"
-                                                        >
-                                                          <IconClose className="size-4" />
-                                                        </button>
-                                                      )}
-                                                    </div>
-                                                  </div>
-                                                ))}
-                                              </div>
-                                            )}
-                                          </div>
-                                        )}
-                                      </div>
-                                    ))}
-                                    <button
-                                      type="button"
-                                      onClick={() => clearAllFiltersForException(exc.id)}
-                                      className="self-start text-[13px] font-medium text-[#4b535c] hover:text-[#0a0a0a] hover:underline mt-1"
-                                    >
-                                      Clear filters
-                                    </button>
-                                  </div>
-                                )}
-                              </>
-                            )
-                          })()}
-                        </div>
-                        )}
+                        <p className="text-[13px] text-[#9ca3af] mt-4">Conditions will be rendered here</p>
                       </div>
                     )}
                   </div>
