@@ -1507,30 +1507,6 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                   <div className="flex items-center gap-3 mt-3">
                     <button
                       type="button"
-                      className="h-10 px-5 rounded-[6px] border border-[#E9EAEB] bg-white text-[14px] font-medium text-[#0a0a0a] hover:bg-[#f8f8f8] flex items-center gap-2"
-                    >
-                      <svg
-                        width="16"
-                        height="16"
-                        viewBox="0 0 16 16"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="shrink-0"
-                        aria-hidden
-                      >
-                        <path
-                          d="M8 11.5V4M8 4L5.5 6.5M8 4L10.5 6.5"
-                          stroke="currentColor"
-                          strokeWidth="1.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                        <path d="M3.5 13h9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                      </svg>
-                      Upload
-                    </button>
-                    <button
-                      type="button"
                       className="h-10 px-5 rounded-[6px] bg-[#0267FF] text-white text-[14px] font-medium hover:bg-[#0252cc] flex items-center gap-2"
                     >
                       <svg
@@ -1552,6 +1528,30 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                         <path d="M3.5 13h9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
                       </svg>
                       Download template
+                    </button>
+                    <button
+                      type="button"
+                      className="h-10 px-5 rounded-[6px] border border-[#E9EAEB] bg-white text-[14px] font-medium text-[#0a0a0a] hover:bg-[#f8f8f8] flex items-center gap-2"
+                    >
+                      <svg
+                        width="16"
+                        height="16"
+                        viewBox="0 0 16 16"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="shrink-0"
+                        aria-hidden
+                      >
+                        <path
+                          d="M8 11.5V4M8 4L5.5 6.5M8 4L10.5 6.5"
+                          stroke="currentColor"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                        <path d="M3.5 13h9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                      </svg>
+                      Upload
                     </button>
                   </div>
                 </section>
