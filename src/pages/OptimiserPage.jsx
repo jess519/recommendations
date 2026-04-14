@@ -1945,7 +1945,7 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-0">
       {pinnedHoverEntryId && activeStatusTab === 'upcoming' && (
         <div role="presentation" className="fixed inset-0 z-40" onClick={() => { setPinnedHoverEntryId(null); setPinnedHoverCellKey(null) }} aria-hidden />
       )}
@@ -1959,7 +1959,7 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
               onClick={() => setActiveStatusTab(tab.id)}
               className={`pb-2 text-[14px] font-medium border-b-2 ${
                 isActive
-                  ? 'text-[#0a0a0a] border-[#0267ff]'
+                  ? 'text-[#0a0a0a] border-[#2EB8C2]'
                   : 'text-[#4b535c] border-transparent hover:text-[#0a0a0a]'
               }`}
             >
@@ -1970,7 +1970,7 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
       </nav>
       {activeStatusTab === 'upcoming' ? (
         <>
-          <div className="flex flex-col gap-6" data-name="Optimiser" data-node-id="174:2696">
+          <div className="mt-6 flex flex-col gap-6" data-name="Optimiser" data-node-id="174:2696">
             <div>
               <p className="text-[16px] font-medium text-[#0a0a0a] leading-tight">Optimiser Schedule & jobs</p>
               <p className="text-[14px] font-normal text-[#4b535c]">Perform all job and schedule actions for all your upcoming inventory</p>
@@ -2347,7 +2347,7 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
           </div>
         </>
       ) : activeStatusTab === 'next' ? (
-        <div className="mt-3 space-y-4">
+        <div className="mt-[10px] space-y-4">
           {sortedNextSchedules.map((schedule) => {
             const deadlineDate = parseDate(schedule.deadline)
             const isDeadlinePast = deadlineDate < today
@@ -2376,8 +2376,8 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                   )
                 case 'transfers':
                   return iconBox(
-                    'bg-[#f5f3ff]',
-                    <Network className={`${iconClass} text-[#7c3aed]`} strokeWidth={1.75} aria-hidden />
+                    'bg-[#EFEFFD]',
+                    <Network className={`${iconClass} text-[#6864E6]`} strokeWidth={1.75} aria-hidden />
                   )
                 case 'revenue':
                   return iconBox(
@@ -2396,13 +2396,11 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
             return (
             <div
               key={schedule.id}
-              className="bg-white border border-[#EAEAEA] rounded-[3.42px] p-5 flex flex-col gap-4 w-full"
+              className={`bg-white border border-[#EAEAEA] rounded-[3.42px] p-5 flex flex-col gap-4 w-full${onOpenScheduleDetail ? ' group cursor-pointer' : ''}`}
+              onClick={() => onOpenScheduleDetail && onOpenScheduleDetail(schedule)}
             >
               <div className="flex flex-wrap items-start justify-between gap-3">
-                <div
-                  className="group flex flex-wrap items-center gap-2 min-w-0 cursor-pointer"
-                  onClick={() => onOpenScheduleDetail && onOpenScheduleDetail(schedule)}
-                >
+                <div className="flex flex-wrap items-center gap-2 min-w-0">
                   <h2 className="text-lg md:text-xl font-medium text-[#0a0a0a] group-hover:text-[#3b82f6]">
                     {schedule.name}
                   </h2>
@@ -2471,7 +2469,7 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                 </div>
                 <div className="h-2 w-full rounded-full bg-[#e5e7eb] overflow-hidden" role="progressbar" aria-valuenow={rp.percent} aria-valuemin={0} aria-valuemax={100}>
                   <div
-                    className="h-full rounded-full bg-[#3b82f6] transition-[width] duration-300"
+                    className="h-full rounded-full bg-[#2EB8C2] transition-[width] duration-300"
                     style={{ width: `${Math.min(100, Math.max(0, rp.percent))}%` }}
                   />
                 </div>

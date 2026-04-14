@@ -16,7 +16,7 @@ export default function ScopePage() {
   const [tripType, setTripType] = useState('rebalancing')
   const [includeZeroTransfers, setIncludeZeroTransfers] = useState(true)
   return (
-    <div className="pt-6 flex flex-col gap-6">
+    <div className="pt-0 flex flex-col gap-6">
       <div className="rounded-[10px] overflow-hidden">
         <div className="flex flex-wrap items-start justify-between gap-4 p-4">
           <div className="flex gap-6">
