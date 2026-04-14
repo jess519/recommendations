@@ -667,6 +667,7 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
   const [recurrenceSubmissionDayOfMonth, setRecurrenceSubmissionDayOfMonth] = useState(1)
   const [recurrenceSubmissionDateYear, setRecurrenceSubmissionDateYear] = useState('')
   const [recurrenceSubmissionTime, setRecurrenceSubmissionTime] = useState('09:00')
+  const [submissionDate, setSubmissionDate] = useState('')
   const reviewStatusFilterOptions = [
     { id: 'in review', label: 'In review' },
     { id: 'upcoming', label: 'Upcoming' },
@@ -1250,6 +1251,19 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                   )}
 
                   <div className="flex flex-col gap-2">
+                    <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Submission date</label>
+                    <input
+                      type="date"
+                      value={submissionDate}
+                      onChange={(e) => setSubmissionDate(e.target.value)}
+                      className="h-12 w-[200px] px-4 rounded-[4px] border border-[#EAEAEA] bg-white text-[16px] text-[#0a0a0a]"
+                    />
+                    <p className="text-[12px] text-[#4b535c]">
+                      The deadline by which all approved recommendations will be submitted
+                    </p>
+                  </div>
+
+                  <div className="flex flex-col gap-2">
                     <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Submission time</label>
                     <div className="relative max-w-[200px]">
                       <select
@@ -1277,16 +1291,33 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                       const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
                       const dayName = dayNames[recurrenceSubmissionDayOfWeek]
                       const timeStr = ` at ${recurrenceSubmissionTime}`
+                      let body = ''
                       if (recurrenceRepeatUnit === 'week') {
-                        return `${recurrenceRepeatEvery} ${recurrenceRepeatEvery === 1 ? unit.slice(0, -1) : unit} on ${dayName}${timeStr}`
+                        body = `${recurrenceRepeatEvery} ${recurrenceRepeatEvery === 1 ? unit.slice(0, -1) : unit} on ${dayName}`
+                      } else if (recurrenceRepeatUnit === 'month') {
+                        body = `${recurrenceRepeatEvery} ${recurrenceRepeatEvery === 1 ? 'month' : unit} on day ${recurrenceSubmissionDayOfMonth}`
+                      } else if (recurrenceRepeatUnit === 'year') {
+                        body = recurrenceSubmissionDateYear
+                          ? `${recurrenceRepeatEvery} ${recurrenceRepeatEvery === 1 ? 'year' : unit} on ${recurrenceSubmissionDateYear}`
+                          : `${recurrenceRepeatEvery} ${recurrenceRepeatEvery === 1 ? 'year' : unit}`
+                      } else {
+                        body = `${recurrenceRepeatEvery} ${recurrenceRepeatEvery === 1 ? 'day' : unit}`
                       }
-                      if (recurrenceRepeatUnit === 'month') {
-                        return `${recurrenceRepeatEvery} ${recurrenceRepeatEvery === 1 ? 'month' : unit} on day ${recurrenceSubmissionDayOfMonth}${timeStr}`
+                      const formatSubmissionDate = (iso) => {
+                        if (!iso) return ''
+                        const p = iso.split('-')
+                        if (p.length !== 3) return iso
+                        const [y, m, d] = p
+                        return `${d.padStart(2, '0')}/${m.padStart(2, '0')}/${y}`
                       }
-                      if (recurrenceRepeatUnit === 'year') {
-                        return recurrenceSubmissionDateYear ? `${recurrenceRepeatEvery} ${recurrenceRepeatEvery === 1 ? 'year' : unit} on ${recurrenceSubmissionDateYear}${timeStr}` : `${recurrenceRepeatEvery} ${recurrenceRepeatEvery === 1 ? 'year' : unit}`
+                      const dateFmt = formatSubmissionDate(submissionDate)
+                      if (submissionDate && dateFmt) {
+                        return `${body}, next submission ${dateFmt} at ${recurrenceSubmissionTime}`
                       }
-                      return `${recurrenceRepeatEvery} ${recurrenceRepeatEvery === 1 ? 'day' : unit}${timeStr}`
+                      if (recurrenceRepeatUnit === 'year' && !recurrenceSubmissionDateYear) {
+                        return body
+                      }
+                      return `${body}${timeStr}`
                     })()}
                   </p>
                 </section>
