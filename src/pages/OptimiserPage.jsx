@@ -662,6 +662,8 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
     exceptions: false,
   })
   const [locationScopeOption, setLocationScopeOption] = useState('all')
+  const [selectedMovementTypes, setSelectedMovementTypes] = useState([])
+  const [movementTypeDropdownOpen, setMovementTypeDropdownOpen] = useState(false)
   const [geoFilterOpen, setGeoFilterOpen] = useState(() => ({ ...DEFAULT_GEO_SCOPE_FILTER_OPEN }))
   const [exceptions, setExceptions] = useState(() => [
     {
@@ -1354,26 +1356,61 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                 <section className="flex flex-col gap-2">
                   <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Movement type</label>
                   <div className="relative">
-                    <select
-                      value={drawerForm.module}
-                      onChange={(ev) =>
-                        setDrawerForm((f) => ({
-                          ...f,
-                          module: ev.target.value,
-                        }))
-                      }
-                      className="w-full h-14 pl-4 pr-10 rounded-[4px] border border-[#EAEAEA] bg-white text-[16px] text-[#0a0a0a] appearance-none"
+                    <button
+                      type="button"
+                      onClick={() => setMovementTypeDropdownOpen((o) => !o)}
+                      className="w-full h-14 pl-4 pr-10 rounded-[4px] border border-[#EAEAEA] bg-white text-[16px] text-[#0a0a0a] text-left flex items-center min-w-0"
                     >
-                      <option value="">Select</option>
-                      {MODULE_OPTIONS.map((opt) => (
-                        <option key={opt.id} value={opt.id}>
-                          {opt.label}
-                        </option>
-                      ))}
-                    </select>
+                      <span
+                        className={`min-w-0 flex-1 truncate text-left ${selectedMovementTypes.length === 0 ? 'text-[#4b535c]' : 'text-[#0a0a0a]'}`}
+                      >
+                        {selectedMovementTypes.length === 0
+                          ? 'Select'
+                          : selectedMovementTypes
+                              .map((id) => MODULE_OPTIONS.find((o) => o.id === id)?.label)
+                              .filter(Boolean)
+                              .join(', ')}
+                      </span>
+                    </button>
                     <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
                       <IconChevronDownSelect />
                     </span>
+                    {movementTypeDropdownOpen && (
+                      <>
+                        <div
+                          role="presentation"
+                          className="fixed inset-0 z-[29]"
+                          onClick={() => setMovementTypeDropdownOpen(false)}
+                          aria-hidden
+                        />
+                        <div
+                          className="absolute left-0 right-0 top-full z-[30] mt-1 rounded-[4px] border border-[#EAEAEA] bg-white shadow-[0px_8px_25px_0px_rgba(0,0,0,0.12)] overflow-hidden"
+                          onClick={(e) => e.stopPropagation()}
+                          role="presentation"
+                        >
+                          {MODULE_OPTIONS.map((opt) => (
+                            <label
+                              key={opt.id}
+                              className="px-4 py-3 flex items-center gap-3 hover:bg-[#f8f8f8] text-[14px] text-[#0a0a0a] cursor-pointer"
+                            >
+                              <input
+                                type="checkbox"
+                                checked={selectedMovementTypes.includes(opt.id)}
+                                onChange={() =>
+                                  setSelectedMovementTypes((prev) =>
+                                    prev.includes(opt.id)
+                                      ? prev.filter((id) => id !== opt.id)
+                                      : [...prev, opt.id]
+                                  )
+                                }
+                                className="size-4 rounded border-[#d1d5db] text-[#0267ff] focus:ring-[#0267ff] shrink-0"
+                              />
+                              <span>{opt.label}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </>
+                    )}
                   </div>
                 </section>
 
@@ -1583,11 +1620,6 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
             </button>
             {accordionOpen.exceptions && (
               <div className="px-5 pb-6 pt-2 flex flex-col gap-4 border-t border-[#EAEAEA]">
-                <p className="text-[13px] text-[#4b535c]">
-                  All recommendations generated for this schedule will be auto-approved by default and submitted on the
-                  deadline. Define exception rules below to flag specific recommendations for manual review before
-                  submission.
-                </p>
                 {exceptions.map((exc, excIdx) => {
                   const exceptionTitleFull = getExceptionDisplayName(exc, excIdx)
                   const exceptionTitleDisplay = truncateExceptionTitleDisplay(exceptionTitleFull)
