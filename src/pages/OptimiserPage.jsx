@@ -661,7 +661,6 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
     scope: false,
     exceptions: false,
   })
-  const [networkConfig, setNetworkConfig] = useState('')
   const [locationScopeOption, setLocationScopeOption] = useState('all')
   const [geoFilterOpen, setGeoFilterOpen] = useState(() => ({ ...DEFAULT_GEO_SCOPE_FILTER_OPEN }))
   const [exceptions, setExceptions] = useState(() => [
@@ -1378,30 +1377,6 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                   </div>
                 </section>
 
-                <section className="flex flex-col gap-2">
-                  <h3 className="text-[14px] font-medium text-[#0a0a0a]">Network configuration</h3>
-                  <div className="relative w-full max-w-[400px]">
-                    <select
-                      id="geo-network-config"
-                      value={networkConfig}
-                      onChange={(ev) => setNetworkConfig(ev.target.value)}
-                      className="h-12 w-full max-w-[400px] px-4 pr-10 rounded-[4px] border border-[#EAEAEA] bg-white text-[16px] text-[#0a0a0a] appearance-none"
-                    >
-                      <option value="" disabled>
-                        Select configuration...
-                      </option>
-                      <option value="paris-weekly-rebal">Paris weekly rebal</option>
-                      <option value="france-monthly-rebal">France monthly rebal</option>
-                    </select>
-                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
-                      <IconChevronDownSelect />
-                    </span>
-                  </div>
-                  <p className="text-[12px] text-[#4b535c]">
-                    Select the network and trip configuration that reflects the logistics for this schedule.
-                  </p>
-                </section>
-
                 <section className="flex flex-col gap-3">
                   <h3 className="text-[14px] font-medium text-[#0a0a0a]">
                     Which locations should receive recommendations?
@@ -1521,6 +1496,65 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                     </div>
                   </section>
                 )}
+
+                <section className="border-t border-[#e5e7eb] pt-5 mt-5 flex flex-col gap-2">
+                  <h3 className="text-[14px] font-medium text-[#0a0a0a]">Network configuration</h3>
+                  <p className="text-[13px] text-[#4b535c] max-w-[600px]">
+                    We&apos;ll default to your global network configuration. If the network set-up is different for this
+                    schedule, download the template for your location scope, update it, and upload the specific
+                    configuration.
+                  </p>
+                  <div className="flex items-center gap-3 mt-3">
+                    <button
+                      type="button"
+                      className="h-10 px-5 rounded-[6px] border border-[#E9EAEB] bg-white text-[14px] font-medium text-[#0a0a0a] hover:bg-[#f8f8f8] flex items-center gap-2"
+                    >
+                      <svg
+                        width="16"
+                        height="16"
+                        viewBox="0 0 16 16"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="shrink-0"
+                        aria-hidden
+                      >
+                        <path
+                          d="M8 11.5V4M8 4L5.5 6.5M8 4L10.5 6.5"
+                          stroke="currentColor"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                        <path d="M3.5 13h9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                      </svg>
+                      Upload
+                    </button>
+                    <button
+                      type="button"
+                      className="h-10 px-5 rounded-[6px] bg-[#0267FF] text-white text-[14px] font-medium hover:bg-[#0252cc] flex items-center gap-2"
+                    >
+                      <svg
+                        width="16"
+                        height="16"
+                        viewBox="0 0 16 16"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="shrink-0"
+                        aria-hidden
+                      >
+                        <path
+                          d="M8 3.5v6M8 9.5l-2.5 2.5M8 9.5l2.5 2.5"
+                          stroke="currentColor"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                        <path d="M3.5 13h9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                      </svg>
+                      Download template
+                    </button>
+                  </div>
+                </section>
               </div>
             )}
           </div>
