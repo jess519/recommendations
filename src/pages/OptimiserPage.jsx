@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { Truck, Network, TrendingUp, ShieldCheck } from 'lucide-react'
-import { IconCalendarSidebar, IconPlus, IconReplenishment, IconReorder, IconRebalancing, IconChevronDown, IconList, IconCalendarNote, IconTruck, IconTrendUp, IconLightbulb, IconEdit, IconClose, IconChevronDownSelect, IconArrowLeft, IconFilterFunnel, IconSearch } from '../components/icons'
+import { IconCalendarSidebar, IconPlus, IconReplenishment, IconReorder, IconRebalancing, IconChevronDown, IconList, IconCalendarNote, IconTruck, IconTrendUp, IconLightbulb, IconEdit, IconClose, IconChevronDownSelect, IconArrowLeft, IconSearch } from '../components/icons'
 
 const SAMPLE_CALENDAR_ENTRY = {
   id: 'entry-1',
@@ -100,6 +100,504 @@ const CALENDAR_ENTRIES = [
   SAMPLE_CALENDAR_ENTRY_REBALANCING_3,
 ]
 
+/** Shared sample values for Create schedule scope filters + exception scope filters */
+const FILTER_SAMPLE_VALUES = {
+  class: ['Accessories', 'Bags', 'Shoes', 'Ready-to-wear', 'Leather goods'],
+  department: ['Accessories Men', 'Accessories Women'],
+  gender: ['Men', 'Women', 'Unisex'],
+  product: ['A1252810', 'A12528YY', 'A13314YY', 'B2045100', 'C3091522'],
+  season: ['Fw16', 'Fw18', 'Fw19', 'Ss20', 'Fw24', 'Ss25'],
+  style: [
+    'Angel Pouch Denim Monogram',
+    'Angel Pouch Grained Leather',
+    'Angel Pouch Wings Cow Burnish',
+    'Angel Pouch Wrinkled Patent',
+    'Angel Tote Denim Monogram',
+    'Angel Tote Monogram',
+    'Angel Tote Voltaire',
+    'Angel Tote Wings Cow Burnish',
+    'Angel Tote Wrinkled Patent',
+  ],
+  subDepartment: ['Leather Good', 'Other Acc', 'Perfume Cosmet', 'Shoes'],
+  events: ['25w Carry Over', 'Fw24 Access Out', 'Fw24 Carry Out', 'Fw24 Stc Out', 'Fw25 Drop 1a', 'Fw25 Drop 2a', 'Fw25 Drop 3a', 'Fw25 Drop 4a'],
+  location: ['Opéra', 'Cannes', 'G.I cap 3000', 'Printemps toulon', 'Marais'],
+  region: ['Europe', 'North America', 'Asia Pacific'],
+  locationType: ['Boutique', 'Outlet', 'Department store', 'E-commerce'],
+  countries: ['France', 'Italy', 'UK', 'Germany', 'Spain'],
+  articles: ['ART-001', 'ART-002', 'ART-003', 'ART-004', 'ART-005'],
+  brand: ['Brand A', 'Brand B', 'Brand C'],
+  size: ['XS', 'S', 'M', 'L', 'XL'],
+  manufacturer: ['Manufacturer A', 'Manufacturer B', 'Manufacturer C'],
+  collectionTypes: ['Permanent', 'Seasonal', 'Limited edition', 'Capsule'],
+  currentWarehouse: ['WH Paris', 'WH Lyon', 'WH London'],
+}
+
+const ADV_FILTER_OPTION_SAMPLES = ['10', '50', '100', '500']
+
+/** Create schedule — geographic scope (destination filters when "Select locations") */
+const GEO_SCOPE_LOCATION_TYPES = ['Boutique', 'Outlet', 'Department store', 'E-commerce', 'Warehouse']
+const GEO_SCOPE_REGIONS = ['Europe', 'North America', 'Asia Pacific', 'Africa']
+const GEO_SCOPE_COUNTRIES = [
+  'France',
+  'Italy',
+  'UK',
+  'Germany',
+  'Spain',
+  'United States',
+  'Canada',
+  'Japan',
+  'South Korea',
+  'Singapore',
+  'South Africa',
+]
+const GEO_SCOPE_CITIES = [
+  'Paris',
+  'Lyon',
+  'Marseille',
+  'Bordeaux',
+  'Lille',
+  'Strasbourg',
+  'Nancy',
+  'Cannes',
+  'Berlin',
+  'Oslo',
+  'Madrid',
+  'London',
+  'Manchester',
+  'Montreal',
+  'Ottawa',
+  'Toronto',
+  'Cape Town',
+  'Tokyo',
+  'Kyoto',
+]
+const GEO_SCOPE_LOCATIONS = [
+  'Paris Store',
+  'Cannes Store',
+  'Lille Store',
+  'Lyon Store',
+  'Marseille Store',
+  'Nancy Store',
+  'Strasbourg Store',
+  'Bordeaux',
+  'Berlin Store',
+  'Oslo Store',
+  'Madrid Store',
+  'London Store',
+  'Manchester Store',
+  'Montreal Store',
+  'Ottawa Store',
+  'Toronto Store',
+  'Cape Town Store',
+  'Tokyo Store',
+  'Kyoto Store',
+]
+const GEO_SCOPE_VALUES_BY_ROW = {
+  locationTypes: GEO_SCOPE_LOCATION_TYPES,
+  regions: GEO_SCOPE_REGIONS,
+  countries: GEO_SCOPE_COUNTRIES,
+  cities: GEO_SCOPE_CITIES,
+  locations: GEO_SCOPE_LOCATIONS,
+}
+const DEFAULT_GEO_SCOPE_FILTER_OPEN = {
+  locationTypes: false,
+  regions: false,
+  countries: false,
+  cities: false,
+  locations: false,
+}
+
+const fe = (id, label, options) => ({ id, label, options })
+
+const EXC_SCOPE_TRIP = [
+  fe('class', 'Class', FILTER_SAMPLE_VALUES.class),
+  fe('department', 'Department', FILTER_SAMPLE_VALUES.department),
+  fe('gender', 'Gender', FILTER_SAMPLE_VALUES.gender),
+  fe('product', 'Product', FILTER_SAMPLE_VALUES.product),
+  fe('season', 'Season', FILTER_SAMPLE_VALUES.season),
+  fe('style', 'Style', FILTER_SAMPLE_VALUES.style),
+  fe('subDepartment', 'Sub-department', FILTER_SAMPLE_VALUES.subDepartment),
+  fe('events', 'Events', FILTER_SAMPLE_VALUES.events),
+  fe('location', 'Location', FILTER_SAMPLE_VALUES.location),
+  fe('region', 'Region', FILTER_SAMPLE_VALUES.region),
+  fe('locationType', 'Location type', FILTER_SAMPLE_VALUES.locationType),
+  fe('countries', 'Countries', FILTER_SAMPLE_VALUES.countries),
+  fe('articles', 'Articles', FILTER_SAMPLE_VALUES.articles),
+  fe('brand', 'Brand', FILTER_SAMPLE_VALUES.brand),
+]
+const EXC_SCOPE_PRODUCT = [
+  ...EXC_SCOPE_TRIP.slice(0, 8),
+  fe('size', 'Size', FILTER_SAMPLE_VALUES.size),
+  ...EXC_SCOPE_TRIP.slice(8),
+  fe('manufacturer', 'Manufacturer', FILTER_SAMPLE_VALUES.manufacturer),
+  fe('collectionTypes', 'Collection types', FILTER_SAMPLE_VALUES.collectionTypes),
+]
+const EXC_SCOPE_SEND_RECV = [
+  ...EXC_SCOPE_TRIP.slice(0, 8),
+  fe('collectionTypes', 'Collection types', FILTER_SAMPLE_VALUES.collectionTypes),
+  fe('brand', 'Brand', FILTER_SAMPLE_VALUES.brand),
+  fe('articles', 'Articles', FILTER_SAMPLE_VALUES.articles),
+  fe('region', 'Region', FILTER_SAMPLE_VALUES.region),
+  fe('locationType', 'Location type', FILTER_SAMPLE_VALUES.locationType),
+  fe('sendingLocations', 'Sending locations', FILTER_SAMPLE_VALUES.location),
+  fe('receivingLocations', 'Receiving locations', FILTER_SAMPLE_VALUES.location),
+  fe('sendingCountries', 'Sending countries', FILTER_SAMPLE_VALUES.countries),
+  fe('receivingCountries', 'Receiving countries', FILTER_SAMPLE_VALUES.countries),
+]
+
+const EXC_ADV_TRIP = [fe('transferUnits', 'Transfer units', ADV_FILTER_OPTION_SAMPLES)]
+
+const EXC_ADV_PRODUCT = [
+  fe('currentUnits', 'Current units', ADV_FILTER_OPTION_SAMPLES),
+  fe('forecast', 'Forecast', ADV_FILTER_OPTION_SAMPLES),
+  fe('transferUnits', 'Transfer units', ADV_FILTER_OPTION_SAMPLES),
+  fe('currentWarehouse', 'Current warehouse', FILTER_SAMPLE_VALUES.currentWarehouse),
+  fe('last7DaysSales', 'Last 7 days sales', ADV_FILTER_OPTION_SAMPLES),
+  fe('last30DaysSales', 'Last 30 days sales', ADV_FILTER_OPTION_SAMPLES),
+  fe('understocksBefore', 'Understocks before', ADV_FILTER_OPTION_SAMPLES),
+  fe('understocksAfter', 'Understocks after', ADV_FILTER_OPTION_SAMPLES),
+  fe('overstocksBefore', 'Overstocks before', ADV_FILTER_OPTION_SAMPLES),
+  fe('overstocksAfter', 'Overstocks after', ADV_FILTER_OPTION_SAMPLES),
+  fe('salesUplift', 'Sales uplift', ADV_FILTER_OPTION_SAMPLES),
+]
+
+const EXC_ADV_SENDING = EXC_ADV_PRODUCT.filter((f) => f.id !== 'currentWarehouse')
+
+const EXC_ADV_RECEIVING = EXC_ADV_PRODUCT
+
+const EXCEPTION_FILTER_OPTIONS_BY_LEVEL = {
+  trip: { scope: EXC_SCOPE_TRIP, advanced: EXC_ADV_TRIP },
+  product: { scope: EXC_SCOPE_PRODUCT, advanced: EXC_ADV_PRODUCT },
+  sending_location: { scope: EXC_SCOPE_SEND_RECV, advanced: EXC_ADV_SENDING },
+  receiving_location: { scope: EXC_SCOPE_SEND_RECV, advanced: EXC_ADV_RECEIVING },
+}
+
+function getExceptionLevelConfig(applyAt) {
+  if (!applyAt || !EXCEPTION_FILTER_OPTIONS_BY_LEVEL[applyAt]) return { scope: [], advanced: [] }
+  return EXCEPTION_FILTER_OPTIONS_BY_LEVEL[applyAt]
+}
+
+function getAllExceptionLevelFilters(applyAt) {
+  const { scope, advanced } = getExceptionLevelConfig(applyAt)
+  return [...scope, ...advanced]
+}
+
+function getExceptionLevelFilterDef(applyAt, filterId) {
+  return getAllExceptionLevelFilters(applyAt).find((f) => f.id === filterId)
+}
+
+const APPLY_AT_DISPLAY_LABELS = {
+  trip: 'Trip',
+  product: 'Product',
+  sending_location: 'Sending location',
+  receiving_location: 'Receiving location',
+}
+
+/** Maps applyAt select values to FILTERS_BY_LEVEL keys */
+const APPLY_AT_TO_FILTERS_LEVEL = {
+  trip: 'Trip',
+  product: 'Product',
+  sending_location: 'Sending location',
+  receiving_location: 'Receiving location',
+}
+
+const FILTERS_BY_LEVEL = {
+  Trip: {
+    product: [
+      { id: 'class', label: 'Class', options: ['Accessories', 'Bags', 'Shoes', 'Ready-to-wear', 'Leather goods'] },
+      { id: 'department', label: 'Department', options: ['Accessories Men', 'Accessories Women'] },
+      { id: 'gender', label: 'Gender', options: ['Men', 'Women', 'Unisex'] },
+      { id: 'product', label: 'Product', options: ['A1252810', 'A12528YY', 'A13314YY', 'B2045100', 'C3091522'] },
+      { id: 'season', label: 'Season', options: ['Fw16', 'Fw18', 'Fw19', 'Ss20', 'Fw24', 'Ss25'] },
+      {
+        id: 'style',
+        label: 'Style',
+        options: [
+          'Angel Pouch Denim Monogram',
+          'Angel Pouch Grained Leather',
+          'Angel Pouch Wings Cow Burnish',
+          'Angel Pouch Wrinkled Patent',
+          'Angel Tote Denim Monogram',
+          'Angel Tote Monogram',
+          'Angel Tote Voltaire',
+          'Angel Tote Wings Cow Burnish',
+          'Angel Tote Wrinkled Patent',
+        ],
+      },
+      { id: 'subDepartment', label: 'Sub-department', options: ['Leather Good', 'Other Acc', 'Perfume Cosmet', 'Shoes'] },
+      {
+        id: 'events',
+        label: 'Events',
+        options: ['25w Carry Over', 'Fw24 Access Out', 'Fw24 Carry Out', 'Fw24 Stc Out', 'Fw25 Drop 1a', 'Fw25 Drop 2a', 'Fw25 Drop 3a', 'Fw25 Drop 4a'],
+      },
+      { id: 'articles', label: 'Articles', options: ['ART-001', 'ART-002', 'ART-003', 'ART-004', 'ART-005'] },
+      { id: 'brand', label: 'Brand', options: ['Brand A', 'Brand B', 'Brand C'] },
+    ],
+    geographic: [
+      { id: 'location', label: 'Location', options: ['Opéra', 'Cannes', 'G.I cap 3000', 'Printemps toulon', 'Marais'] },
+      { id: 'region', label: 'Region', options: ['Europe', 'North America', 'Asia Pacific'] },
+      { id: 'locationType', label: 'Location type', options: ['Boutique', 'Outlet', 'Department store', 'E-commerce'] },
+      { id: 'countries', label: 'Countries', options: ['France', 'Italy', 'UK', 'Germany', 'Spain'] },
+    ],
+    advanced: [{ id: 'transferUnits', label: 'Transfer units' }],
+  },
+  Product: {
+    product: [
+      { id: 'class', label: 'Class', options: ['Accessories', 'Bags', 'Shoes', 'Ready-to-wear', 'Leather goods'] },
+      { id: 'department', label: 'Department', options: ['Accessories Men', 'Accessories Women'] },
+      { id: 'gender', label: 'Gender', options: ['Men', 'Women', 'Unisex'] },
+      { id: 'product', label: 'Product', options: ['A1252810', 'A12528YY', 'A13314YY', 'B2045100', 'C3091522'] },
+      { id: 'season', label: 'Season', options: ['Fw16', 'Fw18', 'Fw19', 'Ss20', 'Fw24', 'Ss25'] },
+      {
+        id: 'style',
+        label: 'Style',
+        options: [
+          'Angel Pouch Denim Monogram',
+          'Angel Pouch Grained Leather',
+          'Angel Pouch Wings Cow Burnish',
+          'Angel Pouch Wrinkled Patent',
+          'Angel Tote Denim Monogram',
+          'Angel Tote Monogram',
+          'Angel Tote Voltaire',
+          'Angel Tote Wings Cow Burnish',
+          'Angel Tote Wrinkled Patent',
+        ],
+      },
+      { id: 'subDepartment', label: 'Sub-department', options: ['Leather Good', 'Other Acc', 'Perfume Cosmet', 'Shoes'] },
+      {
+        id: 'events',
+        label: 'Events',
+        options: ['25w Carry Over', 'Fw24 Access Out', 'Fw24 Carry Out', 'Fw24 Stc Out', 'Fw25 Drop 1a', 'Fw25 Drop 2a', 'Fw25 Drop 3a', 'Fw25 Drop 4a'],
+      },
+      { id: 'size', label: 'Size', options: ['XS', 'S', 'M', 'L', 'XL'] },
+      { id: 'articles', label: 'Articles', options: ['ART-001', 'ART-002', 'ART-003', 'ART-004', 'ART-005'] },
+      { id: 'brand', label: 'Brand', options: ['Brand A', 'Brand B', 'Brand C'] },
+      { id: 'manufacturer', label: 'Manufacturer', options: ['Manufacturer A', 'Manufacturer B', 'Manufacturer C'] },
+      { id: 'collectionTypes', label: 'Collection types', options: ['Permanent', 'Seasonal', 'Limited edition', 'Capsule'] },
+    ],
+    geographic: [
+      { id: 'location', label: 'Location', options: ['Opéra', 'Cannes', 'G.I cap 3000', 'Printemps toulon', 'Marais'] },
+      { id: 'region', label: 'Region', options: ['Europe', 'North America', 'Asia Pacific'] },
+      { id: 'locationType', label: 'Location type', options: ['Boutique', 'Outlet', 'Department store', 'E-commerce'] },
+      { id: 'countries', label: 'Countries', options: ['France', 'Italy', 'UK', 'Germany', 'Spain'] },
+    ],
+    advanced: [
+      { id: 'currentUnits', label: 'Current units' },
+      { id: 'forecast', label: 'Forecast' },
+      { id: 'transferUnits', label: 'Transfer units' },
+      { id: 'currentWarehouse', label: 'Current warehouse' },
+      { id: 'last7DaysSales', label: 'Last 7 days sales' },
+      { id: 'last30DaysSales', label: 'Last 30 days sales' },
+      { id: 'understocksBefore', label: 'Understocks before' },
+      { id: 'understocksAfter', label: 'Understocks after' },
+      { id: 'overstocksBefore', label: 'Overstocks before' },
+      { id: 'overstocksAfter', label: 'Overstocks after' },
+      { id: 'salesUplift', label: 'Sales uplift' },
+    ],
+  },
+  'Sending location': {
+    product: [
+      { id: 'class', label: 'Class', options: ['Accessories', 'Bags', 'Shoes', 'Ready-to-wear', 'Leather goods'] },
+      { id: 'department', label: 'Department', options: ['Accessories Men', 'Accessories Women'] },
+      { id: 'gender', label: 'Gender', options: ['Men', 'Women', 'Unisex'] },
+      { id: 'product', label: 'Product', options: ['A1252810', 'A12528YY', 'A13314YY', 'B2045100', 'C3091522'] },
+      { id: 'season', label: 'Season', options: ['Fw16', 'Fw18', 'Fw19', 'Ss20', 'Fw24', 'Ss25'] },
+      {
+        id: 'style',
+        label: 'Style',
+        options: [
+          'Angel Pouch Denim Monogram',
+          'Angel Pouch Grained Leather',
+          'Angel Pouch Wings Cow Burnish',
+          'Angel Pouch Wrinkled Patent',
+          'Angel Tote Denim Monogram',
+          'Angel Tote Monogram',
+          'Angel Tote Voltaire',
+          'Angel Tote Wings Cow Burnish',
+          'Angel Tote Wrinkled Patent',
+        ],
+      },
+      { id: 'subDepartment', label: 'Sub-department', options: ['Leather Good', 'Other Acc', 'Perfume Cosmet', 'Shoes'] },
+      {
+        id: 'events',
+        label: 'Events',
+        options: ['25w Carry Over', 'Fw24 Access Out', 'Fw24 Carry Out', 'Fw24 Stc Out', 'Fw25 Drop 1a', 'Fw25 Drop 2a', 'Fw25 Drop 3a', 'Fw25 Drop 4a'],
+      },
+      { id: 'articles', label: 'Articles', options: ['ART-001', 'ART-002', 'ART-003', 'ART-004', 'ART-005'] },
+      { id: 'brand', label: 'Brand', options: ['Brand A', 'Brand B', 'Brand C'] },
+      { id: 'collectionTypes', label: 'Collection types', options: ['Permanent', 'Seasonal', 'Limited edition', 'Capsule'] },
+    ],
+    geographic: [
+      { id: 'location', label: 'Location', options: ['Opéra', 'Cannes', 'G.I cap 3000', 'Printemps toulon', 'Marais'] },
+      { id: 'region', label: 'Region', options: ['Europe', 'North America', 'Asia Pacific'] },
+      { id: 'locationType', label: 'Location type', options: ['Boutique', 'Outlet', 'Department store', 'E-commerce'] },
+      { id: 'countries', label: 'Countries', options: ['France', 'Italy', 'UK', 'Germany', 'Spain'] },
+    ],
+    advanced: [
+      { id: 'currentUnits', label: 'Current units' },
+      { id: 'forecast', label: 'Forecast' },
+      { id: 'transferUnits', label: 'Transfer units' },
+      { id: 'last7DaysSales', label: 'Last 7 days sales' },
+      { id: 'last30DaysSales', label: 'Last 30 days sales' },
+      { id: 'understocksBefore', label: 'Understocks before' },
+      { id: 'understocksAfter', label: 'Understocks after' },
+      { id: 'overstocksBefore', label: 'Overstocks before' },
+      { id: 'overstocksAfter', label: 'Overstocks after' },
+      { id: 'salesUplift', label: 'Sales uplift' },
+    ],
+  },
+  'Receiving location': {
+    product: [
+      { id: 'class', label: 'Class', options: ['Accessories', 'Bags', 'Shoes', 'Ready-to-wear', 'Leather goods'] },
+      { id: 'department', label: 'Department', options: ['Accessories Men', 'Accessories Women'] },
+      { id: 'gender', label: 'Gender', options: ['Men', 'Women', 'Unisex'] },
+      { id: 'product', label: 'Product', options: ['A1252810', 'A12528YY', 'A13314YY', 'B2045100', 'C3091522'] },
+      { id: 'season', label: 'Season', options: ['Fw16', 'Fw18', 'Fw19', 'Ss20', 'Fw24', 'Ss25'] },
+      {
+        id: 'style',
+        label: 'Style',
+        options: [
+          'Angel Pouch Denim Monogram',
+          'Angel Pouch Grained Leather',
+          'Angel Pouch Wings Cow Burnish',
+          'Angel Pouch Wrinkled Patent',
+          'Angel Tote Denim Monogram',
+          'Angel Tote Monogram',
+          'Angel Tote Voltaire',
+          'Angel Tote Wings Cow Burnish',
+          'Angel Tote Wrinkled Patent',
+        ],
+      },
+      { id: 'subDepartment', label: 'Sub-department', options: ['Leather Good', 'Other Acc', 'Perfume Cosmet', 'Shoes'] },
+      {
+        id: 'events',
+        label: 'Events',
+        options: ['25w Carry Over', 'Fw24 Access Out', 'Fw24 Carry Out', 'Fw24 Stc Out', 'Fw25 Drop 1a', 'Fw25 Drop 2a', 'Fw25 Drop 3a', 'Fw25 Drop 4a'],
+      },
+      { id: 'articles', label: 'Articles', options: ['ART-001', 'ART-002', 'ART-003', 'ART-004', 'ART-005'] },
+      { id: 'brand', label: 'Brand', options: ['Brand A', 'Brand B', 'Brand C'] },
+      { id: 'collectionTypes', label: 'Collection types', options: ['Permanent', 'Seasonal', 'Limited edition', 'Capsule'] },
+    ],
+    geographic: [
+      { id: 'location', label: 'Location', options: ['Opéra', 'Cannes', 'G.I cap 3000', 'Printemps toulon', 'Marais'] },
+      { id: 'region', label: 'Region', options: ['Europe', 'North America', 'Asia Pacific'] },
+      { id: 'locationType', label: 'Location type', options: ['Boutique', 'Outlet', 'Department store', 'E-commerce'] },
+      { id: 'countries', label: 'Countries', options: ['France', 'Italy', 'UK', 'Germany', 'Spain'] },
+    ],
+    advanced: [
+      { id: 'currentUnits', label: 'Current units' },
+      { id: 'forecast', label: 'Forecast' },
+      { id: 'transferUnits', label: 'Transfer units' },
+      { id: 'currentWarehouse', label: 'Current warehouse' },
+      { id: 'last7DaysSales', label: 'Last 7 days sales' },
+      { id: 'last30DaysSales', label: 'Last 30 days sales' },
+      { id: 'understocksBefore', label: 'Understocks before' },
+      { id: 'understocksAfter', label: 'Understocks after' },
+      { id: 'overstocksBefore', label: 'Overstocks before' },
+      { id: 'overstocksAfter', label: 'Overstocks after' },
+      { id: 'salesUplift', label: 'Sales uplift' },
+    ],
+  },
+}
+
+const ADVANCED_CONDITION_OPTIONS = [
+  'Equal to',
+  'Greater than',
+  'Lower than',
+  'Greater than or equal to',
+  'Lower than or equal to',
+]
+
+function getFiltersConfigForApplyAt(applyAt) {
+  const levelKey = APPLY_AT_TO_FILTERS_LEVEL[applyAt]
+  return levelKey ? FILTERS_BY_LEVEL[levelKey] : null
+}
+
+function classifyFilterSelection(cfg, filterId) {
+  if (!cfg || !filterId) return null
+  const p = cfg.product.find((f) => f.id === filterId)
+  if (p) return { kind: 'scope', def: p }
+  const g = cfg.geographic.find((f) => f.id === filterId)
+  if (g) return { kind: 'scope', def: g }
+  const a = cfg.advanced.find((f) => f.id === filterId)
+  if (a) return { kind: 'advanced', def: a }
+  return null
+}
+
+/** Closed-row summary for scope value trigger; selected text uses text-[#0a0a0a], placeholder uses muted italic. */
+function getScopeValuesTriggerDisplay(values) {
+  const v = Array.isArray(values) ? values : []
+  if (v.length === 0) return { text: 'Click to select...', isPlaceholder: true }
+  if (v.length === 1) return { text: v[0], isPlaceholder: false }
+  if (v.length === 2) return { text: `${v[0]}, ${v[1]}`, isPlaceholder: false }
+  return { text: `${v.length} values selected`, isPlaceholder: false }
+}
+
+function getConditionFilterSelectValue(cond, cfg) {
+  if (!cfg) return ''
+  if (cond.filterType === 'scope' && cond.scopeCategory) return cond.scopeCategory
+  if (cond.filterType === 'advanced' && cond.advancedColumn) {
+    const m = cfg.advanced.find((a) => a.label === cond.advancedColumn)
+    return m?.id ?? ''
+  }
+  return ''
+}
+
+function scopeCategoryLabelForTitle(applyAt, scopeCategoryId) {
+  if (!scopeCategoryId) return ''
+  const def = getExceptionLevelFilterDef(applyAt, scopeCategoryId)
+  return def?.label ?? scopeCategoryId
+}
+
+function applyAtLabelForExceptionTitle(applyAtKey) {
+  if (!applyAtKey) return ''
+  return APPLY_AT_DISPLAY_LABELS[applyAtKey] ?? applyAtKey
+}
+
+/** Single condition summary for exception header (per-condition Apply at level). */
+function buildExceptionConditionSummaryPart(cond) {
+  const level = applyAtLabelForExceptionTitle(cond.applyAt)
+  if (!level) return null
+
+  if (cond.filterType === 'advanced') {
+    if (!cond.advancedColumn || !cond.advancedCondition || cond.advancedValue === undefined || cond.advancedValue === '') {
+      return null
+    }
+    return `${level} ${cond.advancedColumn} ${cond.advancedCondition.toLowerCase()} ${cond.advancedValue}`
+  }
+
+  if (cond.filterType === 'scope' && cond.scopeCategory) {
+    const vals = Array.isArray(cond.scopeValues) ? cond.scopeValues : []
+    if (vals.length === 0) return null
+    const cat = scopeCategoryLabelForTitle(cond.applyAt, cond.scopeCategory)
+    if (!cat) return null
+    if (vals.length === 1) return `${level} ${cat} is ${vals[0]}`
+    if (vals.length <= 3) return `${level} ${cat} in ${vals.join(', ')}`
+    return `${level} ${cat}: ${vals.length} values`
+  }
+
+  return null
+}
+
+function truncateExceptionTitleDisplay(str, maxLen = 100) {
+  if (str.length <= maxLen) return str
+  const ellipsis = '...'
+  return str.slice(0, Math.max(0, maxLen - ellipsis.length)) + ellipsis
+}
+
+function createEmptyExceptionCondition(id) {
+  return {
+    id,
+    applyAt: '',
+    filterType: '',
+    scopeCategory: '',
+    scopeValues: [],
+    advancedColumn: '',
+    advancedCondition: '',
+    advancedValue: '',
+  }
+}
+
 /* Optimiser page – Figma 174:2696 (Optimiser-Concepts) */
 const DEFAULT_DRAWER_FORM = {
   module: '',
@@ -163,67 +661,33 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
     scope: false,
     exceptions: false,
   })
-  const [scopeOption, setScopeOption] = useState('include-all')
-  const [productFilterOpen, setProductFilterOpen] = useState({
-    departments: false,
-    subDepartments: false,
-    seasons: false,
-    events: false,
-    productGroups: false,
-  })
-  const [geoFilterOpen, setGeoFilterOpen] = useState({
-    locationTypes: false,
-    regions: false,
-    countries: false,
-    locations: false,
-  })
-  const DEFAULT_PRODUCT_FILTER_OPEN = { departments: false, subDepartments: false, seasons: false, events: false, productGroups: false }
-  const DEFAULT_GEO_FILTER_OPEN = {
-    locationTypes: false,
-    regions: false,
-    countries: false,
-    locations: false,
-  }
-  const DEFAULT_PRODUCT_FILTER_SELECTED = { departments: [], subDepartments: [], seasons: [], events: [], productGroups: [] }
-  const DEFAULT_GEO_FILTER_SELECTED = {
-    locationTypes: [], regions: [], countries: [], locations: [],
-  }
-  const EXCEPTION_FILTER_OPTIONS = [
-    { id: 'advanced', label: 'Advanced filters', highlight: true },
-    { id: 'departments', label: 'Departments', options: ['Cadeaux', 'Exotiques', 'Femme', 'Homme', 'Voyage'] },
-    { id: 'subDepartments', label: 'Sub-departments', options: ['Alpha', 'Bravo', 'Charlie', 'Delta', 'Echo'] },
-    { id: 'seasons', label: 'Seasons', options: ['25E', '25S', '25W', '26E', '26S'] },
-    { id: 'events', label: 'Events', options: ['Sale', 'New arrivals', 'Promo'] },
-    { id: 'productGroups', label: 'Product groups', options: ['Alpha', 'Bravo', 'Charlie', 'Delta', 'Echo'] },
-    { id: 'locationTypes', label: 'Location Types', options: ['Alpha', 'Bravo', 'Charlie', 'Delta', 'Echo'] },
-    { id: 'regions', label: 'Regions', options: ['Alpha', 'Bravo', 'Charlie', 'Delta', 'Echo'] },
-    { id: 'countries', label: 'Countries', options: ['Alpha', 'Bravo', 'Charlie', 'Delta', 'Echo'] },
-    { id: 'locations', label: 'Locations', options: ['Alpha', 'Bravo', 'Charlie', 'Delta', 'Echo'] },
-  ]
+  const [locationScopeOption, setLocationScopeOption] = useState('all')
+  const [selectedMovementTypes, setSelectedMovementTypes] = useState([])
+  const [movementTypeDropdownOpen, setMovementTypeDropdownOpen] = useState(false)
+  const [geoFilterOpen, setGeoFilterOpen] = useState(() => ({ ...DEFAULT_GEO_SCOPE_FILTER_OPEN }))
   const [exceptions, setExceptions] = useState(() => [
     {
       id: 'exc-1',
       expanded: true,
-      advancedRows: [{ id: 'adv-1', conditions: [{ id: 'cond-1', mainColumn: '', condition: '', value: '' }] }],
-      productFilterOpen: { ...DEFAULT_PRODUCT_FILTER_OPEN },
-      geoFilterOpen: { ...DEFAULT_GEO_FILTER_OPEN },
-      productFilterSelected: { ...DEFAULT_PRODUCT_FILTER_SELECTED },
-      geoFilterSelected: { ...DEFAULT_GEO_FILTER_SELECTED },
-      filtersDropdownOpen: false,
-      openFilterPopover: null,
-      activeFilterTypes: [],
-      filterSearchQuery: '',
+      conditions: [createEmptyExceptionCondition('cond-1')],
     },
   ])
-  const [advancedRowNextId, setAdvancedRowNextId] = useState(2)
-  const [advancedConditionNextId, setAdvancedConditionNextId] = useState(2)
+  const [exceptionConditionNextId, setExceptionConditionNextId] = useState(2)
   const [exceptionNextId, setExceptionNextId] = useState(2)
+  const [openPopover, setOpenPopover] = useState(null)
+  /** Search for scope value popover; resets when `openPopover` changes (see useEffect below). */
+  const [scopePopoverSearch, setScopePopoverSearch] = useState('')
+
+  useEffect(() => {
+    setScopePopoverSearch('')
+  }, [openPopover])
   const [recurrenceRepeatEvery, setRecurrenceRepeatEvery] = useState(1)
   const [recurrenceRepeatUnit, setRecurrenceRepeatUnit] = useState('week')
   const [recurrenceSubmissionDayOfWeek, setRecurrenceSubmissionDayOfWeek] = useState(3)
   const [recurrenceSubmissionDayOfMonth, setRecurrenceSubmissionDayOfMonth] = useState(1)
   const [recurrenceSubmissionDateYear, setRecurrenceSubmissionDateYear] = useState('')
   const [recurrenceSubmissionTime, setRecurrenceSubmissionTime] = useState('09:00')
+  const [submissionDate, setSubmissionDate] = useState('')
   const reviewStatusFilterOptions = [
     { id: 'in review', label: 'In review' },
     { id: 'upcoming', label: 'Upcoming' },
@@ -457,13 +921,6 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
     })
   }
 
-  const toggleProductFilterRow = (key) => {
-    setProductFilterOpen((prev) => ({
-      ...prev,
-      [key]: !prev[key],
-    }))
-  }
-
   const toggleGeoFilterRow = (key) => {
     setGeoFilterOpen((prev) => ({
       ...prev,
@@ -483,11 +940,9 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
 
   const addException = () => {
     const excId = `exc-${exceptionNextId}`
-    const advId = `adv-${advancedRowNextId}`
-    const condId = `cond-${advancedConditionNextId}`
+    const condId = `cond-${exceptionConditionNextId}`
     setExceptionNextId((n) => n + 1)
-    setAdvancedRowNextId((n) => n + 1)
-    setAdvancedConditionNextId((n) => n + 1)
+    setExceptionConditionNextId((n) => n + 1)
     setExceptions((prev) => {
       const withExpandedFalse = prev.map((e) => ({ ...e, expanded: false }))
       return [
@@ -495,278 +950,143 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
         {
           id: excId,
           expanded: true,
-          advancedRows: [{ id: advId, conditions: [{ id: condId, mainColumn: '', condition: '', value: '' }] }],
-          productFilterOpen: { ...DEFAULT_PRODUCT_FILTER_OPEN },
-          geoFilterOpen: { ...DEFAULT_GEO_FILTER_OPEN },
-          productFilterSelected: { ...DEFAULT_PRODUCT_FILTER_SELECTED },
-          geoFilterSelected: { ...DEFAULT_GEO_FILTER_SELECTED },
-          filtersDropdownOpen: false,
-          openFilterPopover: null,
-          activeFilterTypes: [],
-          filterSearchQuery: '',
+          conditions: [createEmptyExceptionCondition(condId)],
         },
       ]
     })
   }
 
-  const toggleProductFilterRowForException = (exceptionId, key) => {
+  const addConditionToException = (exceptionId) => {
+    const newId = `cond-${exceptionConditionNextId}`
+    setExceptionConditionNextId((n) => n + 1)
     setExceptions((prev) =>
       prev.map((e) =>
-        e.id === exceptionId
-          ? { ...e, productFilterOpen: { ...e.productFilterOpen, [key]: !e.productFilterOpen[key] } }
-          : e
+        e.id === exceptionId ? { ...e, conditions: [...e.conditions, createEmptyExceptionCondition(newId)] } : e
       )
     )
   }
 
-  const toggleGeoFilterRowForException = (exceptionId, key) => {
+  const removeConditionFromException = (exceptionId, conditionId) => {
+    const freshId = `cond-${exceptionConditionNextId}`
+    setExceptionConditionNextId((n) => n + 1)
     setExceptions((prev) =>
-      prev.map((e) =>
-        e.id === exceptionId ? { ...e, geoFilterOpen: { ...e.geoFilterOpen, [key]: !e.geoFilterOpen[key] } } : e
-      )
+      prev.map((e) => {
+        if (e.id !== exceptionId) return e
+        const filtered = e.conditions.filter((c) => c.id !== conditionId)
+        if (filtered.length === 0) {
+          return { ...e, conditions: [createEmptyExceptionCondition(freshId)] }
+        }
+        return { ...e, conditions: filtered }
+      })
     )
   }
 
-  const addConditionToBox = (exceptionId, boxId) => {
-    const condId = `cond-${advancedConditionNextId}`
-    setAdvancedConditionNextId((n) => n + 1)
+  const updateConditionField = (exceptionId, conditionId, field, value) => {
     setExceptions((prev) =>
       prev.map((e) =>
         e.id === exceptionId
           ? {
               ...e,
-              advancedRows: e.advancedRows.map((r) =>
-                r.id === boxId ? { ...r, conditions: [...r.conditions, { id: condId, mainColumn: '', condition: '', value: '' }] } : r
-              ),
+              conditions: e.conditions.map((c) => (c.id === conditionId ? { ...c, [field]: value } : c)),
             }
           : e
       )
     )
   }
 
-  const removeConditionFromBox = (exceptionId, boxId, conditionId) => {
-    const condId = `cond-${advancedConditionNextId}`
-    setAdvancedConditionNextId((n) => n + 1)
-    setExceptions((prev) =>
-      prev.map((e) => {
-        if (e.id !== exceptionId) return e
-        const newRows = e.advancedRows
-          .map((r) => {
-            if (r.id !== boxId) return r
-            const newConditions = r.conditions.filter((c) => c.id !== conditionId)
-            if (newConditions.length === 0) return { ...r, conditions: [{ id: condId, mainColumn: '', condition: '', value: '' }] }
-            return { ...r, conditions: newConditions }
-          })
-        return { ...e, advancedRows: newRows }
-      })
-    )
-  }
-
-  const updateAdvancedApprovalCondition = (exceptionId, boxId, conditionId, field, value) => {
+  const patchCondition = (exceptionId, conditionId, partial) => {
     setExceptions((prev) =>
       prev.map((e) =>
         e.id === exceptionId
           ? {
               ...e,
-              advancedRows: e.advancedRows.map((r) =>
-                r.id === boxId ? { ...r, conditions: r.conditions.map((c) => (c.id === conditionId ? { ...c, [field]: value } : c)) } : r
-              ),
+              conditions: e.conditions.map((c) => (c.id === conditionId ? { ...c, ...partial } : c)),
             }
           : e
       )
     )
   }
 
-  const clearAdvancedForException = (exceptionId) => {
-    const advId = `adv-${advancedRowNextId}`
-    const condId = `cond-${advancedConditionNextId}`
-    setAdvancedRowNextId((n) => n + 1)
-    setAdvancedConditionNextId((n) => n + 1)
-    setExceptions((prev) =>
-      prev.map((e) =>
-        e.id === exceptionId
-          ? { ...e, advancedRows: [{ id: advId, conditions: [{ id: condId, mainColumn: '', condition: '', value: '' }] }] }
-          : e
-      )
-    )
-  }
-
-  const clearProductFilterForException = (exceptionId) => {
-    setExceptions((prev) =>
-      prev.map((e) => (e.id === exceptionId ? { ...e, productFilterOpen: { ...DEFAULT_PRODUCT_FILTER_OPEN } } : e))
-    )
-  }
-
-  const clearGeoFilterForException = (exceptionId) => {
-    setExceptions((prev) =>
-      prev.map((e) => (e.id === exceptionId ? { ...e, geoFilterOpen: { ...DEFAULT_GEO_FILTER_OPEN } } : e))
-    )
-  }
-
-  const setExceptionFiltersDropdownOpen = (exceptionId, open) => {
-    setExceptions((prev) =>
-      prev.map((e) => (e.id === exceptionId ? { ...e, filtersDropdownOpen: open, filterSearchQuery: open ? (e.filterSearchQuery || '') : '' } : e))
-    )
-  }
-
-  const setExceptionFilterSearchQuery = (exceptionId, query) => {
-    setExceptions((prev) =>
-      prev.map((e) => (e.id === exceptionId ? { ...e, filterSearchQuery: query } : e))
-    )
-  }
-
-  const addFilterToException = (exceptionId, filterId) => {
-    setExceptions((prev) =>
-      prev.map((e) => {
-        if (e.id !== exceptionId) return e
-        const alreadyActive = e.activeFilterTypes?.includes(filterId)
-        if (alreadyActive) return e
-        return {
-          ...e,
-          filtersDropdownOpen: false,
-          activeFilterTypes: [...(e.activeFilterTypes || []), filterId],
-        }
+  const onConditionFilterSelectChange = (exceptionId, condition, filtersCfg, filterId) => {
+    if (!filtersCfg) return
+    if (!filterId) {
+      patchCondition(exceptionId, condition.id, {
+        filterType: '',
+        scopeCategory: '',
+        scopeValues: [],
+        advancedColumn: '',
+        advancedCondition: '',
+        advancedValue: '',
       })
-    )
-  }
-
-  const removeFilterFromException = (exceptionId, filterId) => {
-    setExceptions((prev) =>
-      prev.map((e) => {
-        if (e.id !== exceptionId) return e
-        const newActive = (e.activeFilterTypes || []).filter((t) => t !== filterId)
-        let updates = { ...e, activeFilterTypes: newActive, openFilterPopover: e.openFilterPopover === filterId ? null : e.openFilterPopover }
-        if (filterId === 'advanced') {
-          const advId = `adv-${advancedRowNextId}`
-          const condId = `cond-${advancedConditionNextId}`
-          setAdvancedRowNextId((n) => n + 1)
-          setAdvancedConditionNextId((n) => n + 1)
-          updates = { ...updates, advancedRows: [{ id: advId, conditions: [{ id: condId, mainColumn: '', condition: '', value: '' }] }] }
-        } else if (EXCEPTION_FILTER_OPTIONS.find((o) => o.id === filterId)) {
-          const opt = EXCEPTION_FILTER_OPTIONS.find((o) => o.id === filterId)
-          if (opt && ['departments', 'subDepartments', 'seasons', 'events', 'productGroups'].includes(filterId)) {
-            updates = { ...updates, productFilterSelected: { ...e.productFilterSelected, [filterId]: [] } }
-          } else if (opt) {
-            updates = { ...updates, geoFilterSelected: { ...e.geoFilterSelected, [filterId]: [] } }
-          }
-        }
-        return updates
-      })
-    )
-  }
-
-  const setExceptionOpenFilterPopover = (exceptionId, filterId) => {
-    setExceptions((prev) =>
-      prev.map((e) => (e.id === exceptionId ? { ...e, openFilterPopover: filterId } : e))
-    )
-  }
-
-  const toggleFilterOptionForException = (exceptionId, filterId, optionValue) => {
-    setExceptions((prev) =>
-      prev.map((e) => {
-        if (e.id !== exceptionId) return e
-        const isProduct = ['departments', 'subDepartments', 'seasons', 'events', 'productGroups'].includes(filterId)
-        const sel = isProduct ? (e.productFilterSelected || {}) : (e.geoFilterSelected || {})
-        const key = filterId
-        const arr = Array.isArray(sel[key]) ? sel[key] : []
-        const has = arr.includes(optionValue)
-        const newArr = has ? arr.filter((v) => v !== optionValue) : [...arr, optionValue]
-        return {
-          ...e,
-          [isProduct ? 'productFilterSelected' : 'geoFilterSelected']: { ...sel, [key]: newArr },
-        }
-      })
-    )
-  }
-
-  const selectAllFilterOptionsForException = (exceptionId, filterId, selectAll) => {
-    const opt = EXCEPTION_FILTER_OPTIONS.find((o) => o.id === filterId)
-    if (!opt?.options) return
-    setExceptions((prev) =>
-      prev.map((e) => {
-        if (e.id !== exceptionId) return e
-        const isProduct = ['departments', 'subDepartments', 'seasons', 'events', 'productGroups'].includes(filterId)
-        const sel = isProduct ? (e.productFilterSelected || {}) : (e.geoFilterSelected || {})
-        return {
-          ...e,
-          [isProduct ? 'productFilterSelected' : 'geoFilterSelected']: {
-            ...sel,
-            [filterId]: selectAll ? [...opt.options] : [],
-          },
-        }
-      })
-    )
-  }
-
-  const clearAllFiltersForException = (exceptionId) => {
-    const advId = `adv-${advancedRowNextId}`
-    const condId = `cond-${advancedConditionNextId}`
-    setAdvancedRowNextId((n) => n + 1)
-    setAdvancedConditionNextId((n) => n + 1)
-    setExceptions((prev) =>
-      prev.map((e) =>
-        e.id === exceptionId
-          ? {
-              ...e,
-              activeFilterTypes: [],
-              filtersDropdownOpen: false,
-              openFilterPopover: null,
-              advancedRows: [{ id: advId, conditions: [{ id: condId, mainColumn: '', condition: '', value: '' }] }],
-              productFilterSelected: { ...DEFAULT_PRODUCT_FILTER_SELECTED },
-              geoFilterSelected: { ...DEFAULT_GEO_FILTER_SELECTED },
-            }
-          : e
-      )
-    )
-  }
-
-  const getAdvancedFilterSummary = (exc) => {
-    const first = exc.advancedRows?.[0]?.conditions?.[0]
-    if (!first || !first.mainColumn || !first.condition || !first.value) return null
-    return `${first.mainColumn} ${first.condition.toLowerCase()} ${first.value}`
-  }
-
-  const getExceptionDisplayName = (exc) => {
-    const parts = []
-    const activeTypes = exc.activeFilterTypes || []
-    for (const filterId of activeTypes) {
-      const opt = EXCEPTION_FILTER_OPTIONS.find((o) => o.id === filterId)
-      const label = opt?.label || filterId
-      const isProduct = ['departments', 'subDepartments', 'seasons', 'events', 'productGroups'].includes(filterId)
-      if (filterId === 'advanced') {
-        const summary = getAdvancedFilterSummary(exc)
-        if (summary) parts.push(summary)
-      } else {
-        const sel = isProduct ? (exc.productFilterSelected || {}) : (exc.geoFilterSelected || {})
-        const raw = sel[filterId]
-        const selected = Array.isArray(raw) ? raw : (raw != null ? [String(raw)] : [])
-        if (selected.length > 0) {
-          parts.push(`${label}: ${selected.join(', ')}`)
-        }
-      }
+      setOpenPopover(null)
+      return
     }
-    return parts.length > 0 ? parts.join(', ') : null
+    const cls = classifyFilterSelection(filtersCfg, filterId)
+    if (!cls) return
+    if (cls.kind === 'scope') {
+      patchCondition(exceptionId, condition.id, {
+        filterType: 'scope',
+        scopeCategory: filterId,
+        scopeValues: [],
+        advancedColumn: '',
+        advancedCondition: '',
+        advancedValue: '',
+      })
+    } else {
+      patchCondition(exceptionId, condition.id, {
+        filterType: 'advanced',
+        scopeCategory: '',
+        scopeValues: [],
+        advancedColumn: cls.def.label,
+        advancedCondition: '',
+        advancedValue: '',
+      })
+    }
+    setOpenPopover(null)
   }
 
-  const MAIN_COLUMN_OPTIONS = [
-    'L30D sales',
-    'Understocks',
-    'Transfer units',
-    'Understocks after rebalance',
-    'Overstocks',
-    'Overstocks after rebalance',
-    'Sales uplift',
-    'Sales uplift units',
-    'L7D sales',
-    'Forecast sales rate',
-  ]
-  const CONDITION_OPTIONS = [
-    'Equal to',
-    'Greater than',
-    'Lower than',
-    'Greater than or equal to',
-    'Lower than or equal to',
-  ]
+  const resetConditionFilters = (exceptionId, conditionId) => {
+    setExceptions((prev) =>
+      prev.map((e) =>
+        e.id === exceptionId
+          ? {
+              ...e,
+              conditions: e.conditions.map((c) =>
+                c.id === conditionId
+                  ? {
+                      ...c,
+                      filterType: '',
+                      scopeCategory: '',
+                      scopeValues: [],
+                      advancedColumn: '',
+                      advancedCondition: '',
+                      advancedValue: '',
+                    }
+                  : c
+              ),
+            }
+          : e
+      )
+    )
+  }
+
+  const clearAllConditionsForException = (exceptionId) => {
+    const freshId = `cond-${exceptionConditionNextId}`
+    setExceptionConditionNextId((n) => n + 1)
+    setOpenPopover(null)
+    setExceptions((prev) =>
+      prev.map((e) => (e.id === exceptionId ? { ...e, conditions: [createEmptyExceptionCondition(freshId)] } : e))
+    )
+  }
+
+  /** Full exception header: "Exception [n]" or "Exception [n]: [part] and [part] ..." (one part per configured condition, each includes its Apply at level). */
+  const getExceptionDisplayName = (exc, excIdx) => {
+    const n = excIdx + 1
+    const prefix = `Exception ${n}`
+    const parts = (exc.conditions || []).map(buildExceptionConditionSummaryPart).filter(Boolean)
+    if (parts.length === 0) return prefix
+    return `${prefix}: ${parts.join(' and ')}`
+  }
 
   if (isCreateSchedulePage) {
     return (
@@ -808,32 +1128,6 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
             </button>
             {accordionOpen.details && (
               <div className="px-5 pb-6 pt-2 flex flex-col gap-6 border-t border-[#EAEAEA]">
-                <section className="flex flex-col gap-2">
-                  <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Movement type</label>
-                  <div className="relative">
-                    <select
-                      value={drawerForm.module}
-                      onChange={(ev) =>
-                        setDrawerForm((f) => ({
-                          ...f,
-                          module: ev.target.value,
-                        }))
-                      }
-                      className="w-full h-14 pl-4 pr-10 rounded-[4px] border border-[#EAEAEA] bg-white text-[16px] text-[#0a0a0a] appearance-none"
-                    >
-                      <option value="">Select</option>
-                      {MODULE_OPTIONS.map((opt) => (
-                        <option key={opt.id} value={opt.id}>
-                          {opt.label}
-                        </option>
-                      ))}
-                    </select>
-                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
-                      <IconChevronDownSelect />
-                    </span>
-                  </div>
-                </section>
-
                 <section className="flex flex-col gap-2">
                   <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Name schedule</label>
                   <input
@@ -944,24 +1238,40 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                   )}
 
                   <div className="flex flex-col gap-2">
-                    <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Submission time</label>
-                    <div className="relative max-w-[200px]">
-                      <select
-                        value={recurrenceSubmissionTime}
-                        onChange={(e) => setRecurrenceSubmissionTime(e.target.value)}
-                        className="w-full h-12 py-3 px-4 pr-10 rounded-[4px] border border-[#E9EAEB] bg-white text-[16px] text-[#0a0a0a] appearance-none"
-                      >
-                        {Array.from({ length: 48 }, (_, i) => {
-                          const h = Math.floor(i / 2)
-                          const m = (i % 2) * 30
-                          const label = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
-                          return <option key={label} value={label}>{label}</option>
-                        })}
-                      </select>
-                      <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
-                        <IconChevronDownSelect />
-                      </span>
+                    <div className="flex items-start gap-4">
+                      <div className="flex flex-col gap-2">
+                        <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Submission date</label>
+                        <input
+                          type="date"
+                          value={submissionDate}
+                          onChange={(e) => setSubmissionDate(e.target.value)}
+                          className="h-12 w-[200px] px-4 rounded-[4px] border border-[#EAEAEA] bg-white text-[16px] text-[#0a0a0a]"
+                        />
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Submission time</label>
+                        <div className="relative w-[200px]">
+                          <select
+                            value={recurrenceSubmissionTime}
+                            onChange={(e) => setRecurrenceSubmissionTime(e.target.value)}
+                            className="w-full h-12 py-3 px-4 pr-10 rounded-[4px] border border-[#E9EAEB] bg-white text-[16px] text-[#0a0a0a] appearance-none"
+                          >
+                            {Array.from({ length: 48 }, (_, i) => {
+                              const h = Math.floor(i / 2)
+                              const m = (i % 2) * 30
+                              const label = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
+                              return <option key={label} value={label}>{label}</option>
+                            })}
+                          </select>
+                          <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
+                            <IconChevronDownSelect />
+                          </span>
+                        </div>
+                      </div>
                     </div>
+                    <p className="text-[12px] text-[#4b535c]">
+                      The deadline by which all approved recommendations will be submitted
+                    </p>
                   </div>
 
                   <p className="text-[14px] italic text-[#4b535c]">
@@ -971,16 +1281,33 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                       const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
                       const dayName = dayNames[recurrenceSubmissionDayOfWeek]
                       const timeStr = ` at ${recurrenceSubmissionTime}`
+                      let body = ''
                       if (recurrenceRepeatUnit === 'week') {
-                        return `${recurrenceRepeatEvery} ${recurrenceRepeatEvery === 1 ? unit.slice(0, -1) : unit} on ${dayName}${timeStr}`
+                        body = `${recurrenceRepeatEvery} ${recurrenceRepeatEvery === 1 ? unit.slice(0, -1) : unit} on ${dayName}`
+                      } else if (recurrenceRepeatUnit === 'month') {
+                        body = `${recurrenceRepeatEvery} ${recurrenceRepeatEvery === 1 ? 'month' : unit} on day ${recurrenceSubmissionDayOfMonth}`
+                      } else if (recurrenceRepeatUnit === 'year') {
+                        body = recurrenceSubmissionDateYear
+                          ? `${recurrenceRepeatEvery} ${recurrenceRepeatEvery === 1 ? 'year' : unit} on ${recurrenceSubmissionDateYear}`
+                          : `${recurrenceRepeatEvery} ${recurrenceRepeatEvery === 1 ? 'year' : unit}`
+                      } else {
+                        body = `${recurrenceRepeatEvery} ${recurrenceRepeatEvery === 1 ? 'day' : unit}`
                       }
-                      if (recurrenceRepeatUnit === 'month') {
-                        return `${recurrenceRepeatEvery} ${recurrenceRepeatEvery === 1 ? 'month' : unit} on day ${recurrenceSubmissionDayOfMonth}${timeStr}`
+                      const formatSubmissionDate = (iso) => {
+                        if (!iso) return ''
+                        const p = iso.split('-')
+                        if (p.length !== 3) return iso
+                        const [y, m, d] = p
+                        return `${d.padStart(2, '0')}/${m.padStart(2, '0')}/${y}`
                       }
-                      if (recurrenceRepeatUnit === 'year') {
-                        return recurrenceSubmissionDateYear ? `${recurrenceRepeatEvery} ${recurrenceRepeatEvery === 1 ? 'year' : unit} on ${recurrenceSubmissionDateYear}${timeStr}` : `${recurrenceRepeatEvery} ${recurrenceRepeatEvery === 1 ? 'year' : unit}`
+                      const dateFmt = formatSubmissionDate(submissionDate)
+                      if (submissionDate && dateFmt) {
+                        return `${body}, next submission ${dateFmt} at ${recurrenceSubmissionTime}`
                       }
-                      return `${recurrenceRepeatEvery} ${recurrenceRepeatEvery === 1 ? 'day' : unit}${timeStr}`
+                      if (recurrenceRepeatUnit === 'year' && !recurrenceSubmissionDateYear) {
+                        return body
+                      }
+                      return `${body}${timeStr}`
                     })()}
                   </p>
                 </section>
@@ -1012,10 +1339,10 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
             >
               <div className="flex flex-col gap-1">
                 <span className="text-[20px] font-medium text-[#212B36] leading-[150%]">
-                  Scope
+                  Geographic scope
                 </span>
                 <span className="text-[14px] font-normal text-[#4b535c]">
-                  Define which products and locations are included in this schedule
+                  Define the locations and network for this schedule.
                 </span>
               </div>
               <IconChevronDown
@@ -1026,214 +1353,245 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
             </button>
             {accordionOpen.scope && (
               <div className="px-5 pb-6 pt-2 flex flex-col gap-6 border-t border-[#EAEAEA]">
-                <div className="flex flex-col gap-3">
-                  <label className="flex items-start gap-3 p-4 rounded-[10px] border border-[#e5e7eb] bg-white cursor-pointer hover:border-[#0267ff]/40 has-[:checked]:border-[#0267ff]">
-                    <input
-                      type="radio"
-                      name="scopeOption"
-                      value="include-all"
-                      checked={scopeOption === 'include-all'}
-                      onChange={() => setScopeOption('include-all')}
-                      className="mt-1 size-4 shrink-0 border-[#e5e7eb] text-[#0267ff] focus:ring-[#0267ff]"
-                    />
-                    <div className="flex flex-col gap-1 min-w-0">
-                      <span className="text-[14px] font-medium text-[#0a0a0a]">Include all recommendations</span>
-                      <span className="text-[12px] font-normal text-[#4b535c]">Applies the full optimised recommendation set for maximum impact.</span>
-                    </div>
-                  </label>
-                  <label className="flex items-start gap-3 p-4 rounded-[10px] border border-[#e5e7eb] bg-white cursor-pointer hover:border-[#0267ff]/40 has-[:checked]:border-[#0267ff]">
-                    <input
-                      type="radio"
-                      name="scopeOption"
-                      value="filter"
-                      checked={scopeOption === 'filter'}
-                      onChange={() => setScopeOption('filter')}
-                      className="mt-1 size-4 shrink-0 border-[#e5e7eb] text-[#0267ff] focus:ring-[#0267ff]"
-                    />
-                    <div className="flex flex-col gap-1 min-w-0">
-                      <span className="text-[14px] font-medium text-[#0a0a0a]">Filter recommendations</span>
-                      <span className="text-[12px] font-normal text-[#4b535c]">Narrow recommendations to specific products, locations, or criteria.</span>
-                    </div>
-                  </label>
-                </div>
-
-                {scopeOption === 'filter' && (
-                  <div className="mt-1 flex flex-col gap-6">
-                    <section className="flex flex-col gap-2">
-                      <div className="flex items-center justify-between">
-                        <h3 className="text-[13px] font-medium text-[#0a0a0a] uppercase tracking-[0.04em]">
-                          Product
-                        </h3>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setProductFilterOpen({
-                              departments: false,
-                              subDepartments: false,
-                              seasons: false,
-                              events: false,
-                              productGroups: false,
-                            })
-                          }
-                          className="text-[12px] font-medium text-[#4b535c] hover:text-[#0a0a0a]"
+                <section className="flex flex-col gap-2">
+                  <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Movement type</label>
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setMovementTypeDropdownOpen((o) => !o)}
+                      className="w-full h-14 pl-4 pr-10 rounded-[4px] border border-[#EAEAEA] bg-white text-[16px] text-[#0a0a0a] text-left flex items-center min-w-0"
+                    >
+                      <span
+                        className={`min-w-0 flex-1 truncate text-left ${selectedMovementTypes.length === 0 ? 'text-[#4b535c]' : 'text-[#0a0a0a]'}`}
+                      >
+                        {selectedMovementTypes.length === 0
+                          ? 'Select'
+                          : selectedMovementTypes
+                              .map((id) => MODULE_OPTIONS.find((o) => o.id === id)?.label)
+                              .filter(Boolean)
+                              .join(', ')}
+                      </span>
+                    </button>
+                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
+                      <IconChevronDownSelect />
+                    </span>
+                    {movementTypeDropdownOpen && (
+                      <>
+                        <div
+                          role="presentation"
+                          className="fixed inset-0 z-[29]"
+                          onClick={() => setMovementTypeDropdownOpen(false)}
+                          aria-hidden
+                        />
+                        <div
+                          className="absolute left-0 right-0 top-full z-[30] mt-1 rounded-[4px] border border-[#EAEAEA] bg-white shadow-[0px_8px_25px_0px_rgba(0,0,0,0.12)] overflow-hidden"
+                          onClick={(e) => e.stopPropagation()}
+                          role="presentation"
                         >
-                          Clear all
-                        </button>
-                      </div>
-                      <div className="mt-1 flex flex-col border-t border-[#e5e7eb]">
-                        {[
-                          { id: 'departments', label: 'Departments' },
-                          { id: 'subDepartments', label: 'Sub-departments' },
-                          { id: 'seasons', label: 'Seasons' },
-                          { id: 'events', label: 'Events' },
-                          { id: 'productGroups', label: 'Product groups' },
-                        ].map((row) => {
-                          const isOpen = productFilterOpen[row.id]
-                          return (
-                            <div key={row.id} className="border-b border-[#e5e7eb] last:border-b-0">
-                              <button
-                                type="button"
-                                onClick={() => toggleProductFilterRow(row.id)}
-                                className="w-full flex items-center justify-between px-3 py-2.5 text-left hover:bg-[#f8f8f8]"
-                              >
-                                <span className="text-[13px] font-medium text-[#0a0a0a]">
-                                  {row.label}
-                                </span>
-                                <span
-                                  className={`inline-flex items-center justify-center size-5 text-[#4b535c] transition-transform ${
-                                    isOpen ? 'rotate-180' : ''
-                                  }`}
-                                >
-                                  <IconChevronDown className="size-4" />
-                                </span>
-                              </button>
-                              {isOpen && (
-                                <div className="px-3 pb-3 pt-1 flex flex-col gap-2 bg-[#fafafa]">
-                                  <div className="flex items-center justify-between gap-2">
-                                    <div className="relative flex-1">
-                                      <input
-                                        type="text"
-                                        placeholder="search..."
-                                        className="w-full h-9 px-3 rounded-[4px] border border-[#e5e7eb] bg-white text-[13px] text-[#0a0a0a] placeholder:text-[#9ca3af]"
-                                      />
-                                    </div>
-                                    <button
-                                      type="button"
-                                      className="text-[12px] font-medium text-[#0267ff] hover:underline shrink-0"
-                                    >
-                                      Select all
-                                    </button>
-                                  </div>
-                                  <div className="flex flex-col gap-1.5 mt-1">
-                                    {(EXCEPTION_FILTER_OPTIONS.find((f) => f.id === row.id)?.options ?? []).map(
-                                      (name) => (
-                                        <label
-                                          key={name}
-                                          className="flex items-center gap-2 text-[13px] text-[#0a0a0a]"
-                                        >
-                                          <input
-                                            type="checkbox"
-                                            className="size-4 rounded border-[#d1d5db] text-[#0267ff] focus:ring-[#0267ff]"
-                                          />
-                                          <span>{name}</span>
-                                        </label>
-                                      ),
-                                    )}
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          )
-                        })}
-                      </div>
-                    </section>
-
-                    <section className="flex flex-col gap-2">
-                      <div className="flex items-center justify-between">
-                        <h3 className="text-[13px] font-medium text-[#0a0a0a] uppercase tracking-[0.04em]">
-                          Geographic
-                        </h3>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setGeoFilterOpen({
-                              locationTypes: false,
-                              regions: false,
-                              countries: false,
-                              locations: false,
-                            })
-                          }
-                          className="text-[12px] font-medium text-[#4b535c] hover:text-[#0a0a0a]"
-                        >
-                          Clear all
-                        </button>
-                      </div>
-                      <div className="mt-1 flex flex-col border-t border-[#e5e7eb]">
-                        {[
-                          { id: 'locationTypes', label: 'Location Types' },
-                          { id: 'regions', label: 'Regions' },
-                          { id: 'countries', label: 'Countries' },
-                          { id: 'locations', label: 'Locations' },
-                        ].map((row) => {
-                          const isOpen = geoFilterOpen[row.id]
-                          return (
-                            <div key={row.id} className="border-b border-[#e5e7eb] last:border-b-0">
-                              <button
-                                type="button"
-                                onClick={() => toggleGeoFilterRow(row.id)}
-                                className="w-full flex items-center justify-between px-3 py-2.5 text-left hover:bg-[#f8f8f8]"
-                              >
-                                <span className="text-[13px] font-medium text-[#0a0a0a]">
-                                  {row.label}
-                                </span>
-                                <span
-                                  className={`inline-flex items-center justify-center size-5 text-[#4b535c] transition-transform ${
-                                    isOpen ? 'rotate-180' : ''
-                                  }`}
-                                >
-                                  <IconChevronDown className="size-4" />
-                                </span>
-                              </button>
-                              {isOpen && (
-                                <div className="px-3 pb-3 pt-1 flex flex-col gap-2 bg-[#fafafa]">
-                                  <div className="flex items-center justify-between gap-2">
-                                    <div className="relative flex-1">
-                                      <input
-                                        type="text"
-                                        placeholder="search..."
-                                        className="w-full h-9 px-3 rounded-[4px] border border-[#e5e7eb] bg-white text-[13px] text-[#0a0a0a] placeholder:text-[#9ca3af]"
-                                      />
-                                    </div>
-                                    <button
-                                      type="button"
-                                      className="text-[12px] font-medium text-[#0267ff] hover:underline shrink-0"
-                                    >
-                                      Select all
-                                    </button>
-                                  </div>
-                                  <div className="flex flex-col gap-1.5 mt-1">
-                                    {['Alpha', 'Bravo', 'Charlie', 'Delta', 'Echo'].map((name) => (
-                                      <label
-                                        key={name}
-                                        className="flex items-center gap-2 text-[13px] text-[#0a0a0a]"
-                                      >
-                                        <input
-                                          type="checkbox"
-                                          className="size-4 rounded border-[#d1d5db] text-[#0267ff] focus:ring-[#0267ff]"
-                                        />
-                                        <span>{name}</span>
-                                      </label>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          )
-                        })}
-                      </div>
-                    </section>
+                          {MODULE_OPTIONS.map((opt) => (
+                            <label
+                              key={opt.id}
+                              className="px-4 py-3 flex items-center gap-3 hover:bg-[#f8f8f8] text-[14px] text-[#0a0a0a] cursor-pointer"
+                            >
+                              <input
+                                type="checkbox"
+                                checked={selectedMovementTypes.includes(opt.id)}
+                                onChange={() =>
+                                  setSelectedMovementTypes((prev) =>
+                                    prev.includes(opt.id)
+                                      ? prev.filter((id) => id !== opt.id)
+                                      : [...prev, opt.id]
+                                  )
+                                }
+                                className="size-4 rounded border-[#d1d5db] text-[#0267ff] focus:ring-[#0267ff] shrink-0"
+                              />
+                              <span>{opt.label}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </>
+                    )}
                   </div>
+                </section>
+
+                <section className="flex flex-col gap-3">
+                  <h3 className="text-[14px] font-medium text-[#0a0a0a]">
+                    Which locations does this schedule cover?
+                  </h3>
+                  <div className="flex flex-col gap-3">
+                    <label className="flex items-start gap-3 p-4 rounded-[10px] border border-[#e5e7eb] bg-white cursor-pointer hover:border-[#0267ff]/40 has-[:checked]:border-[#0267ff]">
+                      <input
+                        type="radio"
+                        name="locationScopeOption"
+                        value="all"
+                        checked={locationScopeOption === 'all'}
+                        onChange={() => setLocationScopeOption('all')}
+                        className="mt-1 size-4 shrink-0 border-[#e5e7eb] text-[#0267ff] focus:ring-[#0267ff]"
+                      />
+                      <div className="flex flex-col gap-1 min-w-0">
+                        <span className="text-[14px] font-medium text-[#0a0a0a]">All locations</span>
+                        <span className="text-[12px] font-normal text-[#4b535c]">
+                          Sol will evaluate your entire network.
+                        </span>
+                      </div>
+                    </label>
+                    <label className="flex items-start gap-3 p-4 rounded-[10px] border border-[#e5e7eb] bg-white cursor-pointer hover:border-[#0267ff]/40 has-[:checked]:border-[#0267ff]">
+                      <input
+                        type="radio"
+                        name="locationScopeOption"
+                        value="select"
+                        checked={locationScopeOption === 'select'}
+                        onChange={() => setLocationScopeOption('select')}
+                        className="mt-1 size-4 shrink-0 border-[#e5e7eb] text-[#0267ff] focus:ring-[#0267ff]"
+                      />
+                      <div className="flex flex-col gap-1 min-w-0">
+                        <span className="text-[14px] font-medium text-[#0a0a0a]">Select locations</span>
+                        <span className="text-[12px] font-normal text-[#4b535c]">
+                          Choose specific locations, regions, or countries to include in this schedule.
+                        </span>
+                      </div>
+                    </label>
+                  </div>
+                </section>
+
+                {locationScopeOption === 'select' && (
+                  <section className="flex flex-col gap-2">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-[13px] font-medium text-[#0a0a0a] uppercase tracking-[0.04em]">
+                        Geographic
+                      </h3>
+                      <button
+                        type="button"
+                        onClick={() => setGeoFilterOpen({ ...DEFAULT_GEO_SCOPE_FILTER_OPEN })}
+                        className="text-[12px] font-medium text-[#4b535c] hover:text-[#0a0a0a]"
+                      >
+                        Clear all
+                      </button>
+                    </div>
+                    <div className="mt-1 flex flex-col border-t border-[#e5e7eb]">
+                      {[
+                        { id: 'regions', label: 'Regions' },
+                        { id: 'countries', label: 'Countries' },
+                        { id: 'cities', label: 'Cities' },
+                        { id: 'locations', label: 'Locations' },
+                        { id: 'locationTypes', label: 'Location Types' },
+                      ].map((row) => {
+                        const isOpen = geoFilterOpen[row.id]
+                        const values = GEO_SCOPE_VALUES_BY_ROW[row.id] ?? []
+                        return (
+                          <div key={row.id} className="border-b border-[#e5e7eb] last:border-b-0">
+                            <button
+                              type="button"
+                              onClick={() => toggleGeoFilterRow(row.id)}
+                              className="w-full flex items-center justify-between px-3 py-2.5 text-left hover:bg-[#f8f8f8]"
+                            >
+                              <span className="text-[13px] font-medium text-[#0a0a0a]">{row.label}</span>
+                              <span
+                                className={`inline-flex items-center justify-center size-5 text-[#4b535c] transition-transform ${
+                                  isOpen ? 'rotate-180' : ''
+                                }`}
+                              >
+                                <IconChevronDown className="size-4" />
+                              </span>
+                            </button>
+                            {isOpen && (
+                              <div className="px-3 pb-3 pt-1 flex flex-col gap-2 bg-[#fafafa]">
+                                <div className="flex items-center justify-between gap-2">
+                                  <div className="relative flex-1">
+                                    <input
+                                      type="text"
+                                      placeholder="search..."
+                                      className="w-full h-9 px-3 rounded-[4px] border border-[#e5e7eb] bg-white text-[13px] text-[#0a0a0a] placeholder:text-[#9ca3af]"
+                                    />
+                                  </div>
+                                  <button
+                                    type="button"
+                                    className="text-[12px] font-medium text-[#0267ff] hover:underline shrink-0"
+                                  >
+                                    Select all
+                                  </button>
+                                </div>
+                                <div className="flex flex-col gap-1.5 mt-1">
+                                  {values.map((name) => (
+                                    <label
+                                      key={name}
+                                      className="flex items-center gap-2 text-[13px] text-[#0a0a0a]"
+                                    >
+                                      <input
+                                        type="checkbox"
+                                        className="size-4 rounded border-[#d1d5db] text-[#0267ff] focus:ring-[#0267ff]"
+                                      />
+                                      <span>{name}</span>
+                                    </label>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </section>
                 )}
+
+                <section className="border-t border-[#e5e7eb] pt-5 mt-5 flex flex-col gap-2">
+                  <h3 className="text-[14px] font-medium text-[#0a0a0a]">Network</h3>
+                  <p className="text-[13px] text-[#4b535c] max-w-[600px]">
+                    We&apos;ll default to your global network set-up in parameters. If the trip configuration or
+                    constraints are different for this schedule, download the template for your location scope, update
+                    it, and upload the specific configuration.
+                  </p>
+                  <div className="flex items-center gap-3 mt-3">
+                    <button
+                      type="button"
+                      className="h-10 px-5 rounded-[6px] bg-[#0267FF] text-white text-[14px] font-medium hover:bg-[#0252cc] flex items-center gap-2"
+                    >
+                      <svg
+                        width="16"
+                        height="16"
+                        viewBox="0 0 16 16"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="shrink-0"
+                        aria-hidden
+                      >
+                        <path
+                          d="M8 3.5v6M8 9.5l-2.5 2.5M8 9.5l2.5 2.5"
+                          stroke="currentColor"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                        <path d="M3.5 13h9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                      </svg>
+                      Download template
+                    </button>
+                    <button
+                      type="button"
+                      className="h-10 px-5 rounded-[6px] border border-[#E9EAEB] bg-white text-[14px] font-medium text-[#0a0a0a] hover:bg-[#f8f8f8] flex items-center gap-2"
+                    >
+                      <svg
+                        width="16"
+                        height="16"
+                        viewBox="0 0 16 16"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="shrink-0"
+                        aria-hidden
+                      >
+                        <path
+                          d="M8 11.5V4M8 4L5.5 6.5M8 4L10.5 6.5"
+                          stroke="currentColor"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                        <path d="M3.5 13h9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                      </svg>
+                      Upload
+                    </button>
+                  </div>
+                </section>
               </div>
             )}
           </div>
@@ -1246,10 +1604,12 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
             >
               <div className="flex flex-col gap-1">
                 <span className="text-[20px] font-medium text-[#212B36] leading-[150%]">
-                  Manage exceptions
+                  Auto-approval &amp; exceptions
                 </span>
                 <span className="text-[14px] font-normal text-[#4b535c]">
-                  Set which recommendations you want to review, the rest will be auto-approved
+                  All recommendations generated for this schedule will be auto-approved by default and submitted on the
+                  deadline. Define exception rules below to flag specific recommendations for manual review before
+                  submission.
                 </span>
               </div>
               <IconChevronDown
@@ -1260,16 +1620,22 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
             </button>
             {accordionOpen.exceptions && (
               <div className="px-5 pb-6 pt-2 flex flex-col gap-4 border-t border-[#EAEAEA]">
-                {exceptions.map((exc, excIdx) => (
+                {exceptions.map((exc, excIdx) => {
+                  const exceptionTitleFull = getExceptionDisplayName(exc, excIdx)
+                  const exceptionTitleDisplay = truncateExceptionTitleDisplay(exceptionTitleFull)
+                  return (
                   <div key={exc.id} className="border border-[#e5e7eb] rounded-[4px] bg-white overflow-visible">
-                    <div className="flex items-center">
+                    <div className="flex items-center min-w-0">
                       <button
                         type="button"
                         onClick={() => toggleExceptionAccordion(exc.id)}
-                        className="flex-1 flex items-center justify-between px-4 py-3 text-left hover:bg-[#f8f8f8] transition-colors"
+                        className="flex-1 flex items-center justify-between gap-2 min-w-0 px-4 py-3 text-left hover:bg-[#f8f8f8] transition-colors"
                       >
-                        <span className="text-[14px] font-medium text-[#0a0a0a]">
-                          {getExceptionDisplayName(exc) ?? `Exception ${excIdx + 1}`}
+                        <span
+                          className="text-[14px] font-medium text-[#0a0a0a] truncate min-w-0 text-left"
+                          title={exceptionTitleFull}
+                        >
+                          {exceptionTitleDisplay}
                         </span>
                         <IconChevronDown
                           className={`size-5 text-[#4b535c] transition-transform shrink-0 ${
@@ -1287,246 +1653,267 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                       </button>
                     </div>
                     {exc.expanded && (
-                      <div className="px-4 pb-4 pt-0 flex flex-col gap-4 border-t border-[#e5e7eb]">
-                        <div className="flex flex-wrap items-center gap-2 mt-4">
-                          <div className="relative">
-                            <button
-                              type="button"
-                              onClick={() => setExceptionFiltersDropdownOpen(exc.id, !exc.filtersDropdownOpen)}
-                              className="h-10 px-4 py-2 flex items-center gap-2 rounded-[4px] border border-[#E9EAEB] bg-white text-[14px] font-medium text-[#0a0a0a] hover:bg-[#f8f8f8]"
-                            >
-                              <IconFilterFunnel />
-                              Filters
-                            </button>
-                            {exc.filtersDropdownOpen && (
-                              <>
-                                <div
-                                  className="fixed inset-0 z-[9]"
-                                  aria-hidden
-                                  onClick={() => setExceptionFiltersDropdownOpen(exc.id, false)}
-                                />
-                                <div
-                                  className="absolute left-0 top-full mt-1 z-10 w-[220px] rounded-[4px] border border-[#E9EAEB] bg-white shadow-lg overflow-hidden"
-                                  style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
-                                >
-                                  <div className="p-2 border-b border-[#e5e7eb]">
-                                    <div className="relative">
-                                      <IconSearch className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-[#9ca3af]" />
-                                      <input
-                                        type="text"
-                                        placeholder="Search"
-                                        value={exc.filterSearchQuery || ''}
-                                        onChange={(e) => setExceptionFilterSearchQuery(exc.id, e.target.value)}
-                                        className="w-full h-9 pl-9 pr-3 rounded-[4px] border border-[#e5e7eb] bg-white text-[13px] text-[#0a0a0a] placeholder:text-[#9ca3af]"
-                                      />
-                                    </div>
+                      <div className="px-4 pb-4 pt-0 flex flex-col border-t border-[#e5e7eb]">
+                        <div className="flex flex-col w-full mt-4">
+                          {(exc.conditions || []).map((cond, condIdx) => {
+                            const filtersCfg = cond.applyAt ? getFiltersConfigForApplyAt(cond.applyAt) : null
+                            const filterSelectValue = filtersCfg ? getConditionFilterSelectValue(cond, filtersCfg) : ''
+                            const scopeDef =
+                              filtersCfg && cond.filterType === 'scope' && cond.scopeCategory
+                                ? [...filtersCfg.product, ...filtersCfg.geographic].find((f) => f.id === cond.scopeCategory)
+                                : null
+                            const scopeOptions = scopeDef?.options ?? []
+                            const popoverId = `${exc.id}__${cond.id}`
+                            const popoverOpen = openPopover === popoverId
+                            const searchQ = (scopePopoverSearch || '').trim().toLowerCase()
+                            const filteredScopeOptions = scopeOptions.filter(
+                              (name) => !searchQ || name.toLowerCase().includes(searchQ)
+                            )
+                            const selectedScopeVals = Array.isArray(cond.scopeValues) ? cond.scopeValues : []
+                            const allScopeSelected =
+                              scopeOptions.length > 0 &&
+                              selectedScopeVals.length === scopeOptions.length &&
+                              scopeOptions.every((o) => selectedScopeVals.includes(o))
+                            const scopeTrigger = getScopeValuesTriggerDisplay(cond.scopeValues)
+
+                            return (
+                              <div key={cond.id} className="w-full">
+                                {condIdx > 0 && (
+                                  <div className="flex justify-center py-1">
+                                    <span className="text-[11px] font-medium text-[#9ca3af] uppercase tracking-wider">
+                                      AND
+                                    </span>
                                   </div>
-                                  <div className="max-h-[240px] overflow-y-auto py-1">
-                                    {EXCEPTION_FILTER_OPTIONS.filter((o) =>
-                                      !(exc.filterSearchQuery || '').trim() ||
-                                      o.label.toLowerCase().includes((exc.filterSearchQuery || '').toLowerCase())
-                                    ).map((opt) => (
-                                      <button
-                                        key={opt.id}
-                                        type="button"
-                                        onClick={() => addFilterToException(exc.id, opt.id)}
-                                        className={`w-full px-3 py-2 text-left text-[13px] font-medium text-[#0a0a0a] hover:bg-[#f8f8f8] ${opt.highlight ? 'bg-[#E8F0FE]' : ''}`}
+                                )}
+                                <div className="rounded-[4px] border border-[#e5e7eb] bg-[#fafafa] px-3 py-2">
+                                  <div className="flex flex-wrap items-center gap-2 min-w-0">
+                                    <span className="text-[12px] text-[#4b535c] shrink-0">Apply at</span>
+                                    <div className="relative shrink-0">
+                                      <select
+                                        value={cond.applyAt ?? ''}
+                                        onChange={(e) => {
+                                          const value = e.target.value
+                                          updateConditionField(exc.id, cond.id, 'applyAt', value)
+                                          resetConditionFilters(exc.id, cond.id)
+                                          setOpenPopover(null)
+                                        }}
+                                        className="h-9 w-[170px] py-0 pl-3 pr-9 rounded-[4px] border border-[#e9eaeb] bg-white text-[13px] text-[#0a0a0a] appearance-none"
                                       >
-                                        {opt.label}
-                                      </button>
-                                    ))}
+                                        <option value="" disabled>
+                                          Select level...
+                                        </option>
+                                        <option value="trip">Trip</option>
+                                        <option value="product">Product</option>
+                                        <option value="sending_location">Sending location</option>
+                                        <option value="receiving_location">Receiving location</option>
+                                      </select>
+                                      <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
+                                        <IconChevronDownSelect />
+                                      </span>
+                                    </div>
+                                    {!cond.applyAt && (
+                                      <span className="text-[13px] text-[#9ca3af] italic flex-1 min-w-[140px]">
+                                        Select a level first
+                                      </span>
+                                    )}
+                                    {cond.applyAt && filtersCfg && (
+                                      <>
+                                        <span className="text-[12px] text-[#4b535c] shrink-0">Filter</span>
+                                        <div className="relative shrink-0">
+                                          <select
+                                            value={filterSelectValue}
+                                            onChange={(e) =>
+                                              onConditionFilterSelectChange(exc.id, cond, filtersCfg, e.target.value)
+                                            }
+                                            className="h-9 w-[180px] py-0 pl-3 pr-9 rounded-[4px] border border-[#e9eaeb] bg-white text-[13px] text-[#0a0a0a] appearance-none"
+                                          >
+                                            <option value="">Select filter...</option>
+                                            <optgroup label="Product">
+                                              {filtersCfg.product.map((f) => (
+                                                <option key={f.id} value={f.id}>
+                                                  {f.label}
+                                                </option>
+                                              ))}
+                                            </optgroup>
+                                            <optgroup label="Geographic">
+                                              {filtersCfg.geographic.map((f) => (
+                                                <option key={f.id} value={f.id}>
+                                                  {f.label}
+                                                </option>
+                                              ))}
+                                            </optgroup>
+                                            <optgroup label="Advanced">
+                                              {filtersCfg.advanced.map((f) => (
+                                                <option key={f.id} value={f.id}>
+                                                  {f.label}
+                                                </option>
+                                              ))}
+                                            </optgroup>
+                                          </select>
+                                          <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
+                                            <IconChevronDownSelect />
+                                          </span>
+                                        </div>
+                                        {cond.filterType === 'scope' && cond.scopeCategory && scopeDef && (
+                                          <div className="relative flex-1 min-w-[120px] max-w-[280px]">
+                                            <button
+                                              type="button"
+                                              onClick={() =>
+                                                setOpenPopover((prev) => (prev === popoverId ? null : popoverId))
+                                              }
+                                              className={`w-full min-h-9 px-2 rounded-[4px] border border-[#e9eaeb] bg-white text-left text-[13px] hover:bg-[#f9fafb] truncate ${
+                                                scopeTrigger.isPlaceholder
+                                                  ? 'text-[#9ca3af] italic'
+                                                  : 'text-[#0a0a0a]'
+                                              }`}
+                                            >
+                                              {scopeTrigger.text}
+                                            </button>
+                                            {popoverOpen && (
+                                              <>
+                                                <div
+                                                  className="fixed inset-0 z-[19]"
+                                                  aria-hidden
+                                                  onClick={() => setOpenPopover(null)}
+                                                />
+                                                <div
+                                                  className="absolute left-0 top-full z-20 mt-1 w-[280px] rounded-[4px] border border-[#e5e7eb] bg-white p-3 shadow-lg"
+                                                  onClick={(e) => e.stopPropagation()}
+                                                  role="presentation"
+                                                >
+                                                  <div className="flex items-start justify-between gap-2 mb-2">
+                                                    <span className="text-[13px] font-semibold text-[#0a0a0a] leading-tight">
+                                                      {scopeDef.label}
+                                                    </span>
+                                                    <button
+                                                      type="button"
+                                                      onClick={() =>
+                                                        allScopeSelected
+                                                          ? updateConditionField(exc.id, cond.id, 'scopeValues', [])
+                                                          : updateConditionField(
+                                                              exc.id,
+                                                              cond.id,
+                                                              'scopeValues',
+                                                              [...scopeOptions]
+                                                            )
+                                                      }
+                                                      className="text-[12px] text-[#0267ff] hover:underline shrink-0"
+                                                    >
+                                                      {allScopeSelected ? 'Deselect all' : 'Select all'}
+                                                    </button>
+                                                  </div>
+                                                  <div className="relative mb-2">
+                                                    <IconSearch className="absolute left-2.5 top-1/2 -translate-y-1/2 size-4 text-[#9ca3af] pointer-events-none" />
+                                                    <input
+                                                      type="text"
+                                                      placeholder="Search"
+                                                      value={scopePopoverSearch}
+                                                      onChange={(e) => setScopePopoverSearch(e.target.value)}
+                                                      className="w-full h-8 pl-9 pr-2 rounded-[4px] border border-[#e5e7eb] bg-white text-[13px] text-[#0a0a0a] placeholder:text-[#9ca3af]"
+                                                    />
+                                                  </div>
+                                                  <div className="flex flex-col max-h-[200px] overflow-y-auto min-h-0 -mx-1">
+                                                    {filteredScopeOptions.map((name) => (
+                                                      <label
+                                                        key={name}
+                                                        className="flex items-center gap-2 py-1.5 px-2 rounded text-[13px] text-[#0a0a0a] cursor-pointer hover:bg-[#f3f4f6]"
+                                                      >
+                                                        <input
+                                                          type="checkbox"
+                                                          checked={selectedScopeVals.includes(name)}
+                                                          onChange={() => {
+                                                            const arr = [...selectedScopeVals]
+                                                            const next = arr.includes(name)
+                                                              ? arr.filter((v) => v !== name)
+                                                              : [...arr, name]
+                                                            updateConditionField(exc.id, cond.id, 'scopeValues', next)
+                                                          }}
+                                                          className="size-4 shrink-0 rounded border-[#d1d5db] text-[#0267ff] focus:ring-[#0267ff]"
+                                                        />
+                                                        <span className="min-w-0 break-words">{name}</span>
+                                                      </label>
+                                                    ))}
+                                                  </div>
+                                                </div>
+                                              </>
+                                            )}
+                                          </div>
+                                        )}
+                                        {cond.filterType === 'advanced' && (
+                                          <>
+                                            <div className="relative shrink-0">
+                                              <select
+                                                value={cond.advancedCondition ?? ''}
+                                                onChange={(e) =>
+                                                  updateConditionField(
+                                                    exc.id,
+                                                    cond.id,
+                                                    'advancedCondition',
+                                                    e.target.value
+                                                  )
+                                                }
+                                                className="h-9 w-[160px] py-0 pl-3 pr-9 rounded-[4px] border border-[#e9eaeb] bg-white text-[13px] text-[#0a0a0a] appearance-none"
+                                              >
+                                                <option value="">Select condition</option>
+                                                {ADVANCED_CONDITION_OPTIONS.map((o) => (
+                                                  <option key={o} value={o}>
+                                                    {o}
+                                                  </option>
+                                                ))}
+                                              </select>
+                                              <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
+                                                <IconChevronDownSelect />
+                                              </span>
+                                            </div>
+                                            <input
+                                              type="text"
+                                              value={cond.advancedValue ?? ''}
+                                              onChange={(e) =>
+                                                updateConditionField(exc.id, cond.id, 'advancedValue', e.target.value)
+                                              }
+                                              placeholder="Value"
+                                              className="h-9 w-[120px] px-3 rounded-[4px] border border-[#e9eaeb] bg-white text-[13px] text-[#0a0a0a] placeholder:text-[#9ca3af]"
+                                            />
+                                          </>
+                                        )}
+                                      </>
+                                    )}
+                                    <button
+                                      type="button"
+                                      className="shrink-0 h-8 w-8 flex items-center justify-center rounded-[4px] text-[#4b535c] hover:bg-[#e5e7eb] hover:text-[#0a0a0a] ml-auto"
+                                      aria-label="Remove condition"
+                                      onClick={() => {
+                                        removeConditionFromException(exc.id, cond.id)
+                                        setOpenPopover((prev) => (prev === popoverId ? null : prev))
+                                      }}
+                                    >
+                                      <IconClose className="size-4" />
+                                    </button>
                                   </div>
                                 </div>
-                              </>
-                            )}
-                          </div>
-                          {(exc.activeFilterTypes || []).map((filterId) => {
-                            const opt = EXCEPTION_FILTER_OPTIONS.find((o) => o.id === filterId)
-                            const label = opt?.label || filterId
-                            const isProduct = ['departments', 'subDepartments', 'seasons', 'events', 'productGroups'].includes(filterId)
-                            const sel = isProduct ? (exc.productFilterSelected || {}) : (exc.geoFilterSelected || {})
-                            const selected = sel[filterId] || []
-                            const summary = filterId === 'advanced'
-                              ? (getAdvancedFilterSummary(exc) || '')
-                              : selected.length > 0
-                                ? selected.join(', ')
-                                : ''
-                            const chipLabel = summary ? `${label}: ${summary}` : `${label}:`
-                            const isPopoverOpen = exc.openFilterPopover === filterId
-                            return (
-                              <div key={filterId} className="relative">
-                                <button
-                                  type="button"
-                                  onClick={() => filterId === 'advanced' ? null : setExceptionOpenFilterPopover(exc.id, isPopoverOpen ? null : filterId)}
-                                  className="h-10 px-3 py-2 flex items-center gap-1.5 rounded-[4px] border border-[#E9EAEB] bg-white text-[13px] font-medium text-[#0a0a0a] hover:bg-[#f8f8f8]"
-                                >
-                                  <span className="max-w-[180px] truncate">{chipLabel}</span>
-                                  <span
-                                    role="button"
-                                    tabIndex={0}
-                                    onClick={(e) => { e.stopPropagation(); e.preventDefault(); removeFilterFromException(exc.id, filterId) }}
-                                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); removeFilterFromException(exc.id, filterId) } }}
-                                    className="inline-flex shrink-0 text-[#4b535c] hover:text-[#0a0a0a]"
-                                  >
-                                    <IconClose className="size-4" />
-                                  </span>
-                                </button>
-                                {filterId !== 'advanced' && isPopoverOpen && (
-                                  <>
-                                    <div
-                                      className="fixed inset-0 z-[9]"
-                                      aria-hidden
-                                      onClick={() => setExceptionOpenFilterPopover(exc.id, null)}
-                                    />
-                                    <div
-                                      className="absolute left-0 top-full mt-1 z-10 w-[220px] rounded-[4px] border border-[#E9EAEB] bg-white shadow-lg overflow-hidden"
-                                      style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
-                                      onClick={(e) => e.stopPropagation()}
-                                    >
-                                      <div className="p-2 border-b border-[#e5e7eb]">
-                                        <div className="relative">
-                                          <IconSearch className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-[#9ca3af] pointer-events-none" />
-                                          <input
-                                            type="text"
-                                            placeholder="Search"
-                                            className="w-full h-9 pl-9 pr-3 rounded-[4px] border border-[#e5e7eb] bg-white text-[13px] text-[#0a0a0a] placeholder:text-[#9ca3af]"
-                                          />
-                                        </div>
-                                      </div>
-                                      <div className="p-2 flex items-center justify-between">
-                                        <button
-                                          type="button"
-                                          onClick={() => selectAllFilterOptionsForException(exc.id, filterId, selected.length < (opt?.options?.length || 0))}
-                                          className="text-[12px] font-medium text-[#0267ff] hover:underline"
-                                        >
-                                          Select all
-                                        </button>
-                                      </div>
-                                      <div className="max-h-[180px] overflow-y-auto py-1 px-2 flex flex-col gap-1.5">
-                                        {(opt?.options || []).map((name) => (
-                                          <label key={name} className="flex items-center gap-2 text-[13px] text-[#0a0a0a] cursor-pointer">
-                                            <input
-                                              type="checkbox"
-                                              checked={selected.includes(name)}
-                                              onChange={() => toggleFilterOptionForException(exc.id, filterId, name)}
-                                              className="size-4 rounded border-[#d1d5db] text-[#0267ff] focus:ring-[#0267ff]"
-                                            />
-                                            <span>{name}</span>
-                                          </label>
-                                        ))}
-                                      </div>
-                                    </div>
-                                  </>
-                                )}
                               </div>
                             )
                           })}
-                          {((exc.activeFilterTypes || []).length > 0) && (
-                            <button
-                              type="button"
-                              onClick={() => clearAllFiltersForException(exc.id)}
-                              className="text-[13px] font-medium text-[#4b535c] hover:text-[#0a0a0a] hover:underline"
-                            >
-                              Clear filters
-                            </button>
-                          )}
                         </div>
-                        {(exc.activeFilterTypes || []).includes('advanced') && (
-                          <div className="flex flex-col gap-3 p-4 rounded-[4px] border border-[#E9EAEB] bg-white shadow-sm">
-                            {exc.advancedRows.map((box) => (
-                              <div key={box.id} className="flex flex-col gap-2">
-                                {box.conditions.map((cond, condIdx) => (
-                                  <div key={cond.id} className="flex flex-col gap-1">
-                                    {condIdx > 0 && (
-                                      <span className="text-[12px] font-normal text-[#878D94]">and</span>
-                                    )}
-                                    <div className="flex items-end gap-2 w-full">
-                                      <span className="text-[14px] font-medium text-[#0a0a0a] shrink-0 w-[48px]">
-                                        {condIdx === 0 ? 'Where' : ''}
-                                      </span>
-                                      <div className="flex flex-col gap-0.5 flex-1 min-w-0">
-                                        <label className="text-[12px] font-normal text-[#4b535c]">Main column</label>
-                                        <div className="relative">
-                                          <select
-                                            value={cond.mainColumn}
-                                            onChange={(e) => updateAdvancedApprovalCondition(exc.id, box.id, cond.id, 'mainColumn', e.target.value)}
-                                            className="w-full h-10 py-2 pl-3 pr-9 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#0a0a0a] appearance-none"
-                                          >
-                                            <option value="">Select</option>
-                                            {MAIN_COLUMN_OPTIONS.map((o) => (
-                                              <option key={o} value={o}>{o}</option>
-                                            ))}
-                                          </select>
-                                          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
-                                            <IconChevronDownSelect />
-                                          </span>
-                                        </div>
-                                      </div>
-                                      <div className="flex flex-col gap-0.5 flex-1 min-w-0">
-                                        <label className="text-[12px] font-normal text-[#4b535c]">Condition</label>
-                                        <div className="relative">
-                                          <select
-                                            value={cond.condition}
-                                            onChange={(e) => updateAdvancedApprovalCondition(exc.id, box.id, cond.id, 'condition', e.target.value)}
-                                            className="w-full h-10 py-2 pl-3 pr-9 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#0a0a0a] appearance-none"
-                                          >
-                                            <option value="">Select</option>
-                                            {CONDITION_OPTIONS.map((o) => (
-                                              <option key={o} value={o}>{o}</option>
-                                            ))}
-                                          </select>
-                                          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
-                                            <IconChevronDownSelect />
-                                          </span>
-                                        </div>
-                                      </div>
-                                      <div className="flex flex-col gap-0.5 flex-1 min-w-0">
-                                        <label className="text-[12px] font-normal text-[#4b535c]">Enter a value</label>
-                                        <input
-                                          type="text"
-                                          placeholder="Enter a value"
-                                          value={cond.value}
-                                          onChange={(e) => updateAdvancedApprovalCondition(exc.id, box.id, cond.id, 'value', e.target.value)}
-                                          className="w-full h-10 py-2 px-3 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#0a0a0a]"
-                                        />
-                                      </div>
-                                      {box.conditions.length > 1 && (
-                                        <button
-                                          type="button"
-                                          onClick={() => removeConditionFromBox(exc.id, box.id, cond.id)}
-                                          className="h-10 w-10 flex items-center justify-center rounded-[4px] text-[#4b535c] hover:bg-[#e5e7eb] shrink-0"
-                                          aria-label="Remove condition"
-                                        >
-                                          <IconClose className="size-4" />
-                                        </button>
-                                      )}
-                                    </div>
-                                  </div>
-                                ))}
-                                <button
-                                  type="button"
-                                  onClick={() => addConditionToBox(exc.id, box.id)}
-                                  className="self-start text-[13px] font-medium text-[#0267FF] hover:underline"
-                                >
-                                  + Add row
-                                </button>
-                              </div>
-                            ))}
-                            <div className="flex justify-end">
-                              <button
-                                type="button"
-                                onClick={() => clearAdvancedForException(exc.id)}
-                                className="h-9 px-4 rounded-[4px] border border-[#E9EAEB] bg-white text-[13px] font-medium text-[#0a0a0a] hover:bg-[#f8f8f8]"
-                              >
-                                Clear
-                              </button>
-                            </div>
-                          </div>
-                        )}
+                        <button
+                          type="button"
+                          onClick={() => addConditionToException(exc.id)}
+                          className="self-start text-[13px] font-medium text-[#0267FF] hover:underline mt-2"
+                        >
+                          + Add condition
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => clearAllConditionsForException(exc.id)}
+                          className="self-start text-[13px] font-medium text-[#4b535c] hover:text-[#0a0a0a] hover:underline mt-1"
+                        >
+                          Clear filters
+                        </button>
                       </div>
                     )}
                   </div>
-                ))}
+                  )
+                })}
                 <button
                   type="button"
                   onClick={addException}
