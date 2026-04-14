@@ -1379,7 +1379,7 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
 
                 <section className="flex flex-col gap-3">
                   <h3 className="text-[14px] font-medium text-[#0a0a0a]">
-                    Which locations should receive recommendations?
+                    Which locations does this schedule cover?
                   </h3>
                   <div className="flex flex-col gap-3">
                     <label className="flex items-start gap-3 p-4 rounded-[10px] border border-[#e5e7eb] bg-white cursor-pointer hover:border-[#0267ff]/40 has-[:checked]:border-[#0267ff]">
@@ -1394,7 +1394,7 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                       <div className="flex flex-col gap-1 min-w-0">
                         <span className="text-[14px] font-medium text-[#0a0a0a]">All locations</span>
                         <span className="text-[12px] font-normal text-[#4b535c]">
-                          The solver evaluates your entire network of receiving locations for this schedule.
+                          Sol will evaluate your entire network.
                         </span>
                       </div>
                     </label>
@@ -1498,11 +1498,11 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                 )}
 
                 <section className="border-t border-[#e5e7eb] pt-5 mt-5 flex flex-col gap-2">
-                  <h3 className="text-[14px] font-medium text-[#0a0a0a]">Network configuration</h3>
+                  <h3 className="text-[14px] font-medium text-[#0a0a0a]">Network</h3>
                   <p className="text-[13px] text-[#4b535c] max-w-[600px]">
-                    We&apos;ll default to your global network configuration. If the network set-up is different for this
-                    schedule, download the template for your location scope, update it, and upload the specific
-                    configuration.
+                    We&apos;ll default to your global network set-up in parameters. If the trip configuration or
+                    constraints are different for this schedule, download the template for your location scope, update
+                    it, and upload the specific configuration.
                   </p>
                   <div className="flex items-center gap-3 mt-3">
                     <button
@@ -1570,8 +1570,9 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                   Auto-approval &amp; exceptions
                 </span>
                 <span className="text-[14px] font-normal text-[#4b535c]">
-                  Configure which recommendations are auto-approved and which need manual review. The solver evaluates
-                  globally — these rules determine the review workflow.
+                  All recommendations generated for this schedule will be auto-approved by default and submitted on the
+                  deadline. Define exception rules below to flag specific recommendations for manual review before
+                  submission.
                 </span>
               </div>
               <IconChevronDown
