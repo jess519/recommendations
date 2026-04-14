@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { Truck, Network, TrendingUp, ShieldCheck, Download, Upload } from 'lucide-react'
+import { Truck, Network, TrendingUp, ShieldCheck } from 'lucide-react'
 import { IconCalendarSidebar, IconPlus, IconReplenishment, IconReorder, IconRebalancing, IconChevronDown, IconList, IconCalendarNote, IconTruck, IconTrendUp, IconLightbulb, IconEdit, IconClose, IconChevronDownSelect, IconArrowLeft, IconSearch } from '../components/icons'
 
 const SAMPLE_CALENDAR_ENTRY = {
@@ -132,26 +132,63 @@ const FILTER_SAMPLE_VALUES = {
   currentWarehouse: ['WH Paris', 'WH Lyon', 'WH London'],
 }
 
-/** Additional filters — Products list (Create schedule scope) */
-const ADDITIONAL_SCOPE_PRODUCT_NAMES = [
-  'Walk Ico Blason Eco',
-  'Rock Ii Grained Leather',
-  'Zadig Woven Bracelet',
-  'Angel Tote Xs Cow Burnish',
-  'Flame Of Love Lighter',
-  'Angel Tote Monogram',
-  'Alys Hc Photo Wild Ride',
-  'Cloe Hc Happy Mouse Strass',
-  'Alys Hc Voltaire Paris',
-  'Rock Earring',
-  'Cloe Hc Somebody Loves Strass',
-  'LWBA04320_BROWNIE',
-  'LWBA04065_ROAD',
-  'Angel Pouch Denim Monogram',
-  'Angel Pouch Grained Leather',
-]
-
 const ADV_FILTER_OPTION_SAMPLES = ['10', '50', '100', '500']
+
+/** Create schedule — geographic scope (destination filters when "Select locations") */
+const GEO_SCOPE_LOCATION_TYPES = ['Boutique', 'Outlet', 'Department store', 'E-commerce', 'Warehouse']
+const GEO_SCOPE_REGIONS = ['Europe', 'North America', 'Asia Pacific', 'Africa']
+const GEO_SCOPE_COUNTRIES = [
+  'France',
+  'Italy',
+  'UK',
+  'Germany',
+  'Spain',
+  'United States',
+  'Canada',
+  'Japan',
+  'South Korea',
+  'Singapore',
+  'South Africa',
+]
+const GEO_SCOPE_LOCATIONS = [
+  'Paris Store',
+  'Cannes Store',
+  'Lille Store',
+  'Lyon Store',
+  'Marseille Store',
+  'Nancy Store',
+  'Strasbourg Store',
+  'Bordeaux',
+  'Berlin Store',
+  'Oslo Store',
+  'Madrid Store',
+  'London Store',
+  'Manchester Store',
+  'Montreal Store',
+  'Ottawa Store',
+  'Toronto Store',
+  'Cape Town Store',
+  'Tokyo Store',
+  'Kyoto Store',
+]
+const GEO_SCOPE_VALUES_BY_ROW = {
+  locationTypes: GEO_SCOPE_LOCATION_TYPES,
+  regions: GEO_SCOPE_REGIONS,
+  countries: GEO_SCOPE_COUNTRIES,
+  locations: GEO_SCOPE_LOCATIONS,
+}
+const GEO_SCOPE_SUPPLIER_OPTIONS = ['Supplier A', 'Supplier B', 'Supplier C']
+const GEO_SCOPE_DISTRIBUTION_CENTRE_OPTIONS = [
+  'Dlo warehouse europe louvres',
+  'Wus whs us main',
+  'Paris Warehouse',
+]
+const DEFAULT_GEO_SCOPE_FILTER_OPEN = {
+  locationTypes: false,
+  regions: false,
+  countries: false,
+  locations: false,
+}
 
 const fe = (id, label, options) => ({ id, label, options })
 
@@ -230,20 +267,6 @@ function getAllExceptionLevelFilters(applyAt) {
 
 function getExceptionLevelFilterDef(applyAt, filterId) {
   return getAllExceptionLevelFilters(applyAt).find((f) => f.id === filterId)
-}
-
-const SCOPE_ACCORDION_PRODUCT_KEYS = {
-  departments: 'department',
-  subDepartments: 'subDepartment',
-  seasons: 'season',
-  events: 'events',
-  productGroups: 'product',
-}
-const SCOPE_ACCORDION_GEO_KEYS = {
-  locationTypes: 'locationType',
-  regions: 'region',
-  countries: 'countries',
-  locations: 'location',
 }
 
 const APPLY_AT_DISPLAY_LABELS = {
@@ -621,30 +644,12 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
     scope: false,
     exceptions: false,
   })
-  const [scopeOption, setScopeOption] = useState('include-all')
-  const [productFilterOpen, setProductFilterOpen] = useState({
-    departments: false,
-    subDepartments: false,
-    seasons: false,
-    events: false,
-    productGroups: false,
-  })
-  const [geoFilterOpen, setGeoFilterOpen] = useState({
-    locationTypes: false,
-    regions: false,
-    countries: false,
-    locations: false,
-  })
-  const [additionalProductsOpen, setAdditionalProductsOpen] = useState(false)
-  const [additionalProductsSelected, setAdditionalProductsSelected] = useState([])
-  const [additionalProductsSearch, setAdditionalProductsSearch] = useState('')
-  const DEFAULT_PRODUCT_FILTER_OPEN = { departments: false, subDepartments: false, seasons: false, events: false, productGroups: false }
-  const DEFAULT_GEO_FILTER_OPEN = {
-    locationTypes: false,
-    regions: false,
-    countries: false,
-    locations: false,
-  }
+  const [locationScopeOption, setLocationScopeOption] = useState('all')
+  const [sourceType, setSourceType] = useState('')
+  const [selectedSupplier, setSelectedSupplier] = useState('')
+  const [selectedDistributionCentre, setSelectedDistributionCentre] = useState('')
+  const [selectedSourceLocation, setSelectedSourceLocation] = useState('')
+  const [geoFilterOpen, setGeoFilterOpen] = useState(() => ({ ...DEFAULT_GEO_SCOPE_FILTER_OPEN }))
   const [exceptions, setExceptions] = useState(() => [
     {
       id: 'exc-1',
@@ -899,13 +904,6 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
       scope: key === 'scope',
       exceptions: key === 'exceptions',
     })
-  }
-
-  const toggleProductFilterRow = (key) => {
-    setProductFilterOpen((prev) => ({
-      ...prev,
-      [key]: !prev[key],
-    }))
   }
 
   const toggleGeoFilterRow = (key) => {
@@ -1349,10 +1347,10 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
             >
               <div className="flex flex-col gap-1">
                 <span className="text-[20px] font-medium text-[#212B36] leading-[150%]">
-                  Auto-approval scope
+                  Geographic scope
                 </span>
                 <span className="text-[14px] font-normal text-[#4b535c]">
-                  The solver evaluates your entire network. Define which recommendations follow your auto-approval and exception rules.
+                  Define the locations and network for this schedule. The solver will generate recommendations based on what is physically actionable within this scope.
                 </span>
               </div>
               <IconChevronDown
@@ -1363,302 +1361,229 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
             </button>
             {accordionOpen.scope && (
               <div className="px-5 pb-6 pt-2 flex flex-col gap-6 border-t border-[#EAEAEA]">
-                <div className="flex flex-col gap-3">
-                  <label className="flex items-start gap-3 p-4 rounded-[10px] border border-[#e5e7eb] bg-white cursor-pointer hover:border-[#0267ff]/40 has-[:checked]:border-[#0267ff]">
-                    <input
-                      type="radio"
-                      name="scopeOption"
-                      value="include-all"
-                      checked={scopeOption === 'include-all'}
-                      onChange={() => setScopeOption('include-all')}
-                      className="mt-1 size-4 shrink-0 border-[#e5e7eb] text-[#0267ff] focus:ring-[#0267ff]"
-                    />
-                    <div className="flex flex-col gap-1 min-w-0">
-                      <span className="text-[14px] font-medium text-[#0a0a0a]">All recommendations</span>
-                      <span className="text-[12px] font-normal text-[#4b535c]">Auto-approve all recommendations that pass your exception rules. Anything flagged by an exception requires manual review before submission.</span>
-                    </div>
-                  </label>
-                  <label className="flex items-start gap-3 p-4 rounded-[10px] border border-[#e5e7eb] bg-white cursor-pointer hover:border-[#0267ff]/40 has-[:checked]:border-[#0267ff]">
-                    <input
-                      type="radio"
-                      name="scopeOption"
-                      value="filter"
-                      checked={scopeOption === 'filter'}
-                      onChange={() => setScopeOption('filter')}
-                      className="mt-1 size-4 shrink-0 border-[#e5e7eb] text-[#0267ff] focus:ring-[#0267ff]"
-                    />
-                    <div className="flex flex-col gap-1 min-w-0">
-                      <span className="text-[14px] font-medium text-[#0a0a0a]">Selected recommendations</span>
-                      <span className="text-[12px] font-normal text-[#4b535c]">Auto-approve only recommendations matching the criteria you set here. Flagged exceptions still require manual review. All other recommendations remain visible and submittable, but default to manual review.</span>
-                    </div>
-                  </label>
-                </div>
-
-                {scopeOption === 'filter' && (
-                  <div className="mt-1 flex flex-col gap-6">
-                    <section className="flex flex-col gap-2">
-                      <div className="flex items-center justify-between">
-                        <h3 className="text-[13px] font-medium text-[#0a0a0a] uppercase tracking-[0.04em]">
-                          Product
-                        </h3>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setProductFilterOpen({
-                              departments: false,
-                              subDepartments: false,
-                              seasons: false,
-                              events: false,
-                              productGroups: false,
-                            })
-                          }
-                          className="text-[12px] font-medium text-[#4b535c] hover:text-[#0a0a0a]"
-                        >
-                          Clear all
-                        </button>
+                <section className="flex flex-col gap-3">
+                  <h3 className="text-[14px] font-medium text-[#0a0a0a]">Where are products coming from?</h3>
+                  <div className="flex flex-col gap-3">
+                    <label className="flex items-start gap-3 p-4 rounded-[10px] border border-[#e5e7eb] bg-white cursor-pointer hover:border-[#0267ff]/40 has-[:checked]:border-[#0267ff]">
+                      <input
+                        type="radio"
+                        name="sourceType"
+                        value="supplier"
+                        checked={sourceType === 'supplier'}
+                        onChange={() => {
+                          setSourceType('supplier')
+                          setSelectedDistributionCentre('')
+                          setSelectedSourceLocation('')
+                        }}
+                        className="mt-1 size-4 shrink-0 border-[#e5e7eb] text-[#0267ff] focus:ring-[#0267ff]"
+                      />
+                      <div className="flex flex-col gap-1 min-w-0">
+                        <span className="text-[14px] font-medium text-[#0a0a0a]">Supplier</span>
+                        <span className="text-[12px] font-normal text-[#4b535c]">
+                          Products will be sent from this supplier to your distribution centre
+                        </span>
                       </div>
-                      <div className="mt-1 flex flex-col border-t border-[#e5e7eb]">
-                        {[
-                          { id: 'departments', label: 'Departments' },
-                          { id: 'subDepartments', label: 'Sub-departments' },
-                          { id: 'seasons', label: 'Seasons' },
-                          { id: 'events', label: 'Events' },
-                          { id: 'productGroups', label: 'Product groups' },
-                        ].map((row) => {
-                          const isOpen = productFilterOpen[row.id]
-                          return (
-                            <div key={row.id} className="border-b border-[#e5e7eb] last:border-b-0">
-                              <button
-                                type="button"
-                                onClick={() => toggleProductFilterRow(row.id)}
-                                className="w-full flex items-center justify-between px-3 py-2.5 text-left hover:bg-[#f8f8f8]"
-                              >
-                                <span className="text-[13px] font-medium text-[#0a0a0a]">
-                                  {row.label}
-                                </span>
-                                <span
-                                  className={`inline-flex items-center justify-center size-5 text-[#4b535c] transition-transform ${
-                                    isOpen ? 'rotate-180' : ''
-                                  }`}
-                                >
-                                  <IconChevronDown className="size-4" />
-                                </span>
-                              </button>
-                              {isOpen && (
-                                <div className="px-3 pb-3 pt-1 flex flex-col gap-2 bg-[#fafafa]">
-                                  <div className="flex items-center justify-between gap-2">
-                                    <div className="relative flex-1">
-                                      <input
-                                        type="text"
-                                        placeholder="search..."
-                                        className="w-full h-9 px-3 rounded-[4px] border border-[#e5e7eb] bg-white text-[13px] text-[#0a0a0a] placeholder:text-[#9ca3af]"
-                                      />
-                                    </div>
-                                    <button
-                                      type="button"
-                                      className="text-[12px] font-medium text-[#0267ff] hover:underline shrink-0"
-                                    >
-                                      Select all
-                                    </button>
-                                  </div>
-                                  <div className="flex flex-col gap-1.5 mt-1">
-                                    {(FILTER_SAMPLE_VALUES[SCOPE_ACCORDION_PRODUCT_KEYS[row.id]] ?? []).map((name) => (
-                                      <label
-                                        key={name}
-                                        className="flex items-center gap-2 text-[13px] text-[#0a0a0a]"
-                                      >
-                                        <input
-                                          type="checkbox"
-                                          className="size-4 rounded border-[#d1d5db] text-[#0267ff] focus:ring-[#0267ff]"
-                                        />
-                                        <span>{name}</span>
-                                      </label>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          )
-                        })}
+                    </label>
+                    <label className="flex items-start gap-3 p-4 rounded-[10px] border border-[#e5e7eb] bg-white cursor-pointer hover:border-[#0267ff]/40 has-[:checked]:border-[#0267ff]">
+                      <input
+                        type="radio"
+                        name="sourceType"
+                        value="distribution-centre"
+                        checked={sourceType === 'distribution-centre'}
+                        onChange={() => {
+                          setSourceType('distribution-centre')
+                          setSelectedSupplier('')
+                          setSelectedSourceLocation('')
+                        }}
+                        className="mt-1 size-4 shrink-0 border-[#e5e7eb] text-[#0267ff] focus:ring-[#0267ff]"
+                      />
+                      <div className="flex flex-col gap-1 min-w-0">
+                        <span className="text-[14px] font-medium text-[#0a0a0a]">Distribution centre</span>
+                        <span className="text-[12px] font-normal text-[#4b535c]">
+                          Products will be distributed from this warehouse to stores
+                        </span>
                       </div>
-                    </section>
-
-                    <section className="flex flex-col gap-2">
-                      <div className="flex items-center justify-between">
-                        <h3 className="text-[13px] font-medium text-[#0a0a0a] uppercase tracking-[0.04em]">
-                          Geographic
-                        </h3>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setGeoFilterOpen({
-                              locationTypes: false,
-                              regions: false,
-                              countries: false,
-                              locations: false,
-                            })
-                          }
-                          className="text-[12px] font-medium text-[#4b535c] hover:text-[#0a0a0a]"
-                        >
-                          Clear all
-                        </button>
+                    </label>
+                    <label className="flex items-start gap-3 p-4 rounded-[10px] border border-[#e5e7eb] bg-white cursor-pointer hover:border-[#0267ff]/40 has-[:checked]:border-[#0267ff]">
+                      <input
+                        type="radio"
+                        name="sourceType"
+                        value="source-location"
+                        checked={sourceType === 'source-location'}
+                        onChange={() => {
+                          setSourceType('source-location')
+                          setSelectedSupplier('')
+                          setSelectedDistributionCentre('')
+                        }}
+                        className="mt-1 size-4 shrink-0 border-[#e5e7eb] text-[#0267ff] focus:ring-[#0267ff]"
+                      />
+                      <div className="flex flex-col gap-1 min-w-0">
+                        <span className="text-[14px] font-medium text-[#0a0a0a]">Store to store</span>
+                        <span className="text-[12px] font-normal text-[#4b535c]">
+                          Products will be moved directly between stores
+                        </span>
                       </div>
-                      <div className="mt-1 flex flex-col border-t border-[#e5e7eb]">
-                        {[
-                          { id: 'locationTypes', label: 'Location Types' },
-                          { id: 'regions', label: 'Regions' },
-                          { id: 'countries', label: 'Countries' },
-                          { id: 'locations', label: 'Locations' },
-                        ].map((row) => {
-                          const isOpen = geoFilterOpen[row.id]
-                          return (
-                            <div key={row.id} className="border-b border-[#e5e7eb] last:border-b-0">
-                              <button
-                                type="button"
-                                onClick={() => toggleGeoFilterRow(row.id)}
-                                className="w-full flex items-center justify-between px-3 py-2.5 text-left hover:bg-[#f8f8f8]"
-                              >
-                                <span className="text-[13px] font-medium text-[#0a0a0a]">
-                                  {row.label}
-                                </span>
-                                <span
-                                  className={`inline-flex items-center justify-center size-5 text-[#4b535c] transition-transform ${
-                                    isOpen ? 'rotate-180' : ''
-                                  }`}
-                                >
-                                  <IconChevronDown className="size-4" />
-                                </span>
-                              </button>
-                              {isOpen && (
-                                <div className="px-3 pb-3 pt-1 flex flex-col gap-2 bg-[#fafafa]">
-                                  <div className="flex items-center justify-between gap-2">
-                                    <div className="relative flex-1">
-                                      <input
-                                        type="text"
-                                        placeholder="search..."
-                                        className="w-full h-9 px-3 rounded-[4px] border border-[#e5e7eb] bg-white text-[13px] text-[#0a0a0a] placeholder:text-[#9ca3af]"
-                                      />
-                                    </div>
-                                    <button
-                                      type="button"
-                                      className="text-[12px] font-medium text-[#0267ff] hover:underline shrink-0"
-                                    >
-                                      Select all
-                                    </button>
-                                  </div>
-                                  <div className="flex flex-col gap-1.5 mt-1">
-                                    {(FILTER_SAMPLE_VALUES[SCOPE_ACCORDION_GEO_KEYS[row.id]] ?? []).map((name) => (
-                                      <label
-                                        key={name}
-                                        className="flex items-center gap-2 text-[13px] text-[#0a0a0a]"
-                                      >
-                                        <input
-                                          type="checkbox"
-                                          className="size-4 rounded border-[#d1d5db] text-[#0267ff] focus:ring-[#0267ff]"
-                                        />
-                                        <span>{name}</span>
-                                      </label>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          )
-                        })}
-                      </div>
-                    </section>
-
-                    <section className="flex flex-col gap-2">
-                      <div className="flex items-center justify-between">
-                        <h3 className="text-[12px] font-semibold uppercase tracking-wider text-[#4b535c]">
-                          Additional filters
-                        </h3>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setAdditionalProductsSelected([])
-                            setAdditionalProductsSearch('')
-                          }}
-                          className="text-[12px] font-medium text-[#4b535c] hover:text-[#0a0a0a]"
-                        >
-                          Clear all
-                        </button>
-                      </div>
-                      <div className="mt-1 flex flex-col border-t border-[#e5e7eb]">
-                        <div className="border-b border-[#e5e7eb] last:border-b-0">
-                          <button
-                            type="button"
-                            onClick={() => setAdditionalProductsOpen((o) => !o)}
-                            className="w-full flex items-center justify-between px-3 py-2.5 text-left hover:bg-[#f8f8f8]"
-                          >
-                            <span className="text-[13px] font-medium text-[#0a0a0a]">Products</span>
-                            <span
-                              className={`inline-flex items-center justify-center size-5 text-[#4b535c] transition-transform ${
-                                additionalProductsOpen ? 'rotate-180' : ''
-                              }`}
-                            >
-                              <IconChevronDown className="size-4" />
-                            </span>
-                          </button>
-                          {additionalProductsOpen && (
-                            <div className="px-3 pb-3 pt-1 flex flex-col gap-2 bg-[#fafafa]">
-                              <div className="flex items-center gap-2">
-                                <div className="relative flex-1 min-w-0">
-                                  <IconSearch className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-[#9ca3af] pointer-events-none" />
-                                  <input
-                                    type="text"
-                                    placeholder="search..."
-                                    value={additionalProductsSearch}
-                                    onChange={(e) => setAdditionalProductsSearch(e.target.value)}
-                                    className="w-full h-9 pl-9 pr-3 rounded-[4px] border border-[#e5e7eb] bg-white text-[13px] text-[#0a0a0a] placeholder:text-[#9ca3af]"
-                                  />
-                                </div>
-                                <button
-                                  type="button"
-                                  aria-label="Download"
-                                  className="h-9 w-9 shrink-0 flex items-center justify-center rounded-[4px] border border-[#e5e7eb] bg-white text-[#4b535c] hover:bg-[#f8f8f8]"
-                                >
-                                  <Download className="size-4" strokeWidth={1.5} />
-                                </button>
-                                <button
-                                  type="button"
-                                  aria-label="Upload"
-                                  className="h-9 w-9 shrink-0 flex items-center justify-center rounded-[4px] border border-[#e5e7eb] bg-white text-[#4b535c] hover:bg-[#f8f8f8]"
-                                >
-                                  <Upload className="size-4" strokeWidth={1.5} />
-                                </button>
-                              </div>
-                              <div className="flex flex-col gap-1.5 mt-1 max-h-[300px] overflow-y-auto min-h-0 pr-0.5">
-                                {ADDITIONAL_SCOPE_PRODUCT_NAMES.filter((name) => {
-                                  const q = additionalProductsSearch.trim().toLowerCase()
-                                  return !q || name.toLowerCase().includes(q)
-                                }).map((name) => (
-                                  <label
-                                    key={name}
-                                    className="flex items-center gap-2 text-[13px] text-[#0a0a0a] cursor-pointer"
-                                  >
-                                    <input
-                                      type="checkbox"
-                                      checked={additionalProductsSelected.includes(name)}
-                                      onChange={() =>
-                                        setAdditionalProductsSelected((prev) =>
-                                          prev.includes(name)
-                                            ? prev.filter((n) => n !== name)
-                                            : [...prev, name]
-                                        )
-                                      }
-                                      className="size-4 rounded border-[#d1d5db] text-[#0267ff] focus:ring-[#0267ff]"
-                                    />
-                                    <span>{name}</span>
-                                  </label>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </section>
+                    </label>
                   </div>
+                  {sourceType === 'supplier' && (
+                    <div className="flex flex-col gap-2 mt-1">
+                      <label htmlFor="geo-scope-supplier" className="text-[13px] font-medium text-[#0a0a0a]">
+                        Select supplier
+                      </label>
+                      <select
+                        id="geo-scope-supplier"
+                        value={selectedSupplier}
+                        onChange={(ev) => setSelectedSupplier(ev.target.value)}
+                        className="w-full h-10 pl-3 pr-9 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#0a0a0a] appearance-none"
+                      >
+                        <option value="">Select supplier</option>
+                        {GEO_SCOPE_SUPPLIER_OPTIONS.map((name) => (
+                          <option key={name} value={name}>
+                            {name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+                  {sourceType === 'distribution-centre' && (
+                    <div className="flex flex-col gap-2 mt-1">
+                      <label htmlFor="geo-scope-dc" className="text-[13px] font-medium text-[#0a0a0a]">
+                        Select distribution centre
+                      </label>
+                      <select
+                        id="geo-scope-dc"
+                        value={selectedDistributionCentre}
+                        onChange={(ev) => setSelectedDistributionCentre(ev.target.value)}
+                        className="w-full h-10 pl-3 pr-9 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#0a0a0a] appearance-none"
+                      >
+                        <option value="">Select distribution centre</option>
+                        {GEO_SCOPE_DISTRIBUTION_CENTRE_OPTIONS.map((name) => (
+                          <option key={name} value={name}>
+                            {name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+                </section>
+
+                <section className="flex flex-col gap-3">
+                  <h3 className="text-[14px] font-medium text-[#0a0a0a]">
+                    Which locations should receive recommendations?
+                  </h3>
+                  <div className="flex flex-col gap-3">
+                    <label className="flex items-start gap-3 p-4 rounded-[10px] border border-[#e5e7eb] bg-white cursor-pointer hover:border-[#0267ff]/40 has-[:checked]:border-[#0267ff]">
+                      <input
+                        type="radio"
+                        name="locationScopeOption"
+                        value="all"
+                        checked={locationScopeOption === 'all'}
+                        onChange={() => setLocationScopeOption('all')}
+                        className="mt-1 size-4 shrink-0 border-[#e5e7eb] text-[#0267ff] focus:ring-[#0267ff]"
+                      />
+                      <div className="flex flex-col gap-1 min-w-0">
+                        <span className="text-[14px] font-medium text-[#0a0a0a]">All locations</span>
+                        <span className="text-[12px] font-normal text-[#4b535c]">
+                          The solver evaluates your entire network of receiving locations for this schedule.
+                        </span>
+                      </div>
+                    </label>
+                    <label className="flex items-start gap-3 p-4 rounded-[10px] border border-[#e5e7eb] bg-white cursor-pointer hover:border-[#0267ff]/40 has-[:checked]:border-[#0267ff]">
+                      <input
+                        type="radio"
+                        name="locationScopeOption"
+                        value="select"
+                        checked={locationScopeOption === 'select'}
+                        onChange={() => setLocationScopeOption('select')}
+                        className="mt-1 size-4 shrink-0 border-[#e5e7eb] text-[#0267ff] focus:ring-[#0267ff]"
+                      />
+                      <div className="flex flex-col gap-1 min-w-0">
+                        <span className="text-[14px] font-medium text-[#0a0a0a]">Select locations</span>
+                        <span className="text-[12px] font-normal text-[#4b535c]">
+                          Choose specific locations, regions, or countries to include in this schedule.
+                        </span>
+                      </div>
+                    </label>
+                  </div>
+                </section>
+
+                {locationScopeOption === 'select' && (
+                  <section className="flex flex-col gap-2">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-[13px] font-medium text-[#0a0a0a] uppercase tracking-[0.04em]">
+                        Geographic
+                      </h3>
+                      <button
+                        type="button"
+                        onClick={() => setGeoFilterOpen({ ...DEFAULT_GEO_SCOPE_FILTER_OPEN })}
+                        className="text-[12px] font-medium text-[#4b535c] hover:text-[#0a0a0a]"
+                      >
+                        Clear all
+                      </button>
+                    </div>
+                    <div className="mt-1 flex flex-col border-t border-[#e5e7eb]">
+                      {[
+                        { id: 'locationTypes', label: 'Location Types' },
+                        { id: 'regions', label: 'Regions' },
+                        { id: 'countries', label: 'Countries' },
+                        { id: 'locations', label: 'Locations' },
+                      ].map((row) => {
+                        const isOpen = geoFilterOpen[row.id]
+                        const values = GEO_SCOPE_VALUES_BY_ROW[row.id] ?? []
+                        return (
+                          <div key={row.id} className="border-b border-[#e5e7eb] last:border-b-0">
+                            <button
+                              type="button"
+                              onClick={() => toggleGeoFilterRow(row.id)}
+                              className="w-full flex items-center justify-between px-3 py-2.5 text-left hover:bg-[#f8f8f8]"
+                            >
+                              <span className="text-[13px] font-medium text-[#0a0a0a]">{row.label}</span>
+                              <span
+                                className={`inline-flex items-center justify-center size-5 text-[#4b535c] transition-transform ${
+                                  isOpen ? 'rotate-180' : ''
+                                }`}
+                              >
+                                <IconChevronDown className="size-4" />
+                              </span>
+                            </button>
+                            {isOpen && (
+                              <div className="px-3 pb-3 pt-1 flex flex-col gap-2 bg-[#fafafa]">
+                                <div className="flex items-center justify-between gap-2">
+                                  <div className="relative flex-1">
+                                    <input
+                                      type="text"
+                                      placeholder="search..."
+                                      className="w-full h-9 px-3 rounded-[4px] border border-[#e5e7eb] bg-white text-[13px] text-[#0a0a0a] placeholder:text-[#9ca3af]"
+                                    />
+                                  </div>
+                                  <button
+                                    type="button"
+                                    className="text-[12px] font-medium text-[#0267ff] hover:underline shrink-0"
+                                  >
+                                    Select all
+                                  </button>
+                                </div>
+                                <div className="flex flex-col gap-1.5 mt-1">
+                                  {values.map((name) => (
+                                    <label
+                                      key={name}
+                                      className="flex items-center gap-2 text-[13px] text-[#0a0a0a]"
+                                    >
+                                      <input
+                                        type="checkbox"
+                                        className="size-4 rounded border-[#d1d5db] text-[#0267ff] focus:ring-[#0267ff]"
+                                      />
+                                      <span>{name}</span>
+                                    </label>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </section>
                 )}
               </div>
             )}
