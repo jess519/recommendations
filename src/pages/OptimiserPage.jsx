@@ -150,6 +150,27 @@ const GEO_SCOPE_COUNTRIES = [
   'Singapore',
   'South Africa',
 ]
+const GEO_SCOPE_CITIES = [
+  'Paris',
+  'Lyon',
+  'Marseille',
+  'Bordeaux',
+  'Lille',
+  'Strasbourg',
+  'Nancy',
+  'Cannes',
+  'Berlin',
+  'Oslo',
+  'Madrid',
+  'London',
+  'Manchester',
+  'Montreal',
+  'Ottawa',
+  'Toronto',
+  'Cape Town',
+  'Tokyo',
+  'Kyoto',
+]
 const GEO_SCOPE_LOCATIONS = [
   'Paris Store',
   'Cannes Store',
@@ -175,18 +196,14 @@ const GEO_SCOPE_VALUES_BY_ROW = {
   locationTypes: GEO_SCOPE_LOCATION_TYPES,
   regions: GEO_SCOPE_REGIONS,
   countries: GEO_SCOPE_COUNTRIES,
+  cities: GEO_SCOPE_CITIES,
   locations: GEO_SCOPE_LOCATIONS,
 }
-const GEO_SCOPE_SUPPLIER_OPTIONS = ['Supplier A', 'Supplier B', 'Supplier C']
-const GEO_SCOPE_DISTRIBUTION_CENTRE_OPTIONS = [
-  'Dlo warehouse europe louvres',
-  'Wus whs us main',
-  'Paris Warehouse',
-]
 const DEFAULT_GEO_SCOPE_FILTER_OPEN = {
   locationTypes: false,
   regions: false,
   countries: false,
+  cities: false,
   locations: false,
 }
 
@@ -642,14 +659,10 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
   const [accordionOpen, setAccordionOpen] = useState({
     details: true,
     scope: false,
-    network: false,
     exceptions: false,
   })
+  const [networkConfig, setNetworkConfig] = useState('')
   const [locationScopeOption, setLocationScopeOption] = useState('all')
-  const [sourceType, setSourceType] = useState('')
-  const [selectedSupplier, setSelectedSupplier] = useState('')
-  const [selectedDistributionCentre, setSelectedDistributionCentre] = useState('')
-  const [selectedSourceLocation, setSelectedSourceLocation] = useState('')
   const [geoFilterOpen, setGeoFilterOpen] = useState(() => ({ ...DEFAULT_GEO_SCOPE_FILTER_OPEN }))
   const [exceptions, setExceptions] = useState(() => [
     {
@@ -903,7 +916,6 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
     setAccordionOpen({
       details: key === 'details',
       scope: key === 'scope',
-      network: key === 'network',
       exceptions: key === 'exceptions',
     })
   }
@@ -1116,32 +1128,6 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
             {accordionOpen.details && (
               <div className="px-5 pb-6 pt-2 flex flex-col gap-6 border-t border-[#EAEAEA]">
                 <section className="flex flex-col gap-2">
-                  <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Movement type</label>
-                  <div className="relative">
-                    <select
-                      value={drawerForm.module}
-                      onChange={(ev) =>
-                        setDrawerForm((f) => ({
-                          ...f,
-                          module: ev.target.value,
-                        }))
-                      }
-                      className="w-full h-14 pl-4 pr-10 rounded-[4px] border border-[#EAEAEA] bg-white text-[16px] text-[#0a0a0a] appearance-none"
-                    >
-                      <option value="">Select</option>
-                      {MODULE_OPTIONS.map((opt) => (
-                        <option key={opt.id} value={opt.id}>
-                          {opt.label}
-                        </option>
-                      ))}
-                    </select>
-                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
-                      <IconChevronDownSelect />
-                    </span>
-                  </div>
-                </section>
-
-                <section className="flex flex-col gap-2">
                   <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Name schedule</label>
                   <input
                     type="text"
@@ -1251,37 +1237,40 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                   )}
 
                   <div className="flex flex-col gap-2">
-                    <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Submission date</label>
-                    <input
-                      type="date"
-                      value={submissionDate}
-                      onChange={(e) => setSubmissionDate(e.target.value)}
-                      className="h-12 w-[200px] px-4 rounded-[4px] border border-[#EAEAEA] bg-white text-[16px] text-[#0a0a0a]"
-                    />
+                    <div className="flex items-start gap-4">
+                      <div className="flex flex-col gap-2">
+                        <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Submission date</label>
+                        <input
+                          type="date"
+                          value={submissionDate}
+                          onChange={(e) => setSubmissionDate(e.target.value)}
+                          className="h-12 w-[200px] px-4 rounded-[4px] border border-[#EAEAEA] bg-white text-[16px] text-[#0a0a0a]"
+                        />
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Submission time</label>
+                        <div className="relative w-[200px]">
+                          <select
+                            value={recurrenceSubmissionTime}
+                            onChange={(e) => setRecurrenceSubmissionTime(e.target.value)}
+                            className="w-full h-12 py-3 px-4 pr-10 rounded-[4px] border border-[#E9EAEB] bg-white text-[16px] text-[#0a0a0a] appearance-none"
+                          >
+                            {Array.from({ length: 48 }, (_, i) => {
+                              const h = Math.floor(i / 2)
+                              const m = (i % 2) * 30
+                              const label = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
+                              return <option key={label} value={label}>{label}</option>
+                            })}
+                          </select>
+                          <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
+                            <IconChevronDownSelect />
+                          </span>
+                        </div>
+                      </div>
+                    </div>
                     <p className="text-[12px] text-[#4b535c]">
                       The deadline by which all approved recommendations will be submitted
                     </p>
-                  </div>
-
-                  <div className="flex flex-col gap-2">
-                    <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Submission time</label>
-                    <div className="relative max-w-[200px]">
-                      <select
-                        value={recurrenceSubmissionTime}
-                        onChange={(e) => setRecurrenceSubmissionTime(e.target.value)}
-                        className="w-full h-12 py-3 px-4 pr-10 rounded-[4px] border border-[#E9EAEB] bg-white text-[16px] text-[#0a0a0a] appearance-none"
-                      >
-                        {Array.from({ length: 48 }, (_, i) => {
-                          const h = Math.floor(i / 2)
-                          const m = (i % 2) * 30
-                          const label = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
-                          return <option key={label} value={label}>{label}</option>
-                        })}
-                      </select>
-                      <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
-                        <IconChevronDownSelect />
-                      </span>
-                    </div>
                   </div>
 
                   <p className="text-[14px] italic text-[#4b535c]">
@@ -1352,7 +1341,7 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                   Geographic scope
                 </span>
                 <span className="text-[14px] font-normal text-[#4b535c]">
-                  Define the locations and network for this schedule. The solver will generate recommendations based on what is physically actionable within this scope.
+                  Define the locations and network for this schedule.
                 </span>
               </div>
               <IconChevronDown
@@ -1363,110 +1352,54 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
             </button>
             {accordionOpen.scope && (
               <div className="px-5 pb-6 pt-2 flex flex-col gap-6 border-t border-[#EAEAEA]">
-                <section className="flex flex-col gap-3">
-                  <h3 className="text-[14px] font-medium text-[#0a0a0a]">Where are products coming from?</h3>
-                  <div className="flex flex-col gap-3">
-                    <label className="flex items-start gap-3 p-4 rounded-[10px] border border-[#e5e7eb] bg-white cursor-pointer hover:border-[#0267ff]/40 has-[:checked]:border-[#0267ff]">
-                      <input
-                        type="radio"
-                        name="sourceType"
-                        value="supplier"
-                        checked={sourceType === 'supplier'}
-                        onChange={() => {
-                          setSourceType('supplier')
-                          setSelectedDistributionCentre('')
-                          setSelectedSourceLocation('')
-                        }}
-                        className="mt-1 size-4 shrink-0 border-[#e5e7eb] text-[#0267ff] focus:ring-[#0267ff]"
-                      />
-                      <div className="flex flex-col gap-1 min-w-0">
-                        <span className="text-[14px] font-medium text-[#0a0a0a]">Supplier</span>
-                        <span className="text-[12px] font-normal text-[#4b535c]">
-                          Products will be sent from this supplier to your distribution centre
-                        </span>
-                      </div>
-                    </label>
-                    <label className="flex items-start gap-3 p-4 rounded-[10px] border border-[#e5e7eb] bg-white cursor-pointer hover:border-[#0267ff]/40 has-[:checked]:border-[#0267ff]">
-                      <input
-                        type="radio"
-                        name="sourceType"
-                        value="distribution-centre"
-                        checked={sourceType === 'distribution-centre'}
-                        onChange={() => {
-                          setSourceType('distribution-centre')
-                          setSelectedSupplier('')
-                          setSelectedSourceLocation('')
-                        }}
-                        className="mt-1 size-4 shrink-0 border-[#e5e7eb] text-[#0267ff] focus:ring-[#0267ff]"
-                      />
-                      <div className="flex flex-col gap-1 min-w-0">
-                        <span className="text-[14px] font-medium text-[#0a0a0a]">Distribution centre</span>
-                        <span className="text-[12px] font-normal text-[#4b535c]">
-                          Products will be distributed from this warehouse to stores
-                        </span>
-                      </div>
-                    </label>
-                    <label className="flex items-start gap-3 p-4 rounded-[10px] border border-[#e5e7eb] bg-white cursor-pointer hover:border-[#0267ff]/40 has-[:checked]:border-[#0267ff]">
-                      <input
-                        type="radio"
-                        name="sourceType"
-                        value="source-location"
-                        checked={sourceType === 'source-location'}
-                        onChange={() => {
-                          setSourceType('source-location')
-                          setSelectedSupplier('')
-                          setSelectedDistributionCentre('')
-                        }}
-                        className="mt-1 size-4 shrink-0 border-[#e5e7eb] text-[#0267ff] focus:ring-[#0267ff]"
-                      />
-                      <div className="flex flex-col gap-1 min-w-0">
-                        <span className="text-[14px] font-medium text-[#0a0a0a]">Store to store</span>
-                        <span className="text-[12px] font-normal text-[#4b535c]">
-                          Products will be moved directly between stores
-                        </span>
-                      </div>
-                    </label>
+                <section className="flex flex-col gap-2">
+                  <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Movement type</label>
+                  <div className="relative">
+                    <select
+                      value={drawerForm.module}
+                      onChange={(ev) =>
+                        setDrawerForm((f) => ({
+                          ...f,
+                          module: ev.target.value,
+                        }))
+                      }
+                      className="w-full h-14 pl-4 pr-10 rounded-[4px] border border-[#EAEAEA] bg-white text-[16px] text-[#0a0a0a] appearance-none"
+                    >
+                      <option value="">Select</option>
+                      {MODULE_OPTIONS.map((opt) => (
+                        <option key={opt.id} value={opt.id}>
+                          {opt.label}
+                        </option>
+                      ))}
+                    </select>
+                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
+                      <IconChevronDownSelect />
+                    </span>
                   </div>
-                  {sourceType === 'supplier' && (
-                    <div className="flex flex-col gap-2 mt-1">
-                      <label htmlFor="geo-scope-supplier" className="text-[13px] font-medium text-[#0a0a0a]">
-                        Select supplier
-                      </label>
-                      <select
-                        id="geo-scope-supplier"
-                        value={selectedSupplier}
-                        onChange={(ev) => setSelectedSupplier(ev.target.value)}
-                        className="w-full h-10 pl-3 pr-9 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#0a0a0a] appearance-none"
-                      >
-                        <option value="">Select supplier</option>
-                        {GEO_SCOPE_SUPPLIER_OPTIONS.map((name) => (
-                          <option key={name} value={name}>
-                            {name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  )}
-                  {sourceType === 'distribution-centre' && (
-                    <div className="flex flex-col gap-2 mt-1">
-                      <label htmlFor="geo-scope-dc" className="text-[13px] font-medium text-[#0a0a0a]">
-                        Select distribution centre
-                      </label>
-                      <select
-                        id="geo-scope-dc"
-                        value={selectedDistributionCentre}
-                        onChange={(ev) => setSelectedDistributionCentre(ev.target.value)}
-                        className="w-full h-10 pl-3 pr-9 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#0a0a0a] appearance-none"
-                      >
-                        <option value="">Select distribution centre</option>
-                        {GEO_SCOPE_DISTRIBUTION_CENTRE_OPTIONS.map((name) => (
-                          <option key={name} value={name}>
-                            {name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  )}
+                </section>
+
+                <section className="flex flex-col gap-2">
+                  <h3 className="text-[14px] font-medium text-[#0a0a0a]">Network configuration</h3>
+                  <div className="relative w-full max-w-[400px]">
+                    <select
+                      id="geo-network-config"
+                      value={networkConfig}
+                      onChange={(ev) => setNetworkConfig(ev.target.value)}
+                      className="h-12 w-full max-w-[400px] px-4 pr-10 rounded-[4px] border border-[#EAEAEA] bg-white text-[16px] text-[#0a0a0a] appearance-none"
+                    >
+                      <option value="" disabled>
+                        Select configuration...
+                      </option>
+                      <option value="paris-weekly-rebal">Paris weekly rebal</option>
+                      <option value="france-monthly-rebal">France monthly rebal</option>
+                    </select>
+                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
+                      <IconChevronDownSelect />
+                    </span>
+                  </div>
+                  <p className="text-[12px] text-[#4b535c]">
+                    Select the network and trip configuration that reflects the logistics for this schedule.
+                  </p>
                 </section>
 
                 <section className="flex flex-col gap-3">
@@ -1525,10 +1458,11 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                     </div>
                     <div className="mt-1 flex flex-col border-t border-[#e5e7eb]">
                       {[
-                        { id: 'locationTypes', label: 'Location Types' },
                         { id: 'regions', label: 'Regions' },
                         { id: 'countries', label: 'Countries' },
+                        { id: 'cities', label: 'Cities' },
                         { id: 'locations', label: 'Locations' },
+                        { id: 'locationTypes', label: 'Location Types' },
                       ].map((row) => {
                         const isOpen = geoFilterOpen[row.id]
                         const values = GEO_SCOPE_VALUES_BY_ROW[row.id] ?? []
@@ -1587,36 +1521,6 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                     </div>
                   </section>
                 )}
-              </div>
-            )}
-          </div>
-
-          <div className="border border-[#EAEAEA] rounded-[4px] bg-white overflow-hidden">
-            <button
-              type="button"
-              onClick={() => toggleAccordion('network')}
-              className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-[#f8f8f8] transition-colors"
-            >
-              <div className="flex flex-col gap-1">
-                <span className="text-[20px] font-medium text-[#212B36] leading-[150%]">
-                  Network parameters
-                </span>
-                <span className="text-[14px] font-normal text-[#4b535c]">
-                  Configure capacity, routing, and operational constraints the solver uses for this schedule.
-                </span>
-              </div>
-              <IconChevronDown
-                className={`size-5 text-[#4b535c] transition-transform shrink-0 ${
-                  accordionOpen.network ? 'rotate-180' : ''
-                }`}
-              />
-            </button>
-            {accordionOpen.network && (
-              <div className="px-5 pb-6 pt-2 flex flex-col gap-4 border-t border-[#EAEAEA]">
-                <p className="text-[13px] text-[#4b535c]">
-                  Network parameters refine how recommendations are generated within your geographic scope—such as
-                  lead times, transfer limits, and routing preferences.
-                </p>
               </div>
             )}
           </div>
