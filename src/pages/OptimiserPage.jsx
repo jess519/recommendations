@@ -642,6 +642,7 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
   const [accordionOpen, setAccordionOpen] = useState({
     details: true,
     scope: false,
+    network: false,
     exceptions: false,
   })
   const [locationScopeOption, setLocationScopeOption] = useState('all')
@@ -902,6 +903,7 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
     setAccordionOpen({
       details: key === 'details',
       scope: key === 'scope',
+      network: key === 'network',
       exceptions: key === 'exceptions',
     })
   }
@@ -1589,6 +1591,36 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
             )}
           </div>
 
+          <div className="border border-[#EAEAEA] rounded-[4px] bg-white overflow-hidden">
+            <button
+              type="button"
+              onClick={() => toggleAccordion('network')}
+              className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-[#f8f8f8] transition-colors"
+            >
+              <div className="flex flex-col gap-1">
+                <span className="text-[20px] font-medium text-[#212B36] leading-[150%]">
+                  Network parameters
+                </span>
+                <span className="text-[14px] font-normal text-[#4b535c]">
+                  Configure capacity, routing, and operational constraints the solver uses for this schedule.
+                </span>
+              </div>
+              <IconChevronDown
+                className={`size-5 text-[#4b535c] transition-transform shrink-0 ${
+                  accordionOpen.network ? 'rotate-180' : ''
+                }`}
+              />
+            </button>
+            {accordionOpen.network && (
+              <div className="px-5 pb-6 pt-2 flex flex-col gap-4 border-t border-[#EAEAEA]">
+                <p className="text-[13px] text-[#4b535c]">
+                  Network parameters refine how recommendations are generated within your geographic scope—such as
+                  lead times, transfer limits, and routing preferences.
+                </p>
+              </div>
+            )}
+          </div>
+
           <div className="border border-[#EAEAEA] rounded-[4px] bg-white overflow-visible">
             <button
               type="button"
@@ -1597,10 +1629,11 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
             >
               <div className="flex flex-col gap-1">
                 <span className="text-[20px] font-medium text-[#212B36] leading-[150%]">
-                  Manage exceptions
+                  Auto-approval &amp; exceptions
                 </span>
                 <span className="text-[14px] font-normal text-[#4b535c]">
-                  Set which recommendations you want to review, the rest will be auto-approved
+                  Configure which recommendations are auto-approved and which need manual review. The solver evaluates
+                  globally — these rules determine the review workflow.
                 </span>
               </div>
               <IconChevronDown
@@ -1611,6 +1644,11 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
             </button>
             {accordionOpen.exceptions && (
               <div className="px-5 pb-6 pt-2 flex flex-col gap-4 border-t border-[#EAEAEA]">
+                <p className="text-[13px] text-[#4b535c]">
+                  All recommendations generated for this schedule will be auto-approved by default and submitted on the
+                  deadline. Define exception rules below to flag specific recommendations for manual review before
+                  submission.
+                </p>
                 {exceptions.map((exc, excIdx) => {
                   const exceptionTitleFull = getExceptionDisplayName(exc, excIdx)
                   const exceptionTitleDisplay = truncateExceptionTitleDisplay(exceptionTitleFull)
