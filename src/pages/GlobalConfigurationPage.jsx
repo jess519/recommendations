@@ -123,7 +123,7 @@ export default function GlobalConfigurationPage() {
   }, [showApplySuccess])
 
   return (
-    <div className="relative w-full max-w-none space-y-6 pt-6">
+    <div className="relative w-full max-w-none space-y-6 pt-0">
       {showApplySuccess ? (
         <div
           className="absolute left-0 right-0 top-0 z-50 flex items-start gap-3 rounded-[6px] border border-[#08a16a] bg-[#e4f4ef] p-4 shadow-[0px_8px_25px_0px_rgba(0,0,0,0.1)]"

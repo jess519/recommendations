@@ -121,7 +121,7 @@ export default function App() {
         </div>
 
         <nav className={`flex-1 flex flex-col gap-[var(--spacing-xs,6px)] min-h-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${sidebarCollapsed ? 'w-full items-center' : 'w-full items-start'} ${optimiserOpen || insightsOpen ? 'overflow-visible' : 'overflow-y-auto'}`} data-name="Container" data-node-id="14404:7246">
-          <button type="button" onClick={() => setActiveView('control-panel')} className={`${navItemBase} ${sidebarCollapsed ? navItemCollapsed : `${navItemExpanded} text-left font-medium`} ${activeView === 'control-panel' ? 'bg-[#0267ff] text-white' : 'text-white hover:bg-white/5'}`} data-name="Sidebar element" data-node-id="14404:7247">
+          <button type="button" onClick={() => setActiveView('control-panel')} className={`${navItemBase} ${sidebarCollapsed ? navItemCollapsed : `${navItemExpanded} text-left font-medium`} ${activeView === 'control-panel' ? 'bg-[#0D7580] text-white' : 'text-white hover:bg-white/5'}`} data-name="Sidebar element" data-node-id="14404:7247">
             <IconGrid className="size-6 shrink-0 text-white" aria-hidden />
             {!sidebarCollapsed && <span>Overview</span>}
           </button>
@@ -133,7 +133,7 @@ export default function App() {
                 setInsightSubView(null)
                 if (!sidebarCollapsed) setInsightsOpen((o) => !o)
               }}
-              className={`${navItemBase} ${sidebarCollapsed ? navItemCollapsed : `${navItemExpanded} text-left`} ${activeView === 'insights' ? 'bg-[#0267ff] text-white font-medium' : 'font-normal text-white hover:bg-white/5'}`}
+              className={`${navItemBase} ${sidebarCollapsed ? navItemCollapsed : `${navItemExpanded} text-left`} ${activeView === 'insights' ? 'bg-[#0D7580] text-white font-medium' : 'font-normal text-white hover:bg-white/5'}`}
               aria-expanded={sidebarCollapsed ? false : insightsOpen}
               data-name="Sidebar element"
               data-node-id="14404:7252"
@@ -150,16 +150,16 @@ export default function App() {
             </button>
             {insightsOpen && !sidebarCollapsed && (
               <div className="flex flex-col gap-[4px] pl-4 pb-2 w-full shrink-0">
-                <button type="button" onClick={() => { setActiveView('insights'); setInsightSubView('buying'); }} className={`min-h-[36px] w-full flex items-center gap-[var(--spacing-s,8px)] px-[var(--spacing-s,8px)] py-[var(--spacing-xxs,4px)] rounded-[var(--border-radius-s,4px)] text-left text-[14px] font-normal shrink-0 ${insightSubView === 'buying' ? 'bg-[#0267ff]/50 text-white' : 'text-white hover:bg-white/5'}`} data-name="Sidebar element">
+                <button type="button" onClick={() => { setActiveView('insights'); setInsightSubView('buying'); }} className={`min-h-[36px] w-full flex items-center gap-[var(--spacing-s,8px)] px-[var(--spacing-s,8px)] py-[var(--spacing-xxs,4px)] rounded-[var(--border-radius-s,4px)] text-left text-[14px] font-normal shrink-0 ${insightSubView === 'buying' ? 'bg-[#0D7580]/50 text-white' : 'text-white hover:bg-white/5'}`} data-name="Sidebar element">
                   Buying
                 </button>
-                <button type="button" onClick={() => { setActiveView('insights'); setInsightSubView('data-health'); }} className={`min-h-[36px] w-full flex items-center gap-[var(--spacing-s,8px)] px-[var(--spacing-s,8px)] py-[var(--spacing-xxs,4px)] rounded-[var(--border-radius-s,4px)] text-left text-[14px] font-normal shrink-0 ${insightSubView === 'data-health' ? 'bg-[#0267ff]/50 text-white' : 'text-white hover:bg-white/5'}`} data-name="Sidebar element">
+                <button type="button" onClick={() => { setActiveView('insights'); setInsightSubView('data-health'); }} className={`min-h-[36px] w-full flex items-center gap-[var(--spacing-s,8px)] px-[var(--spacing-s,8px)] py-[var(--spacing-xxs,4px)] rounded-[var(--border-radius-s,4px)] text-left text-[14px] font-normal shrink-0 ${insightSubView === 'data-health' ? 'bg-[#0D7580]/50 text-white' : 'text-white hover:bg-white/5'}`} data-name="Sidebar element">
                   Data health
                 </button>
-                <button type="button" onClick={() => { setActiveView('insights'); setInsightSubView('optimiser-status'); }} className={`min-h-[36px] w-full flex items-center gap-[var(--spacing-s,8px)] px-[var(--spacing-s,8px)] py-[var(--spacing-xxs,4px)] rounded-[var(--border-radius-s,4px)] text-left text-[14px] font-normal shrink-0 ${insightSubView === 'optimiser-status' ? 'bg-[#0267ff]/50 text-white' : 'text-white hover:bg-white/5'}`} data-name="Sidebar element">
+                <button type="button" onClick={() => { setActiveView('insights'); setInsightSubView('optimiser-status'); }} className={`min-h-[36px] w-full flex items-center gap-[var(--spacing-s,8px)] px-[var(--spacing-s,8px)] py-[var(--spacing-xxs,4px)] rounded-[var(--border-radius-s,4px)] text-left text-[14px] font-normal shrink-0 ${insightSubView === 'optimiser-status' ? 'bg-[#0D7580]/50 text-white' : 'text-white hover:bg-white/5'}`} data-name="Sidebar element">
                   Optimiser status
                 </button>
-                <button type="button" onClick={() => { setActiveView('insights'); setInsightSubView('forecast-inspector'); }} className={`min-h-[36px] w-full flex items-center gap-[var(--spacing-s,8px)] px-[var(--spacing-s,8px)] py-[var(--spacing-xxs,4px)] rounded-[var(--border-radius-s,4px)] text-left text-[14px] font-normal shrink-0 ${insightSubView === 'forecast-inspector' ? 'bg-[#0267ff]/50 text-white' : 'text-white hover:bg-white/5'}`} data-name="Sidebar element">
+                <button type="button" onClick={() => { setActiveView('insights'); setInsightSubView('forecast-inspector'); }} className={`min-h-[36px] w-full flex items-center gap-[var(--spacing-s,8px)] px-[var(--spacing-s,8px)] py-[var(--spacing-xxs,4px)] rounded-[var(--border-radius-s,4px)] text-left text-[14px] font-normal shrink-0 ${insightSubView === 'forecast-inspector' ? 'bg-[#0D7580]/50 text-white' : 'text-white hover:bg-white/5'}`} data-name="Sidebar element">
                   <span className="flex-1 min-w-0 text-left">Forecast inspector</span>
                   <span className="text-xs bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded shrink-0">Premium</span>
                 </button>
@@ -172,7 +172,7 @@ export default function App() {
               setActiveView('global-configuration')
               setOptimiserOpen(false)
             }}
-            className={`${navItemBase} ${sidebarCollapsed ? navItemCollapsed : `${navItemExpanded} text-left font-normal`} ${activeView === 'global-configuration' ? 'bg-[#0267ff] text-white font-medium' : 'text-white hover:bg-white/5'}`}
+            className={`${navItemBase} ${sidebarCollapsed ? navItemCollapsed : `${navItemExpanded} text-left font-normal`} ${activeView === 'global-configuration' ? 'bg-[#0D7580] text-white font-medium' : 'text-white hover:bg-white/5'}`}
             data-name="Sidebar element"
             data-node-id="14404:global-configuration"
           >
@@ -192,7 +192,7 @@ export default function App() {
               setActiveView('inventory-goals')
               setOptimiserOpen(false)
             }}
-            className={`${navItemBase} ${sidebarCollapsed ? navItemCollapsed : `${navItemExpanded} text-left font-normal`} ${activeView === 'inventory-goals' ? 'bg-[#0267ff] text-white font-medium' : 'text-white hover:bg-white/5'}`}
+            className={`${navItemBase} ${sidebarCollapsed ? navItemCollapsed : `${navItemExpanded} text-left font-normal`} ${activeView === 'inventory-goals' ? 'bg-[#0D7580] text-white font-medium' : 'text-white hover:bg-white/5'}`}
             data-name="Sidebar element"
             data-node-id="14404:inventory-goals"
           >
@@ -214,7 +214,7 @@ export default function App() {
                 setResetToRecommendationsLandingSignal((n) => n + 1)
                 setOptimiserOpen((o) => !o)
               }}
-              className={`${navItemBase} ${sidebarCollapsed ? navItemCollapsed : `${navItemExpanded} text-left`} ${activeView === 'optimiser' ? 'bg-[#0267ff] text-white font-medium' : 'font-normal text-white hover:bg-white/5'}`}
+              className={`${navItemBase} ${sidebarCollapsed ? navItemCollapsed : `${navItemExpanded} text-left`} ${activeView === 'optimiser' ? 'bg-[#0D7580] text-white font-medium' : 'font-normal text-white hover:bg-white/5'}`}
               aria-expanded={sidebarCollapsed ? false : optimiserOpen}
               data-name="Sidebar element"
               data-node-id="14404:7825"
@@ -432,15 +432,17 @@ export default function App() {
           />
         </div>
 
-        <main className="flex-1 min-h-0 min-w-0 w-full pl-8 pr-8 pb-12 overflow-y-auto overflow-x-hidden">
+        <main className="flex-1 min-h-0 min-w-0 w-full bg-white pl-8 pr-8 pb-12 overflow-y-auto overflow-x-hidden">
           {activeView === 'optimiser' && optimiserSubView === 'scope' ? (
-            <ScopePage />
+            <div className="pt-5">
+              <ScopePage />
+            </div>
           ) : activeView === 'optimiser' && optimiserSubView === 'schedule-detail' ? (
-            <div className="pt-6">
+            <div className="pt-5">
               <ScheduleDetailPage />
             </div>
           ) : activeView === 'optimiser' ? (
-            <div className="pt-6">
+            <div className="pt-5">
               <OptimiserPage
                 onAddJob={() => setOptimiserSubView('scope')}
                 openScheduleDrawer={openScheduleDrawerSignal}
@@ -452,11 +454,11 @@ export default function App() {
               />
             </div>
           ) : activeView === 'global-configuration' ? (
-            <div className="pt-6">
+            <div className="pt-5">
               <GlobalConfigurationPage />
             </div>
           ) : activeView === 'inventory-goals' ? (
-            <div className="pt-6">
+            <div className="pt-5">
               <InventoryGoalsPage onCreateGoal={handleInventoryCreateGoal} />
             </div>
           ) : activeView === 'insights' ? (

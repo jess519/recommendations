@@ -30,10 +30,71 @@ export const IconInsightsChevron = () => (
     <path d="M5 7.5L7.73726 10.2373C8.52929 11.0293 8.92531 11.4253 9.38197 11.5737C9.78365 11.7042 10.2163 11.7042 10.618 11.5737C11.0747 11.4253 11.4707 11.0293 12.2627 10.2373L15 7.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
   </svg>
 )
-/* Search icon – inside search box (Figma 116:1577): dark grey outline magnifying glass */
-export const IconFilterFunnel = () => (
-  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="shrink-0" aria-hidden>
-    <path d="M2 4h16l-5 7v5l-4 2v-7L2 4z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+/** Icon=filter (gestalt filter-2) — DS 2.0 (Figma 14152:1106 / 14152:119), vector from file; Base #22272F via currentColor */
+export const IconFilterFunnel = ({ className = 'w-5 h-5' }) => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    className={`shrink-0 ${className}`}
+    aria-hidden
+    data-name="Icon=filter"
+    data-node-id="14152:119"
+  >
+    <g transform="translate(2.25 1.25)">
+      <path
+        d="M17.1152 0.75H2.3848C1.48193 0.75 0.75 1.48193 0.75 2.3848C0.75 4.49665 1.76989 6.47849 3.48837 7.70598L5.41667 9.08333L5.41668 9.08334C6.05877 9.54198 6.37982 9.7713 6.63894 10.0419C7.17476 10.6014 7.53657 11.3045 7.68043 12.0657C7.75 12.4338 7.75 12.8284 7.75 13.6174V18.75C7.75 19.8546 8.64543 20.75 9.75 20.75C10.8546 20.75 11.75 19.8546 11.75 18.75V13.6174C11.75 12.8284 11.75 12.4338 11.8196 12.0657C11.9634 11.3045 12.3252 10.6014 12.8611 10.0419C13.1202 9.7713 13.4412 9.54198 14.0833 9.08333L16.0116 7.70598C17.7301 6.47849 18.75 4.49665 18.75 2.3848C18.75 1.48193 18.0181 0.75 17.1152 0.75Z"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </g>
+  </svg>
+)
+/** Icon=Ascending (sort order — list + arrow) — DS 2.0 (Figma 14152:1468 / 14152:552), 20×20, viewBox 24×24, Base #22272F via currentColor */
+export const IconSortOrder = ({ className = '' }) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="20"
+    height="20"
+    viewBox="0 0 24 24"
+    fill="none"
+    className={`shrink-0 ${className}`}
+    aria-hidden
+    data-name="Icon=Ascending"
+    data-node-id="14152:1468"
+  >
+    <path
+      d="M3 7h10M3 12h10M3 17h10"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+    />
+    <path
+      d="M18 6v9M15 15l3 3 3-3"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+)
+/** Icon=grid-14 (column settings) — DS 2.0 (Figma 14152:1144 / 14152:122), 24×24, Base #22272F via currentColor */
+export const IconColumnSettings = ({ className = 'w-5 h-5' }) => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    className={`shrink-0 ${className}`}
+    aria-hidden
+    data-name="Icon=grid-14"
+    data-node-id="14152:122"
+  >
+    <rect x="2" y="2" width="20" height="20" rx="5" stroke="currentColor" strokeWidth="1.5" />
+    <rect x="5.75" y="6" width="2.5" height="12" rx="1.25" stroke="currentColor" strokeWidth="1.5" />
+    <rect x="10.75" y="6" width="2.5" height="12" rx="1.25" stroke="currentColor" strokeWidth="1.5" />
+    <rect x="15.75" y="6" width="2.5" height="12" rx="1.25" stroke="currentColor" strokeWidth="1.5" />
   </svg>
 )
 /** Icon=search — DS 2.0 (Figma 4605:27828); default 20×20, pass e.g. `w-4 h-4` for 16px field */
@@ -145,6 +206,20 @@ export const IconClose = ({ className = 'w-6 h-6' }) => (
     <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
   </svg>
 )
+/** Icon=alert-triangle — DS 2.0 (Figma 4605:27922); default 24×24 */
+export const IconAlertTriangle = ({ className = 'size-6' }) => (
+  <svg viewBox="0 0 24 24" fill="none" className={`shrink-0 ${className}`} aria-hidden data-name="Icon=alert-triangle" data-node-id="4605:27922">
+    <path
+      d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path d="M12 9v4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M12 17h.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+)
 export const IconEdit = () => (
   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="shrink-0" aria-hidden>
     <path d="M12 2l2 2-8 8H4v-2l8-8z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -236,8 +311,16 @@ export const IconStar = () => (
     <path d="M10 2l2.2 4.5 4.9.7-3.5 3.4.8 4.9L10 13.5l-4.4 2.1.8-4.9-3.5-3.4 4.9-.7L10 2z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
   </svg>
 )
-export const IconInfo = () => (
-  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="shrink-0">
+/** Icon=info — DS 2.0 (Figma 4605:27942); default 20×20, pass e.g. `size-6` for 24px */
+export const IconInfo = ({ className = 'w-5 h-5' }) => (
+  <svg
+    viewBox="0 0 20 20"
+    fill="none"
+    className={`shrink-0 ${className}`}
+    aria-hidden
+    data-name="Icon=info"
+    data-node-id="4605:27942"
+  >
     <circle cx="10" cy="10" r="7.5" stroke="currentColor" strokeWidth="1.5" />
     <circle cx="10" cy="6.5" r="1.25" fill="currentColor" />
     <path d="M10 9v4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
@@ -554,6 +637,35 @@ export const IconTruck = () => (
     <circle cx="12" cy="12" r="1" stroke="currentColor" strokeWidth="1.2" />
   </svg>
 )
+
+/** Side-view van — TU truck badge (blue chip, white stroke) */
+export const IconTruckTu = ({ className = '' }) => (
+  <svg
+    width="20"
+    height="20"
+    viewBox="0 0 16 16"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    className={`size-[20px] shrink-0 ${className}`}
+    aria-hidden
+  >
+    <path
+      d="M1.75 5.75h6.25v3.75H1.75V5.75z"
+      stroke="currentColor"
+      strokeWidth="1.15"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M8 6.75h4.25l2.25 2v2.75H8V6.75z"
+      stroke="currentColor"
+      strokeWidth="1.15"
+      strokeLinejoin="round"
+    />
+    <path d="M11.25 8.5h1.75" stroke="currentColor" strokeWidth="1" strokeLinecap="round" />
+    <circle cx="4.88" cy="11.35" r="1.05" stroke="currentColor" strokeWidth="1.15" />
+    <circle cx="11.35" cy="11.35" r="1.05" stroke="currentColor" strokeWidth="1.15" />
+  </svg>
+)
 export const IconLightbulb = () => (
   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="shrink-0">
     <path d="M6 14h4M8 12v-1M5.5 6.5a3 3 0 015 0c0 .8-.3 1.5-.7 2.1L8 9.5V11M8 2v1M3 5l.7.7M12.3 5.7L13 5M4 9H3M13 9h-1" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
@@ -603,6 +715,29 @@ export const IconInventoryGoals = ({ className = '' }) => (
     <circle cx="12" cy="12" r="5.5" stroke="currentColor" strokeWidth="1.5" />
     <circle cx="12" cy="12" r="2" fill="currentColor" />
     <path d="M12 3v3M12 18v3M3 12h3M18 12h3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+  </svg>
+)
+
+/** Isometric carton — TU warehouse badge (purple chip, white stroke) */
+export const IconPackageTu = ({ className = '' }) => (
+  <svg
+    width="20"
+    height="20"
+    viewBox="0 0 16 16"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    className={`size-[20px] shrink-0 ${className}`}
+    aria-hidden
+  >
+    <path
+      d="M8 2.5 13 5.25 8 8 3 5.25 8 2.5z"
+      stroke="currentColor"
+      strokeWidth="1.15"
+      strokeLinejoin="round"
+    />
+    <path d="M3 5.25v6.5L8 14l5-2.25V5.25" stroke="currentColor" strokeWidth="1.15" strokeLinejoin="round" />
+    <path d="M8 8v6" stroke="currentColor" strokeWidth="1.15" strokeLinecap="round" />
+    <path d="M5.2 4.35l5.6 3.3" stroke="currentColor" strokeWidth="1" strokeLinecap="round" />
   </svg>
 )
 
