@@ -2338,11 +2338,23 @@ function ProductsDrilldown({ trip, onBack, showBackButton = true, recalculatedTi
   )
 }
 
-function LocationsTab() {
+function LocationsTab({ recalculatedTimestamp }) {
   const [selectedLocationIds, setSelectedLocationIds] = useState(new Set())
   const [statusFilters, setStatusFilters] = useState([])
   const [filtersDropdownOpen, setFiltersDropdownOpen] = useState(false)
   const locations = LOCATIONS_TABLE_DATA
+  const hasRecalculated = Boolean(recalculatedTimestamp)
+
+  const getLocationRecommendationsUpdatedDisplay = (loc) => {
+    const rowStatus = getRowStatus(loc)
+    if (hasRecalculated && shouldUpdateRecommendationsTimestampForStatus(rowStatus)) {
+      return recalculatedTimestamp
+    }
+    return {
+      date: loc.recommendationsUpdated || '26/02/2026',
+      time: loc.recommendationsUpdatedTime || '',
+    }
+  }
 
   const toggleLocationSelection = (id) => {
     setSelectedLocationIds((prev) => {
@@ -2740,8 +2752,7 @@ function LocationsTab() {
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right align-top`}>
             {(() => {
-              const locationStatus = getRowStatus(loc)
-              const display = getRecommendationsUpdatedDisplay(loc, locationStatus)
+              const display = getLocationRecommendationsUpdatedDisplay(loc)
               return (
             <div className="flex flex-col items-end gap-0.5 line-clamp-2 min-w-0">
               <span className="text-[14px] text-[#4B535C]">{display.date}</span>
@@ -3782,7 +3793,7 @@ export default function ScheduleDetailPage() {
         ) : activeTab === 'products' ? (
           <ProductsDrilldown trip={TRIPS_OPERA[0]} onBack={() => {}} showBackButton={false} recalculatedTimestamp={recalculatedTimestamp} />
         ) : activeTab === 'locations' ? (
-          <LocationsTab />
+          <LocationsTab recalculatedTimestamp={recalculatedTimestamp} />
         ) : null}
 
       {selectedTripIds.size > 0 && activeTab === 'trips' && (
