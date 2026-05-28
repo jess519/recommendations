@@ -398,7 +398,7 @@ export default function App() {
                 : activeView === 'optimiser' && optimiserSubView === 'schedule-detail'
                   ? null
                   : activeView === 'optimiser'
-                    ? 'Automate replenishment, reordering, and rebalancing with scheduled inventory optimisation.'
+                    ? 'Optimise inventory across your warehouses and stores'
                     : activeView === 'global-configuration'
                       ? 'Configure the rules and priorities that guide how your data is interpreted and how decisions are made across the platform.'
                       : activeView === 'inventory-goals'
