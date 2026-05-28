@@ -614,7 +614,6 @@ const DEFAULT_DRAWER_FORM = {
 const DAY_OPTIONS = Array.from({ length: 31 }, (_, i) => i + 1)
 const MODULE_OPTIONS = [
   { id: 'replenishment', label: 'Replenishment' },
-  { id: 'reorder', label: 'Reorder' },
   { id: 'rebalancing', label: 'Rebalancing' },
 ]
 
