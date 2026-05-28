@@ -1977,9 +1977,6 @@ function ProductsDrilldown({ trip, onBack, showBackButton = true }) {
               {p.recommendationsUpdatedTime && (
                 <span className="text-[12px] text-[#4b535c]">{p.recommendationsUpdatedTime}</span>
               )}
-              {p.recommendationsUpdatedBy && (
-                <span className="text-[11px] text-[#9ca3af]">{p.recommendationsUpdatedBy}</span>
-              )}
             </div>
           </td>
         )
@@ -2721,9 +2718,6 @@ function LocationsTab() {
               {loc.recommendationsUpdatedTime && (
                 <span className="text-[12px] text-[#4b535c]">{loc.recommendationsUpdatedTime}</span>
               )}
-              {loc.recommendationsUpdatedBy && (
-                <span className="text-[11px] text-[#9ca3af]">{loc.recommendationsUpdatedBy}</span>
-              )}
             </div>
           </td>
         )
@@ -2908,7 +2902,7 @@ function LocationsTab() {
 }
 
 export default function ScheduleDetailPage() {
-  const [activeTab, setActiveTab] = useState('trips')
+  const [activeTab, setActiveTab] = useState('products')
   const [viewShowsFullDataset, setViewShowsFullDataset] = useState(true)
   const [selectedView, setSelectedView] = useState('Show all recommendations')
   const [viewDropdownOpen, setViewDropdownOpen] = useState(false)
@@ -3121,9 +3115,9 @@ export default function ScheduleDetailPage() {
         <div className="flex items-center justify-between gap-4">
           <nav className="flex items-center gap-6 h-11">
             {[
-              { id: 'trips', label: 'Trips' },
               { id: 'products', label: 'Products' },
               { id: 'locations', label: 'Locations' },
+              { id: 'trips', label: 'Trips' },
             ].map((tab) => {
               const isActive = activeTab === tab.id
               return (
@@ -3672,9 +3666,6 @@ export default function ScheduleDetailPage() {
                                     </span>
                                     {row.recommendationsUpdatedTime && (
                                       <span className="text-[12px] text-[#4b535c]">{row.recommendationsUpdatedTime}</span>
-                                    )}
-                                    {row.recommendationsUpdatedBy && (
-                                      <span className="text-[11px] text-[#9ca3af]">{row.recommendationsUpdatedBy}</span>
                                     )}
                                   </div>
                                 </td>
