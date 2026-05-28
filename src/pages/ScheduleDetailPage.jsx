@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useLayoutEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts'
-import { IconSearch, IconChevronDown, IconChevronRight, IconShare, IconDocument, IconClose, IconAlertTriangle, IconArrowLeft, IconGears, IconTruckTu, IconPackageTu, IconRebalancing, IconReplenishment, IconCalendarNote, IconTrendUp, IconFilterFunnel, IconColumnSettings, IconSortOrder } from '../components/icons'
+import { IconSearch, IconChevronDown, IconChevronRight, IconShare, IconDocument, IconClose, IconArrowLeft, IconGears, IconTruckTu, IconPackageTu, IconRebalancing, IconReplenishment, IconCalendarNote, IconTrendUp, IconFilterFunnel, IconColumnSettings, IconSortOrder } from '../components/icons'
 function IconInfo() {
   return (
     <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="shrink-0 text-[#9ca3af]" aria-hidden>
@@ -87,7 +87,7 @@ const TRIP_COL_RESIZE_LABELS = [
   'Resize Status column',
 ]
 const SCHEDULE_CREATION_DATE = '24/02/2026'
-const SCHEDULE_DEADLINE_BANNER_LABEL = 'Deadline: 28 Feb, 1PM'
+const SCHEDULE_SUBMISSION_DEADLINE = '28/02/2026'
 
 const TRIPS_OPERA = [
   {
@@ -2911,7 +2911,6 @@ export default function ScheduleDetailPage() {
   const [selectedTripIds, setSelectedTripIds] = useState(new Set())
   const [statusFilters, setStatusFilters] = useState([])
   const [filtersDropdownOpen, setFiltersDropdownOpen] = useState(false)
-  const [deadlineBannerDismissed, setDeadlineBannerDismissed] = useState(false)
 
   const baseTripsRows = viewShowsFullDataset ? TRIPS_ALL : TRIPS_OPERA
   const tripsRows = (() => {
@@ -3051,7 +3050,15 @@ export default function ScheduleDetailPage() {
               Europe monthly rebal
             </h1>
             <div className="flex flex-wrap items-center gap-3 text-[13px] text-[#4b535c]">
-              <span>Created: {SCHEDULE_CREATION_DATE}</span>
+              <span className="inline-flex items-center gap-2 flex-wrap">
+                <span className="text-[#4b535c]">Submission deadline:</span>
+                <span className="px-2.5 py-0.5 rounded-full text-[13px] font-medium bg-[#fce7f3] text-[#9d174d]">
+                  {SCHEDULE_SUBMISSION_DEADLINE}
+                </span>
+              </span>
+              <span>
+                Created <span className="text-[#0a0a0a]">{SCHEDULE_CREATION_DATE}</span>
+              </span>
               <button
                 type="button"
                 className="text-[13px] font-medium text-[#0267ff] hover:underline"
@@ -3082,32 +3089,6 @@ export default function ScheduleDetailPage() {
               Submit recommendations
             </button>
           </div>
-        </div>
-        <div className="flex flex-col gap-3 w-full min-w-0">
-        {!deadlineBannerDismissed && (
-        <div
-          className="w-full rounded-[6px] border border-solid border-[#f29a35] bg-[#fff6e5] p-4 flex items-center gap-3 min-w-0"
-          role="alert"
-          data-name="Alerts & notifications"
-          data-node-id="13693:315"
-        >
-          <IconAlertTriangle className="size-6 shrink-0 text-[#f29a35]" aria-hidden />
-          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1">
-            <span className="text-[16px] font-medium leading-normal text-[#00050a]">
-              {SCHEDULE_DEADLINE_BANNER_LABEL}
-            </span>
-          </div>
-          <button
-            type="button"
-            onClick={() => setDeadlineBannerDismissed(true)}
-            className="shrink-0 inline-flex items-center justify-center rounded-[4px] p-1.5 text-[#4b535c] hover:bg-black/[0.04]"
-            aria-label="Dismiss deadline reminder"
-          >
-            <IconClose className="size-4" />
-          </button>
-        </div>
-        )}
-
         </div>
       </header>
 
