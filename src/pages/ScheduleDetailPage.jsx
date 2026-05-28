@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useLayoutEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts'
-import { IconSearch, IconChevronDown, IconChevronRight, IconShare, IconDocument, IconClose, IconAlertTriangle, IconInfo as DsIconInfo, IconArrowLeft, IconGears, IconTruckTu, IconPackageTu, IconRebalancing, IconReplenishment, IconCalendarNote, IconTrendUp, IconFilterFunnel, IconColumnSettings, IconSortOrder } from '../components/icons'
+import { IconSearch, IconChevronDown, IconChevronRight, IconShare, IconDocument, IconClose, IconAlertTriangle, IconArrowLeft, IconGears, IconTruckTu, IconPackageTu, IconRebalancing, IconReplenishment, IconCalendarNote, IconTrendUp, IconFilterFunnel, IconColumnSettings, IconSortOrder } from '../components/icons'
 function IconInfo() {
   return (
     <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="shrink-0 text-[#9ca3af]" aria-hidden>
@@ -87,10 +87,7 @@ const TRIP_COL_RESIZE_LABELS = [
   'Resize Status column',
 ]
 const SCHEDULE_CREATION_DATE = '24/02/2026'
-const SCHEDULE_SUBMISSION_DEADLINE = '28/02/2026, 1:00 PM'
 const SCHEDULE_DEADLINE_BANNER_LABEL = 'Deadline: 28 Feb, 1PM'
-const SCHEDULE_EXCEPTIONS_PENDING = 12
-const SCHEDULE_IMPORTANT_UPDATES_COUNT = 2
 
 const TRIPS_OPERA = [
   {
@@ -2920,8 +2917,6 @@ export default function ScheduleDetailPage() {
   const [selectedTripIds, setSelectedTripIds] = useState(new Set())
   const [statusFilters, setStatusFilters] = useState([])
   const [filtersDropdownOpen, setFiltersDropdownOpen] = useState(false)
-  const [importantUpdatesOpen, setImportantUpdatesOpen] = useState(false)
-  const [importantUpdatesDismissed, setImportantUpdatesDismissed] = useState(false)
   const [deadlineBannerDismissed, setDeadlineBannerDismissed] = useState(false)
 
   const baseTripsRows = viewShowsFullDataset ? TRIPS_ALL : TRIPS_OPERA
@@ -3119,72 +3114,6 @@ export default function ScheduleDetailPage() {
         </div>
         )}
 
-        {!importantUpdatesDismissed && (
-        <div
-          id="schedule-important-updates"
-          className="w-full rounded-[6px] border border-solid border-[#0267ff] bg-[#ebf3ff] p-4 flex flex-col gap-0 min-w-0"
-          data-name="Alerts & notifications"
-          data-node-id="13693:311"
-        >
-          <div className="flex items-center gap-3 min-w-0">
-            <DsIconInfo className="size-6 shrink-0 text-[#0267ff]" aria-hidden />
-            <button
-              type="button"
-              onClick={() => setImportantUpdatesOpen((o) => !o)}
-              className="flex flex-1 min-w-0 items-center justify-between gap-3 text-left min-h-0 rounded-[4px] py-0.5 px-1 -outline-offset-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0267ff] focus-visible:ring-offset-2 focus-visible:ring-offset-[#ebf3ff]"
-              aria-expanded={importantUpdatesOpen}
-              aria-controls="important-updates-panel"
-              id="important-updates-trigger"
-            >
-              <span className="text-[16px] font-medium leading-normal text-[#00050a]">
-                Important updates ({SCHEDULE_IMPORTANT_UPDATES_COUNT})
-              </span>
-              <div className="flex items-center gap-2 shrink-0">
-                <div className="hidden sm:flex items-center gap-1.5 whitespace-nowrap text-[#00050a] pr-1">
-                  <span className="text-[16px] font-medium leading-normal tabular-nums">
-                    {SCHEDULE_EXCEPTIONS_PENDING.toLocaleString()}
-                  </span>
-                  <span className="text-[14px] font-normal leading-normal text-[#00050a]">
-                    exceptions pending
-                  </span>
-                </div>
-                <span
-                  className={`inline-flex text-[#4b535c] transition-transform duration-200 ${importantUpdatesOpen ? 'rotate-180' : ''}`}
-                  aria-hidden
-                >
-                  <IconChevronDown />
-                </span>
-              </div>
-            </button>
-            <button
-              type="button"
-              onClick={() => setImportantUpdatesDismissed(true)}
-              className="shrink-0 inline-flex items-center justify-center rounded-[4px] p-1.5 text-[#4b535c] hover:bg-black/[0.04]"
-              aria-label="Dismiss important updates"
-            >
-              <IconClose className="size-4" />
-            </button>
-          </div>
-          {importantUpdatesOpen && (
-            <div
-              id="important-updates-panel"
-              role="region"
-              aria-labelledby="important-updates-trigger"
-              className="mt-3 pt-3 border-t border-[#0267ff]/25 flex flex-col gap-[8px] text-[14px] pl-9"
-            >
-              <p className="font-medium text-[#00050a]">
-                {SCHEDULE_EXCEPTIONS_PENDING} exceptions still to approve
-              </p>
-              <p className="text-[#4b535c] leading-normal">
-                The next scheduled recommendations are the UK weekly replenishment running on 10/03/2026.
-              </p>
-              <p className="text-[#4b535c] leading-normal">
-                Any approved or locked recommendations will be auto-submitted at this time ({SCHEDULE_SUBMISSION_DEADLINE}).
-              </p>
-            </div>
-          )}
-        </div>
-        )}
         </div>
       </header>
 
