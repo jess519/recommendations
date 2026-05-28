@@ -89,6 +89,46 @@ const TRIP_COL_RESIZE_LABELS = [
 const SCHEDULE_CREATION_DATE = '24/02/2026'
 const SCHEDULE_SUBMISSION_DEADLINE = '28/02/2026'
 
+/** Hardcoded totals for Products tab summary row (6 visible products, trip id 1). */
+const PRODUCTS_TAB_SUMMARY_TOTALS = {
+  productDetails: '6 products',
+  transfersUnits: '12 units',
+  transfersTrips: '5 trips',
+  revenue: '€6.9K',
+  recommendedUnits: '18 units',
+  recommendedTrips: '5 trips',
+  stockUnits: '70 units',
+  stockInTransit: '11 in transit',
+  warehouseAllocate: '320 → 280 to allocate',
+  warehouseSell: '400 → 360 to sell',
+  salesL7: '138 L7D',
+  salesL30: '693 L30D',
+  forecast: '5.58',
+  stockouts: '1 → 2',
+  locations: '11 → 10',
+  overstocks: '21 → 5',
+  understocks: '25 → 11',
+  depth: '4.0 → 5.2',
+}
+
+/** Hardcoded totals for Trips tab summary row (TRIPS_ALL, default full dataset view). */
+const TRIPS_TAB_SUMMARY_TOTALS_FULL = {
+  sendingTrips: '22 trips',
+  transfers: '2,038 units',
+  revenue: '€435.3K',
+  recommended: '2,151 units',
+  products: '257 products',
+}
+
+/** Hardcoded totals for Trips tab summary row (TRIPS_OPERA subset view). */
+const TRIPS_TAB_SUMMARY_TOTALS_OPERA = {
+  sendingTrips: '9 trips',
+  transfers: '241 units',
+  revenue: '€48.1K',
+  recommended: '241 units',
+  products: '147 products',
+}
+
 const TRIPS_OPERA = [
   {
     id: 1,
@@ -498,16 +538,16 @@ const LOCATIONS_TABLE_DATA = [
 // Mock products for trip drilldown (keyed by trip id)
 const PRODUCTS_BY_TRIP = {
   1: [
-    { id: 1, name: 'Croi-sac zip l', sku: 'A1398810', colour: 'Noir', transfers: 3, transfersSub: 1, revenue: '€1.48K', recommended: 1, recommendedBadges: ['REV'], recommendedSub: 2, salesL7: 1, salesL30: 2, forecast: 1.87, stockouts: '0 -> 0', locations: '2 -> 2', overstocks: '4 -> 1', understocks: '8 -> 5', depth: '5.0 -> 5.0',     status: 'approved_by_system', recommendationsUpdated: '26/02/2026', recommendationsUpdatedTime: '14:32', recommendationsUpdatedBy: 'System', currentUnits: 12, currentUnitsInTransit: 3, leftInWarehouseAllocate: 45, leftInWarehouseSell: 32 },
-    { id: 2, name: 'Pre-sac seau m', sku: 'A101080', colour: 'Bleu petrole', transfers: 2, transfersSub: 1, revenue: '€1.12K', recommended: 2, recommendedBadges: ['VIS'], recommendedSub: 1, salesL7: 2, salesL30: 3, forecast: 0.54, stockouts: '0 -> 1', locations: '2 -> 1', overstocks: '3 -> 0', understocks: '2 -> 0', depth: '3.0 -> 6.0', recommendationsUpdated: '24/02/2026', recommendationsUpdatedTime: '09:15', recommendationsUpdatedBy: 'User', currentUnits: 8, currentUnitsInTransit: 0, leftInWarehouseAllocate: 120, leftInWarehouseSell: 95 },
-    { id: 3, name: 'Ang-sac pte main m', sku: 'A1252810', colour: 'Figue', transfers: 3, transfersSub: 2, revenue: '€1.89K', recommended: 3, recommendedBadges: ['REV', 'VIS'], recommendedSub: 1, salesL7: 1, salesL30: 4, forecast: 2.1, stockouts: '1 -> 0', locations: '2 -> 2', overstocks: '5 -> 2', understocks: '6 -> 3', depth: '4.2 -> 4.8',     status: 'last_edited_by_user', editedByUser: 'Csabi Toth', recommendationsUpdated: '26/02/2026', recommendationsUpdatedTime: '16:48', recommendationsUpdatedBy: 'User', currentUnits: 25, currentUnitsInTransit: 5, leftInWarehouseAllocate: 18, leftInWarehouseSell: 12 },
-    { id: 4, name: 'Croi-sac zip s', sku: 'A1398811', colour: 'Noir', transfers: 1, transfersSub: 2, revenue: '€0.98K', recommended: 1, recommendedBadges: ['REV'], recommendedSub: 2, salesL7: 0, salesL30: 1, forecast: 0.32, stockouts: '0 -> 0', locations: '1 -> 2', overstocks: '2 -> 1', understocks: '4 -> 2', depth: '5.0 -> 5.0', status: 'approved_by_user', approvedByUser: 'Jess Briggs', recommendationsUpdated: '24/02/2026', recommendationsUpdatedTime: '11:03', recommendationsUpdatedBy: 'User', currentUnits: 3, currentUnitsInTransit: 1, leftInWarehouseAllocate: 65, leftInWarehouseSell: 50 },
-    { id: 5, name: 'Pre-sac seau s', sku: 'A101081', colour: 'Bleu petrole', transfers: 2, transfersSub: 1, revenue: '€0.76K', recommended: 2, recommendedBadges: ['VIS'], recommendedSub: 1, salesL7: 1, salesL30: 2, forecast: 0.54, stockouts: '0 -> 1', locations: '2 -> 1', overstocks: '3 -> 0', understocks: '2 -> 0', depth: '3.0 -> 6.0', status: 'needs_review_from_user', recommendationsUpdated: '26/02/2026', recommendationsUpdatedTime: '08:22', recommendationsUpdatedBy: 'System', currentUnits: 15, currentUnitsInTransit: 2, leftInWarehouseAllocate: 30, leftInWarehouseSell: 22 },
-    { id: 6, name: 'Ang-sac pte main s', sku: 'A1252811', colour: 'Figue', transfers: 1, transfersSub: 1, revenue: '€0.65K', recommended: 1, recommendedBadges: ['REV'], recommendedSub: 1, salesL7: 0, salesL30: 1, forecast: 0.21, stockouts: '0 -> 0', locations: '2 -> 2', overstocks: '4 -> 1', understocks: '3 -> 1', depth: '4.0 -> 4.5', status: 'approved_by_system', recommendationsUpdated: '24/02/2026', recommendationsUpdatedTime: '15:07', recommendationsUpdatedBy: 'System', currentUnits: 7, currentUnitsInTransit: 0, leftInWarehouseAllocate: 42, leftInWarehouseSell: 28 },
+    { id: 1, name: 'Croi-sac zip l', sku: 'A1398810', colour: 'Noir', transfers: 3, transfersSub: 1, revenue: '€1.48K', recommended: 1, recommendedBadges: ['REV'], recommendedSub: 2, salesL7: 1, salesL30: 2, forecast: 1.87, stockouts: '0 → 0', locations: '2 → 2', overstocks: '4 → 1', understocks: '8 → 5', depth: '5.0 → 5.0',     status: 'approved_by_system', recommendationsUpdated: '26/02/2026', recommendationsUpdatedTime: '14:32', recommendationsUpdatedBy: 'System', currentUnits: 12, currentUnitsInTransit: 3, leftInWarehouseAllocate: 45, leftInWarehouseSell: 32 },
+    { id: 2, name: 'Pre-sac seau m', sku: 'A101080', colour: 'Bleu petrole', transfers: 2, transfersSub: 1, revenue: '€1.12K', recommended: 2, recommendedBadges: ['VIS'], recommendedSub: 1, salesL7: 2, salesL30: 3, forecast: 0.54, stockouts: '0 → 1', locations: '2 → 1', overstocks: '3 → 0', understocks: '2 → 0', depth: '3.0 → 6.0', recommendationsUpdated: '24/02/2026', recommendationsUpdatedTime: '09:15', recommendationsUpdatedBy: 'User', currentUnits: 8, currentUnitsInTransit: 0, leftInWarehouseAllocate: 120, leftInWarehouseSell: 95 },
+    { id: 3, name: 'Ang-sac pte main m', sku: 'A1252810', colour: 'Figue', transfers: 3, transfersSub: 2, revenue: '€1.89K', recommended: 3, recommendedBadges: ['REV', 'VIS'], recommendedSub: 1, salesL7: 1, salesL30: 4, forecast: 2.1, stockouts: '1 → 0', locations: '2 → 2', overstocks: '5 → 2', understocks: '6 → 3', depth: '4.2 → 4.8',     status: 'last_edited_by_user', editedByUser: 'Csabi Toth', recommendationsUpdated: '26/02/2026', recommendationsUpdatedTime: '16:48', recommendationsUpdatedBy: 'User', currentUnits: 25, currentUnitsInTransit: 5, leftInWarehouseAllocate: 18, leftInWarehouseSell: 12 },
+    { id: 4, name: 'Croi-sac zip s', sku: 'A1398811', colour: 'Noir', transfers: 1, transfersSub: 2, revenue: '€0.98K', recommended: 1, recommendedBadges: ['REV'], recommendedSub: 2, salesL7: 0, salesL30: 1, forecast: 0.32, stockouts: '0 → 0', locations: '1 → 2', overstocks: '2 → 1', understocks: '4 → 2', depth: '5.0 → 5.0', status: 'approved_by_user', approvedByUser: 'Jess Briggs', recommendationsUpdated: '24/02/2026', recommendationsUpdatedTime: '11:03', recommendationsUpdatedBy: 'User', currentUnits: 3, currentUnitsInTransit: 1, leftInWarehouseAllocate: 65, leftInWarehouseSell: 50 },
+    { id: 5, name: 'Pre-sac seau s', sku: 'A101081', colour: 'Bleu petrole', transfers: 2, transfersSub: 1, revenue: '€0.76K', recommended: 2, recommendedBadges: ['VIS'], recommendedSub: 1, salesL7: 1, salesL30: 2, forecast: 0.54, stockouts: '0 → 1', locations: '2 → 1', overstocks: '3 → 0', understocks: '2 → 0', depth: '3.0 → 6.0', status: 'needs_review_from_user', recommendationsUpdated: '26/02/2026', recommendationsUpdatedTime: '08:22', recommendationsUpdatedBy: 'System', currentUnits: 15, currentUnitsInTransit: 2, leftInWarehouseAllocate: 30, leftInWarehouseSell: 22 },
+    { id: 6, name: 'Ang-sac pte main s', sku: 'A1252811', colour: 'Figue', transfers: 1, transfersSub: 1, revenue: '€0.65K', recommended: 1, recommendedBadges: ['REV'], recommendedSub: 1, salesL7: 0, salesL30: 1, forecast: 0.21, stockouts: '0 → 0', locations: '2 → 2', overstocks: '4 → 1', understocks: '3 → 1', depth: '4.0 → 4.5', status: 'approved_by_system', recommendationsUpdated: '24/02/2026', recommendationsUpdatedTime: '15:07', recommendationsUpdatedBy: 'System', currentUnits: 7, currentUnitsInTransit: 0, leftInWarehouseAllocate: 42, leftInWarehouseSell: 28 },
   ],
   2: [
-    { id: 7, name: 'Sac zip l', sku: 'B200001', colour: 'Noir', transfers: 2, transfersSub: 1, revenue: '€0.89K', recommended: 2, recommendedBadges: ['REV'], recommendedSub: 1, salesL7: 1, salesL30: 2, forecast: 0.45, stockouts: '0 -> 0', locations: '2 -> 2', overstocks: '2 -> 1', understocks: '5 -> 3', depth: '4.5 -> 5.0', status: 'approved_by_user', approvedByUser: 'Jess Briggs', recommendationsUpdated: '26/02/2026', recommendationsUpdatedTime: '13:55', recommendationsUpdatedBy: 'User', currentUnits: 18, currentUnitsInTransit: 4, leftInWarehouseAllocate: 88, leftInWarehouseSell: 70 },
-    { id: 8, name: 'Sac seau m', sku: 'B200002', colour: 'Noir', transfers: 1, transfersSub: 2, revenue: '€0.52K', recommended: 1, recommendedBadges: ['VIS'], recommendedSub: 2, salesL7: 0, salesL30: 1, forecast: 0.28, stockouts: '0 -> 1', locations: '1 -> 2', overstocks: '1 -> 0', understocks: '3 -> 1', depth: '3.6 -> 4.3', status: 'last_edited_by_user', editedByUser: 'Csabi Toth', recommendationsUpdated: '24/02/2026', recommendationsUpdatedTime: '17:19', recommendationsUpdatedBy: 'User', currentUnits: 11, currentUnitsInTransit: 2, leftInWarehouseAllocate: 55, leftInWarehouseSell: 40 },
+    { id: 7, name: 'Sac zip l', sku: 'B200001', colour: 'Noir', transfers: 2, transfersSub: 1, revenue: '€0.89K', recommended: 2, recommendedBadges: ['REV'], recommendedSub: 1, salesL7: 1, salesL30: 2, forecast: 0.45, stockouts: '0 → 0', locations: '2 → 2', overstocks: '2 → 1', understocks: '5 → 3', depth: '4.5 → 5.0', status: 'approved_by_user', approvedByUser: 'Jess Briggs', recommendationsUpdated: '26/02/2026', recommendationsUpdatedTime: '13:55', recommendationsUpdatedBy: 'User', currentUnits: 18, currentUnitsInTransit: 4, leftInWarehouseAllocate: 88, leftInWarehouseSell: 70 },
+    { id: 8, name: 'Sac seau m', sku: 'B200002', colour: 'Noir', transfers: 1, transfersSub: 2, revenue: '€0.52K', recommended: 1, recommendedBadges: ['VIS'], recommendedSub: 2, salesL7: 0, salesL30: 1, forecast: 0.28, stockouts: '0 → 1', locations: '1 → 2', overstocks: '1 → 0', understocks: '3 → 1', depth: '3.6 → 4.3', status: 'last_edited_by_user', editedByUser: 'Csabi Toth', recommendationsUpdated: '24/02/2026', recommendationsUpdatedTime: '17:19', recommendationsUpdatedBy: 'User', currentUnits: 11, currentUnitsInTransit: 2, leftInWarehouseAllocate: 55, leftInWarehouseSell: 40 },
   ],
 }
 
@@ -1558,16 +1598,7 @@ function ProductsDrilldown({ trip, onBack, showBackButton = true, recalculatedTi
   }
   const breadcrumbFrom = `${trip.from} [${trip.fromCode}]`
   const breadcrumbTo = trip.to.length > 12 ? `${trip.to.slice(0, 10)}...` : trip.to
-  const summaryTransfers = products.reduce((s, p) => s + (productTransfersOverrides[p.id] ?? p.transfers), 0)
-  const summaryRevenue = products.reduce((s, p) => {
-    const m = p.revenue.replace(/[€K]/g, '')
-    return s + parseFloat(m || 0)
-  }, 0)
-  const summaryRecommended = products.reduce((s, p) => s + p.recommended + (p.recommendedSub || 0), 0)
-  const summaryCurrentUnits = products.reduce((s, p) => s + (p.currentUnits || 0), 0)
-  const summaryCurrentUnitsInTransit = products.reduce((s, p) => s + (p.currentUnitsInTransit || 0), 0)
-  const summaryLeftInWarehouseAllocate = products.reduce((s, p) => s + (p.leftInWarehouseAllocate || 0), 0)
-  const summaryLeftInWarehouseSell = products.reduce((s, p) => s + (p.leftInWarehouseSell || 0), 0)
+  const productSummary = PRODUCTS_TAB_SUMMARY_TOTALS
 
   const productColLast = productColumnOrder.length - 1
   const productThPin = (isFirst, isLast) => {
@@ -1837,23 +1868,33 @@ function ProductsDrilldown({ trip, onBack, showBackButton = true, recalculatedTi
     const pin = `${productThPin(isFirst, isLast)}`
     switch (logicalIdx) {
       case 0:
-        return <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-normal text-[#4b535c]`} />
+        return (
+          <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a]`}>
+            {productSummary.productDetails}
+          </th>
+        )
       case 1:
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
-            {summaryTransfers} units
+            <div className="flex flex-col items-end">
+              <span>{productSummary.transfersUnits}</span>
+              <span className="text-[12px] text-[#4b535c]">{productSummary.transfersTrips}</span>
+            </div>
           </th>
         )
       case 2:
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
-            €{summaryRevenue.toFixed(1)}K
+            {productSummary.revenue}
           </th>
         )
       case 3:
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
-            {summaryRecommended} units
+            <div className="flex flex-col items-end">
+              <span>{productSummary.recommendedUnits}</span>
+              <span className="text-[12px] text-[#4b535c]">{productSummary.recommendedTrips}</span>
+            </div>
           </th>
         )
       case 4:
@@ -1866,10 +1907,8 @@ function ProductsDrilldown({ trip, onBack, showBackButton = true, recalculatedTi
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
             <div className="flex flex-col items-end">
-              <span>{summaryCurrentUnits} units</span>
-              {summaryCurrentUnitsInTransit > 0 && (
-                <span className="text-[12px] text-[#4b535c]">{summaryCurrentUnitsInTransit} in transit</span>
-              )}
+              <span>{productSummary.stockUnits}</span>
+              <span className="text-[12px] text-[#4b535c]">{productSummary.stockInTransit}</span>
             </div>
           </th>
         )
@@ -1877,21 +1916,54 @@ function ProductsDrilldown({ trip, onBack, showBackButton = true, recalculatedTi
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
             <div className="flex flex-col items-end">
-              <span>{summaryLeftInWarehouseAllocate.toLocaleString()} to allocate</span>
-              <span className="text-[12px] text-[#4b535c]">{summaryLeftInWarehouseSell.toLocaleString()} to sell</span>
+              <span>{productSummary.warehouseAllocate}</span>
+              <span className="text-[12px] text-[#4b535c]">{productSummary.warehouseSell}</span>
             </div>
           </th>
         )
       case 7:
+        return (
+          <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
+            <div className="flex flex-col items-end">
+              <span>{productSummary.salesL7}</span>
+              <span className="text-[12px] text-[#4b535c]">{productSummary.salesL30}</span>
+            </div>
+          </th>
+        )
       case 8:
+        return (
+          <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
+            {productSummary.forecast}
+          </th>
+        )
       case 9:
+        return (
+          <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
+            {productSummary.stockouts}
+          </th>
+        )
       case 10:
+        return (
+          <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
+            {productSummary.locations}
+          </th>
+        )
       case 11:
+        return (
+          <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
+            {productSummary.overstocks}
+          </th>
+        )
       case 12:
+        return (
+          <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
+            {productSummary.understocks}
+          </th>
+        )
       case 13:
         return (
-          <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-normal text-[#4b535c] text-right`}>
-            —
+          <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
+            {productSummary.depth}
           </th>
         )
       case 14:
@@ -3037,9 +3109,7 @@ export default function ScheduleDetailPage() {
     }
     return rows
   })()
-  const summaryTransfers = viewShowsFullDataset ? '2,000 units' : '203 units'
-  const summaryRevenue = viewShowsFullDataset ? '€435.3K' : '€41.3K'
-  const summaryRecommended = viewShowsFullDataset ? '2,105 units' : '203 units'
+  const tripSummary = viewShowsFullDataset ? TRIPS_TAB_SUMMARY_TOTALS_FULL : TRIPS_TAB_SUMMARY_TOTALS_OPERA
 
   const [tripTableColWidths, setTripTableColWidths] = useState(() => [...TRIPS_TABLE_DEFAULT_COL_WIDTHS])
   const [tripColumnOrder, setTripColumnOrder] = useState(() =>
@@ -3632,6 +3702,14 @@ export default function ScheduleDetailPage() {
                     {tripColumnOrder.map((logicalIdx) => {
                       switch (logicalIdx) {
                         case 0:
+                          return (
+                            <th
+                              key={logicalIdx}
+                              className="sticky top-[62px] z-20 bg-white py-2 px-3 text-[12px] font-medium text-[#0a0a0a]"
+                            >
+                              {tripSummary.sendingTrips}
+                            </th>
+                          )
                         case 1:
                           return (
                             <th
@@ -3645,7 +3723,7 @@ export default function ScheduleDetailPage() {
                               key={logicalIdx}
                               className="sticky top-[62px] z-20 bg-white py-2 px-3 text-[12px] font-medium text-[#0a0a0a]"
                             >
-                              {summaryTransfers}
+                              {tripSummary.transfers}
                             </th>
                           )
                         case 3:
@@ -3654,7 +3732,7 @@ export default function ScheduleDetailPage() {
                               key={logicalIdx}
                               className="sticky top-[62px] z-20 bg-white py-2 pl-3 pr-8 text-[12px] font-medium text-[#0a0a0a]"
                             >
-                              {summaryRevenue}
+                              {tripSummary.revenue}
                             </th>
                           )
                         case 4:
@@ -3663,7 +3741,7 @@ export default function ScheduleDetailPage() {
                               key={logicalIdx}
                               className="sticky top-[62px] z-20 bg-white whitespace-nowrap py-2 px-3 text-right text-[12px] font-medium text-[#0a0a0a]"
                             >
-                              {summaryRecommended}
+                              {tripSummary.recommended}
                             </th>
                           )
                         case 5:
@@ -3671,17 +3749,15 @@ export default function ScheduleDetailPage() {
                             <th
                               key={logicalIdx}
                               className="sticky top-[62px] z-20 bg-white py-2 px-3 text-right text-[12px] font-normal text-[#4b535c]"
-                            >
-                              —
-                            </th>
+                            />
                           )
                         case 6:
                           return (
                             <th
                               key={logicalIdx}
-                              className="sticky top-[62px] z-20 bg-white py-2 px-3 text-right text-[12px] font-normal text-[#4b535c]"
+                              className="sticky top-[62px] z-20 bg-white py-2 px-3 text-right text-[12px] font-medium text-[#0a0a0a]"
                             >
-                              N/A
+                              {tripSummary.products}
                             </th>
                           )
                         case 7:
