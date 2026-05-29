@@ -612,9 +612,9 @@ function IconCheck() {
 const STATUS_OPTIONS = [
   { id: 'approved_by_system', displayLabel: 'Approved by system', dotClass: 'bg-[#08a16a]' },
   { id: 'approved_by_user', displayLabel: 'Approved by user', dotClass: 'bg-[#08a16a]' },
-  { id: 'last_edited_by_user', displayLabel: 'Last edited by user', dotClass: 'bg-[#0267ff]' },
+  { id: 'last_edited_by_user', displayLabel: 'Edited', dotClass: 'bg-[#0267ff]' },
   { id: 'unapproved', displayLabel: 'Unapproved', dotClass: 'bg-[#878d94]' },
-  { id: 'needs_review_from_user', displayLabel: 'Needs review from user', dotClass: 'bg-[#bd5800]' },
+  { id: 'needs_review_from_user', displayLabel: 'Needs review', dotClass: 'bg-[#bd5800]' },
   { id: 'partially_approved', displayLabel: 'Partially approved', dotClass: 'bg-[#f29a35]' },
   { id: 'remove_edits', displayLabel: 'Remove edits', dotClass: 'bg-[#A855F7]' },
 ]
@@ -705,12 +705,7 @@ function StatusDropdown({ value, userName, onChange, rowId, useShortEditedLabel 
   const [position, setPosition] = useState({ top: 0, left: 0 })
   const opt = STATUS_OPTIONS.find((o) => o.id === value) || STATUS_OPTIONS.find((o) => o.id === 'unapproved')
   const badgeClass = STATUS_BADGE_CLASSES[value] || STATUS_BADGE_CLASSES.unapproved
-  const displayLabel =
-    value === 'approved_by_user' && userName && !useShortEditedLabel
-      ? `Approved by user: ${userName}`
-      : value === 'last_edited_by_user'
-        ? (useShortEditedLabel ? 'Edited' : (userName ? `Last edited by user: ${userName}` : 'Edited'))
-        : opt?.displayLabel ?? 'Unapproved'
+  const displayLabel = opt?.displayLabel ?? 'Unapproved'
 
   useEffect(() => {
     const handleClickOutside = (e) => {
