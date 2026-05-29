@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useLayoutEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts'
-import { IconSearch, IconChevronDown, IconChevronRight, IconShare, IconDocument, IconClose, IconInfo as DsIconInfo, IconArrowLeft, IconGears, IconTruckTu, IconPackageTu, IconRebalancing, IconReplenishment, IconCalendarNote, IconTrendUp, IconFilterFunnel, IconColumnSettings, IconSortOrder } from '../components/icons'
+import { IconSearch, IconChevronDown, IconChevronRight, IconShare, IconDocument, IconClose, IconInfo as DsIconInfo, IconArrowLeft, IconGears, IconTruckTu, IconPackageTu, IconRebalancing, IconReplenishment, IconCalendarNote, IconTrendUp, IconFilterFunnel, IconColumnSettings, IconSortOrder, IconSave } from '../components/icons'
 function IconInfo() {
   return (
     <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="shrink-0 text-[#9ca3af]" aria-hidden>
@@ -694,6 +694,39 @@ function MovementTypePills({ movementType }) {
           {MOVEMENT_TYPE_LABELS[t] ?? t}
         </span>
       ))}
+    </div>
+  )
+}
+
+const QUICK_FILTER_CHIPS = [
+  { id: 'low_confidence', label: 'Low confidence' },
+  { id: 'unapproved', label: 'Unapproved' },
+  { id: 'needs_review', label: 'Needs review' },
+  { id: 'broken_size_run', label: 'Broken size run' },
+  { id: 'stale_stock', label: 'Stale stock' },
+]
+
+function ScheduleQuickFilterChips({ activeId, onChange }) {
+  return (
+    <div className="flex items-center gap-2 shrink-0">
+      {QUICK_FILTER_CHIPS.map((chip) => {
+        const active = activeId === chip.id
+        return (
+          <button
+            key={chip.id}
+            type="button"
+            aria-pressed={active}
+            onClick={() => onChange(active ? null : chip.id)}
+            className={`shrink-0 h-8 px-3 rounded-full text-[13px] font-medium border transition-colors ${
+              active
+                ? 'bg-[#0267ff] text-white border-[#0267ff] hover:bg-[#0252cc]'
+                : 'bg-[#f3f4f6] text-[#0a0a0a] border-[#e5e7eb] hover:bg-[#e9eaeb]'
+            }`}
+          >
+            {chip.label}
+          </button>
+        )
+      })}
     </div>
   )
 }
@@ -1528,7 +1561,7 @@ function StockAnalysisDrilldown({ product, trip, onBack }) {
   )
 }
 
-function ProductsDrilldown({ trip, onBack, showBackButton = true, recalculatedTimestamp }) {
+function ProductsDrilldown({ trip, onBack, showBackButton = true, recalculatedTimestamp, onDrawerFiltersActiveChange }) {
   const [selectedProduct, setSelectedProduct] = useState(null)
   const [productStatusOverrides, setProductStatusOverrides] = useState({})
   const [productTransfersOverrides, setProductTransfersOverrides] = useState({})
@@ -1537,10 +1570,16 @@ function ProductsDrilldown({ trip, onBack, showBackButton = true, recalculatedTi
   const [selectedProductIds, setSelectedProductIds] = useState(new Set())
   const [statusFilters, setStatusFilters] = useState([])
   const [filtersDropdownOpen, setFiltersDropdownOpen] = useState(false)
+  const [productsActiveQuickFilter, setProductsActiveQuickFilter] = useState(null)
   const [bulkChangeStatusOpen, setBulkChangeStatusOpen] = useState(false)
   const [productColumnOrder, setProductColumnOrder] = useState(() =>
     Array.from({ length: PRODUCTS_TABLE_NUM_DATA_COLS }, (_, i) => i)
   )
+
+  useEffect(() => {
+    onDrawerFiltersActiveChange?.(statusFilters.length > 0)
+  }, [statusFilters, onDrawerFiltersActiveChange])
+
   const baseProducts = PRODUCTS_BY_TRIP[trip.id] || DEFAULT_PRODUCTS
   const products = (() => {
     let list = baseProducts
@@ -2294,7 +2333,7 @@ function ProductsDrilldown({ trip, onBack, showBackButton = true, recalculatedTi
       )}
 
       <div className="flex flex-col gap-[15px]">
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 min-w-0">
           <div className="flex items-center h-10 rounded-[4px] border border-[#e9eaeb] bg-white flex-1 min-w-[200px] max-w-[280px]">
             <input
               type="text"
@@ -2319,7 +2358,7 @@ function ProductsDrilldown({ trip, onBack, showBackButton = true, recalculatedTi
           >
             <IconSortOrder />
           </button>
-          <div className="relative">
+          <div className="relative shrink-0">
             <button
               type="button"
               onClick={() => setFiltersDropdownOpen((o) => !o)}
@@ -2356,6 +2395,12 @@ function ProductsDrilldown({ trip, onBack, showBackButton = true, recalculatedTi
                 </div>
               </>
             )}
+          </div>
+          <div className="flex min-w-0 flex-1 items-center overflow-x-auto">
+            <ScheduleQuickFilterChips
+              activeId={productsActiveQuickFilter}
+              onChange={setProductsActiveQuickFilter}
+            />
           </div>
         </div>
 
@@ -2516,11 +2561,17 @@ function ProductsDrilldown({ trip, onBack, showBackButton = true, recalculatedTi
   )
 }
 
-function LocationsTab({ recalculatedTimestamp }) {
+function LocationsTab({ recalculatedTimestamp, onDrawerFiltersActiveChange }) {
   const [selectedLocationIds, setSelectedLocationIds] = useState(new Set())
   const [locationStatusOverrides, setLocationStatusOverrides] = useState({})
   const [statusFilters, setStatusFilters] = useState([])
   const [filtersDropdownOpen, setFiltersDropdownOpen] = useState(false)
+  const [locationsActiveQuickFilter, setLocationsActiveQuickFilter] = useState(null)
+
+  useEffect(() => {
+    onDrawerFiltersActiveChange?.(statusFilters.length > 0)
+  }, [statusFilters, onDrawerFiltersActiveChange])
+
   const baseLocations = LOCATIONS_TABLE_DATA
   const locations = (() => {
     let list = baseLocations
@@ -3074,7 +3125,7 @@ function LocationsTab({ recalculatedTimestamp }) {
 
   return (
     <div className="flex flex-col gap-[15px]">
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2 min-w-0">
         <div className="flex items-center h-10 rounded-[4px] border border-[#e9eaeb] bg-white flex-1 min-w-[200px] max-w-[280px]">
           <input
             type="text"
@@ -3099,7 +3150,7 @@ function LocationsTab({ recalculatedTimestamp }) {
         >
           <IconSortOrder />
         </button>
-        <div className="relative">
+        <div className="relative shrink-0">
           <button
             type="button"
             onClick={() => setFiltersDropdownOpen((o) => !o)}
@@ -3136,6 +3187,12 @@ function LocationsTab({ recalculatedTimestamp }) {
               </div>
             </>
           )}
+        </div>
+        <div className="flex min-w-0 flex-1 items-center overflow-x-auto">
+          <ScheduleQuickFilterChips
+            activeId={locationsActiveQuickFilter}
+            onChange={setLocationsActiveQuickFilter}
+          />
         </div>
       </div>
 
@@ -3215,9 +3272,23 @@ export default function ScheduleDetailPage() {
   const [selectedTripIds, setSelectedTripIds] = useState(new Set())
   const [statusFilters, setStatusFilters] = useState([])
   const [filtersDropdownOpen, setFiltersDropdownOpen] = useState(false)
+  const [tripsActiveQuickFilter, setTripsActiveQuickFilter] = useState(null)
+  const [productsDrawerFiltersActive, setProductsDrawerFiltersActive] = useState(false)
+  const [locationsDrawerFiltersActive, setLocationsDrawerFiltersActive] = useState(false)
   const [staleDataBannerDismissed, setStaleDataBannerDismissed] = useState(false)
   const [recalculatedTimestamp, setRecalculatedTimestamp] = useState(null)
   const hasRecalculated = Boolean(recalculatedTimestamp)
+
+  const showSaveViewButton =
+    activeTab === 'trips'
+      ? selectedTrip
+        ? productsDrawerFiltersActive
+        : statusFilters.length > 0
+      : activeTab === 'products'
+        ? productsDrawerFiltersActive
+        : activeTab === 'locations'
+          ? locationsDrawerFiltersActive
+          : false
 
   const baseTripsRows = viewShowsFullDataset ? TRIPS_ALL : TRIPS_OPERA
   const tripsRows = (() => {
@@ -3468,6 +3539,18 @@ export default function ScheduleDetailPage() {
             })}
           </nav>
           <div className="flex items-center gap-2 shrink-0 pb-2">
+            {showSaveViewButton && (
+              <button
+                type="button"
+                className="flex items-center gap-2 h-10 px-4 rounded-[4px] border border-[#EAEAEA] bg-white text-[14px] font-medium text-[#212B36] hover:bg-[#f8f8f8] shrink-0"
+                aria-label="Save view"
+              >
+                <span className="size-4 shrink-0 text-[#212B36] [&_svg]:size-full">
+                  <IconSave />
+                </span>
+                Save
+              </button>
+            )}
             <div className={`relative ${viewDropdownOpen ? 'z-[120]' : ''}`}>
               <button
                 type="button"
@@ -3520,11 +3603,16 @@ export default function ScheduleDetailPage() {
 
         {activeTab === 'trips' ? (
           selectedTrip ? (
-            <ProductsDrilldown trip={selectedTrip} onBack={() => setSelectedTrip(null)} recalculatedTimestamp={recalculatedTimestamp} />
+            <ProductsDrilldown
+              trip={selectedTrip}
+              onBack={() => setSelectedTrip(null)}
+              recalculatedTimestamp={recalculatedTimestamp}
+              onDrawerFiltersActiveChange={setProductsDrawerFiltersActive}
+            />
           ) : (
           <div className="flex flex-col gap-[15px]">
             <div className="flex flex-col gap-[15px]">
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2 min-w-0">
               <div className="flex items-center h-10 rounded-[4px] border border-[#e9eaeb] bg-white flex-1 min-w-[200px] max-w-[280px]">
                 <input
                   type="text"
@@ -3549,7 +3637,7 @@ export default function ScheduleDetailPage() {
               >
                 <IconSortOrder />
               </button>
-              <div className="relative">
+              <div className="relative shrink-0">
                 <button
                   type="button"
                   onClick={() => setFiltersDropdownOpen((o) => !o)}
@@ -3586,6 +3674,12 @@ export default function ScheduleDetailPage() {
                     </div>
                   </>
                 )}
+              </div>
+              <div className="flex min-w-0 flex-1 items-center overflow-x-auto">
+                <ScheduleQuickFilterChips
+                  activeId={tripsActiveQuickFilter}
+                  onChange={setTripsActiveQuickFilter}
+                />
               </div>
             </div>
 
@@ -4083,9 +4177,18 @@ export default function ScheduleDetailPage() {
           </div>
           )
         ) : activeTab === 'products' ? (
-          <ProductsDrilldown trip={TRIPS_OPERA[0]} onBack={() => {}} showBackButton={false} recalculatedTimestamp={recalculatedTimestamp} />
+          <ProductsDrilldown
+            trip={TRIPS_OPERA[0]}
+            onBack={() => {}}
+            showBackButton={false}
+            recalculatedTimestamp={recalculatedTimestamp}
+            onDrawerFiltersActiveChange={setProductsDrawerFiltersActive}
+          />
         ) : activeTab === 'locations' ? (
-          <LocationsTab recalculatedTimestamp={recalculatedTimestamp} />
+          <LocationsTab
+            recalculatedTimestamp={recalculatedTimestamp}
+            onDrawerFiltersActiveChange={setLocationsDrawerFiltersActive}
+          />
         ) : null}
 
       {selectedTripIds.size > 0 && activeTab === 'trips' && (
