@@ -134,77 +134,83 @@ const FILTER_SAMPLE_VALUES = {
 
 const ADV_FILTER_OPTION_SAMPLES = ['10', '50', '100', '500']
 
-/** Create schedule — geographic scope (destination filters when "Select locations") */
-const GEO_SCOPE_LOCATION_TYPES = ['Boutique', 'Outlet', 'Department store', 'E-commerce', 'Warehouse']
-const GEO_SCOPE_REGIONS = ['Europe', 'North America', 'Asia Pacific', 'Africa']
-const GEO_SCOPE_COUNTRIES = [
-  'France',
-  'Italy',
-  'UK',
-  'Germany',
-  'Spain',
-  'United States',
-  'Canada',
-  'Japan',
-  'South Korea',
-  'Singapore',
-  'South Africa',
-]
-const GEO_SCOPE_CITIES = [
-  'Paris',
-  'Lyon',
-  'Marseille',
-  'Bordeaux',
-  'Lille',
-  'Strasbourg',
-  'Nancy',
-  'Cannes',
-  'Berlin',
-  'Oslo',
-  'Madrid',
-  'London',
-  'Manchester',
-  'Montreal',
-  'Ottawa',
-  'Toronto',
-  'Cape Town',
-  'Tokyo',
-  'Kyoto',
-]
-const GEO_SCOPE_LOCATIONS = [
-  'Paris Store',
-  'Cannes Store',
-  'Lille Store',
-  'Lyon Store',
-  'Marseille Store',
-  'Nancy Store',
-  'Strasbourg Store',
-  'Bordeaux',
-  'Berlin Store',
-  'Oslo Store',
-  'Madrid Store',
-  'London Store',
-  'Manchester Store',
-  'Montreal Store',
-  'Ottawa Store',
-  'Toronto Store',
-  'Cape Town Store',
-  'Tokyo Store',
-  'Kyoto Store',
-]
-const GEO_SCOPE_VALUES_BY_ROW = {
-  locationTypes: GEO_SCOPE_LOCATION_TYPES,
-  regions: GEO_SCOPE_REGIONS,
-  countries: GEO_SCOPE_COUNTRIES,
-  cities: GEO_SCOPE_CITIES,
-  locations: GEO_SCOPE_LOCATIONS,
+/** Create schedule — scope filter dummy options (prototype display only) */
+const SCOPE_DEPARTMENT_OPTIONS = ['Apparel', 'Footwear', 'Accessories']
+const SCOPE_LOCATION_TYPE_OPTIONS = ['Store', 'Warehouse', 'Outlet']
+
+function CreateScheduleScopeSelect({ label, placeholder = 'Select', options = [] }) {
+  return (
+    <div className="flex flex-col gap-2">
+      <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">{label}</label>
+      <div className="relative">
+        <select
+          defaultValue=""
+          className="w-full h-14 pl-4 pr-10 rounded-[4px] border border-[#EAEAEA] bg-white text-[16px] text-[#0a0a0a] appearance-none"
+        >
+          <option value="" disabled>
+            {placeholder}
+          </option>
+          {options.map((opt) => (
+            <option key={opt} value={opt}>
+              {opt}
+            </option>
+          ))}
+        </select>
+        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
+          <IconChevronDownSelect />
+        </span>
+      </div>
+    </div>
+  )
 }
-const DEFAULT_GEO_SCOPE_FILTER_OPEN = {
-  locationTypes: false,
-  regions: false,
-  countries: false,
-  cities: false,
-  locations: false,
+
+function CreateScheduleScopeSearchInput({ label, placeholder = 'Search' }) {
+  return (
+    <div className="flex flex-col gap-2">
+      <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">{label}</label>
+      <div className="relative">
+        <input
+          type="text"
+          placeholder={placeholder}
+          readOnly
+          className="w-full h-14 pl-4 pr-10 rounded-[4px] border border-[#EAEAEA] bg-white text-[16px] text-[#0a0a0a] placeholder:text-[#9CA1AE]"
+        />
+        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
+          <IconSearch className="size-4" />
+        </span>
+      </div>
+    </div>
+  )
+}
+
+function NetworkStyleDownloadIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className="shrink-0" aria-hidden>
+      <path
+        d="M8 3.5v6M8 9.5l-2.5 2.5M8 9.5l2.5 2.5"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path d="M3.5 13h9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+function NetworkStyleUploadIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className="shrink-0" aria-hidden>
+      <path
+        d="M8 11.5V4M8 4L5.5 6.5M8 4L10.5 6.5"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path d="M3.5 13h9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  )
 }
 
 const fe = (id, label, options) => ({ id, label, options })
@@ -661,9 +667,9 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
     exceptions: false,
   })
   const [locationScopeOption, setLocationScopeOption] = useState('all')
+  const [sourceLocationOption, setSourceLocationOption] = useState('central')
   const [selectedMovementTypes, setSelectedMovementTypes] = useState([])
   const [movementTypeDropdownOpen, setMovementTypeDropdownOpen] = useState(false)
-  const [geoFilterOpen, setGeoFilterOpen] = useState(() => ({ ...DEFAULT_GEO_SCOPE_FILTER_OPEN }))
   const [exceptions, setExceptions] = useState(() => [
     {
       id: 'exc-1',
@@ -918,13 +924,6 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
       scope: key === 'scope',
       exceptions: key === 'exceptions',
     })
-  }
-
-  const toggleGeoFilterRow = (key) => {
-    setGeoFilterOpen((prev) => ({
-      ...prev,
-      [key]: !prev[key],
-    }))
   }
 
   const toggleExceptionAccordion = (exceptionId) => {
@@ -1338,10 +1337,10 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
             >
               <div className="flex flex-col gap-1">
                 <span className="text-[20px] font-medium text-[#212B36] leading-[150%]">
-                  Geographic scope
+                  Scope
                 </span>
                 <span className="text-[14px] font-normal text-[#4b535c]">
-                  Define the locations and network for this schedule.
+                  Define the products, locations, and network for this schedule.
                 </span>
               </div>
               <IconChevronDown
@@ -1413,9 +1412,48 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                   </div>
                 </section>
 
+                {selectedMovementTypes.includes('replenishment') && (
+                  <section className="flex flex-col gap-3">
+                    <div className="flex flex-col gap-1">
+                      <h3 className="text-[14px] font-medium text-[#0a0a0a]">Select your source location</h3>
+                      <p className="text-[12px] font-normal text-[#4b535c]">
+                        This is the location your products will be distributed from.
+                      </p>
+                    </div>
+                    <div className="flex flex-col gap-3">
+                      <label className="flex items-start gap-3 p-4 rounded-[10px] border border-[#e5e7eb] bg-white cursor-pointer hover:border-[#0267ff]/40 has-[:checked]:border-[#0267ff]">
+                        <input
+                          type="radio"
+                          name="sourceLocationOption"
+                          value="central"
+                          checked={sourceLocationOption === 'central'}
+                          onChange={() => setSourceLocationOption('central')}
+                          className="mt-1 size-4 shrink-0 border-[#e5e7eb] text-[#0267ff] focus:ring-[#0267ff]"
+                        />
+                        <div className="flex flex-col gap-1 min-w-0">
+                          <span className="text-[14px] font-medium text-[#0a0a0a]">Central</span>
+                        </div>
+                      </label>
+                      <label className="flex items-start gap-3 p-4 rounded-[10px] border border-[#e5e7eb] bg-white cursor-pointer hover:border-[#0267ff]/40 has-[:checked]:border-[#0267ff]">
+                        <input
+                          type="radio"
+                          name="sourceLocationOption"
+                          value="supplier"
+                          checked={sourceLocationOption === 'supplier'}
+                          onChange={() => setSourceLocationOption('supplier')}
+                          className="mt-1 size-4 shrink-0 border-[#e5e7eb] text-[#0267ff] focus:ring-[#0267ff]"
+                        />
+                        <div className="flex flex-col gap-1 min-w-0">
+                          <span className="text-[14px] font-medium text-[#0a0a0a]">Supplier</span>
+                        </div>
+                      </label>
+                    </div>
+                  </section>
+                )}
+
                 <section className="flex flex-col gap-3">
                   <h3 className="text-[14px] font-medium text-[#0a0a0a]">
-                    Which locations does this schedule cover?
+                    Which products and locations does this schedule cover?
                   </h3>
                   <div className="flex flex-col gap-3">
                     <label className="flex items-start gap-3 p-4 rounded-[10px] border border-[#e5e7eb] bg-white cursor-pointer hover:border-[#0267ff]/40 has-[:checked]:border-[#0267ff]">
@@ -1428,9 +1466,9 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                         className="mt-1 size-4 shrink-0 border-[#e5e7eb] text-[#0267ff] focus:ring-[#0267ff]"
                       />
                       <div className="flex flex-col gap-1 min-w-0">
-                        <span className="text-[14px] font-medium text-[#0a0a0a]">All locations</span>
+                        <span className="text-[14px] font-medium text-[#0a0a0a]">All products and locations</span>
                         <span className="text-[12px] font-normal text-[#4b535c]">
-                          Sol will evaluate your entire network.
+                          Sol will evaluate your entire product catalogue and network.
                         </span>
                       </div>
                     </label>
@@ -1444,94 +1482,83 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                         className="mt-1 size-4 shrink-0 border-[#e5e7eb] text-[#0267ff] focus:ring-[#0267ff]"
                       />
                       <div className="flex flex-col gap-1 min-w-0">
-                        <span className="text-[14px] font-medium text-[#0a0a0a]">Select locations</span>
+                        <span className="text-[14px] font-medium text-[#0a0a0a]">Select products and locations</span>
                         <span className="text-[12px] font-normal text-[#4b535c]">
-                          Choose specific locations, regions, or countries to include in this schedule.
+                          Choose specific products, locations, regions, or countries to include in this schedule.
                         </span>
                       </div>
                     </label>
                   </div>
-                </section>
 
-                {locationScopeOption === 'select' && (
-                  <section className="flex flex-col gap-2">
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-[13px] font-medium text-[#0a0a0a] uppercase tracking-[0.04em]">
-                        Geographic
-                      </h3>
-                      <button
-                        type="button"
-                        onClick={() => setGeoFilterOpen({ ...DEFAULT_GEO_SCOPE_FILTER_OPEN })}
-                        className="text-[12px] font-medium text-[#4b535c] hover:text-[#0a0a0a]"
-                      >
-                        Clear all
-                      </button>
-                    </div>
-                    <div className="mt-1 flex flex-col border-t border-[#e5e7eb]">
-                      {[
-                        { id: 'regions', label: 'Regions' },
-                        { id: 'countries', label: 'Countries' },
-                        { id: 'cities', label: 'Cities' },
-                        { id: 'locations', label: 'Locations' },
-                        { id: 'locationTypes', label: 'Location Types' },
-                      ].map((row) => {
-                        const isOpen = geoFilterOpen[row.id]
-                        const values = GEO_SCOPE_VALUES_BY_ROW[row.id] ?? []
-                        return (
-                          <div key={row.id} className="border-b border-[#e5e7eb] last:border-b-0">
-                            <button
-                              type="button"
-                              onClick={() => toggleGeoFilterRow(row.id)}
-                              className="w-full flex items-center justify-between px-3 py-2.5 text-left hover:bg-[#f8f8f8]"
-                            >
-                              <span className="text-[13px] font-medium text-[#0a0a0a]">{row.label}</span>
-                              <span
-                                className={`inline-flex items-center justify-center size-5 text-[#4b535c] transition-transform ${
-                                  isOpen ? 'rotate-180' : ''
-                                }`}
-                              >
-                                <IconChevronDown className="size-4" />
-                              </span>
-                            </button>
-                            {isOpen && (
-                              <div className="px-3 pb-3 pt-1 flex flex-col gap-2 bg-[#fafafa]">
-                                <div className="flex items-center justify-between gap-2">
-                                  <div className="relative flex-1">
-                                    <input
-                                      type="text"
-                                      placeholder="search..."
-                                      className="w-full h-9 px-3 rounded-[4px] border border-[#e5e7eb] bg-white text-[13px] text-[#0a0a0a] placeholder:text-[#9ca3af]"
-                                    />
-                                  </div>
-                                  <button
-                                    type="button"
-                                    className="text-[12px] font-medium text-[#0267ff] hover:underline shrink-0"
-                                  >
-                                    Select all
-                                  </button>
-                                </div>
-                                <div className="flex flex-col gap-1.5 mt-1">
-                                  {values.map((name) => (
-                                    <label
-                                      key={name}
-                                      className="flex items-center gap-2 text-[13px] text-[#0a0a0a]"
-                                    >
-                                      <input
-                                        type="checkbox"
-                                        className="size-4 rounded border-[#d1d5db] text-[#0267ff] focus:ring-[#0267ff]"
-                                      />
-                                      <span>{name}</span>
-                                    </label>
-                                  ))}
-                                </div>
+                  {locationScopeOption === 'select' && (
+                    <div className="rounded-[4px] border border-[#e5e7eb] bg-[#fafafa] p-4 flex flex-col gap-6">
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div className="flex flex-col gap-4">
+                          <h4 className="text-[13px] font-medium text-[#0a0a0a] uppercase tracking-[0.04em]">
+                            Product scope
+                          </h4>
+                          <CreateScheduleScopeSelect
+                            label="Departments"
+                            placeholder="Select departments"
+                            options={SCOPE_DEPARTMENT_OPTIONS}
+                          />
+                          <CreateScheduleScopeSearchInput label="Sub-departments" placeholder="Search sub-departments" />
+                          <CreateScheduleScopeSearchInput label="Seasons" placeholder="Search seasons" />
+                          <CreateScheduleScopeSearchInput label="Events" placeholder="Search events" />
+                          <div className="flex flex-col gap-2">
+                            <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Products</label>
+                            <div className="flex items-center gap-2">
+                              <div className="relative flex-1 min-w-0">
+                                <input
+                                  type="text"
+                                  placeholder="Search products"
+                                  readOnly
+                                  className="w-full h-14 pl-4 pr-10 rounded-[4px] border border-[#EAEAEA] bg-white text-[16px] text-[#0a0a0a] placeholder:text-[#9CA1AE]"
+                                />
+                                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
+                                  <IconSearch className="size-4" />
+                                </span>
                               </div>
-                            )}
+                              <button
+                                type="button"
+                                onClick={() => {}}
+                                aria-label="Upload products"
+                                className="h-14 w-14 shrink-0 rounded-[4px] border border-[#E9EAEB] bg-white text-[#0a0a0a] hover:bg-[#f8f8f8] flex items-center justify-center"
+                              >
+                                <NetworkStyleUploadIcon />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {}}
+                                aria-label="Download products"
+                                className="h-14 w-14 shrink-0 rounded-[4px] border border-[#E9EAEB] bg-white text-[#0a0a0a] hover:bg-[#f8f8f8] flex items-center justify-center"
+                              >
+                                <NetworkStyleDownloadIcon />
+                              </button>
+                            </div>
                           </div>
-                        )
-                      })}
+                        </div>
+                        <div className="flex flex-col gap-4">
+                          <h4 className="text-[13px] font-medium text-[#0a0a0a] uppercase tracking-[0.04em]">
+                            Geographic scope
+                          </h4>
+                          <CreateScheduleScopeSelect
+                            label="Location Types"
+                            placeholder="Select location types"
+                            options={SCOPE_LOCATION_TYPE_OPTIONS}
+                          />
+                          <CreateScheduleScopeSearchInput label="Regions" placeholder="Search regions" />
+                          <CreateScheduleScopeSearchInput label="Countries" placeholder="Search countries" />
+                          <CreateScheduleScopeSearchInput label="Sending countries" placeholder="Search sending countries" />
+                          <CreateScheduleScopeSearchInput label="Receiving countries" placeholder="Search receiving countries" />
+                          <CreateScheduleScopeSearchInput label="Locations" placeholder="Search locations" />
+                          <CreateScheduleScopeSearchInput label="Sending locations" placeholder="Search sending locations" />
+                          <CreateScheduleScopeSearchInput label="Receiving locations" placeholder="Search receiving locations" />
+                        </div>
+                      </div>
                     </div>
-                  </section>
-                )}
+                  )}
+                </section>
 
                 <section className="border-t border-[#e5e7eb] pt-5 mt-5 flex flex-col gap-2">
                   <h3 className="text-[14px] font-medium text-[#0a0a0a]">Network</h3>
