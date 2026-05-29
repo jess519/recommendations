@@ -738,6 +738,8 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
   const [sourceLocationOption, setSourceLocationOption] = useState('central')
   const [selectedMovementTypes, setSelectedMovementTypes] = useState([])
   const [movementTypeDropdownOpen, setMovementTypeDropdownOpen] = useState(false)
+  /** Create schedule — 'auto' | 'manual' (auto-approve vs review all before submission). */
+  const [approvalMode, setApprovalMode] = useState('auto')
   const [exceptions, setExceptions] = useState(() => [
     {
       id: 'exc-1',
@@ -1664,13 +1666,15 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
             >
               <div className="flex flex-col gap-1">
                 <span className="text-[20px] font-medium text-[#212B36] leading-[150%]">
-                  Auto-approval &amp; exceptions
+                  Approval &amp; submission
                 </span>
-                <span className="text-[14px] font-normal text-[#4b535c]">
-                  All recommendations generated for this schedule will be auto-approved by default and submitted on the
-                  deadline. Define exception rules below to flag specific recommendations for manual review before
-                  submission.
-                </span>
+                {approvalMode === 'auto' && (
+                  <span className="text-[14px] font-normal text-[#4b535c]">
+                    All recommendations generated for this schedule will be auto-approved by default and submitted on
+                    the deadline. Define exception rules below to flag specific recommendations for manual review before
+                    submission.
+                  </span>
+                )}
               </div>
               <IconChevronDown
                 className={`size-5 text-[#4b535c] transition-transform shrink-0 ${
@@ -1679,7 +1683,53 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
               />
             </button>
             {accordionOpen.exceptions && (
-              <div className="px-5 pb-6 pt-2 flex flex-col gap-4 border-t border-[#EAEAEA]">
+              <div className="px-5 pb-6 pt-2 flex flex-col gap-6 border-t border-[#EAEAEA]">
+                <section className="flex flex-col gap-3">
+                  <h3 className="text-[14px] font-medium text-[#0a0a0a]">Approval mode</h3>
+                  <div className="flex flex-col gap-3">
+                    <label className="flex items-start gap-3 p-4 rounded-[10px] border border-[#e5e7eb] bg-white cursor-pointer hover:border-[#0267ff]/40 has-[:checked]:border-[#0267ff]">
+                      <input
+                        type="radio"
+                        name="approvalMode"
+                        value="auto"
+                        checked={approvalMode === 'auto'}
+                        onChange={() => setApprovalMode('auto')}
+                        className="mt-1 size-4 shrink-0 border-[#e5e7eb] text-[#0267ff] focus:ring-[#0267ff]"
+                      />
+                      <div className="flex flex-col gap-1 min-w-0">
+                        <span className="text-[14px] font-medium text-[#0a0a0a]">Auto-approve recommendations</span>
+                        <span className="text-[12px] font-normal text-[#4b535c]">
+                          Recommendations are auto-approved by default. Define exceptions below to flag specific
+                          recommendations for manual review.
+                        </span>
+                      </div>
+                    </label>
+                    <label className="flex items-start gap-3 p-4 rounded-[10px] border border-[#e5e7eb] bg-white cursor-pointer hover:border-[#0267ff]/40 has-[:checked]:border-[#0267ff]">
+                      <input
+                        type="radio"
+                        name="approvalMode"
+                        value="manual"
+                        checked={approvalMode === 'manual'}
+                        onChange={() => setApprovalMode('manual')}
+                        className="mt-1 size-4 shrink-0 border-[#e5e7eb] text-[#0267ff] focus:ring-[#0267ff]"
+                      />
+                      <div className="flex flex-col gap-1 min-w-0">
+                        <span className="text-[14px] font-medium text-[#0a0a0a]">
+                          Manually review all recommendations before submission
+                        </span>
+                        <span className="text-[12px] font-normal text-[#4b535c]">
+                          All recommendations will be flagged for manual review before submission. No exceptions
+                          needed.
+                        </span>
+                      </div>
+                    </label>
+                  </div>
+                </section>
+
+                <div
+                  className={approvalMode === 'auto' ? 'flex flex-col gap-4' : 'hidden'}
+                  aria-hidden={approvalMode !== 'auto'}
+                >
                 {exceptions.map((exc, excIdx) => {
                   const exceptionTitleFull = getExceptionDisplayName(exc, excIdx)
                   const exceptionTitleDisplay = truncateExceptionTitleDisplay(exceptionTitleFull)
@@ -1981,6 +2031,7 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                 >
                   + Add exception
                 </button>
+                </div>
               </div>
             )}
           </div>

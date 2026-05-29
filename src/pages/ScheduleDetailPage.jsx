@@ -51,13 +51,13 @@ function TripColumnDragGrip({ visualIndex, onDragStart }) {
 }
 
 /** Trips table data cols; 3 = Revenue increase, 5 = Recommendations updated (long headers) */
-const TRIPS_TABLE_DEFAULT_COL_WIDTHS = [200, 200, 120, 220, 160, 230, 100, 200]
+const TRIPS_TABLE_DEFAULT_COL_WIDTHS = [200, 200, 140, 120, 220, 160, 230, 100, 200]
 const TRIPS_TABLE_NUM_DATA_COLS = TRIPS_TABLE_DEFAULT_COL_WIDTHS.length
 const TRIPS_COL_DND_MIME = 'application/x-autone-trip-col'
-/** Logical product table columns are 0–14 (Status = 14). */
-const PRODUCTS_TABLE_NUM_DATA_COLS = 15
+/** Logical product table columns are 0–16 (Status = 16). */
+const PRODUCTS_TABLE_NUM_DATA_COLS = 17
 const PRODUCTS_COL_DND_MIME = 'application/x-autone-products-col'
-const LOCATIONS_TABLE_NUM_DATA_COLS = 14
+const LOCATIONS_TABLE_NUM_DATA_COLS = 15
 const LOCATIONS_COL_DND_MIME = 'application/x-autone-locations-col'
 
 function moveTripTableColumnOrder(order, fromVisualIndex, toVisualIndex) {
@@ -79,6 +79,7 @@ function moveTripTableColumnOrder(order, fromVisualIndex, toVisualIndex) {
 const TRIP_COL_RESIZE_LABELS = [
   'Resize Sending location column',
   'Resize Receiving location column',
+  'Resize Movement type column',
   'Resize Transfers column',
   'Resize Revenue increase column',
   'Resize Recommended transfers column',
@@ -140,7 +141,7 @@ const TRIPS_OPERA = [
     revenue: '€23.5K',
     recommended: '119',
     products: 68,
-    movementType: 'Rebalancing',
+    movementType: ['rebalancing'],
     badges: ['VIS', 'REV'],
     recommendationsUpdated: '26/02/2026',
     recommendationsUpdatedTime: '14:32',
@@ -157,7 +158,7 @@ const TRIPS_OPERA = [
     revenue: '€5.73K',
     recommended: '35',
     products: 23,
-    movementType: 'Rebalancing',
+    movementType: ['rebalancing'],
     badges: ['VIS', 'REV'],
     recommendationsUpdated: '24/02/2026',
     recommendationsUpdatedTime: '09:15',
@@ -174,7 +175,7 @@ const TRIPS_OPERA = [
     revenue: '€5.09K',
     recommended: '24',
     products: 16,
-    movementType: 'Replenishment',
+    movementType: ['replenishment'],
     badges: ['VIS', 'REV'],
     status: 'last_edited_by_user',
     editedByUser: 'Csabi Toth',
@@ -192,7 +193,7 @@ const TRIPS_OPERA = [
     revenue: '€2.76K',
     recommended: '6',
     products: 2,
-    movementType: 'Rebalancing',
+    movementType: ['rebalancing'],
     badges: ['REV'],
     status: 'approved_by_system',
     recommendationsUpdated: '24/02/2026',
@@ -209,7 +210,7 @@ const TRIPS_OPERA = [
     revenue: '€2.28K',
     recommended: '15',
     products: 12,
-    movementType: 'Reorder',
+    movementType: ['replenishment', 'rebalancing'],
     badges: ['VIS', 'REV'],
     status: 'partially_approved',
     recommendationsUpdated: '26/02/2026',
@@ -226,7 +227,7 @@ const TRIPS_OPERA = [
     revenue: '€1.98K',
     recommended: '4',
     products: 4,
-    movementType: 'Replenishment',
+    movementType: ['replenishment'],
     badges: ['REV'],
     status: 'approved_by_user',
     approvedByUser: 'Jess Briggs',
@@ -244,7 +245,7 @@ const TRIPS_OPERA = [
     revenue: '€3.2K',
     recommended: '18',
     products: 10,
-    movementType: 'Rebalancing',
+    movementType: ['rebalancing'],
     badges: ['VIS', 'REV'],
     status: 'approved_by_user',
     approvedByUser: 'Jess Briggs',
@@ -262,7 +263,7 @@ const TRIPS_OPERA = [
     revenue: '€1.5K',
     recommended: '8',
     products: 5,
-    movementType: 'Replenishment',
+    movementType: ['rebalancing'],
     badges: ['REV'],
     status: 'last_edited_by_user',
     editedByUser: 'Csabi Toth',
@@ -280,7 +281,7 @@ const TRIPS_OPERA = [
     revenue: '€2.1K',
     recommended: '12',
     products: 7,
-    movementType: 'Rebalancing',
+    movementType: ['rebalancing'],
     badges: ['VIS', 'REV'],
     status: 'unapproved',
     editedByUser: 'Csabi Toth',
@@ -324,7 +325,7 @@ const TRIPS_OTHER = [
     revenue: '€52.4K',
     recommended: '192',
     products: 18,
-    movementType: 'Replenishment',
+    movementType: ['replenishment', 'rebalancing'],
     badges: ['MDQ', 'VIS', 'REV'],
     recommendationsUpdated: '26/02/2026',
     recommendationsUpdatedTime: '12:08',
@@ -341,7 +342,7 @@ const TRIPS_OTHER = [
     revenue: '€41.7K',
     recommended: '176',
     products: 14,
-    movementType: 'Rebalancing',
+    movementType: ['rebalancing'],
     badges: ['MDQ', 'VIS', 'REV'],
     recommendationsUpdated: '24/02/2026',
     recommendationsUpdatedTime: '09:33',
@@ -358,7 +359,7 @@ const TRIPS_OTHER = [
     revenue: '€38.2K',
     recommended: '200',
     products: 12,
-    movementType: 'Reorder',
+    movementType: ['rebalancing'],
     badges: ['MDQ', 'VIS', 'REV'],
     recommendationsUpdated: '26/02/2026',
     recommendationsUpdatedTime: '14:18',
@@ -374,7 +375,7 @@ const TRIPS_OTHER = [
     revenue: '€36.9K',
     recommended: '188',
     products: 9,
-    movementType: 'Replenishment',
+    movementType: ['replenishment'],
     badges: ['MDQ', 'VIS', 'REV'],
     recommendationsUpdated: '24/02/2026',
     recommendationsUpdatedTime: '11:27',
@@ -390,7 +391,7 @@ const TRIPS_OTHER = [
     revenue: '€34.1K',
     recommended: '170',
     products: 11,
-    movementType: 'Rebalancing',
+    movementType: ['rebalancing'],
     badges: ['MDQ', 'VIS', 'REV'],
     recommendationsUpdated: '26/02/2026',
     recommendationsUpdatedTime: '16:52',
@@ -406,7 +407,7 @@ const TRIPS_OTHER = [
     revenue: '€29.8K',
     recommended: '159',
     products: 10,
-    movementType: 'Replenishment',
+    movementType: ['replenishment'],
     badges: ['MDQ', 'VIS', 'REV'],
     recommendationsUpdated: '24/02/2026',
     recommendationsUpdatedTime: '10:05',
@@ -422,7 +423,7 @@ const TRIPS_OTHER = [
     revenue: '€27.5K',
     recommended: '144',
     products: 8,
-    movementType: 'Rebalancing',
+    movementType: ['rebalancing'],
     badges: ['MDQ', 'VIS', 'REV'],
     recommendationsUpdated: '26/02/2026',
     recommendationsUpdatedTime: '13:41',
@@ -438,7 +439,7 @@ const TRIPS_OTHER = [
     revenue: '€26.3K',
     recommended: '151',
     products: 7,
-    movementType: 'Replenishment',
+    movementType: ['replenishment'],
     badges: ['MDQ', 'VIS', 'REV'],
     recommendationsUpdated: '24/02/2026',
     recommendationsUpdatedTime: '08:59',
@@ -454,7 +455,7 @@ const TRIPS_OTHER = [
     revenue: '€24.7K',
     recommended: '136',
     products: 6,
-    movementType: 'Rebalancing',
+    movementType: ['rebalancing'],
     badges: ['MDQ', 'VIS', 'REV'],
     recommendationsUpdated: '26/02/2026',
     recommendationsUpdatedTime: '15:23',
@@ -469,7 +470,7 @@ const TRIPS_OTHER = [
     revenue: '€22.4K',
     recommended: '129',
     products: 5,
-    movementType: 'Replenishment',
+    movementType: ['replenishment'],
     badges: ['MDQ', 'VIS', 'REV'],
     recommendationsUpdated: '24/02/2026',
     recommendationsUpdatedTime: '11:46',
@@ -484,7 +485,7 @@ const TRIPS_OTHER = [
     revenue: '€21.3K',
     recommended: '145',
     products: 6,
-    movementType: 'Rebalancing',
+    movementType: ['replenishment', 'rebalancing'],
     badges: ['MDQ', 'VIS', 'REV'],
     recommendationsUpdated: '26/02/2026',
     recommendationsUpdatedTime: '17:02',
@@ -499,7 +500,7 @@ const TRIPS_OTHER = [
     revenue: '€18.7K',
     recommended: '120',
     products: 4,
-    movementType: 'Replenishment',
+    movementType: ['replenishment'],
     badges: ['MDQ', 'VIS', 'REV'],
     recommendationsUpdated: '24/02/2026',
     recommendationsUpdatedTime: '09:18',
@@ -518,36 +519,36 @@ const EDITED_EXCEPTION_IDS = [3, 5]
 
 // Mock locations for Locations tab table
 const LOCATIONS_TABLE_DATA = [
-  { id: 1, name: 'Suk003 londres maryleb...', code: 'SUK003', status: 'unapproved', transfersIn: 40, transfersInSub: '2 (max 2)', transfersOut: 0, transfersOutSub: '0', revenueIncrease: '€5.21K', recommendedIn: 40, recommendedInBadges: ['VIS', 'REV'], recommendedOut: 0, recommendationsUpdated: '26/02/2026', recommendationsUpdatedTime: '14:32', recommendationsUpdatedBy: 'System', stockInCirculation: 145, stockInTransit: 12, salesL7: 11, salesL30: 40, forecast: 13.46, stockouts: '9 → 0', overstocks: '0 → 0', understocks: '95 → 67' },
-  { id: 2, name: 'Sfr004 fd calvaire', code: 'SFR004', status: 'partially_approved', transfersIn: 38, transfersInSub: '2 (max 2)', transfersOut: 0, transfersOutSub: '0', revenueIncrease: '€4.4K', recommendedIn: 38, recommendedInBadges: ['VIS', 'REV'], recommendedOut: 0, recommendationsUpdated: '24/02/2026', recommendationsUpdatedTime: '09:15', recommendationsUpdatedBy: 'User', stockInCirculation: 89, stockInTransit: 0, salesL7: 8, salesL30: 32, forecast: 10.82, stockouts: '2 → 0', overstocks: '7 → 0', understocks: '154 → 139' },
-  { id: 13, name: 'Out001 la vallée village', code: 'OUT001', locationType: 'outlet', status: 'approved_by_system', transfersIn: 28, transfersInSub: '1 (max 2)', transfersOut: 0, transfersOutSub: '0', revenueIncrease: '€2.98K', recommendedIn: 28, recommendedInBadges: ['VIS', 'REV'], recommendedOut: 0, recommendationsUpdated: '26/02/2026', recommendationsUpdatedTime: '16:48', recommendationsUpdatedBy: 'User', stockInCirculation: 56, stockInTransit: 8, salesL7: 4, salesL30: 16, forecast: 5.12, stockouts: '6 → 3', overstocks: '8 → 2', understocks: '62 → 44' },
-  { id: 3, name: 'Sfr012 legendre', code: 'SFR012', status: 'approved_by_user', approvedByUser: 'Jess Briggs', transfersIn: 35, transfersInSub: '1 (max 2)', transfersOut: 15, transfersOutSub: '1 (max 3)', revenueIncrease: '€4.12K', recommendedIn: 35, recommendedInBadges: ['VIS', 'REV'], recommendedOut: 15, recommendationsUpdated: '24/02/2026', recommendationsUpdatedTime: '11:03', recommendationsUpdatedBy: 'System', stockInCirculation: 210, stockInTransit: 18, salesL7: 6, salesL30: 28, forecast: 9.14, stockouts: '5 → 2', overstocks: '12 → 4', understocks: '124 → 82' },
-  { id: 4, name: 'Sfr008 saints-peres', code: 'SFR008', status: 'last_edited_by_user', editedByUser: 'Csabi Toth', transfersIn: 42, transfersInSub: '2 (max 2)', transfersOut: 0, transfersOutSub: '0', revenueIncrease: '€5.89K', recommendedIn: 42, recommendedInBadges: ['VIS', 'REV'], recommendedOut: 0, recommendationsUpdated: '26/02/2026', recommendationsUpdatedTime: '08:22', recommendationsUpdatedBy: 'System', stockInCirculation: 320, stockInTransit: 25, salesL7: 14, salesL30: 55, forecast: 15.22, stockouts: '3 → 0', overstocks: '2 → 0', understocks: '73 → 55' },
-  { id: 5, name: 'Sfr013 sevigne', code: 'SFR013', status: 'needs_review_from_user', transfersIn: 33, transfersInSub: '2 (max 2)', transfersOut: 0, transfersOutSub: '0', revenueIncrease: '€3.67K', recommendedIn: 33, recommendedInBadges: ['VIS', 'REV'], recommendedOut: 0, recommendationsUpdated: '24/02/2026', recommendationsUpdatedTime: '15:07', recommendationsUpdatedBy: 'User', stockInCirculation: 78, stockInTransit: 5, salesL7: 5, salesL30: 22, forecast: 8.14, stockouts: '12 → 5', overstocks: '18 → 6', understocks: '88 → 61' },
-  { id: 14, name: 'Wh001 paris entrepôt', code: 'WH001', locationType: 'warehouse', status: 'unapproved', transfersIn: 95, transfersInSub: '4 (max 4)', transfersOut: 92, transfersOutSub: '4 (max 4)', revenueIncrease: '€12.4K', recommendedIn: 95, recommendedInBadges: ['VIS', 'REV'], recommendedOut: 92, recommendationsUpdated: '26/02/2026', recommendationsUpdatedTime: '10:41', recommendationsUpdatedBy: 'User', stockInCirculation: 580, stockInTransit: 45, salesL7: 0, salesL30: 0, forecast: 0, stockouts: '0 → 0', overstocks: '45 → 12', understocks: '0 → 0' },
-  { id: 6, name: 'Sbe002 anvers', code: 'SBE002', status: 'partially_approved', transfersIn: 29, transfersInSub: '1 (max 2)', transfersOut: 29, transfersOutSub: '2 (max 3)', revenueIncrease: '€3.21K', recommendedIn: 29, recommendedInBadges: ['VIS', 'REV'], recommendedOut: 29, recommendationsUpdated: '24/02/2026', recommendationsUpdatedTime: '13:55', recommendationsUpdatedBy: 'System', stockInCirculation: 112, stockInTransit: 0, salesL7: 3, salesL30: 18, forecast: 6.92, stockouts: '18 → 12', overstocks: '5 → 2', understocks: '112 → 78' },
-  { id: 7, name: 'Sfr003 courcelles', code: 'SFR003', status: 'approved_by_system', transfersIn: 45, transfersInSub: '2 (max 2)', transfersOut: 0, transfersOutSub: '0', revenueIncrease: '€6.12K', recommendedIn: 45, recommendedInBadges: ['VIS', 'REV'], recommendedOut: 0, recommendationsUpdated: '26/02/2026', recommendationsUpdatedTime: '17:19', recommendationsUpdatedBy: 'User', stockInCirculation: 198, stockInTransit: 22, salesL7: 16, salesL30: 62, forecast: 17.08, stockouts: '1 → 0', overstocks: '0 → 0', understocks: '42 → 28' },
-  { id: 8, name: 'Sfr001 bonaparte', code: 'SFR001', status: 'approved_by_user', approvedByUser: 'Jess Briggs', transfersIn: 52, transfersInSub: '2 (max 2)', transfersOut: 0, transfersOutSub: '0', revenueIncrease: '€7.34K', recommendedIn: 52, recommendedInBadges: ['VIS', 'REV'], recommendedOut: 0, recommendationsUpdated: '24/02/2026', recommendationsUpdatedTime: '09:33', recommendationsUpdatedBy: 'System', stockInCirculation: 265, stockInTransit: 15, salesL7: 19, salesL30: 78, forecast: 21.45, stockouts: '0 → 0', overstocks: '0 → 0', understocks: '28 → 15' },
-  { id: 15, name: 'Web001 france online', code: 'WEB001', locationType: 'ecomm', status: 'last_edited_by_user', editedByUser: 'Csabi Toth', transfersIn: 0, transfersInSub: '0', transfersOut: 0, transfersOutSub: '0', revenueIncrease: '€8.56K', recommendedIn: 0, recommendedInBadges: ['VIS', 'REV'], recommendedOut: 0, recommendationsUpdated: '26/02/2026', recommendationsUpdatedTime: '12:08', recommendationsUpdatedBy: 'User', stockInCirculation: 0, stockInTransit: 0, salesL7: 22, salesL30: 95, forecast: 28.34, stockouts: '0 → 0', overstocks: '0 → 0', understocks: '0 → 0' },
-  { id: 9, name: 'Sfr005 charonne', code: 'SFR005', status: 'needs_review_from_user', transfersIn: 31, transfersInSub: '1 (max 2)', transfersOut: 0, transfersOutSub: '0', revenueIncrease: '€3.45K', recommendedIn: 31, recommendedInBadges: ['VIS', 'REV'], recommendedOut: 0, recommendationsUpdated: '24/02/2026', recommendationsUpdatedTime: '11:27', recommendationsUpdatedBy: 'System', stockInCirculation: 67, stockInTransit: 0, salesL7: 4, salesL30: 19, forecast: 7.28, stockouts: '22 → 18', overstocks: '9 → 3', understocks: '136 → 94' },
-  { id: 10, name: 'Sfr018 lyon', code: 'SFR018', status: 'unapproved', transfersIn: 48, transfersInSub: '2 (max 2)', transfersOut: 0, transfersOutSub: '0', revenueIncrease: '€6.78K', recommendedIn: 48, recommendedInBadges: ['VIS', 'REV'], recommendedOut: 0, recommendationsUpdated: '26/02/2026', recommendationsUpdatedTime: '16:52', recommendationsUpdatedBy: 'User', stockInCirculation: 175, stockInTransit: 12, salesL7: 17, salesL30: 68, forecast: 18.92, stockouts: '2 → 1', overstocks: '3 → 1', understocks: '56 → 38' },
-  { id: 11, name: 'Ssp001 madrid coello', code: 'SSP001', status: 'approved_by_system', transfersIn: 36, transfersInSub: '2 (max 2)', transfersOut: 0, transfersOutSub: '0', revenueIncrease: '€4.02K', recommendedIn: 36, recommendedInBadges: ['VIS', 'REV'], recommendedOut: 0, recommendationsUpdated: '24/02/2026', recommendationsUpdatedTime: '10:05', recommendationsUpdatedBy: 'System', stockInCirculation: 134, stockInTransit: 9, salesL7: 7, salesL30: 30, forecast: 9.56, stockouts: '8 → 4', overstocks: '14 → 5', understocks: '98 → 72' },
-  { id: 12, name: 'Sfr014 guichard', code: 'SFR014', status: 'partially_approved', transfersIn: 34, transfersInSub: '1 (max 2)', transfersOut: 0, transfersOutSub: '0', revenueIncrease: '€3.89K', recommendedIn: 34, recommendedInBadges: ['VIS', 'REV'], recommendedOut: 0, recommendationsUpdated: '26/02/2026', recommendationsUpdatedTime: '13:41', recommendationsUpdatedBy: 'User', stockInCirculation: 91, stockInTransit: 7, salesL7: 6, salesL30: 26, forecast: 8.42, stockouts: '11 → 7', overstocks: '6 → 2', understocks: '82 → 58' },
+  { id: 1, name: 'Suk003 londres maryleb...', code: 'SUK003', movementType: ["rebalancing"], status: 'unapproved', transfersIn: 40, transfersInSub: '2 (max 2)', transfersOut: 0, transfersOutSub: '0', revenueIncrease: '€5.21K', recommendedIn: 40, recommendedInBadges: ['VIS', 'REV'], recommendedOut: 0, recommendationsUpdated: '26/02/2026', recommendationsUpdatedTime: '14:32', recommendationsUpdatedBy: 'System', stockInCirculation: 145, stockInTransit: 12, salesL7: 11, salesL30: 40, forecast: 13.46, stockouts: '9 → 0', overstocks: '0 → 0', understocks: '95 → 67' },
+  { id: 2, name: 'Sfr004 fd calvaire', code: 'SFR004', movementType: ["rebalancing"], status: 'partially_approved', transfersIn: 38, transfersInSub: '2 (max 2)', transfersOut: 0, transfersOutSub: '0', revenueIncrease: '€4.4K', recommendedIn: 38, recommendedInBadges: ['VIS', 'REV'], recommendedOut: 0, recommendationsUpdated: '24/02/2026', recommendationsUpdatedTime: '09:15', recommendationsUpdatedBy: 'User', stockInCirculation: 89, stockInTransit: 0, salesL7: 8, salesL30: 32, forecast: 10.82, stockouts: '2 → 0', overstocks: '7 → 0', understocks: '154 → 139' },
+  { id: 13, name: 'Out001 la vallée village', code: 'OUT001', movementType: ["rebalancing"], locationType: 'outlet', status: 'approved_by_system', transfersIn: 28, transfersInSub: '1 (max 2)', transfersOut: 0, transfersOutSub: '0', revenueIncrease: '€2.98K', recommendedIn: 28, recommendedInBadges: ['VIS', 'REV'], recommendedOut: 0, recommendationsUpdated: '26/02/2026', recommendationsUpdatedTime: '16:48', recommendationsUpdatedBy: 'User', stockInCirculation: 56, stockInTransit: 8, salesL7: 4, salesL30: 16, forecast: 5.12, stockouts: '6 → 3', overstocks: '8 → 2', understocks: '62 → 44' },
+  { id: 3, name: 'Sfr012 legendre', code: 'SFR012', movementType: ["rebalancing"], status: 'approved_by_user', approvedByUser: 'Jess Briggs', transfersIn: 35, transfersInSub: '1 (max 2)', transfersOut: 15, transfersOutSub: '1 (max 3)', revenueIncrease: '€4.12K', recommendedIn: 35, recommendedInBadges: ['VIS', 'REV'], recommendedOut: 15, recommendationsUpdated: '24/02/2026', recommendationsUpdatedTime: '11:03', recommendationsUpdatedBy: 'System', stockInCirculation: 210, stockInTransit: 18, salesL7: 6, salesL30: 28, forecast: 9.14, stockouts: '5 → 2', overstocks: '12 → 4', understocks: '124 → 82' },
+  { id: 4, name: 'Sfr008 saints-peres', code: 'SFR008', movementType: ["replenishment","rebalancing"], status: 'last_edited_by_user', editedByUser: 'Csabi Toth', transfersIn: 42, transfersInSub: '2 (max 2)', transfersOut: 0, transfersOutSub: '0', revenueIncrease: '€5.89K', recommendedIn: 42, recommendedInBadges: ['VIS', 'REV'], recommendedOut: 0, recommendationsUpdated: '26/02/2026', recommendationsUpdatedTime: '08:22', recommendationsUpdatedBy: 'System', stockInCirculation: 320, stockInTransit: 25, salesL7: 14, salesL30: 55, forecast: 15.22, stockouts: '3 → 0', overstocks: '2 → 0', understocks: '73 → 55' },
+  { id: 5, name: 'Sfr013 sevigne', code: 'SFR013', movementType: ["rebalancing"], status: 'needs_review_from_user', transfersIn: 33, transfersInSub: '2 (max 2)', transfersOut: 0, transfersOutSub: '0', revenueIncrease: '€3.67K', recommendedIn: 33, recommendedInBadges: ['VIS', 'REV'], recommendedOut: 0, recommendationsUpdated: '24/02/2026', recommendationsUpdatedTime: '15:07', recommendationsUpdatedBy: 'User', stockInCirculation: 78, stockInTransit: 5, salesL7: 5, salesL30: 22, forecast: 8.14, stockouts: '12 → 5', overstocks: '18 → 6', understocks: '88 → 61' },
+  { id: 14, name: 'Wh001 paris entrepôt', code: 'WH001', movementType: ["replenishment","rebalancing"], locationType: 'warehouse', status: 'unapproved', transfersIn: 95, transfersInSub: '4 (max 4)', transfersOut: 92, transfersOutSub: '4 (max 4)', revenueIncrease: '€12.4K', recommendedIn: 95, recommendedInBadges: ['VIS', 'REV'], recommendedOut: 92, recommendationsUpdated: '26/02/2026', recommendationsUpdatedTime: '10:41', recommendationsUpdatedBy: 'User', stockInCirculation: 580, stockInTransit: 45, salesL7: 0, salesL30: 0, forecast: 0, stockouts: '0 → 0', overstocks: '45 → 12', understocks: '0 → 0' },
+  { id: 6, name: 'Sbe002 anvers', code: 'SBE002', movementType: ["rebalancing"], status: 'partially_approved', transfersIn: 29, transfersInSub: '1 (max 2)', transfersOut: 29, transfersOutSub: '2 (max 3)', revenueIncrease: '€3.21K', recommendedIn: 29, recommendedInBadges: ['VIS', 'REV'], recommendedOut: 29, recommendationsUpdated: '24/02/2026', recommendationsUpdatedTime: '13:55', recommendationsUpdatedBy: 'System', stockInCirculation: 112, stockInTransit: 0, salesL7: 3, salesL30: 18, forecast: 6.92, stockouts: '18 → 12', overstocks: '5 → 2', understocks: '112 → 78' },
+  { id: 7, name: 'Sfr003 courcelles', code: 'SFR003', movementType: ["rebalancing"], status: 'approved_by_system', transfersIn: 45, transfersInSub: '2 (max 2)', transfersOut: 0, transfersOutSub: '0', revenueIncrease: '€6.12K', recommendedIn: 45, recommendedInBadges: ['VIS', 'REV'], recommendedOut: 0, recommendationsUpdated: '26/02/2026', recommendationsUpdatedTime: '17:19', recommendationsUpdatedBy: 'User', stockInCirculation: 198, stockInTransit: 22, salesL7: 16, salesL30: 62, forecast: 17.08, stockouts: '1 → 0', overstocks: '0 → 0', understocks: '42 → 28' },
+  { id: 8, name: 'Sfr001 bonaparte', code: 'SFR001', movementType: ["replenishment"], status: 'approved_by_user', approvedByUser: 'Jess Briggs', transfersIn: 52, transfersInSub: '2 (max 2)', transfersOut: 0, transfersOutSub: '0', revenueIncrease: '€7.34K', recommendedIn: 52, recommendedInBadges: ['VIS', 'REV'], recommendedOut: 0, recommendationsUpdated: '24/02/2026', recommendationsUpdatedTime: '09:33', recommendationsUpdatedBy: 'System', stockInCirculation: 265, stockInTransit: 15, salesL7: 19, salesL30: 78, forecast: 21.45, stockouts: '0 → 0', overstocks: '0 → 0', understocks: '28 → 15' },
+  { id: 15, name: 'Web001 france online', code: 'WEB001', movementType: ["replenishment"], locationType: 'ecomm', status: 'last_edited_by_user', editedByUser: 'Csabi Toth', transfersIn: 0, transfersInSub: '0', transfersOut: 0, transfersOutSub: '0', revenueIncrease: '€8.56K', recommendedIn: 0, recommendedInBadges: ['VIS', 'REV'], recommendedOut: 0, recommendationsUpdated: '26/02/2026', recommendationsUpdatedTime: '12:08', recommendationsUpdatedBy: 'User', stockInCirculation: 0, stockInTransit: 0, salesL7: 22, salesL30: 95, forecast: 28.34, stockouts: '0 → 0', overstocks: '0 → 0', understocks: '0 → 0' },
+  { id: 9, name: 'Sfr005 charonne', code: 'SFR005', movementType: ["rebalancing"], status: 'needs_review_from_user', transfersIn: 31, transfersInSub: '1 (max 2)', transfersOut: 0, transfersOutSub: '0', revenueIncrease: '€3.45K', recommendedIn: 31, recommendedInBadges: ['VIS', 'REV'], recommendedOut: 0, recommendationsUpdated: '24/02/2026', recommendationsUpdatedTime: '11:27', recommendationsUpdatedBy: 'System', stockInCirculation: 67, stockInTransit: 0, salesL7: 4, salesL30: 19, forecast: 7.28, stockouts: '22 → 18', overstocks: '9 → 3', understocks: '136 → 94' },
+  { id: 10, name: 'Sfr018 lyon', code: 'SFR018', movementType: ["rebalancing"], status: 'unapproved', transfersIn: 48, transfersInSub: '2 (max 2)', transfersOut: 0, transfersOutSub: '0', revenueIncrease: '€6.78K', recommendedIn: 48, recommendedInBadges: ['VIS', 'REV'], recommendedOut: 0, recommendationsUpdated: '26/02/2026', recommendationsUpdatedTime: '16:52', recommendationsUpdatedBy: 'User', stockInCirculation: 175, stockInTransit: 12, salesL7: 17, salesL30: 68, forecast: 18.92, stockouts: '2 → 1', overstocks: '3 → 1', understocks: '56 → 38' },
+  { id: 11, name: 'Ssp001 madrid coello', code: 'SSP001', movementType: ["replenishment","rebalancing"], status: 'approved_by_system', transfersIn: 36, transfersInSub: '2 (max 2)', transfersOut: 0, transfersOutSub: '0', revenueIncrease: '€4.02K', recommendedIn: 36, recommendedInBadges: ['VIS', 'REV'], recommendedOut: 0, recommendationsUpdated: '24/02/2026', recommendationsUpdatedTime: '10:05', recommendationsUpdatedBy: 'System', stockInCirculation: 134, stockInTransit: 9, salesL7: 7, salesL30: 30, forecast: 9.56, stockouts: '8 → 4', overstocks: '14 → 5', understocks: '98 → 72' },
+  { id: 12, name: 'Sfr014 guichard', code: 'SFR014', movementType: ["rebalancing"], status: 'partially_approved', transfersIn: 34, transfersInSub: '1 (max 2)', transfersOut: 0, transfersOutSub: '0', revenueIncrease: '€3.89K', recommendedIn: 34, recommendedInBadges: ['VIS', 'REV'], recommendedOut: 0, recommendationsUpdated: '26/02/2026', recommendationsUpdatedTime: '13:41', recommendationsUpdatedBy: 'User', stockInCirculation: 91, stockInTransit: 7, salesL7: 6, salesL30: 26, forecast: 8.42, stockouts: '11 → 7', overstocks: '6 → 2', understocks: '82 → 58' },
 ]
 
 // Mock products for trip drilldown (keyed by trip id)
 const PRODUCTS_BY_TRIP = {
   1: [
-    { id: 1, name: 'Croi-sac zip l', sku: 'A1398810', colour: 'Noir', transfers: 3, transfersSub: 1, revenue: '€1.48K', recommended: 1, recommendedBadges: ['REV'], recommendedSub: 2, salesL7: 1, salesL30: 2, forecast: 1.87, stockouts: '0 → 0', locations: '2 → 2', overstocks: '4 → 1', understocks: '8 → 5', depth: '5.0 → 5.0',     status: 'approved_by_system', recommendationsUpdated: '26/02/2026', recommendationsUpdatedTime: '14:32', recommendationsUpdatedBy: 'System', currentUnits: 12, currentUnitsInTransit: 3, leftInWarehouseAllocate: 45, leftInWarehouseSell: 32 },
-    { id: 2, name: 'Pre-sac seau m', sku: 'A101080', colour: 'Bleu petrole', transfers: 2, transfersSub: 1, revenue: '€1.12K', recommended: 2, recommendedBadges: ['VIS'], recommendedSub: 1, salesL7: 2, salesL30: 3, forecast: 0.54, stockouts: '0 → 1', locations: '2 → 1', overstocks: '3 → 0', understocks: '2 → 0', depth: '3.0 → 6.0', recommendationsUpdated: '24/02/2026', recommendationsUpdatedTime: '09:15', recommendationsUpdatedBy: 'User', currentUnits: 8, currentUnitsInTransit: 0, leftInWarehouseAllocate: 120, leftInWarehouseSell: 95 },
-    { id: 3, name: 'Ang-sac pte main m', sku: 'A1252810', colour: 'Figue', transfers: 3, transfersSub: 2, revenue: '€1.89K', recommended: 3, recommendedBadges: ['REV', 'VIS'], recommendedSub: 1, salesL7: 1, salesL30: 4, forecast: 2.1, stockouts: '1 → 0', locations: '2 → 2', overstocks: '5 → 2', understocks: '6 → 3', depth: '4.2 → 4.8',     status: 'last_edited_by_user', editedByUser: 'Csabi Toth', recommendationsUpdated: '26/02/2026', recommendationsUpdatedTime: '16:48', recommendationsUpdatedBy: 'User', currentUnits: 25, currentUnitsInTransit: 5, leftInWarehouseAllocate: 18, leftInWarehouseSell: 12 },
-    { id: 4, name: 'Croi-sac zip s', sku: 'A1398811', colour: 'Noir', transfers: 1, transfersSub: 2, revenue: '€0.98K', recommended: 1, recommendedBadges: ['REV'], recommendedSub: 2, salesL7: 0, salesL30: 1, forecast: 0.32, stockouts: '0 → 0', locations: '1 → 2', overstocks: '2 → 1', understocks: '4 → 2', depth: '5.0 → 5.0', status: 'approved_by_user', approvedByUser: 'Jess Briggs', recommendationsUpdated: '24/02/2026', recommendationsUpdatedTime: '11:03', recommendationsUpdatedBy: 'User', currentUnits: 3, currentUnitsInTransit: 1, leftInWarehouseAllocate: 65, leftInWarehouseSell: 50 },
-    { id: 5, name: 'Pre-sac seau s', sku: 'A101081', colour: 'Bleu petrole', transfers: 2, transfersSub: 1, revenue: '€0.76K', recommended: 2, recommendedBadges: ['VIS'], recommendedSub: 1, salesL7: 1, salesL30: 2, forecast: 0.54, stockouts: '0 → 1', locations: '2 → 1', overstocks: '3 → 0', understocks: '2 → 0', depth: '3.0 → 6.0', status: 'needs_review_from_user', recommendationsUpdated: '26/02/2026', recommendationsUpdatedTime: '08:22', recommendationsUpdatedBy: 'System', currentUnits: 15, currentUnitsInTransit: 2, leftInWarehouseAllocate: 30, leftInWarehouseSell: 22 },
-    { id: 6, name: 'Ang-sac pte main s', sku: 'A1252811', colour: 'Figue', transfers: 1, transfersSub: 1, revenue: '€0.65K', recommended: 1, recommendedBadges: ['REV'], recommendedSub: 1, salesL7: 0, salesL30: 1, forecast: 0.21, stockouts: '0 → 0', locations: '2 → 2', overstocks: '4 → 1', understocks: '3 → 1', depth: '4.0 → 4.5', status: 'approved_by_system', recommendationsUpdated: '24/02/2026', recommendationsUpdatedTime: '15:07', recommendationsUpdatedBy: 'System', currentUnits: 7, currentUnitsInTransit: 0, leftInWarehouseAllocate: 42, leftInWarehouseSell: 28 },
+    { id: 1, name: 'Croi-sac zip l', sku: 'A1398810', colour: 'Noir', movementType: ["rebalancing"], transfers: 3, transfersSub: 1, revenue: '€1.48K', recommended: 1, recommendedBadges: ['REV'], recommendedSub: 2, confidence: 'very_high', salesL7: 1, salesL30: 2, forecast: 1.87, stockouts: '0 → 0', locations: '2 → 2', overstocks: '4 → 1', understocks: '8 → 5', depth: '5.0 → 5.0',     status: 'approved_by_system', recommendationsUpdated: '26/02/2026', recommendationsUpdatedTime: '14:32', recommendationsUpdatedBy: 'System', currentUnits: 12, currentUnitsInTransit: 3, leftInWarehouseAllocate: 45, leftInWarehouseSell: 32 },
+    { id: 2, name: 'Pre-sac seau m', sku: 'A101080', colour: 'Bleu petrole', movementType: ["rebalancing"], transfers: 2, transfersSub: 1, revenue: '€1.12K', recommended: 2, recommendedBadges: ['VIS'], recommendedSub: 1, confidence: 'high', salesL7: 2, salesL30: 3, forecast: 0.54, stockouts: '0 → 1', locations: '2 → 1', overstocks: '3 → 0', understocks: '2 → 0', depth: '3.0 → 6.0', recommendationsUpdated: '24/02/2026', recommendationsUpdatedTime: '09:15', recommendationsUpdatedBy: 'User', currentUnits: 8, currentUnitsInTransit: 0, leftInWarehouseAllocate: 120, leftInWarehouseSell: 95 },
+    { id: 3, name: 'Ang-sac pte main m', sku: 'A1252810', colour: 'Figue', movementType: ["rebalancing"], transfers: 3, transfersSub: 2, revenue: '€1.89K', recommended: 3, recommendedBadges: ['REV', 'VIS'], recommendedSub: 1, confidence: 'high', salesL7: 1, salesL30: 4, forecast: 2.1, stockouts: '1 → 0', locations: '2 → 2', overstocks: '5 → 2', understocks: '6 → 3', depth: '4.2 → 4.8',     status: 'last_edited_by_user', editedByUser: 'Csabi Toth', recommendationsUpdated: '26/02/2026', recommendationsUpdatedTime: '16:48', recommendationsUpdatedBy: 'User', currentUnits: 25, currentUnitsInTransit: 5, leftInWarehouseAllocate: 18, leftInWarehouseSell: 12 },
+    { id: 4, name: 'Croi-sac zip s', sku: 'A1398811', colour: 'Noir', movementType: ["rebalancing"], transfers: 1, transfersSub: 2, revenue: '€0.98K', recommended: 1, recommendedBadges: ['REV'], recommendedSub: 2, confidence: 'medium', salesL7: 0, salesL30: 1, forecast: 0.32, stockouts: '0 → 0', locations: '1 → 2', overstocks: '2 → 1', understocks: '4 → 2', depth: '5.0 → 5.0', status: 'approved_by_user', approvedByUser: 'Jess Briggs', recommendationsUpdated: '24/02/2026', recommendationsUpdatedTime: '11:03', recommendationsUpdatedBy: 'User', currentUnits: 3, currentUnitsInTransit: 1, leftInWarehouseAllocate: 65, leftInWarehouseSell: 50 },
+    { id: 5, name: 'Pre-sac seau s', sku: 'A101081', colour: 'Bleu petrole', movementType: ["replenishment"], transfers: 2, transfersSub: 1, revenue: '€0.76K', recommended: 2, recommendedBadges: ['VIS'], recommendedSub: 1, confidence: 'low', salesL7: 1, salesL30: 2, forecast: 0.54, stockouts: '0 → 1', locations: '2 → 1', overstocks: '3 → 0', understocks: '2 → 0', depth: '3.0 → 6.0', status: 'needs_review_from_user', recommendationsUpdated: '26/02/2026', recommendationsUpdatedTime: '08:22', recommendationsUpdatedBy: 'System', currentUnits: 15, currentUnitsInTransit: 2, leftInWarehouseAllocate: 30, leftInWarehouseSell: 22 },
+    { id: 6, name: 'Ang-sac pte main s', sku: 'A1252811', colour: 'Figue', movementType: ["replenishment","rebalancing"], transfers: 1, transfersSub: 1, revenue: '€0.65K', recommended: 1, recommendedBadges: ['REV'], recommendedSub: 1, confidence: 'very_low', salesL7: 0, salesL30: 1, forecast: 0.21, stockouts: '0 → 0', locations: '2 → 2', overstocks: '4 → 1', understocks: '3 → 1', depth: '4.0 → 4.5', status: 'approved_by_system', recommendationsUpdated: '24/02/2026', recommendationsUpdatedTime: '15:07', recommendationsUpdatedBy: 'System', currentUnits: 7, currentUnitsInTransit: 0, leftInWarehouseAllocate: 42, leftInWarehouseSell: 28 },
   ],
   2: [
-    { id: 7, name: 'Sac zip l', sku: 'B200001', colour: 'Noir', transfers: 2, transfersSub: 1, revenue: '€0.89K', recommended: 2, recommendedBadges: ['REV'], recommendedSub: 1, salesL7: 1, salesL30: 2, forecast: 0.45, stockouts: '0 → 0', locations: '2 → 2', overstocks: '2 → 1', understocks: '5 → 3', depth: '4.5 → 5.0', status: 'approved_by_user', approvedByUser: 'Jess Briggs', recommendationsUpdated: '26/02/2026', recommendationsUpdatedTime: '13:55', recommendationsUpdatedBy: 'User', currentUnits: 18, currentUnitsInTransit: 4, leftInWarehouseAllocate: 88, leftInWarehouseSell: 70 },
-    { id: 8, name: 'Sac seau m', sku: 'B200002', colour: 'Noir', transfers: 1, transfersSub: 2, revenue: '€0.52K', recommended: 1, recommendedBadges: ['VIS'], recommendedSub: 2, salesL7: 0, salesL30: 1, forecast: 0.28, stockouts: '0 → 1', locations: '1 → 2', overstocks: '1 → 0', understocks: '3 → 1', depth: '3.6 → 4.3', status: 'last_edited_by_user', editedByUser: 'Csabi Toth', recommendationsUpdated: '24/02/2026', recommendationsUpdatedTime: '17:19', recommendationsUpdatedBy: 'User', currentUnits: 11, currentUnitsInTransit: 2, leftInWarehouseAllocate: 55, leftInWarehouseSell: 40 },
+    { id: 7, name: 'Sac zip l', sku: 'B200001', colour: 'Noir', movementType: ["rebalancing"], transfers: 2, transfersSub: 1, revenue: '€0.89K', recommended: 2, recommendedBadges: ['REV'], recommendedSub: 1, confidence: 'medium', salesL7: 1, salesL30: 2, forecast: 0.45, stockouts: '0 → 0', locations: '2 → 2', overstocks: '2 → 1', understocks: '5 → 3', depth: '4.5 → 5.0', status: 'approved_by_user', approvedByUser: 'Jess Briggs', recommendationsUpdated: '26/02/2026', recommendationsUpdatedTime: '13:55', recommendationsUpdatedBy: 'User', currentUnits: 18, currentUnitsInTransit: 4, leftInWarehouseAllocate: 88, leftInWarehouseSell: 70 },
+    { id: 8, name: 'Sac seau m', sku: 'B200002', colour: 'Noir', movementType: ["rebalancing"], transfers: 1, transfersSub: 2, revenue: '€0.52K', recommended: 1, recommendedBadges: ['VIS'], recommendedSub: 2, confidence: 'high', salesL7: 0, salesL30: 1, forecast: 0.28, stockouts: '0 → 1', locations: '1 → 2', overstocks: '1 → 0', understocks: '3 → 1', depth: '3.6 → 4.3', status: 'last_edited_by_user', editedByUser: 'Csabi Toth', recommendationsUpdated: '24/02/2026', recommendationsUpdatedTime: '17:19', recommendationsUpdatedBy: 'User', currentUnits: 11, currentUnitsInTransit: 2, leftInWarehouseAllocate: 55, leftInWarehouseSell: 40 },
   ],
 }
 
@@ -560,20 +561,20 @@ const PRODUCTS_EDITED_IDS = [1, 3]
 // Mock locations for stock analysis drilldown (keyed by product id)
 const LOCATIONS_BY_PRODUCT = {
   1: [
-    { id: 1, name: 'Opéra', code: 'A1A', stock: '6 → 12', tu: '6 → 12', tuWarehouse: 6, tuTruck: [3, 3], salesL7: 1, salesL30: 2, forecast: 1.87, stockouts: '0 → 0', coverage: '0% → 100%', targetWeeks: 6, receivingWeeksCoverage: '3.2 → 6.4 (6 target)', recommendationReason: 'Increase revenue', revenueIncrease: '€679', availableToSend: 4, sendingStock: '10 → 7', sendingCoverage: '2.1 → 1.8 (4 target)', approvalStatus: 'approved_by_system' },
-    { id: 2, name: 'G.L. Haussmann Maro', code: 'AIA', stock: '6 → 6', tu: '4 → 5', tuWarehouse: 3, tuTruck: [1], salesL7: 0, salesL30: 0, forecast: 0, stockouts: '0 → 0', coverage: '0% → 0%', targetWeeks: 4, receivingWeeksCoverage: 'N/A (0 forecast)', recommendationReason: 'Reduce overstock', revenueIncrease: '€120', availableToSend: 3, sendingStock: '8 → 5', sendingCoverage: 'N/A (0 forecast)' },
-    { id: 3, name: 'La Défense', code: 'A2B', stock: '5 → 5', tu: '4 → 5', tuWarehouse: 3, tuTruck: [1], salesL7: 1, salesL30: 1, forecast: 0.76, stockouts: '0 → 0', coverage: '100% → 100%', targetWeeks: 4, receivingWeeksCoverage: '5.2 → 5.8 (4 target)', recommendationReason: 'Increase revenue', revenueIncrease: '€245', availableToSend: 4, sendingStock: '9 → 6', sendingCoverage: '1.8 → 1.2 (4 target)', approvalStatus: 'edited_by_user', editedByUser: 'Csabi Toth' },
-    { id: 4, name: 'Cap 3000', code: 'A3E', stock: '4 → 4', tu: '0 → 1', tuWarehouse: null, tuTruck: [1], salesL7: 0, salesL30: 2, forecast: 0.32, stockouts: '0 → 0', coverage: '0% → 0%', targetWeeks: 4, receivingWeeksCoverage: 'N/A (0 forecast)', recommendationReason: 'Improve coverage', revenueIncrease: '€89', availableToSend: 2, sendingStock: '6 → 5', sendingCoverage: 'N/A (0 forecast)', approvalStatus: 'approved_by_user', approvedByUser: 'Jess Briggs' },
-    { id: 5, name: 'Lyon Herriot', code: 'A4C', stock: '5 → 5', tu: '0 → 1', tuWarehouse: null, tuTruck: [1], salesL7: 1, salesL30: 1, forecast: 0.54, stockouts: '0 → 0', coverage: '0% → 0%', targetWeeks: 4, receivingWeeksCoverage: '4.1 → 4.5 (4 target)', recommendationReason: 'Increase revenue', revenueIncrease: '€156', availableToSend: 3, sendingStock: '7 → 6', sendingCoverage: '2.4 → 2.0 (4 target)' },
-    { id: 6, name: 'Printemps Lille', code: 'ASF', stock: '8 → 8', tu: '0 → 20', tuWarehouse: 4, tuTruck: [20], salesL7: 2, salesL30: 4, forecast: 2.1, stockouts: '0 → 0', coverage: '100% → 100%', targetWeeks: 6, receivingWeeksCoverage: '3.8 → 6.2 (6 target)', recommendationReason: 'Increase revenue', revenueIncrease: '€1.2K', availableToSend: 5, sendingStock: '12 → 8', sendingCoverage: '3.2 → 2.1 (6 target)', approvalStatus: 'approved_by_system' },
+    { id: 1, name: 'Opéra', code: 'A1A', movementType: ["rebalancing"], stock: '6 → 12', tu: '6 → 12', tuWarehouse: 6, tuTruck: [3, 3], salesL7: 1, salesL30: 2, forecast: 1.87, stockouts: '0 → 0', coverage: '0% → 100%', targetWeeks: 6, receivingWeeksCoverage: '3.2 → 6.4 (6 target)', recommendationReason: 'Increase revenue', revenueIncrease: '€679', availableToSend: 4, sendingStock: '10 → 7', sendingCoverage: '2.1 → 1.8 (4 target)', approvalStatus: 'approved_by_system' },
+    { id: 2, name: 'G.L. Haussmann Maro', code: 'AIA', movementType: ["rebalancing"], stock: '6 → 6', tu: '4 → 5', tuWarehouse: 3, tuTruck: [1], salesL7: 0, salesL30: 0, forecast: 0, stockouts: '0 → 0', coverage: '0% → 0%', targetWeeks: 4, receivingWeeksCoverage: 'N/A (0 forecast)', recommendationReason: 'Reduce overstock', revenueIncrease: '€120', availableToSend: 3, sendingStock: '8 → 5', sendingCoverage: 'N/A (0 forecast)' },
+    { id: 3, name: 'La Défense', code: 'A2B', movementType: ["rebalancing"], stock: '5 → 5', tu: '4 → 5', tuWarehouse: 3, tuTruck: [1], salesL7: 1, salesL30: 1, forecast: 0.76, stockouts: '0 → 0', coverage: '100% → 100%', targetWeeks: 4, receivingWeeksCoverage: '5.2 → 5.8 (4 target)', recommendationReason: 'Increase revenue', revenueIncrease: '€245', availableToSend: 4, sendingStock: '9 → 6', sendingCoverage: '1.8 → 1.2 (4 target)', approvalStatus: 'edited_by_user', editedByUser: 'Csabi Toth' },
+    { id: 4, name: 'Cap 3000', code: 'A3E', movementType: ["replenishment","rebalancing"], stock: '4 → 4', tu: '0 → 1', tuWarehouse: null, tuTruck: [1], salesL7: 0, salesL30: 2, forecast: 0.32, stockouts: '0 → 0', coverage: '0% → 0%', targetWeeks: 4, receivingWeeksCoverage: 'N/A (0 forecast)', recommendationReason: 'Improve coverage', revenueIncrease: '€89', availableToSend: 2, sendingStock: '6 → 5', sendingCoverage: 'N/A (0 forecast)', approvalStatus: 'approved_by_user', approvedByUser: 'Jess Briggs' },
+    { id: 5, name: 'Lyon Herriot', code: 'A4C', movementType: ["rebalancing"], stock: '5 → 5', tu: '0 → 1', tuWarehouse: null, tuTruck: [1], salesL7: 1, salesL30: 1, forecast: 0.54, stockouts: '0 → 0', coverage: '0% → 0%', targetWeeks: 4, receivingWeeksCoverage: '4.1 → 4.5 (4 target)', recommendationReason: 'Increase revenue', revenueIncrease: '€156', availableToSend: 3, sendingStock: '7 → 6', sendingCoverage: '2.4 → 2.0 (4 target)' },
+    { id: 6, name: 'Printemps Lille', code: 'ASF', movementType: ["rebalancing"], stock: '8 → 8', tu: '0 → 20', tuWarehouse: 4, tuTruck: [20], salesL7: 2, salesL30: 4, forecast: 2.1, stockouts: '0 → 0', coverage: '100% → 100%', targetWeeks: 6, receivingWeeksCoverage: '3.8 → 6.2 (6 target)', recommendationReason: 'Increase revenue', revenueIncrease: '€1.2K', availableToSend: 5, sendingStock: '12 → 8', sendingCoverage: '3.2 → 2.1 (6 target)', approvalStatus: 'approved_by_system' },
   ],
   2: [
-    { id: 1, name: 'Opéra', code: 'A1A', stock: '4 → 4', tu: '4 → 4', tuWarehouse: 4, tuTruck: [], salesL7: 2, salesL30: 3, forecast: 0.54, stockouts: '0 → 0', coverage: '100% → 100%', targetWeeks: 4, receivingWeeksCoverage: '5.2 → 5.2 (4 target)', recommendationReason: 'Increase revenue', revenueIncrease: '€312', availableToSend: 4, sendingStock: '8 → 4', sendingCoverage: '2.0 → 1.0 (4 target)', approvalStatus: 'approved_by_user', approvedByUser: 'Jess Briggs' },
-    { id: 2, name: 'La Défense', code: 'A2B', stock: '3 → 3', tu: '3 → 3', tuWarehouse: 3, tuTruck: [], salesL7: 1, salesL30: 2, forecast: 0.45, stockouts: '0 → 0', coverage: '100% → 100%', targetWeeks: 4, receivingWeeksCoverage: '4.1 → 4.1 (4 target)', recommendationReason: 'Reduce understock', revenueIncrease: '€98', availableToSend: 3, sendingStock: '6 → 3', sendingCoverage: '1.5 → 0.8 (4 target)', approvalStatus: 'edited_by_user', editedByUser: 'Csabi Toth' },
+    { id: 1, name: 'Opéra', code: 'A1A', movementType: ["rebalancing"], stock: '4 → 4', tu: '4 → 4', tuWarehouse: 4, tuTruck: [], salesL7: 2, salesL30: 3, forecast: 0.54, stockouts: '0 → 0', coverage: '100% → 100%', targetWeeks: 4, receivingWeeksCoverage: '5.2 → 5.2 (4 target)', recommendationReason: 'Increase revenue', revenueIncrease: '€312', availableToSend: 4, sendingStock: '8 → 4', sendingCoverage: '2.0 → 1.0 (4 target)', approvalStatus: 'approved_by_user', approvedByUser: 'Jess Briggs' },
+    { id: 2, name: 'La Défense', code: 'A2B', movementType: ["rebalancing"], stock: '3 → 3', tu: '3 → 3', tuWarehouse: 3, tuTruck: [], salesL7: 1, salesL30: 2, forecast: 0.45, stockouts: '0 → 0', coverage: '100% → 100%', targetWeeks: 4, receivingWeeksCoverage: '4.1 → 4.1 (4 target)', recommendationReason: 'Reduce understock', revenueIncrease: '€98', availableToSend: 3, sendingStock: '6 → 3', sendingCoverage: '1.5 → 0.8 (4 target)', approvalStatus: 'edited_by_user', editedByUser: 'Csabi Toth' },
   ],
   3: [
-    { id: 1, name: 'Opéra', code: 'A1A', stock: '6 → 6', tu: '6 → 6', tuWarehouse: 6, tuTruck: [], salesL7: 1, salesL30: 4, forecast: 2.1, stockouts: '0 → 0', coverage: '100% → 100%', targetWeeks: 6, receivingWeeksCoverage: '2.9 → 2.9 (6 target)', recommendationReason: 'Increase revenue', revenueIncrease: '€445', availableToSend: 6, sendingStock: '12 → 6', sendingCoverage: '2.8 → 1.4 (6 target)' },
-    { id: 2, name: 'G.L. Haussmann Maro', code: 'AIA', stock: '5 → 5', tu: '5 → 5', tuWarehouse: 5, tuTruck: [], salesL7: 0, salesL30: 0, forecast: 0, stockouts: '0 → 0', coverage: '0% → 0%', targetWeeks: 5, receivingWeeksCoverage: 'N/A (0 forecast)', recommendationReason: 'Improve coverage', revenueIncrease: '€0', availableToSend: 5, sendingStock: '10 → 5', sendingCoverage: 'N/A (0 forecast)', approvalStatus: 'approved_by_system' },
+    { id: 1, name: 'Opéra', code: 'A1A', movementType: ["rebalancing"], stock: '6 → 6', tu: '6 → 6', tuWarehouse: 6, tuTruck: [], salesL7: 1, salesL30: 4, forecast: 2.1, stockouts: '0 → 0', coverage: '100% → 100%', targetWeeks: 6, receivingWeeksCoverage: '2.9 → 2.9 (6 target)', recommendationReason: 'Increase revenue', revenueIncrease: '€445', availableToSend: 6, sendingStock: '12 → 6', sendingCoverage: '2.8 → 1.4 (6 target)' },
+    { id: 2, name: 'G.L. Haussmann Maro', code: 'AIA', movementType: ["rebalancing"], stock: '5 → 5', tu: '5 → 5', tuWarehouse: 5, tuTruck: [], salesL7: 0, salesL30: 0, forecast: 0, stockouts: '0 → 0', coverage: '0% → 0%', targetWeeks: 5, receivingWeeksCoverage: 'N/A (0 forecast)', recommendationReason: 'Improve coverage', revenueIncrease: '€0', availableToSend: 5, sendingStock: '10 → 5', sendingCoverage: 'N/A (0 forecast)', approvalStatus: 'approved_by_system' },
   ],
 }
 
@@ -634,6 +635,67 @@ const STATUS_BADGE_CLASSES = {
   needs_review_from_user: 'bg-[#ffe4cc] text-[#0a0a0a] border-[#bd5800]',
   remove_edits: 'bg-[#f3e8ff] text-[#7c3aed]',
   partially_approved: 'bg-[#fff6e5] text-[#0a0a0a] border-[#f29a35]',
+}
+
+const CONFIDENCE_PILL_CONFIG = {
+  very_high: {
+    label: 'Very high',
+    badgeClass: 'bg-[#cce8dc] text-[#0a0a0a] border-[#067a4e]',
+    dotClass: 'bg-[#067a4e]',
+  },
+  high: {
+    label: 'High',
+    badgeClass: 'bg-[#e4f4ef] text-[#0a0a0a] border-[#08a16a]',
+    dotClass: 'bg-[#08a16a]',
+  },
+  medium: {
+    label: 'Medium',
+    badgeClass: 'bg-[#fef9c3] text-[#0a0a0a] border-[#ca8a04]',
+    dotClass: 'bg-[#eab308]',
+  },
+  low: {
+    label: 'Low',
+    badgeClass: 'bg-[#ffe4cc] text-[#0a0a0a] border-[#bd5800]',
+    dotClass: 'bg-[#bd5800]',
+  },
+  very_low: {
+    label: 'Very low',
+    badgeClass: 'bg-[#fee2e2] text-[#0a0a0a] border-[#dc2626]',
+    dotClass: 'bg-[#dc2626]',
+  },
+}
+
+function ConfidencePill({ value }) {
+  const cfg = CONFIDENCE_PILL_CONFIG[value] || CONFIDENCE_PILL_CONFIG.medium
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-[6px] border text-[12px] font-medium border-transparent ${cfg.badgeClass}`}
+    >
+      <span className={`size-2 rounded-full shrink-0 ${cfg.dotClass}`} aria-hidden />
+      <span className="truncate">{cfg.label}</span>
+    </span>
+  )
+}
+
+const MOVEMENT_TYPE_PILL_CLASS =
+  'inline-flex items-center px-2 py-1 rounded-[6px] border text-[12px] font-medium bg-[#f4f4f5] text-[#0a0a0a] border-[#878d94]'
+
+const MOVEMENT_TYPE_LABELS = {
+  replenishment: 'Replenishment',
+  rebalancing: 'Rebalancing',
+}
+
+function MovementTypePills({ movementType }) {
+  const types = Array.isArray(movementType) ? movementType : []
+  return (
+    <div className="flex flex-wrap items-center gap-1.5">
+      {types.map((t) => (
+        <span key={t} className={MOVEMENT_TYPE_PILL_CLASS}>
+          {MOVEMENT_TYPE_LABELS[t] ?? t}
+        </span>
+      ))}
+    </div>
+  )
 }
 
 function StatusDropdown({ value, userName, onChange, rowId, useShortEditedLabel }) {
@@ -1651,6 +1713,19 @@ function ProductsDrilldown({ trip, onBack, showBackButton = true, recalculatedTi
         return (
           <th
             key={logicalIdx}
+            className={`${productThPin(isFirst, isLast)}h-[62px] min-h-[62px] text-left px-4 align-middle font-medium text-[#00050A] min-w-[140px] box-border`}
+            {...d}
+          >
+            <span className="inline-flex min-w-0 items-center gap-2">
+              {grip}
+              Movement type
+            </span>
+          </th>
+        )
+      case 2:
+        return (
+          <th
+            key={logicalIdx}
             className={`${productThPin(isFirst, isLast)}h-[62px] min-h-[62px] text-right px-4 align-middle font-medium text-[#00050A] min-w-[70px] box-border`}
             {...d}
           >
@@ -1660,7 +1735,7 @@ function ProductsDrilldown({ trip, onBack, showBackButton = true, recalculatedTi
             </span>
           </th>
         )
-      case 2:
+      case 3:
         return (
           <th
             key={logicalIdx}
@@ -1675,7 +1750,7 @@ function ProductsDrilldown({ trip, onBack, showBackButton = true, recalculatedTi
             </span>
           </th>
         )
-      case 3:
+      case 4:
         return (
           <th
             key={logicalIdx}
@@ -1690,7 +1765,25 @@ function ProductsDrilldown({ trip, onBack, showBackButton = true, recalculatedTi
             </span>
           </th>
         )
-      case 4:
+      case 5:
+        return (
+          <th
+            key={logicalIdx}
+            className={`${productThPin(isFirst, isLast)}h-[62px] min-h-[62px] text-right px-4 align-middle font-medium text-[#00050A] min-w-[100px] box-border`}
+            {...d}
+          >
+            <span className="inline-flex w-full min-w-0 items-center justify-end gap-2">
+              {grip}
+              <span
+                className="inline-flex items-center gap-1 cursor-help"
+                title="Based on historical forecast accuracy at the product level. Lower confidence means recommendations carry more uncertainty."
+              >
+                Confidence <IconInfo />
+              </span>
+            </span>
+          </th>
+        )
+      case 6:
         return (
           <th
             key={logicalIdx}
@@ -1703,7 +1796,7 @@ function ProductsDrilldown({ trip, onBack, showBackButton = true, recalculatedTi
             </span>
           </th>
         )
-      case 5:
+      case 7:
         return (
           <th
             key={logicalIdx}
@@ -1721,7 +1814,7 @@ function ProductsDrilldown({ trip, onBack, showBackButton = true, recalculatedTi
             </span>
           </th>
         )
-      case 6:
+      case 8:
         return (
           <th
             key={logicalIdx}
@@ -1739,7 +1832,7 @@ function ProductsDrilldown({ trip, onBack, showBackButton = true, recalculatedTi
             </span>
           </th>
         )
-      case 7:
+      case 9:
         return (
           <th
             key={logicalIdx}
@@ -1755,7 +1848,7 @@ function ProductsDrilldown({ trip, onBack, showBackButton = true, recalculatedTi
             </span>
           </th>
         )
-      case 8:
+      case 10:
         return (
           <th
             key={logicalIdx}
@@ -1773,7 +1866,7 @@ function ProductsDrilldown({ trip, onBack, showBackButton = true, recalculatedTi
             </span>
           </th>
         )
-      case 9:
+      case 11:
         return (
           <th
             key={logicalIdx}
@@ -1786,7 +1879,7 @@ function ProductsDrilldown({ trip, onBack, showBackButton = true, recalculatedTi
             </span>
           </th>
         )
-      case 10:
+      case 12:
         return (
           <th
             key={logicalIdx}
@@ -1799,7 +1892,7 @@ function ProductsDrilldown({ trip, onBack, showBackButton = true, recalculatedTi
             </span>
           </th>
         )
-      case 11:
+      case 13:
         return (
           <th
             key={logicalIdx}
@@ -1814,7 +1907,7 @@ function ProductsDrilldown({ trip, onBack, showBackButton = true, recalculatedTi
             </span>
           </th>
         )
-      case 12:
+      case 14:
         return (
           <th
             key={logicalIdx}
@@ -1829,7 +1922,7 @@ function ProductsDrilldown({ trip, onBack, showBackButton = true, recalculatedTi
             </span>
           </th>
         )
-      case 13:
+      case 15:
         return (
           <th
             key={logicalIdx}
@@ -1844,7 +1937,7 @@ function ProductsDrilldown({ trip, onBack, showBackButton = true, recalculatedTi
             </span>
           </th>
         )
-      case 14:
+      case 16:
         return (
           <th
             key={logicalIdx}
@@ -1874,6 +1967,8 @@ function ProductsDrilldown({ trip, onBack, showBackButton = true, recalculatedTi
           </th>
         )
       case 1:
+        return <th key={logicalIdx} className={`${pin}py-2 px-4`} />
+      case 2:
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
             <div className="flex flex-col items-end">
@@ -1882,13 +1977,13 @@ function ProductsDrilldown({ trip, onBack, showBackButton = true, recalculatedTi
             </div>
           </th>
         )
-      case 2:
+      case 3:
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
             {productSummary.revenue}
           </th>
         )
-      case 3:
+      case 4:
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
             <div className="flex flex-col items-end">
@@ -1897,13 +1992,15 @@ function ProductsDrilldown({ trip, onBack, showBackButton = true, recalculatedTi
             </div>
           </th>
         )
-      case 4:
+      case 5:
+        return <th key={logicalIdx} className={`${pin}py-2 px-4 text-right`} />
+      case 6:
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-normal text-[#4b535c] text-right`}>
             —
           </th>
         )
-      case 5:
+      case 7:
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
             <div className="flex flex-col items-end">
@@ -1912,7 +2009,7 @@ function ProductsDrilldown({ trip, onBack, showBackButton = true, recalculatedTi
             </div>
           </th>
         )
-      case 6:
+      case 8:
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
             <div className="flex flex-col items-end">
@@ -1921,7 +2018,7 @@ function ProductsDrilldown({ trip, onBack, showBackButton = true, recalculatedTi
             </div>
           </th>
         )
-      case 7:
+      case 9:
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
             <div className="flex flex-col items-end">
@@ -1930,43 +2027,43 @@ function ProductsDrilldown({ trip, onBack, showBackButton = true, recalculatedTi
             </div>
           </th>
         )
-      case 8:
+      case 10:
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
             {productSummary.forecast}
           </th>
         )
-      case 9:
+      case 11:
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
             {productSummary.stockouts}
           </th>
         )
-      case 10:
+      case 12:
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
             {productSummary.locations}
           </th>
         )
-      case 11:
+      case 13:
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
             {productSummary.overstocks}
           </th>
         )
-      case 12:
+      case 14:
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
             {productSummary.understocks}
           </th>
         )
-      case 13:
+      case 15:
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
             {productSummary.depth}
           </th>
         )
-      case 14:
+      case 16:
         return <th key={logicalIdx} className={`${pin}py-2 px-4 text-right`} />
       default:
         return null
@@ -1995,6 +2092,12 @@ function ProductsDrilldown({ trip, onBack, showBackButton = true, recalculatedTi
           </td>
         )
       case 1:
+        return (
+          <td key={logicalIdx} className={`${pin}py-3 px-4 align-top`}>
+            <MovementTypePills movementType={p.movementType} />
+          </td>
+        )
+      case 2:
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right align-top`} onClick={(e) => e.stopPropagation()}>
             <div className="flex w-full min-w-0 justify-end">
@@ -2042,13 +2145,13 @@ function ProductsDrilldown({ trip, onBack, showBackButton = true, recalculatedTi
             </div>
           </td>
         )
-      case 2:
+      case 3:
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right text-[#0a0a0a] align-top`}>
             <div className="line-clamp-2 min-w-0 w-full text-right">{p.revenue}</div>
           </td>
         )
-      case 3:
+      case 4:
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right align-top`}>
             <div className="flex flex-col items-end gap-1 line-clamp-2 min-w-0">
@@ -2067,7 +2170,15 @@ function ProductsDrilldown({ trip, onBack, showBackButton = true, recalculatedTi
             </div>
           </td>
         )
-      case 4:
+      case 5:
+        return (
+          <td key={logicalIdx} className={`${pin}py-3 px-4 text-right align-top`}>
+            <div className="flex justify-end">
+              <ConfidencePill value={p.confidence} />
+            </div>
+          </td>
+        )
+      case 6:
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right align-top`}>
             <div className="flex flex-col items-end gap-0.5 line-clamp-2 min-w-0">
@@ -2078,7 +2189,7 @@ function ProductsDrilldown({ trip, onBack, showBackButton = true, recalculatedTi
             </div>
           </td>
         )
-      case 5:
+      case 7:
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right align-top`}>
             <div className="flex flex-col items-end line-clamp-2 min-w-0">
@@ -2087,7 +2198,7 @@ function ProductsDrilldown({ trip, onBack, showBackButton = true, recalculatedTi
             </div>
           </td>
         )
-      case 6:
+      case 8:
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right align-top`}>
             <div className="flex flex-col items-end line-clamp-2 min-w-0">
@@ -2096,7 +2207,7 @@ function ProductsDrilldown({ trip, onBack, showBackButton = true, recalculatedTi
             </div>
           </td>
         )
-      case 7:
+      case 9:
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right align-top`}>
             <div className="flex flex-col items-end line-clamp-2 min-w-0">
@@ -2105,43 +2216,43 @@ function ProductsDrilldown({ trip, onBack, showBackButton = true, recalculatedTi
             </div>
           </td>
         )
-      case 8:
+      case 10:
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right text-[#0a0a0a] align-top`}>
             <div className="line-clamp-2 min-w-0 w-full text-right">{p.forecast}</div>
           </td>
         )
-      case 9:
+      case 11:
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right text-[#0a0a0a] align-top`}>
             <div className="line-clamp-2 min-w-0 w-full text-right">{p.stockouts}</div>
           </td>
         )
-      case 10:
+      case 12:
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right text-[#0a0a0a] align-top`}>
             <div className="line-clamp-2 min-w-0 w-full text-right">{p.locations}</div>
           </td>
         )
-      case 11:
+      case 13:
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right text-[#0a0a0a] align-top`}>
             <div className="line-clamp-2 min-w-0 w-full text-right">{p.overstocks}</div>
           </td>
         )
-      case 12:
+      case 14:
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right text-[#0a0a0a] align-top`}>
             <div className="line-clamp-2 min-w-0 w-full text-right">{p.understocks}</div>
           </td>
         )
-      case 13:
+      case 15:
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right text-[#0a0a0a] align-top`}>
             <div className="line-clamp-2 min-w-0 w-full text-right">{p.depth}</div>
           </td>
         )
-      case 14:
+      case 16:
         return (
           <td
             key={logicalIdx}
@@ -2463,8 +2574,8 @@ function LocationsTab({ recalculatedTimestamp }) {
   const [locationColumnOrder, setLocationColumnOrder] = useState(() =>
     Array.from({ length: LOCATIONS_TABLE_NUM_DATA_COLS }, (_, i) => i)
   )
-  /** Status (logical col 13) only pins to the right when it is the trailing column after reorder. */
-  const locationStatusColumnIsTrailing = locationColumnOrder[locationColumnOrder.length - 1] === 13
+  /** Status (logical col 14) only pins to the right when it is the trailing column after reorder. */
+  const locationStatusColumnIsTrailing = locationColumnOrder[locationColumnOrder.length - 1] === 14
 
   const onLocationColDragStart = useCallback((visualIndex, e) => {
     e.stopPropagation()
@@ -2503,7 +2614,7 @@ function LocationsTab({ recalculatedTimestamp }) {
       ? 'sticky left-14 z-20 border-r border-[#e5e7eb] shadow-[4px_0_8px_rgba(0,0,0,0.04)] bg-white '
       : 'relative '
   const locStatusThPin = (logicalIdx) =>
-    logicalIdx === 13 && locationStatusColumnIsTrailing
+    logicalIdx === 14 && locationStatusColumnIsTrailing
       ? 'sticky right-0 z-30 border-l border-[#e5e7eb] shadow-[-4px_0_12px_-6px_rgba(15,23,42,0.12)] bg-white '
       : ''
   const locTdPin = (isFirst) =>
@@ -2511,7 +2622,7 @@ function LocationsTab({ recalculatedTimestamp }) {
       ? 'sticky left-14 z-10 border-r border-[#e5e7eb] shadow-[4px_0_8px_rgba(0,0,0,0.04)] bg-white group-hover:bg-[#f9fafb] '
       : ''
   const locStatusTdPin = (logicalIdx) =>
-    logicalIdx === 13 && locationStatusColumnIsTrailing
+    logicalIdx === 14 && locationStatusColumnIsTrailing
       ? 'sticky right-0 z-20 border-l border-[#e5e7eb] shadow-[-4px_0_12px_-6px_rgba(15,23,42,0.12)] bg-white group-hover:bg-[#f9fafb] '
       : ''
 
@@ -2550,10 +2661,13 @@ function LocationsTab({ recalculatedTimestamp }) {
         return (
           <th
             key={logicalIdx}
-            className={`${thPin}h-[62px] min-h-[62px] text-right px-4 align-middle font-medium text-[#00050A] min-w-[90px] box-border`}
+            className={`${thPin}h-[62px] min-h-[62px] text-left px-4 align-middle font-medium text-[#00050A] min-w-[140px] box-border`}
             {...d}
           >
-            {rowEnd('Transfers in')}
+            <span className="inline-flex min-w-0 items-center gap-2">
+              {grip}
+              Movement type
+            </span>
           </th>
         )
       case 2:
@@ -2563,10 +2677,20 @@ function LocationsTab({ recalculatedTimestamp }) {
             className={`${thPin}h-[62px] min-h-[62px] text-right px-4 align-middle font-medium text-[#00050A] min-w-[90px] box-border`}
             {...d}
           >
-            {rowEnd('Transfers out')}
+            {rowEnd('Transfers in')}
           </th>
         )
       case 3:
+        return (
+          <th
+            key={logicalIdx}
+            className={`${thPin}h-[62px] min-h-[62px] text-right px-4 align-middle font-medium text-[#00050A] min-w-[90px] box-border`}
+            {...d}
+          >
+            {rowEnd('Transfers out')}
+          </th>
+        )
+      case 4:
         return (
           <th
             key={logicalIdx}
@@ -2580,7 +2704,7 @@ function LocationsTab({ recalculatedTimestamp }) {
             )}
           </th>
         )
-      case 4:
+      case 5:
         return (
           <th
             key={logicalIdx}
@@ -2592,7 +2716,7 @@ function LocationsTab({ recalculatedTimestamp }) {
             )}
           </th>
         )
-      case 5:
+      case 6:
         return (
           <th
             key={logicalIdx}
@@ -2604,7 +2728,7 @@ function LocationsTab({ recalculatedTimestamp }) {
             )}
           </th>
         )
-      case 6:
+      case 7:
         return (
           <th
             key={logicalIdx}
@@ -2614,7 +2738,7 @@ function LocationsTab({ recalculatedTimestamp }) {
             {rowEnd('Recommendations updated')}
           </th>
         )
-      case 7:
+      case 8:
         return (
           <th
             key={logicalIdx}
@@ -2631,7 +2755,7 @@ function LocationsTab({ recalculatedTimestamp }) {
             )}
           </th>
         )
-      case 8:
+      case 9:
         return (
           <th
             key={logicalIdx}
@@ -2641,7 +2765,7 @@ function LocationsTab({ recalculatedTimestamp }) {
             {rowEnd('Sales')}
           </th>
         )
-      case 9:
+      case 10:
         return (
           <th
             key={logicalIdx}
@@ -2653,7 +2777,7 @@ function LocationsTab({ recalculatedTimestamp }) {
             )}
           </th>
         )
-      case 10:
+      case 11:
         return (
           <th
             key={logicalIdx}
@@ -2663,7 +2787,7 @@ function LocationsTab({ recalculatedTimestamp }) {
             {rowEnd('Stockouts')}
           </th>
         )
-      case 11:
+      case 12:
         return (
           <th
             key={logicalIdx}
@@ -2675,7 +2799,7 @@ function LocationsTab({ recalculatedTimestamp }) {
             )}
           </th>
         )
-      case 12:
+      case 13:
         return (
           <th
             key={logicalIdx}
@@ -2687,7 +2811,7 @@ function LocationsTab({ recalculatedTimestamp }) {
             )}
           </th>
         )
-      case 13:
+      case 14:
         return (
           <th
             key={logicalIdx}
@@ -2709,6 +2833,8 @@ function LocationsTab({ recalculatedTimestamp }) {
       case 0:
         return <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-normal text-[#4b535c]`} />
       case 1:
+        return <th key={logicalIdx} className={`${pin}py-2 px-4`} />
+      case 2:
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
             <div className="flex flex-col items-end">
@@ -2717,7 +2843,7 @@ function LocationsTab({ recalculatedTimestamp }) {
             </div>
           </th>
         )
-      case 2:
+      case 3:
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
             <div className="flex flex-col items-end">
@@ -2726,16 +2852,10 @@ function LocationsTab({ recalculatedTimestamp }) {
             </div>
           </th>
         )
-      case 3:
-        return (
-          <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
-            €50.4K
-          </th>
-        )
       case 4:
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
-            477 units
+            €50.4K
           </th>
         )
       case 5:
@@ -2746,11 +2866,17 @@ function LocationsTab({ recalculatedTimestamp }) {
         )
       case 6:
         return (
+          <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
+            477 units
+          </th>
+        )
+      case 7:
+        return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-normal text-[#4b535c] text-right`}>
             —
           </th>
         )
-      case 7:
+      case 8:
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
             <div className="flex flex-col items-end">
@@ -2759,7 +2885,7 @@ function LocationsTab({ recalculatedTimestamp }) {
             </div>
           </th>
         )
-      case 8:
+      case 9:
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
             <div className="flex flex-col items-end">
@@ -2768,31 +2894,31 @@ function LocationsTab({ recalculatedTimestamp }) {
             </div>
           </th>
         )
-      case 9:
+      case 10:
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
             154.61 per wk
           </th>
         )
-      case 10:
+      case 11:
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
             189 → 383
           </th>
         )
-      case 11:
+      case 12:
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
             301 → 28
           </th>
         )
-      case 12:
+      case 13:
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
             1,270 → …
           </th>
         )
-      case 13:
+      case 14:
         return <th key={logicalIdx} className={`${pin}py-2 px-4 text-right`} />
       default:
         return null
@@ -2816,6 +2942,12 @@ function LocationsTab({ recalculatedTimestamp }) {
         )
       case 1:
         return (
+          <td key={logicalIdx} className={`${pin}py-3 px-4 align-top`}>
+            <MovementTypePills movementType={loc.movementType} />
+          </td>
+        )
+      case 2:
+        return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right align-top`}>
             <div className="flex flex-col items-end line-clamp-2 min-w-0">
               <span className="text-[#0a0a0a]">{loc.transfersIn}</span>
@@ -2823,7 +2955,7 @@ function LocationsTab({ recalculatedTimestamp }) {
             </div>
           </td>
         )
-      case 2:
+      case 3:
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right align-top`}>
             <div className="flex flex-col items-end line-clamp-2 min-w-0">
@@ -2832,13 +2964,13 @@ function LocationsTab({ recalculatedTimestamp }) {
             </div>
           </td>
         )
-      case 3:
+      case 4:
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right text-[#0a0a0a] align-top`}>
             <div className="line-clamp-2 min-w-0">{loc.revenueIncrease}</div>
           </td>
         )
-      case 4:
+      case 5:
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right align-top`}>
             <div className="flex flex-col items-end gap-1 line-clamp-2 min-w-0">
@@ -2856,13 +2988,13 @@ function LocationsTab({ recalculatedTimestamp }) {
             </div>
           </td>
         )
-      case 5:
+      case 6:
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right text-[#0a0a0a] align-top`}>
             <div className="line-clamp-2 min-w-0">{loc.recommendedOut}</div>
           </td>
         )
-      case 6:
+      case 7:
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right align-top`}>
             {(() => {
@@ -2878,7 +3010,7 @@ function LocationsTab({ recalculatedTimestamp }) {
             })()}
           </td>
         )
-      case 7:
+      case 8:
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right align-top`}>
             <div className="flex flex-col items-end line-clamp-2 min-w-0">
@@ -2887,7 +3019,7 @@ function LocationsTab({ recalculatedTimestamp }) {
             </div>
           </td>
         )
-      case 8:
+      case 9:
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right align-top`}>
             <div className="flex flex-col items-end line-clamp-2 min-w-0">
@@ -2896,31 +3028,31 @@ function LocationsTab({ recalculatedTimestamp }) {
             </div>
           </td>
         )
-      case 9:
+      case 10:
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right text-[#0a0a0a] align-top`}>
             <div className="line-clamp-2 min-w-0">{loc.forecast}</div>
           </td>
         )
-      case 10:
+      case 11:
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right text-[#0a0a0a] align-top`}>
             <div className="line-clamp-2 min-w-0">{loc.stockouts}</div>
           </td>
         )
-      case 11:
+      case 12:
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right text-[#0a0a0a] align-top`}>
             <div className="line-clamp-2 min-w-0">{loc.overstocks}</div>
           </td>
         )
-      case 12:
+      case 13:
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right text-[#0a0a0a] align-top`}>
             <div className="line-clamp-2 min-w-0">{loc.understocks}</div>
           </td>
         )
-      case 13:
+      case 14:
         return (
           <td
             key={logicalIdx}
@@ -3115,8 +3247,8 @@ export default function ScheduleDetailPage() {
   const [tripColumnOrder, setTripColumnOrder] = useState(() =>
     Array.from({ length: TRIPS_TABLE_NUM_DATA_COLS }, (_, i) => i)
   )
-  /** Status (logical col 7) only pins to the right when it is the trailing column after reorder. */
-  const tripStatusColumnIsTrailing = tripColumnOrder[tripColumnOrder.length - 1] === 7
+  /** Status (logical col 8) only pins to the right when it is the trailing column after reorder. */
+  const tripStatusColumnIsTrailing = tripColumnOrder[tripColumnOrder.length - 1] === 8
 
   const onTripColDragStart = useCallback((visualIndex, e) => {
     e.stopPropagation()
@@ -3156,7 +3288,7 @@ export default function ScheduleDetailPage() {
     e.stopPropagation()
     const startX = e.clientX
     const startW = tripTableColWidths[colIndex]
-    const minColW = colIndex === 3 ? 160 : colIndex === 5 ? 190 : 72
+    const minColW = colIndex === 4 ? 160 : colIndex === 6 ? 190 : 72
     const onMove = (ev) => {
       const d = ev.clientX - startX
       setTripTableColWidths((prev) => {
@@ -3606,12 +3738,26 @@ export default function ScheduleDetailPage() {
                             >
                               <span className="inline-flex min-w-0 items-center gap-2">
                                 {grip}
-                                Transfers
+                                Movement type
                               </span>
                               {resizer}
                             </th>
                           )
                         case 3:
+                          return (
+                            <th
+                              key={logicalIdx}
+                              className="sticky top-0 z-20 bg-white relative h-[62px] min-h-[62px] px-3 text-left align-middle font-medium text-[#0a0a0a] box-border"
+                              {...dropProps}
+                            >
+                              <span className="inline-flex min-w-0 items-center gap-2">
+                                {grip}
+                                Transfers
+                              </span>
+                              {resizer}
+                            </th>
+                          )
+                        case 4:
                           return (
                             <th
                               key={logicalIdx}
@@ -3629,7 +3775,7 @@ export default function ScheduleDetailPage() {
                               {resizer}
                             </th>
                           )
-                        case 4:
+                        case 5:
                           return (
                             <th
                               key={logicalIdx}
@@ -3646,7 +3792,7 @@ export default function ScheduleDetailPage() {
                               {resizer}
                             </th>
                           )
-                        case 5:
+                        case 6:
                           return (
                             <th
                               key={logicalIdx}
@@ -3660,7 +3806,7 @@ export default function ScheduleDetailPage() {
                               {resizer}
                             </th>
                           )
-                        case 6:
+                        case 7:
                           return (
                             <th
                               key={logicalIdx}
@@ -3674,7 +3820,7 @@ export default function ScheduleDetailPage() {
                               {resizer}
                             </th>
                           )
-                        case 7:
+                        case 8:
                           return (
                             <th
                               key={logicalIdx}
@@ -3721,12 +3867,19 @@ export default function ScheduleDetailPage() {
                           return (
                             <th
                               key={logicalIdx}
+                              className="sticky top-[62px] z-20 bg-white py-2 px-3"
+                            />
+                          )
+                        case 3:
+                          return (
+                            <th
+                              key={logicalIdx}
                               className="sticky top-[62px] z-20 bg-white py-2 px-3 text-[12px] font-medium text-[#0a0a0a]"
                             >
                               {tripSummary.transfers}
                             </th>
                           )
-                        case 3:
+                        case 4:
                           return (
                             <th
                               key={logicalIdx}
@@ -3735,7 +3888,7 @@ export default function ScheduleDetailPage() {
                               {tripSummary.revenue}
                             </th>
                           )
-                        case 4:
+                        case 5:
                           return (
                             <th
                               key={logicalIdx}
@@ -3744,14 +3897,14 @@ export default function ScheduleDetailPage() {
                               {tripSummary.recommended}
                             </th>
                           )
-                        case 5:
+                        case 6:
                           return (
                             <th
                               key={logicalIdx}
                               className="sticky top-[62px] z-20 bg-white py-2 px-3 text-right text-[12px] font-normal text-[#4b535c]"
                             />
                           )
-                        case 6:
+                        case 7:
                           return (
                             <th
                               key={logicalIdx}
@@ -3760,7 +3913,7 @@ export default function ScheduleDetailPage() {
                               {tripSummary.products}
                             </th>
                           )
-                        case 7:
+                        case 8:
                           return (
                             <th
                               key={logicalIdx}
@@ -3831,18 +3984,24 @@ export default function ScheduleDetailPage() {
                             case 2:
                               return (
                                 <td key={logicalIdx} className="py-3 px-3 align-top">
+                                  <MovementTypePills movementType={row.movementType} />
+                                </td>
+                              )
+                            case 3:
+                              return (
+                                <td key={logicalIdx} className="py-3 px-3 align-top">
                                   <span className="text-[#0a0a0a]">{row.transfers}</span>
                                   <span className="text-[12px] text-[#4b535c] ml-1">(max 200)</span>
                                 </td>
                               )
-                            case 3:
+                            case 4:
                               return (
                                 <td key={logicalIdx} className="py-3 pl-3 pr-8 align-top">
                                   <span className="text-[#0a0a0a]">{row.revenue}</span>
                                   <span className="text-[12px] text-[#4b535c] ml-1">(min 6903)</span>
                                 </td>
                               )
-                            case 4:
+                            case 5:
                               return (
                                 <td key={logicalIdx} className="py-3 px-3 align-top text-right">
                                   <div className="flex flex-col gap-1 items-end">
@@ -3867,7 +4026,7 @@ export default function ScheduleDetailPage() {
                                   </div>
                                 </td>
                               )
-                            case 5:
+                            case 6:
                               return (
                                 <td key={logicalIdx} className="py-3 px-3 align-top text-right">
                                   {(() => {
@@ -3885,13 +4044,13 @@ export default function ScheduleDetailPage() {
                                   })()}
                                 </td>
                               )
-                            case 6:
+                            case 7:
                               return (
                                 <td key={logicalIdx} className="py-3 px-3 align-top text-right">
                                   <span className="text-[#0a0a0a]">{row.products}</span>
                                 </td>
                               )
-                            case 7:
+                            case 8:
                               return (
                                 <td
                                   key={logicalIdx}
