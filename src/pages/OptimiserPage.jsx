@@ -213,6 +213,74 @@ function NetworkStyleUploadIcon() {
   )
 }
 
+/** Product + geographic scope filters (include or exclude panel — separate instances for independent state). */
+function CreateScheduleScopeFilterPanel() {
+  return (
+    <div className="rounded-[4px] border border-[#e5e7eb] bg-[#fafafa] p-4 flex flex-col gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="flex flex-col gap-4">
+          <h4 className="text-[13px] font-medium text-[#0a0a0a] uppercase tracking-[0.04em]">Product scope</h4>
+          <CreateScheduleScopeSelect
+            label="Departments"
+            placeholder="Select departments"
+            options={SCOPE_DEPARTMENT_OPTIONS}
+          />
+          <CreateScheduleScopeSearchInput label="Sub-departments" placeholder="Search sub-departments" />
+          <CreateScheduleScopeSearchInput label="Seasons" placeholder="Search seasons" />
+          <CreateScheduleScopeSearchInput label="Events" placeholder="Search events" />
+          <div className="flex flex-col gap-2">
+            <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Products</label>
+            <div className="flex items-center gap-2">
+              <div className="relative flex-1 min-w-0">
+                <input
+                  type="text"
+                  placeholder="Search products"
+                  readOnly
+                  className="w-full h-14 pl-4 pr-10 rounded-[4px] border border-[#EAEAEA] bg-white text-[16px] text-[#0a0a0a] placeholder:text-[#9CA1AE]"
+                />
+                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
+                  <IconSearch className="size-4" />
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => {}}
+                aria-label="Upload products"
+                className="h-14 w-14 shrink-0 rounded-[4px] border border-[#E9EAEB] bg-white text-[#0a0a0a] hover:bg-[#f8f8f8] flex items-center justify-center"
+              >
+                <NetworkStyleUploadIcon />
+              </button>
+              <button
+                type="button"
+                onClick={() => {}}
+                aria-label="Download products"
+                className="h-14 w-14 shrink-0 rounded-[4px] border border-[#E9EAEB] bg-white text-[#0a0a0a] hover:bg-[#f8f8f8] flex items-center justify-center"
+              >
+                <NetworkStyleDownloadIcon />
+              </button>
+            </div>
+          </div>
+        </div>
+        <div className="flex flex-col gap-4">
+          <h4 className="text-[13px] font-medium text-[#0a0a0a] uppercase tracking-[0.04em]">Geographic scope</h4>
+          <CreateScheduleScopeSelect
+            label="Location Types"
+            placeholder="Select location types"
+            options={SCOPE_LOCATION_TYPE_OPTIONS}
+          />
+          <CreateScheduleScopeSearchInput label="Regions" placeholder="Search regions" />
+          <CreateScheduleScopeSearchInput label="Countries" placeholder="Search countries" />
+          <CreateScheduleScopeSearchInput label="Sending countries" placeholder="Search sending countries" />
+          <CreateScheduleScopeSearchInput label="Receiving countries" placeholder="Search receiving countries" />
+          <CreateScheduleScopeSearchInput label="Locations" placeholder="Search locations" />
+          <CreateScheduleScopeSearchInput label="Sending locations" placeholder="Search sending locations" />
+          <CreateScheduleScopeSearchInput label="Receiving locations" placeholder="Search receiving locations" />
+        </div>
+      </div>
+    </div>
+  )
+}
+
 const fe = (id, label, options) => ({ id, label, options })
 
 const EXC_SCOPE_TRIP = [
@@ -1484,79 +1552,45 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                       <div className="flex flex-col gap-1 min-w-0">
                         <span className="text-[14px] font-medium text-[#0a0a0a]">Select products and locations</span>
                         <span className="text-[12px] font-normal text-[#4b535c]">
-                          Choose specific products, locations, regions, or countries to include in this schedule.
+                          Choose specific products, locations, regions, or countries to{' '}
+                          <strong className="font-semibold">include</strong> in this schedule.
+                        </span>
+                      </div>
+                    </label>
+                    <label className="flex items-start gap-3 p-4 rounded-[10px] border border-[#e5e7eb] bg-white cursor-pointer hover:border-[#0267ff]/40 has-[:checked]:border-[#0267ff]">
+                      <input
+                        type="radio"
+                        name="locationScopeOption"
+                        value="exclude"
+                        checked={locationScopeOption === 'exclude'}
+                        onChange={() => setLocationScopeOption('exclude')}
+                        className="mt-1 size-4 shrink-0 border-[#e5e7eb] text-[#0267ff] focus:ring-[#0267ff]"
+                      />
+                      <div className="flex flex-col gap-1 min-w-0">
+                        <span className="text-[14px] font-medium text-[#0a0a0a]">Exclude products and locations</span>
+                        <span className="text-[12px] font-normal text-[#4b535c]">
+                          Choose specific products, locations, regions, or countries to{' '}
+                          <strong className="font-semibold">exclude</strong> from this schedule.
                         </span>
                       </div>
                     </label>
                   </div>
 
-                  {locationScopeOption === 'select' && (
-                    <div className="rounded-[4px] border border-[#e5e7eb] bg-[#fafafa] p-4 flex flex-col gap-6">
-                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        <div className="flex flex-col gap-4">
-                          <h4 className="text-[13px] font-medium text-[#0a0a0a] uppercase tracking-[0.04em]">
-                            Product scope
-                          </h4>
-                          <CreateScheduleScopeSelect
-                            label="Departments"
-                            placeholder="Select departments"
-                            options={SCOPE_DEPARTMENT_OPTIONS}
-                          />
-                          <CreateScheduleScopeSearchInput label="Sub-departments" placeholder="Search sub-departments" />
-                          <CreateScheduleScopeSearchInput label="Seasons" placeholder="Search seasons" />
-                          <CreateScheduleScopeSearchInput label="Events" placeholder="Search events" />
-                          <div className="flex flex-col gap-2">
-                            <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Products</label>
-                            <div className="flex items-center gap-2">
-                              <div className="relative flex-1 min-w-0">
-                                <input
-                                  type="text"
-                                  placeholder="Search products"
-                                  readOnly
-                                  className="w-full h-14 pl-4 pr-10 rounded-[4px] border border-[#EAEAEA] bg-white text-[16px] text-[#0a0a0a] placeholder:text-[#9CA1AE]"
-                                />
-                                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
-                                  <IconSearch className="size-4" />
-                                </span>
-                              </div>
-                              <button
-                                type="button"
-                                onClick={() => {}}
-                                aria-label="Upload products"
-                                className="h-14 w-14 shrink-0 rounded-[4px] border border-[#E9EAEB] bg-white text-[#0a0a0a] hover:bg-[#f8f8f8] flex items-center justify-center"
-                              >
-                                <NetworkStyleUploadIcon />
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => {}}
-                                aria-label="Download products"
-                                className="h-14 w-14 shrink-0 rounded-[4px] border border-[#E9EAEB] bg-white text-[#0a0a0a] hover:bg-[#f8f8f8] flex items-center justify-center"
-                              >
-                                <NetworkStyleDownloadIcon />
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex flex-col gap-4">
-                          <h4 className="text-[13px] font-medium text-[#0a0a0a] uppercase tracking-[0.04em]">
-                            Geographic scope
-                          </h4>
-                          <CreateScheduleScopeSelect
-                            label="Location Types"
-                            placeholder="Select location types"
-                            options={SCOPE_LOCATION_TYPE_OPTIONS}
-                          />
-                          <CreateScheduleScopeSearchInput label="Regions" placeholder="Search regions" />
-                          <CreateScheduleScopeSearchInput label="Countries" placeholder="Search countries" />
-                          <CreateScheduleScopeSearchInput label="Sending countries" placeholder="Search sending countries" />
-                          <CreateScheduleScopeSearchInput label="Receiving countries" placeholder="Search receiving countries" />
-                          <CreateScheduleScopeSearchInput label="Locations" placeholder="Search locations" />
-                          <CreateScheduleScopeSearchInput label="Sending locations" placeholder="Search sending locations" />
-                          <CreateScheduleScopeSearchInput label="Receiving locations" placeholder="Search receiving locations" />
-                        </div>
+                  {locationScopeOption !== 'all' && (
+                    <>
+                      <div
+                        className={locationScopeOption === 'select' ? '' : 'hidden'}
+                        aria-hidden={locationScopeOption !== 'select'}
+                      >
+                        <CreateScheduleScopeFilterPanel key="scope-filter-include" />
                       </div>
-                    </div>
+                      <div
+                        className={locationScopeOption === 'exclude' ? '' : 'hidden'}
+                        aria-hidden={locationScopeOption !== 'exclude'}
+                      >
+                        <CreateScheduleScopeFilterPanel key="scope-filter-exclude" />
+                      </div>
+                    </>
                   )}
                 </section>
 
