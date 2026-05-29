@@ -54,8 +54,8 @@ function TripColumnDragGrip({ visualIndex, onDragStart }) {
 const TRIPS_TABLE_DEFAULT_COL_WIDTHS = [200, 200, 140, 120, 220, 160, 230, 100, 200]
 const TRIPS_TABLE_NUM_DATA_COLS = TRIPS_TABLE_DEFAULT_COL_WIDTHS.length
 const TRIPS_COL_DND_MIME = 'application/x-autone-trip-col'
-/** Logical product table columns are 0–16 (Status = 16). */
-const PRODUCTS_TABLE_NUM_DATA_COLS = 17
+/** Logical product table columns are 0–17 (Status = 17). */
+const PRODUCTS_TABLE_NUM_DATA_COLS = 18
 const PRODUCTS_COL_DND_MIME = 'application/x-autone-products-col'
 const LOCATIONS_TABLE_NUM_DATA_COLS = 15
 const LOCATIONS_COL_DND_MIME = 'application/x-autone-locations-col'
@@ -539,16 +539,16 @@ const LOCATIONS_TABLE_DATA = [
 // Mock products for trip drilldown (keyed by trip id)
 const PRODUCTS_BY_TRIP = {
   1: [
-    { id: 1, name: 'Croi-sac zip l', sku: 'A1398810', colour: 'Noir', movementType: ["rebalancing"], transfers: 3, transfersSub: 1, revenue: '€1.48K', recommended: 1, recommendedBadges: ['REV'], recommendedSub: 2, confidence: 'very_high', salesL7: 1, salesL30: 2, forecast: 1.87, stockouts: '0 → 0', locations: '2 → 2', overstocks: '4 → 1', understocks: '8 → 5', depth: '5.0 → 5.0',     status: 'approved_by_system', recommendationsUpdated: '26/02/2026', recommendationsUpdatedTime: '14:32', recommendationsUpdatedBy: 'System', currentUnits: 12, currentUnitsInTransit: 3, leftInWarehouseAllocate: 45, leftInWarehouseSell: 32 },
-    { id: 2, name: 'Pre-sac seau m', sku: 'A101080', colour: 'Bleu petrole', movementType: ["rebalancing"], transfers: 2, transfersSub: 1, revenue: '€1.12K', recommended: 2, recommendedBadges: ['VIS'], recommendedSub: 1, confidence: 'high', salesL7: 2, salesL30: 3, forecast: 0.54, stockouts: '0 → 1', locations: '2 → 1', overstocks: '3 → 0', understocks: '2 → 0', depth: '3.0 → 6.0', recommendationsUpdated: '24/02/2026', recommendationsUpdatedTime: '09:15', recommendationsUpdatedBy: 'User', currentUnits: 8, currentUnitsInTransit: 0, leftInWarehouseAllocate: 120, leftInWarehouseSell: 95 },
-    { id: 3, name: 'Ang-sac pte main m', sku: 'A1252810', colour: 'Figue', movementType: ["rebalancing"], transfers: 3, transfersSub: 2, revenue: '€1.89K', recommended: 3, recommendedBadges: ['REV', 'VIS'], recommendedSub: 1, confidence: 'high', salesL7: 1, salesL30: 4, forecast: 2.1, stockouts: '1 → 0', locations: '2 → 2', overstocks: '5 → 2', understocks: '6 → 3', depth: '4.2 → 4.8',     status: 'last_edited_by_user', editedByUser: 'Csabi Toth', recommendationsUpdated: '26/02/2026', recommendationsUpdatedTime: '16:48', recommendationsUpdatedBy: 'User', currentUnits: 25, currentUnitsInTransit: 5, leftInWarehouseAllocate: 18, leftInWarehouseSell: 12 },
-    { id: 4, name: 'Croi-sac zip s', sku: 'A1398811', colour: 'Noir', movementType: ["rebalancing"], transfers: 1, transfersSub: 2, revenue: '€0.98K', recommended: 1, recommendedBadges: ['REV'], recommendedSub: 2, confidence: 'medium', salesL7: 0, salesL30: 1, forecast: 0.32, stockouts: '0 → 0', locations: '1 → 2', overstocks: '2 → 1', understocks: '4 → 2', depth: '5.0 → 5.0', status: 'approved_by_user', approvedByUser: 'Jess Briggs', recommendationsUpdated: '24/02/2026', recommendationsUpdatedTime: '11:03', recommendationsUpdatedBy: 'User', currentUnits: 3, currentUnitsInTransit: 1, leftInWarehouseAllocate: 65, leftInWarehouseSell: 50 },
-    { id: 5, name: 'Pre-sac seau s', sku: 'A101081', colour: 'Bleu petrole', movementType: ["replenishment"], transfers: 2, transfersSub: 1, revenue: '€0.76K', recommended: 2, recommendedBadges: ['VIS'], recommendedSub: 1, confidence: 'low', salesL7: 1, salesL30: 2, forecast: 0.54, stockouts: '0 → 1', locations: '2 → 1', overstocks: '3 → 0', understocks: '2 → 0', depth: '3.0 → 6.0', status: 'needs_review_from_user', recommendationsUpdated: '26/02/2026', recommendationsUpdatedTime: '08:22', recommendationsUpdatedBy: 'System', currentUnits: 15, currentUnitsInTransit: 2, leftInWarehouseAllocate: 30, leftInWarehouseSell: 22 },
-    { id: 6, name: 'Ang-sac pte main s', sku: 'A1252811', colour: 'Figue', movementType: ["replenishment","rebalancing"], transfers: 1, transfersSub: 1, revenue: '€0.65K', recommended: 1, recommendedBadges: ['REV'], recommendedSub: 1, confidence: 'very_low', salesL7: 0, salesL30: 1, forecast: 0.21, stockouts: '0 → 0', locations: '2 → 2', overstocks: '4 → 1', understocks: '3 → 1', depth: '4.0 → 4.5', status: 'approved_by_system', recommendationsUpdated: '24/02/2026', recommendationsUpdatedTime: '15:07', recommendationsUpdatedBy: 'System', currentUnits: 7, currentUnitsInTransit: 0, leftInWarehouseAllocate: 42, leftInWarehouseSell: 28 },
+    { id: 1, name: 'Croi-sac zip l', sku: 'A1398810', colour: 'Noir', movementType: ["rebalancing"], transfers: 3, transfersSub: 1, revenue: '€1.48K', recommended: 1, recommendedBadges: ['REV'], recommendedSub: 2, confidence: 'very_high', coverage: 'All SKUs in target', salesL7: 1, salesL30: 2, forecast: 1.87, stockouts: '0 → 0', locations: '2 → 2', overstocks: '4 → 1', understocks: '8 → 5', depth: '5.0 → 5.0',     status: 'approved_by_system', recommendationsUpdated: '26/02/2026', recommendationsUpdatedTime: '14:32', recommendationsUpdatedBy: 'System', currentUnits: 12, currentUnitsInTransit: 3, warehouseAllocateLine: '52 → 48', warehouseSellLine: '68 → 62' },
+    { id: 2, name: 'Pre-sac seau m', sku: 'A101080', colour: 'Bleu petrole', movementType: ["rebalancing"], transfers: 2, transfersSub: 1, revenue: '€1.12K', recommended: 2, recommendedBadges: ['VIS'], recommendedSub: 1, confidence: 'high', coverage: '2% below target', salesL7: 2, salesL30: 3, forecast: 0.54, stockouts: '0 → 1', locations: '2 → 1', overstocks: '3 → 0', understocks: '2 → 0', depth: '3.0 → 6.0', recommendationsUpdated: '24/02/2026', recommendationsUpdatedTime: '09:15', recommendationsUpdatedBy: 'User', currentUnits: 8, currentUnitsInTransit: 0, warehouseAllocateLine: '58 → 51', warehouseSellLine: '72 → 65' },
+    { id: 3, name: 'Ang-sac pte main m', sku: 'A1252810', colour: 'Figue', movementType: ["rebalancing"], transfers: 3, transfersSub: 2, revenue: '€1.89K', recommended: 3, recommendedBadges: ['REV', 'VIS'], recommendedSub: 1, confidence: 'high', coverage: '5% below target', salesL7: 1, salesL30: 4, forecast: 2.1, stockouts: '1 → 0', locations: '2 → 2', overstocks: '5 → 2', understocks: '6 → 3', depth: '4.2 → 4.8',     status: 'last_edited_by_user', editedByUser: 'Csabi Toth', recommendationsUpdated: '26/02/2026', recommendationsUpdatedTime: '16:48', recommendationsUpdatedBy: 'User', currentUnits: 25, currentUnitsInTransit: 5, warehouseAllocateLine: '48 → 42', warehouseSellLine: '65 → 58' },
+    { id: 4, name: 'Croi-sac zip s', sku: 'A1398811', colour: 'Noir', movementType: ["rebalancing"], transfers: 1, transfersSub: 2, revenue: '€0.98K', recommended: 1, recommendedBadges: ['REV'], recommendedSub: 2, confidence: 'medium', coverage: 'N/A', salesL7: 0, salesL30: 1, forecast: 0.32, stockouts: '0 → 0', locations: '1 → 2', overstocks: '2 → 1', understocks: '4 → 2', depth: '5.0 → 5.0', status: 'approved_by_user', approvedByUser: 'Jess Briggs', recommendationsUpdated: '24/02/2026', recommendationsUpdatedTime: '11:03', recommendationsUpdatedBy: 'User', currentUnits: 3, currentUnitsInTransit: 1, warehouseAllocateLine: '55 → 50', warehouseSellLine: '70 → 63' },
+    { id: 5, name: 'Pre-sac seau s', sku: 'A101081', colour: 'Bleu petrole', movementType: ["replenishment"], transfers: 2, transfersSub: 1, revenue: '€0.76K', recommended: 2, recommendedBadges: ['VIS'], recommendedSub: 1, confidence: 'low', coverage: '8% below target', salesL7: 1, salesL30: 2, forecast: 0.54, stockouts: '0 → 1', locations: '2 → 1', overstocks: '3 → 0', understocks: '2 → 0', depth: '3.0 → 6.0', status: 'needs_review_from_user', recommendationsUpdated: '26/02/2026', recommendationsUpdatedTime: '08:22', recommendationsUpdatedBy: 'System', currentUnits: 15, currentUnitsInTransit: 2, warehouseAllocateLine: '50 → 45', warehouseSellLine: '68 → 61' },
+    { id: 6, name: 'Ang-sac pte main s', sku: 'A1252811', colour: 'Figue', movementType: ["replenishment","rebalancing"], transfers: 1, transfersSub: 1, revenue: '€0.65K', recommended: 1, recommendedBadges: ['REV'], recommendedSub: 1, confidence: 'very_low', coverage: '67% below target', salesL7: 0, salesL30: 1, forecast: 0.21, stockouts: '0 → 0', locations: '2 → 2', overstocks: '4 → 1', understocks: '3 → 1', depth: '4.0 → 4.5', status: 'approved_by_system', recommendationsUpdated: '24/02/2026', recommendationsUpdatedTime: '15:07', recommendationsUpdatedBy: 'System', currentUnits: 7, currentUnitsInTransit: 0, warehouseAllocateLine: '57 → 44', warehouseSellLine: '57 → 51' },
   ],
   2: [
-    { id: 7, name: 'Sac zip l', sku: 'B200001', colour: 'Noir', movementType: ["rebalancing"], transfers: 2, transfersSub: 1, revenue: '€0.89K', recommended: 2, recommendedBadges: ['REV'], recommendedSub: 1, confidence: 'medium', salesL7: 1, salesL30: 2, forecast: 0.45, stockouts: '0 → 0', locations: '2 → 2', overstocks: '2 → 1', understocks: '5 → 3', depth: '4.5 → 5.0', status: 'approved_by_user', approvedByUser: 'Jess Briggs', recommendationsUpdated: '26/02/2026', recommendationsUpdatedTime: '13:55', recommendationsUpdatedBy: 'User', currentUnits: 18, currentUnitsInTransit: 4, leftInWarehouseAllocate: 88, leftInWarehouseSell: 70 },
-    { id: 8, name: 'Sac seau m', sku: 'B200002', colour: 'Noir', movementType: ["rebalancing"], transfers: 1, transfersSub: 2, revenue: '€0.52K', recommended: 1, recommendedBadges: ['VIS'], recommendedSub: 2, confidence: 'high', salesL7: 0, salesL30: 1, forecast: 0.28, stockouts: '0 → 1', locations: '1 → 2', overstocks: '1 → 0', understocks: '3 → 1', depth: '3.6 → 4.3', status: 'last_edited_by_user', editedByUser: 'Csabi Toth', recommendationsUpdated: '24/02/2026', recommendationsUpdatedTime: '17:19', recommendationsUpdatedBy: 'User', currentUnits: 11, currentUnitsInTransit: 2, leftInWarehouseAllocate: 55, leftInWarehouseSell: 40 },
+    { id: 7, name: 'Sac zip l', sku: 'B200001', colour: 'Noir', movementType: ["rebalancing"], transfers: 2, transfersSub: 1, revenue: '€0.89K', recommended: 2, recommendedBadges: ['REV'], recommendedSub: 1, confidence: 'medium', coverage: '3% below target', salesL7: 1, salesL30: 2, forecast: 0.45, stockouts: '0 → 0', locations: '2 → 2', overstocks: '2 → 1', understocks: '5 → 3', depth: '4.5 → 5.0', status: 'approved_by_user', approvedByUser: 'Jess Briggs', recommendationsUpdated: '26/02/2026', recommendationsUpdatedTime: '13:55', recommendationsUpdatedBy: 'User', currentUnits: 18, currentUnitsInTransit: 4, warehouseAllocateLine: '40 → 36', warehouseSellLine: '50 → 45' },
+    { id: 8, name: 'Sac seau m', sku: 'B200002', colour: 'Noir', movementType: ["rebalancing"], transfers: 1, transfersSub: 2, revenue: '€0.52K', recommended: 1, recommendedBadges: ['VIS'], recommendedSub: 2, confidence: 'high', coverage: 'All SKUs in target', salesL7: 0, salesL30: 1, forecast: 0.28, stockouts: '0 → 1', locations: '1 → 2', overstocks: '1 → 0', understocks: '3 → 1', depth: '3.6 → 4.3', status: 'last_edited_by_user', editedByUser: 'Csabi Toth', recommendationsUpdated: '24/02/2026', recommendationsUpdatedTime: '17:19', recommendationsUpdatedBy: 'User', currentUnits: 11, currentUnitsInTransit: 2, warehouseAllocateLine: '35 → 30', warehouseSellLine: '42 → 38' },
   ],
 }
 
@@ -675,6 +675,16 @@ function ConfidencePill({ value }) {
       <span className="truncate">{cfg.label}</span>
     </span>
   )
+}
+
+function ProductCoverageText({ value }) {
+  if (!value || value === 'N/A') {
+    return <span className="text-[14px] text-[#4b535c]">N/A</span>
+  }
+  if (value === 'All SKUs in target') {
+    return <span className="text-[14px] text-[#067a4e]">{value}</span>
+  }
+  return <span className="text-[14px] text-[#dc2626]">{value}</span>
 }
 
 const MOVEMENT_TYPE_PILL_CLASS =
@@ -1834,6 +1844,24 @@ function ProductsDrilldown({ trip, onBack, showBackButton = true, recalculatedTi
         return (
           <th
             key={logicalIdx}
+            className={`${productThPin(isFirst, isLast)}h-[62px] min-h-[62px] text-right px-4 align-middle font-medium text-[#00050A] min-w-[120px] box-border`}
+            {...d}
+          >
+            <span className="inline-flex w-full min-w-0 items-center justify-end gap-2">
+              {grip}
+              <span
+                className="inline-flex items-center gap-1 cursor-help"
+                title="How well current stock is meeting forecasted demand. 'X% below target' means stock is short of target; 'All SKUs in target' means coverage is on track."
+              >
+                Coverage <IconInfo />
+              </span>
+            </span>
+          </th>
+        )
+      case 8:
+        return (
+          <th
+            key={logicalIdx}
             className={`${productThPin(isFirst, isLast)}h-[62px] min-h-[62px] text-right px-4 align-middle font-medium text-[#00050A] min-w-[100px] box-border`}
             {...d}
           >
@@ -1848,7 +1876,7 @@ function ProductsDrilldown({ trip, onBack, showBackButton = true, recalculatedTi
             </span>
           </th>
         )
-      case 8:
+      case 9:
         return (
           <th
             key={logicalIdx}
@@ -1866,7 +1894,7 @@ function ProductsDrilldown({ trip, onBack, showBackButton = true, recalculatedTi
             </span>
           </th>
         )
-      case 9:
+      case 10:
         return (
           <th
             key={logicalIdx}
@@ -1882,7 +1910,7 @@ function ProductsDrilldown({ trip, onBack, showBackButton = true, recalculatedTi
             </span>
           </th>
         )
-      case 10:
+      case 11:
         return (
           <th
             key={logicalIdx}
@@ -1900,7 +1928,7 @@ function ProductsDrilldown({ trip, onBack, showBackButton = true, recalculatedTi
             </span>
           </th>
         )
-      case 11:
+      case 12:
         return (
           <th
             key={logicalIdx}
@@ -1913,7 +1941,7 @@ function ProductsDrilldown({ trip, onBack, showBackButton = true, recalculatedTi
             </span>
           </th>
         )
-      case 12:
+      case 13:
         return (
           <th
             key={logicalIdx}
@@ -1926,7 +1954,7 @@ function ProductsDrilldown({ trip, onBack, showBackButton = true, recalculatedTi
             </span>
           </th>
         )
-      case 13:
+      case 14:
         return (
           <th
             key={logicalIdx}
@@ -1941,7 +1969,7 @@ function ProductsDrilldown({ trip, onBack, showBackButton = true, recalculatedTi
             </span>
           </th>
         )
-      case 14:
+      case 15:
         return (
           <th
             key={logicalIdx}
@@ -1956,7 +1984,7 @@ function ProductsDrilldown({ trip, onBack, showBackButton = true, recalculatedTi
             </span>
           </th>
         )
-      case 15:
+      case 16:
         return (
           <th
             key={logicalIdx}
@@ -1971,7 +1999,7 @@ function ProductsDrilldown({ trip, onBack, showBackButton = true, recalculatedTi
             </span>
           </th>
         )
-      case 16:
+      case 17:
         return (
           <th
             key={logicalIdx}
@@ -2035,6 +2063,8 @@ function ProductsDrilldown({ trip, onBack, showBackButton = true, recalculatedTi
           </th>
         )
       case 7:
+        return <th key={logicalIdx} className={`${pin}py-2 px-4 text-right`} />
+      case 8:
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
             <div className="flex flex-col items-end">
@@ -2043,7 +2073,7 @@ function ProductsDrilldown({ trip, onBack, showBackButton = true, recalculatedTi
             </div>
           </th>
         )
-      case 8:
+      case 9:
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
             <div className="flex flex-col items-end">
@@ -2052,7 +2082,7 @@ function ProductsDrilldown({ trip, onBack, showBackButton = true, recalculatedTi
             </div>
           </th>
         )
-      case 9:
+      case 10:
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
             <div className="flex flex-col items-end">
@@ -2061,43 +2091,43 @@ function ProductsDrilldown({ trip, onBack, showBackButton = true, recalculatedTi
             </div>
           </th>
         )
-      case 10:
+      case 11:
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
             {productSummary.forecast}
           </th>
         )
-      case 11:
+      case 12:
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
             {productSummary.stockouts}
           </th>
         )
-      case 12:
+      case 13:
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
             {productSummary.locations}
           </th>
         )
-      case 13:
+      case 14:
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
             {productSummary.overstocks}
           </th>
         )
-      case 14:
+      case 15:
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
             {productSummary.understocks}
           </th>
         )
-      case 15:
+      case 16:
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
             {productSummary.depth}
           </th>
         )
-      case 16:
+      case 17:
         return <th key={logicalIdx} className={`${pin}py-2 px-4 text-right`} />
       default:
         return null
@@ -2226,9 +2256,8 @@ function ProductsDrilldown({ trip, onBack, showBackButton = true, recalculatedTi
       case 7:
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right align-top`}>
-            <div className="flex flex-col items-end line-clamp-2 min-w-0">
-              <span className="text-[#0a0a0a]">{p.currentUnits ?? '—'}</span>
-              <span className="text-[12px] text-[#4b535c]">{p.currentUnitsInTransit ?? 0}</span>
+            <div className="flex justify-end line-clamp-2 min-w-0">
+              <ProductCoverageText value={p.coverage} />
             </div>
           </td>
         )
@@ -2236,12 +2265,21 @@ function ProductsDrilldown({ trip, onBack, showBackButton = true, recalculatedTi
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right align-top`}>
             <div className="flex flex-col items-end line-clamp-2 min-w-0">
-              <span className="text-[#0a0a0a]">{p.leftInWarehouseAllocate ?? '—'}</span>
-              <span className="text-[12px] text-[#4b535c]">{p.leftInWarehouseSell ?? '—'}</span>
+              <span className="text-[#0a0a0a]">{p.currentUnits ?? '—'}</span>
+              <span className="text-[12px] text-[#4b535c]">{p.currentUnitsInTransit ?? 0}</span>
             </div>
           </td>
         )
       case 9:
+        return (
+          <td key={logicalIdx} className={`${pin}py-3 px-4 text-right align-top`}>
+            <div className="flex flex-col items-end line-clamp-2 min-w-0">
+              <span className="text-[#0a0a0a]">{p.warehouseAllocateLine ?? '—'}</span>
+              <span className="text-[12px] text-[#4b535c]">{p.warehouseSellLine ?? '—'}</span>
+            </div>
+          </td>
+        )
+      case 10:
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right align-top`}>
             <div className="flex flex-col items-end line-clamp-2 min-w-0">
@@ -2250,43 +2288,43 @@ function ProductsDrilldown({ trip, onBack, showBackButton = true, recalculatedTi
             </div>
           </td>
         )
-      case 10:
+      case 11:
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right text-[#0a0a0a] align-top`}>
             <div className="line-clamp-2 min-w-0 w-full text-right">{p.forecast}</div>
           </td>
         )
-      case 11:
+      case 12:
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right text-[#0a0a0a] align-top`}>
             <div className="line-clamp-2 min-w-0 w-full text-right">{p.stockouts}</div>
           </td>
         )
-      case 12:
+      case 13:
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right text-[#0a0a0a] align-top`}>
             <div className="line-clamp-2 min-w-0 w-full text-right">{p.locations}</div>
           </td>
         )
-      case 13:
+      case 14:
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right text-[#0a0a0a] align-top`}>
             <div className="line-clamp-2 min-w-0 w-full text-right">{p.overstocks}</div>
           </td>
         )
-      case 14:
+      case 15:
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right text-[#0a0a0a] align-top`}>
             <div className="line-clamp-2 min-w-0 w-full text-right">{p.understocks}</div>
           </td>
         )
-      case 15:
+      case 16:
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right text-[#0a0a0a] align-top`}>
             <div className="line-clamp-2 min-w-0 w-full text-right">{p.depth}</div>
           </td>
         )
-      case 16:
+      case 17:
         return (
           <td
             key={logicalIdx}
