@@ -678,17 +678,17 @@ function ConfidencePill({ value }) {
 }
 
 const MOVEMENT_TYPE_PILL_CLASS =
-  'inline-flex items-center px-2 py-1 rounded-[6px] border text-[12px] font-medium bg-[#f4f4f5] text-[#0a0a0a] border-[#878d94]'
+  'inline-flex w-fit items-center px-2 py-0.5 rounded-[6px] border text-[12px] font-medium bg-[#f4f4f5] text-[#0a0a0a] border-[#878d94]'
 
 const MOVEMENT_TYPE_LABELS = {
-  replenishment: 'Replenishment',
-  rebalancing: 'Rebalancing',
+  replenishment: 'Replen',
+  rebalancing: 'Rebal',
 }
 
 function MovementTypePills({ movementType }) {
   const types = Array.isArray(movementType) ? movementType : []
   return (
-    <div className="flex flex-wrap items-center gap-1.5">
+    <div className="flex flex-col items-start gap-1">
       {types.map((t) => (
         <span key={t} className={MOVEMENT_TYPE_PILL_CLASS}>
           {MOVEMENT_TYPE_LABELS[t] ?? t}
