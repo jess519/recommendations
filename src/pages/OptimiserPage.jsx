@@ -270,11 +270,7 @@ function CreateScheduleScopeFilterPanel() {
           />
           <CreateScheduleScopeSearchInput label="Regions" placeholder="Search regions" />
           <CreateScheduleScopeSearchInput label="Countries" placeholder="Search countries" />
-          <CreateScheduleScopeSearchInput label="Sending countries" placeholder="Search sending countries" />
-          <CreateScheduleScopeSearchInput label="Receiving countries" placeholder="Search receiving countries" />
           <CreateScheduleScopeSearchInput label="Locations" placeholder="Search locations" />
-          <CreateScheduleScopeSearchInput label="Sending locations" placeholder="Search sending locations" />
-          <CreateScheduleScopeSearchInput label="Receiving locations" placeholder="Search receiving locations" />
         </div>
       </div>
     </div>
