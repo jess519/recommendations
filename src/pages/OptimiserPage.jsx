@@ -778,7 +778,7 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
   const nextSchedules = [
     {
       id: 'eu-monthly-rebal',
-      name: 'Europe monthly rebal',
+      name: 'Europe monthly',
       created: '24/02/2026',
       deadline: '28/02/2026',
       status: 'Ready to review',
@@ -802,7 +802,7 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
       id: 'uk-weekly-replen',
       name: 'UK weekly replenishment',
       created: '04/05/2026',
-      deadline: '06/05/2026',
+      deadline: '01/06/2026',
       status: 'Ready to review',
       exceptions: '5',
       approved: '42',
