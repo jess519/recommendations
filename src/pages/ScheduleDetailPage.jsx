@@ -683,17 +683,18 @@ function ProductCoverageText({ coverageWeeks, coverageTarget, coverage }) {
   if (coverageWeeks == null || coverageTarget == null) {
     return <span className="text-[14px] text-[#4b535c]">N/A</span>
   }
-  const isOnTarget = coverageWeeks >= coverageTarget
+  const isBelowTarget = coverage?.includes('below target')
+  const badgeText = isBelowTarget ? coverage.replace(' below target', ' of SKUs below target') : coverage
   return (
     <div className="flex flex-col items-end gap-1">
       <span className="text-[14px] text-[#0a0a0a] font-medium">{coverageWeeks} wks</span>
       {coverage && (
         <span
           className={`px-1.5 py-0.5 rounded-[4px] text-[11px] font-medium ${
-            isOnTarget ? 'bg-[#dcfce7] text-[#166534]' : 'bg-[#fee2e2] text-[#E30D3C]'
+            isBelowTarget ? 'bg-[#fee2e2] text-[#E30D3C]' : 'bg-[#dcfce7] text-[#166534]'
           }`}
         >
-          {coverage}
+          {badgeText}
         </span>
       )}
     </div>
