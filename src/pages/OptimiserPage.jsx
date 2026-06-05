@@ -213,13 +213,45 @@ function NetworkStyleUploadIcon() {
   )
 }
 
-/** Product + geographic scope filters (include or exclude panel — separate instances for independent state). */
-function CreateScheduleScopeFilterPanel() {
+/** Product + geographic scope filters for create schedule scope selection. */
+function CreateScheduleScopeFilterPanel({
+  productScopeMode,
+  setProductScopeMode,
+  geoScopeMode,
+  setGeoScopeMode,
+}) {
+  const scopeModeToggleClass = (active) =>
+    active
+      ? 'bg-[#0267ff] text-white rounded-[4px] px-2.5 py-1 text-[12px] font-medium'
+      : 'bg-white text-[#4b535c] rounded-[4px] px-2.5 py-1 text-[12px] font-medium border border-[#e9eaeb]'
+
+  const renderScopeModeToggle = (mode, setMode) => (
+    <div className="flex border border-[#e9eaeb] rounded-[4px] overflow-hidden shrink-0">
+      <button
+        type="button"
+        onClick={() => setMode('include')}
+        className={scopeModeToggleClass(mode === 'include')}
+      >
+        Include
+      </button>
+      <button
+        type="button"
+        onClick={() => setMode('exclude')}
+        className={scopeModeToggleClass(mode === 'exclude')}
+      >
+        Exclude
+      </button>
+    </div>
+  )
+
   return (
     <div className="rounded-[4px] border border-[#e5e7eb] bg-[#fafafa] p-4 flex flex-col gap-6">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="flex flex-col gap-4">
-          <h4 className="text-[13px] font-medium text-[#0a0a0a] uppercase tracking-[0.04em]">Product scope</h4>
+          <div className="flex items-center justify-between gap-2">
+            <h4 className="text-[13px] font-medium text-[#0a0a0a] uppercase tracking-[0.04em]">Product scope</h4>
+            {renderScopeModeToggle(productScopeMode, setProductScopeMode)}
+          </div>
           <CreateScheduleScopeSelect
             label="Departments"
             placeholder="Select departments"
@@ -262,7 +294,10 @@ function CreateScheduleScopeFilterPanel() {
           </div>
         </div>
         <div className="flex flex-col gap-4">
-          <h4 className="text-[13px] font-medium text-[#0a0a0a] uppercase tracking-[0.04em]">Geographic scope</h4>
+          <div className="flex items-center justify-between gap-2">
+            <h4 className="text-[13px] font-medium text-[#0a0a0a] uppercase tracking-[0.04em]">Geographic scope</h4>
+            {renderScopeModeToggle(geoScopeMode, setGeoScopeMode)}
+          </div>
           <CreateScheduleScopeSelect
             label="Location Types"
             placeholder="Select location types"
@@ -742,6 +777,8 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
   const [isCreateSchedulePage, setIsCreateSchedulePage] = useState(false)
   const [openSections, setOpenSections] = useState(['scope'])
   const [locationScopeOption, setLocationScopeOption] = useState('all')
+  const [productScopeMode, setProductScopeMode] = useState('include')
+  const [geoScopeMode, setGeoScopeMode] = useState('include')
   const [sourceLocationOption, setSourceLocationOption] = useState('central')
   const [selectedMovementTypes, setSelectedMovementTypes] = useState([])
   const [movementTypeDropdownOpen, setMovementTypeDropdownOpen] = useState(false)
@@ -1240,40 +1277,15 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                         </span>
                       </div>
                     </label>
-                    <label className="flex items-start gap-3 p-4 rounded-[10px] border border-[#e5e7eb] bg-white cursor-pointer hover:border-[#0267ff]/40 has-[:checked]:border-[#0267ff]">
-                      <input
-                        type="radio"
-                        name="locationScopeOption"
-                        value="exclude"
-                        checked={locationScopeOption === 'exclude'}
-                        onChange={() => setLocationScopeOption('exclude')}
-                        className="mt-1 size-4 shrink-0 border-[#e5e7eb] text-[#0267ff] focus:ring-[#0267ff]"
-                      />
-                      <div className="flex flex-col gap-1 min-w-0">
-                        <span className="text-[14px] font-medium text-[#0a0a0a]">Exclude products and locations</span>
-                        <span className="text-[12px] font-normal text-[#4b535c]">
-                          Choose specific products, locations, regions, or countries to{' '}
-                          <strong className="font-semibold">exclude</strong> from this schedule.
-                        </span>
-                      </div>
-                    </label>
                   </div>
 
-                  {locationScopeOption !== 'all' && (
-                    <>
-                      <div
-                        className={locationScopeOption === 'select' ? '' : 'hidden'}
-                        aria-hidden={locationScopeOption !== 'select'}
-                      >
-                        <CreateScheduleScopeFilterPanel key="scope-filter-include" />
-                      </div>
-                      <div
-                        className={locationScopeOption === 'exclude' ? '' : 'hidden'}
-                        aria-hidden={locationScopeOption !== 'exclude'}
-                      >
-                        <CreateScheduleScopeFilterPanel key="scope-filter-exclude" />
-                      </div>
-                    </>
+                  {locationScopeOption === 'select' && (
+                    <CreateScheduleScopeFilterPanel
+                      productScopeMode={productScopeMode}
+                      setProductScopeMode={setProductScopeMode}
+                      geoScopeMode={geoScopeMode}
+                      setGeoScopeMode={setGeoScopeMode}
+                    />
                   )}
                 </section>
 
