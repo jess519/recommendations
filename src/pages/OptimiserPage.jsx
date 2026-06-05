@@ -808,7 +808,7 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
   const [recurrenceSubmissionTime, setRecurrenceSubmissionTime] = useState('09:00')
   const [submissionDate, setSubmissionDate] = useState('')
   const [skipEveryN, setSkipEveryN] = useState('')
-  const [workingDaysOnly, setWorkingDaysOnly] = useState(false)
+  const [workingDaysOnly, setWorkingDaysOnly] = useState(true)
   const [skipDays, setSkipDays] = useState([])
 
   useEffect(() => {
@@ -1745,8 +1745,8 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                     <>
                       <div className="flex flex-col gap-2">
                         <span className="text-[14px] text-[#0a0a0a]">Skip on</span>
-                        <div className="flex gap-4">
-                          {(workingDaysOnly
+                        {(() => {
+                          const skipDayOptions = workingDaysOnly
                             ? [
                                 { label: 'M', value: 'Mon' },
                                 { label: 'T', value: 'Tue' },
@@ -1763,27 +1763,32 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                                 { label: 'F', value: 'Fri' },
                                 { label: 'S', value: 'Sat' },
                               ]
-                          ).map(({ label, value }) => (
-                            <button
-                              key={value}
-                              type="button"
-                              onClick={() =>
-                                setSkipDays((prev) =>
-                                  prev.includes(value)
-                                    ? prev.filter((d) => d !== value)
-                                    : [...prev, value]
-                                )
-                              }
-                              className={`size-10 rounded-full flex items-center justify-center text-[14px] font-medium shrink-0 transition-colors ${
-                                skipDays.includes(value)
-                                  ? 'bg-[#0267FF] text-white'
-                                  : 'bg-[#F8F8F8] text-[#4b535c] hover:bg-[#eee]'
-                              }`}
-                            >
-                              {label}
-                            </button>
-                          ))}
-                        </div>
+
+                          return (
+                            <div className="flex gap-4">
+                              {skipDayOptions.map(({ label, value }) => (
+                                <button
+                                  key={value}
+                                  type="button"
+                                  onClick={() =>
+                                    setSkipDays((prev) =>
+                                      prev.includes(value)
+                                        ? prev.filter((d) => d !== value)
+                                        : [...prev, value]
+                                    )
+                                  }
+                                  className={`size-10 rounded-full flex items-center justify-center text-[14px] font-medium shrink-0 transition-colors ${
+                                    skipDays.includes(value)
+                                      ? 'bg-[#0267FF] text-white'
+                                      : 'bg-[#F8F8F8] text-[#4b535c] hover:bg-[#eee]'
+                                  }`}
+                                >
+                                  {label}
+                                </button>
+                              ))}
+                            </div>
+                          )
+                        })()}
                       </div>
                       {skipDays.length > 0 && (
                         <p className="text-[12px] text-[#4b535c] italic">
