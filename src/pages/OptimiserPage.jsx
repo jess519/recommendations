@@ -808,6 +808,8 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
   const [recurrenceSubmissionTime, setRecurrenceSubmissionTime] = useState('09:00')
   const [submissionDate, setSubmissionDate] = useState('')
   const [skipEveryN, setSkipEveryN] = useState('')
+  const [workingDaysOnly, setWorkingDaysOnly] = useState(false)
+  const [skipDays, setSkipDays] = useState([])
   const reviewStatusFilterOptions = [
     { id: 'in review', label: 'In review' },
     { id: 'upcoming', label: 'Upcoming' },
@@ -1588,6 +1590,30 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                     </div>
                   </div>
 
+                  {recurrenceRepeatUnit === 'day' && (
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex flex-col gap-1">
+                        <span className="text-[14px] text-[#0a0a0a]">Working days only</span>
+                        <span className="text-[12px] text-[#4b535c]">Schedule will only run on Monday–Friday</span>
+                      </div>
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-checked={workingDaysOnly}
+                        onClick={() => setWorkingDaysOnly((v) => !v)}
+                        className={`relative w-11 h-6 rounded-full transition-colors shrink-0 ${
+                          workingDaysOnly ? 'bg-[#0267ff]' : 'bg-[#e5e7eb]'
+                        }`}
+                      >
+                        <span
+                          className={`absolute top-1 left-1 size-4 rounded-full bg-white transition-transform ${
+                            workingDaysOnly ? 'translate-x-5' : 'translate-x-0'
+                          }`}
+                        />
+                      </button>
+                    </div>
+                  )}
+
                   {recurrenceRepeatUnit === 'week' && (
                     <div className="flex flex-col gap-2">
                       <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Submission day</label>
@@ -1723,6 +1749,51 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                       Use this if you want to temporarily run a different schedule — for example, to combine movement types or separate replenishment and rebalancing into one batch.
                     </p>
                   </div>
+                  <div className="flex flex-col gap-3">
+                  {recurrenceRepeatUnit === 'day' ? (
+                    <>
+                      <div className="flex flex-col gap-2">
+                        <span className="text-[14px] text-[#0a0a0a]">Skip on</span>
+                        <div className="flex gap-4">
+                          {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((letter, i) => (
+                            <button
+                              key={i}
+                              type="button"
+                              onClick={() =>
+                                setSkipDays((prev) =>
+                                  prev.includes(i) ? prev.filter((d) => d !== i) : [...prev, i].sort((a, b) => a - b)
+                                )
+                              }
+                              className={`size-10 rounded-full flex items-center justify-center text-[14px] font-medium shrink-0 transition-colors ${
+                                skipDays.includes(i)
+                                  ? 'bg-[#0267FF] text-white'
+                                  : 'bg-[#F8F8F8] text-[#4b535c] hover:bg-[#eee]'
+                              }`}
+                            >
+                              {letter}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      {skipDays.length > 0 && (
+                        <p className="text-[12px] text-[#4b535c] italic">
+                          This schedule will be skipped on{' '}
+                          {skipDays
+                            .map((i) => ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][i])
+                            .join(', ')}
+                        </p>
+                      )}
+                      {skipDays.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => setSkipDays([])}
+                          className="self-start text-[12px] text-[#0267ff] hover:underline"
+                        >
+                          Clear
+                        </button>
+                      )}
+                    </>
+                  ) : (
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="text-[14px] text-[#0a0a0a]">Skip every</span>
                     <div className="flex items-center border border-[#EAEAEA] rounded-[4px] bg-white overflow-hidden h-12">
@@ -1769,7 +1840,8 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                       {recurrenceRepeatUnit === 'week' ? 'weeks' : recurrenceRepeatUnit === 'month' ? 'months' : 'days'}
                     </span>
                   </div>
-                  {skipEveryN !== '' && (
+                  )}
+                  {recurrenceRepeatUnit !== 'day' && skipEveryN !== '' && (
                     <p className="text-[12px] text-[#4b535c] italic">
                       This schedule will be skipped every {skipEveryN}{' '}
                       {recurrenceRepeatUnit === 'week'
@@ -1781,7 +1853,7 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                             : 'days'}
                     </p>
                   )}
-                  {skipEveryN !== '' && (
+                  {recurrenceRepeatUnit !== 'day' && skipEveryN !== '' && (
                     <button
                       type="button"
                       onClick={() => setSkipEveryN('')}
@@ -1790,6 +1862,7 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                       Clear
                     </button>
                   )}
+                  </div>
                 </section>
 
                 <section className="flex flex-col gap-2">
