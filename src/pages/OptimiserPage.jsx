@@ -213,13 +213,45 @@ function NetworkStyleUploadIcon() {
   )
 }
 
-/** Product + geographic scope filters (include or exclude panel — separate instances for independent state). */
-function CreateScheduleScopeFilterPanel() {
+/** Product + geographic scope filters for create schedule scope selection. */
+function CreateScheduleScopeFilterPanel({
+  productScopeMode,
+  setProductScopeMode,
+  geoScopeMode,
+  setGeoScopeMode,
+}) {
+  const scopeModeToggleClass = (active) =>
+    active
+      ? 'bg-[#0267ff] text-white rounded-[4px] px-2.5 py-1 text-[12px] font-medium'
+      : 'bg-white text-[#4b535c] rounded-[4px] px-2.5 py-1 text-[12px] font-medium border border-[#e9eaeb]'
+
+  const renderScopeModeToggle = (mode, setMode) => (
+    <div className="flex border border-[#e9eaeb] rounded-[4px] overflow-hidden shrink-0">
+      <button
+        type="button"
+        onClick={() => setMode('include')}
+        className={scopeModeToggleClass(mode === 'include')}
+      >
+        Include
+      </button>
+      <button
+        type="button"
+        onClick={() => setMode('exclude')}
+        className={scopeModeToggleClass(mode === 'exclude')}
+      >
+        Exclude
+      </button>
+    </div>
+  )
+
   return (
     <div className="rounded-[4px] border border-[#e5e7eb] bg-[#fafafa] p-4 flex flex-col gap-6">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="flex flex-col gap-4">
-          <h4 className="text-[13px] font-medium text-[#0a0a0a] uppercase tracking-[0.04em]">Product scope</h4>
+          <div className="flex items-center justify-between gap-2">
+            <h4 className="text-[13px] font-medium text-[#0a0a0a] uppercase tracking-[0.04em]">Product scope</h4>
+            {renderScopeModeToggle(productScopeMode, setProductScopeMode)}
+          </div>
           <CreateScheduleScopeSelect
             label="Departments"
             placeholder="Select departments"
@@ -262,7 +294,10 @@ function CreateScheduleScopeFilterPanel() {
           </div>
         </div>
         <div className="flex flex-col gap-4">
-          <h4 className="text-[13px] font-medium text-[#0a0a0a] uppercase tracking-[0.04em]">Geographic scope</h4>
+          <div className="flex items-center justify-between gap-2">
+            <h4 className="text-[13px] font-medium text-[#0a0a0a] uppercase tracking-[0.04em]">Geographic scope</h4>
+            {renderScopeModeToggle(geoScopeMode, setGeoScopeMode)}
+          </div>
           <CreateScheduleScopeSelect
             label="Location Types"
             placeholder="Select location types"
@@ -692,6 +727,9 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
   const [editingScheduleEntry, setEditingScheduleEntry] = useState(null)
   const [drawerForm, setDrawerForm] = useState(DEFAULT_DRAWER_FORM)
   const [scheduleDrawerDays, setScheduleDrawerDays] = useState(() => ({ Wed: true, Sat: true }))
+  const [skipDates, setSkipDates] = useState([])
+  const [skipDatePickerOpen, setSkipDatePickerOpen] = useState(false)
+  const [skipDateDraft, setSkipDateDraft] = useState('')
   const [moduleDropdownOpen, setModuleDropdownOpen] = useState(false)
   const [entryReviewStatus, setEntryReviewStatus] = useState(() => ({
     'entry-1': 'upcoming',   // Replenishment
@@ -709,6 +747,18 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
   const hoverLeaveTimeoutRef = useRef(null)
   const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
   const toggleScheduleDay = (day) => setScheduleDrawerDays((prev) => ({ ...prev, [day]: !prev[day] }))
+  const formatSkipDateDisplay = (isoDate) => {
+    const [y, m, d] = isoDate.split('-')
+    return `${d}/${m}/${y}`
+  }
+  const confirmSkipDate = () => {
+    if (!skipDateDraft) return
+    const formatted = formatSkipDateDisplay(skipDateDraft)
+    setSkipDates((prev) => (prev.includes(formatted) ? prev : [...prev, formatted]))
+    setSkipDateDraft('')
+    setSkipDatePickerOpen(false)
+  }
+  const removeSkipDate = (date) => setSkipDates((prev) => prev.filter((d) => d !== date))
   const typeFilters = [
     { id: 'all', label: 'All', icon: null },
     { id: 'replenishment', label: 'Replenishment', icon: 'replenishment' },
@@ -725,12 +775,10 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
   const [activeStatusTab, setActiveStatusTab] = useState('next')
   const [expandedExceptionsScheduleId, setExpandedExceptionsScheduleId] = useState(null)
   const [isCreateSchedulePage, setIsCreateSchedulePage] = useState(false)
-  const [accordionOpen, setAccordionOpen] = useState({
-    details: true,
-    scope: false,
-    exceptions: false,
-  })
+  const [openSections, setOpenSections] = useState(['scope'])
   const [locationScopeOption, setLocationScopeOption] = useState('all')
+  const [productScopeMode, setProductScopeMode] = useState('include')
+  const [geoScopeMode, setGeoScopeMode] = useState('include')
   const [sourceLocationOption, setSourceLocationOption] = useState('central')
   const [selectedMovementTypes, setSelectedMovementTypes] = useState([])
   const [movementTypeDropdownOpen, setMovementTypeDropdownOpen] = useState(false)
@@ -759,6 +807,15 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
   const [recurrenceSubmissionDateYear, setRecurrenceSubmissionDateYear] = useState('')
   const [recurrenceSubmissionTime, setRecurrenceSubmissionTime] = useState('09:00')
   const [submissionDate, setSubmissionDate] = useState('')
+  const [skipEveryN, setSkipEveryN] = useState('')
+  const [workingDaysOnly, setWorkingDaysOnly] = useState(true)
+  const [skipDays, setSkipDays] = useState([])
+
+  useEffect(() => {
+    if (workingDaysOnly) {
+      setSkipDays((prev) => prev.filter((d) => d !== 'Sun' && d !== 'Sat'))
+    }
+  }, [workingDaysOnly])
   const reviewStatusFilterOptions = [
     { id: 'in review', label: 'In review' },
     { id: 'upcoming', label: 'Upcoming' },
@@ -984,12 +1041,10 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
     setIsCreateSchedulePage(false)
   }, [resetToRecommendationsLanding])
 
-  const toggleAccordion = (key) => {
-    setAccordionOpen({
-      details: key === 'details',
-      scope: key === 'scope',
-      exceptions: key === 'exceptions',
-    })
+  const toggleSection = (key) => {
+    setOpenSections((prev) =>
+      prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]
+    )
   }
 
   const toggleExceptionAccordion = (exceptionId) => {
@@ -1173,233 +1228,8 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
           <div className="border border-[#EAEAEA] rounded-[4px] bg-white overflow-hidden">
             <button
               type="button"
-              onClick={() => toggleAccordion('details')}
-              className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-[#f8f8f8] transition-colors"
-            >
-              <div className="flex flex-col gap-1">
-                <span className="text-[20px] font-medium text-[#212B36] leading-[150%]">
-                  Schedule details
-                </span>
-                <span className="text-[14px] font-normal text-[#4b535c]">
-                  Configure how you want your schedule to run
-                </span>
-              </div>
-              <IconChevronDown
-                className={`size-5 text-[#4b535c] transition-transform shrink-0 ${
-                  accordionOpen.details ? 'rotate-180' : ''
-                }`}
-              />
-            </button>
-            {accordionOpen.details && (
-              <div className="px-5 pb-6 pt-2 flex flex-col gap-6 border-t border-[#EAEAEA]">
-                <section className="flex flex-col gap-2">
-                  <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Name schedule</label>
-                  <input
-                    type="text"
-                    placeholder="Placeholder"
-                    value={drawerForm.name}
-                    onChange={(ev) =>
-                      setDrawerForm((f) => ({
-                        ...f,
-                        name: ev.target.value,
-                      }))
-                    }
-                    className="w-full h-14 px-4 rounded-[4px] border border-[#EAEAEA] bg-white text-[16px] text-[#0a0a0a] placeholder:text-[#9CA1AE]"
-                  />
-                  <p className="text-[12px] font-normal text-[#4b535c]">
-                    If not assigned, name will be given automatically
-                  </p>
-                </section>
-
-                <section className="flex flex-col gap-4">
-                  <p className="text-[14px] font-medium text-[#0a0a0a]">Scheduling Dates</p>
-
-                  <div className="flex flex-col gap-2">
-                    <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Repeat every</label>
-                    <div className="flex items-center gap-2">
-                      <div className="flex items-center border border-[#EAEAEA] rounded-[4px] bg-white overflow-hidden h-12">
-                        <input
-                          type="number"
-                          min={1}
-                          value={recurrenceRepeatEvery}
-                          onChange={(e) => setRecurrenceRepeatEvery(Math.max(1, parseInt(e.target.value, 10) || 1))}
-                          className="w-[80px] h-12 py-3 px-4 text-center text-[16px] text-[#0a0a0a] border-none focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                        />
-                        <div className="flex flex-col border-l border-[#EAEAEA] shrink-0">
-                          <button type="button" onClick={() => setRecurrenceRepeatEvery((v) => Math.max(1, v + 1))} className="h-6 w-7 flex items-center justify-center text-[#4b535c] hover:bg-[#f8f8f8] border-b border-[#EAEAEA]">+</button>
-                          <button type="button" onClick={() => setRecurrenceRepeatEvery((v) => Math.max(1, v - 1))} className="h-6 w-7 flex items-center justify-center text-[#4b535c] hover:bg-[#f8f8f8]">−</button>
-                        </div>
-                      </div>
-                      <div className="relative">
-                        <select
-                          value={recurrenceRepeatUnit}
-                          onChange={(e) => setRecurrenceRepeatUnit(e.target.value)}
-                          className="h-12 w-[120px] py-3 px-4 pr-10 rounded-[4px] border border-[#EAEAEA] bg-white text-[16px] text-[#0a0a0a] appearance-none"
-                        >
-                          <option value="day">day</option>
-                          <option value="week">week</option>
-                          <option value="month">month</option>
-                          <option value="year">year</option>
-                        </select>
-                        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
-                          <IconChevronDownSelect />
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {recurrenceRepeatUnit === 'week' && (
-                    <div className="flex flex-col gap-2">
-                      <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Submission day</label>
-                      <div className="flex gap-4">
-                        {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((letter, i) => (
-                          <button
-                            key={i}
-                            type="button"
-                            onClick={() => setRecurrenceSubmissionDayOfWeek(i)}
-                            className={`size-10 rounded-full flex items-center justify-center text-[14px] font-medium shrink-0 transition-colors ${
-                              recurrenceSubmissionDayOfWeek === i
-                                ? 'bg-[#0267FF] text-white'
-                                : 'bg-[#F8F8F8] text-[#4b535c] hover:bg-[#eee]'
-                            }`}
-                          >
-                            {letter}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  {recurrenceRepeatUnit === 'month' && (
-                    <div className="flex flex-col gap-2">
-                      <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Submission day</label>
-                      <div className="relative max-w-[200px]">
-                        <select
-                          value={recurrenceSubmissionDayOfMonth}
-                          onChange={(e) => setRecurrenceSubmissionDayOfMonth(Number(e.target.value))}
-                          className="w-full h-14 pl-4 pr-10 rounded-[4px] border border-[#EAEAEA] bg-white text-[16px] text-[#0a0a0a] appearance-none"
-                        >
-                          {Array.from({ length: 28 }, (_, i) => i + 1).map((d) => (
-                            <option key={d} value={d}>{d}</option>
-                          ))}
-                        </select>
-                        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
-                          <IconChevronDownSelect />
-                        </span>
-                      </div>
-                    </div>
-                  )}
-                  {recurrenceRepeatUnit === 'year' && (
-                    <div className="flex flex-col gap-2">
-                      <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Submission day</label>
-                      <input
-                        type="text"
-                        placeholder="e.g. Jun 10, 2026"
-                        value={recurrenceSubmissionDateYear}
-                        onChange={(e) => setRecurrenceSubmissionDateYear(e.target.value)}
-                        className="w-full max-w-[200px] h-14 px-4 rounded-[4px] border border-[#EAEAEA] bg-white text-[16px] text-[#0a0a0a] placeholder:text-[#9CA1AE]"
-                      />
-                    </div>
-                  )}
-
-                  <div className="flex flex-col gap-2">
-                    <div className="flex items-start gap-4">
-                      <div className="flex flex-col gap-2">
-                        <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Submission date</label>
-                        <input
-                          type="date"
-                          value={submissionDate}
-                          onChange={(e) => setSubmissionDate(e.target.value)}
-                          className="h-12 w-[200px] px-4 rounded-[4px] border border-[#EAEAEA] bg-white text-[16px] text-[#0a0a0a]"
-                        />
-                      </div>
-                      <div className="flex flex-col gap-2">
-                        <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Submission time</label>
-                        <div className="relative w-[200px]">
-                          <select
-                            value={recurrenceSubmissionTime}
-                            onChange={(e) => setRecurrenceSubmissionTime(e.target.value)}
-                            className="w-full h-12 py-3 px-4 pr-10 rounded-[4px] border border-[#E9EAEB] bg-white text-[16px] text-[#0a0a0a] appearance-none"
-                          >
-                            {Array.from({ length: 48 }, (_, i) => {
-                              const h = Math.floor(i / 2)
-                              const m = (i % 2) * 30
-                              const label = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
-                              return <option key={label} value={label}>{label}</option>
-                            })}
-                          </select>
-                          <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
-                            <IconChevronDownSelect />
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                    <p className="text-[12px] text-[#4b535c]">
-                      The deadline by which all approved recommendations will be submitted
-                    </p>
-                  </div>
-
-                  <p className="text-[14px] italic text-[#4b535c]">
-                    New scheduled recommendations available every{' '}
-                    {(() => {
-                      const unit = recurrenceRepeatUnit === 'week' ? 'weeks' : recurrenceRepeatUnit === 'month' ? 'months' : recurrenceRepeatUnit === 'year' ? 'years' : 'days'
-                      const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
-                      const dayName = dayNames[recurrenceSubmissionDayOfWeek]
-                      const timeStr = ` at ${recurrenceSubmissionTime}`
-                      let body = ''
-                      if (recurrenceRepeatUnit === 'week') {
-                        body = `${recurrenceRepeatEvery} ${recurrenceRepeatEvery === 1 ? unit.slice(0, -1) : unit} on ${dayName}`
-                      } else if (recurrenceRepeatUnit === 'month') {
-                        body = `${recurrenceRepeatEvery} ${recurrenceRepeatEvery === 1 ? 'month' : unit} on day ${recurrenceSubmissionDayOfMonth}`
-                      } else if (recurrenceRepeatUnit === 'year') {
-                        body = recurrenceSubmissionDateYear
-                          ? `${recurrenceRepeatEvery} ${recurrenceRepeatEvery === 1 ? 'year' : unit} on ${recurrenceSubmissionDateYear}`
-                          : `${recurrenceRepeatEvery} ${recurrenceRepeatEvery === 1 ? 'year' : unit}`
-                      } else {
-                        body = `${recurrenceRepeatEvery} ${recurrenceRepeatEvery === 1 ? 'day' : unit}`
-                      }
-                      const formatSubmissionDate = (iso) => {
-                        if (!iso) return ''
-                        const p = iso.split('-')
-                        if (p.length !== 3) return iso
-                        const [y, m, d] = p
-                        return `${d.padStart(2, '0')}/${m.padStart(2, '0')}/${y}`
-                      }
-                      const dateFmt = formatSubmissionDate(submissionDate)
-                      if (submissionDate && dateFmt) {
-                        return `${body}, next submission ${dateFmt} at ${recurrenceSubmissionTime}`
-                      }
-                      if (recurrenceRepeatUnit === 'year' && !recurrenceSubmissionDateYear) {
-                        return body
-                      }
-                      return `${body}${timeStr}`
-                    })()}
-                  </p>
-                </section>
-
-                <section className="flex flex-col gap-2">
-                  <p className="text-[14px] font-medium text-[#0a0a0a]">Notify users:</p>
-                  <input
-                    type="text"
-                    placeholder="Enter user emails"
-                    value={drawerForm.notify}
-                    onChange={(ev) =>
-                      setDrawerForm((f) => ({
-                        ...f,
-                        notify: ev.target.value,
-                      }))
-                    }
-                    className="w-full h-14 px-4 rounded-[4px] border border-[#EAEAEA] bg-white text-[16px] text-[#0a0a0a] placeholder:text-[#9CA1AE]"
-                  />
-                </section>
-              </div>
-            )}
-          </div>
-
-          <div className="border border-[#EAEAEA] rounded-[4px] bg-white overflow-hidden">
-            <button
-              type="button"
-              onClick={() => toggleAccordion('scope')}
-              className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-[#f8f8f8] transition-colors"
+              onClick={() => toggleSection('scope')}
+              className="w-full flex items-center justify-between px-5 py-4 text-left cursor-pointer hover:bg-[#f9fafb] transition-colors"
             >
               <div className="flex flex-col gap-1">
                 <span className="text-[20px] font-medium text-[#212B36] leading-[150%]">
@@ -1411,112 +1241,12 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
               </div>
               <IconChevronDown
                 className={`size-5 text-[#4b535c] transition-transform shrink-0 ${
-                  accordionOpen.scope ? 'rotate-180' : ''
+                  openSections.includes('scope') ? 'rotate-180' : ''
                 }`}
               />
             </button>
-            {accordionOpen.scope && (
+            {openSections.includes('scope') && (
               <div className="px-5 pb-6 pt-2 flex flex-col gap-6 border-t border-[#EAEAEA]">
-                <section className="flex flex-col gap-2">
-                  <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Movement type</label>
-                  <div className="relative">
-                    <button
-                      type="button"
-                      onClick={() => setMovementTypeDropdownOpen((o) => !o)}
-                      className="w-full h-14 pl-4 pr-10 rounded-[4px] border border-[#EAEAEA] bg-white text-[16px] text-[#0a0a0a] text-left flex items-center min-w-0"
-                    >
-                      <span
-                        className={`min-w-0 flex-1 truncate text-left ${selectedMovementTypes.length === 0 ? 'text-[#4b535c]' : 'text-[#0a0a0a]'}`}
-                      >
-                        {selectedMovementTypes.length === 0
-                          ? 'Select'
-                          : selectedMovementTypes
-                              .map((id) => MODULE_OPTIONS.find((o) => o.id === id)?.label)
-                              .filter(Boolean)
-                              .join(', ')}
-                      </span>
-                    </button>
-                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
-                      <IconChevronDownSelect />
-                    </span>
-                    {movementTypeDropdownOpen && (
-                      <>
-                        <div
-                          role="presentation"
-                          className="fixed inset-0 z-[29]"
-                          onClick={() => setMovementTypeDropdownOpen(false)}
-                          aria-hidden
-                        />
-                        <div
-                          className="absolute left-0 right-0 top-full z-[30] mt-1 rounded-[4px] border border-[#EAEAEA] bg-white shadow-[0px_8px_25px_0px_rgba(0,0,0,0.12)] overflow-hidden"
-                          onClick={(e) => e.stopPropagation()}
-                          role="presentation"
-                        >
-                          {MODULE_OPTIONS.map((opt) => (
-                            <label
-                              key={opt.id}
-                              className="px-4 py-3 flex items-center gap-3 hover:bg-[#f8f8f8] text-[14px] text-[#0a0a0a] cursor-pointer"
-                            >
-                              <input
-                                type="checkbox"
-                                checked={selectedMovementTypes.includes(opt.id)}
-                                onChange={() =>
-                                  setSelectedMovementTypes((prev) =>
-                                    prev.includes(opt.id)
-                                      ? prev.filter((id) => id !== opt.id)
-                                      : [...prev, opt.id]
-                                  )
-                                }
-                                className="size-4 rounded border-[#d1d5db] text-[#0267ff] focus:ring-[#0267ff] shrink-0"
-                              />
-                              <span>{opt.label}</span>
-                            </label>
-                          ))}
-                        </div>
-                      </>
-                    )}
-                  </div>
-                </section>
-
-                {selectedMovementTypes.includes('replenishment') && (
-                  <section className="flex flex-col gap-3">
-                    <div className="flex flex-col gap-1">
-                      <h3 className="text-[14px] font-medium text-[#0a0a0a]">Select your source location</h3>
-                      <p className="text-[12px] font-normal text-[#4b535c]">
-                        This is the location your products will be distributed from.
-                      </p>
-                    </div>
-                    <div className="flex flex-col gap-3">
-                      <label className="flex items-start gap-3 p-4 rounded-[10px] border border-[#e5e7eb] bg-white cursor-pointer hover:border-[#0267ff]/40 has-[:checked]:border-[#0267ff]">
-                        <input
-                          type="radio"
-                          name="sourceLocationOption"
-                          value="central"
-                          checked={sourceLocationOption === 'central'}
-                          onChange={() => setSourceLocationOption('central')}
-                          className="mt-1 size-4 shrink-0 border-[#e5e7eb] text-[#0267ff] focus:ring-[#0267ff]"
-                        />
-                        <div className="flex flex-col gap-1 min-w-0">
-                          <span className="text-[14px] font-medium text-[#0a0a0a]">Central</span>
-                        </div>
-                      </label>
-                      <label className="flex items-start gap-3 p-4 rounded-[10px] border border-[#e5e7eb] bg-white cursor-pointer hover:border-[#0267ff]/40 has-[:checked]:border-[#0267ff]">
-                        <input
-                          type="radio"
-                          name="sourceLocationOption"
-                          value="supplier"
-                          checked={sourceLocationOption === 'supplier'}
-                          onChange={() => setSourceLocationOption('supplier')}
-                          className="mt-1 size-4 shrink-0 border-[#e5e7eb] text-[#0267ff] focus:ring-[#0267ff]"
-                        />
-                        <div className="flex flex-col gap-1 min-w-0">
-                          <span className="text-[14px] font-medium text-[#0a0a0a]">Supplier</span>
-                        </div>
-                      </label>
-                    </div>
-                  </section>
-                )}
-
                 <section className="flex flex-col gap-3">
                   <h3 className="text-[14px] font-medium text-[#0a0a0a]">
                     Which products and locations does this schedule cover?
@@ -1555,40 +1285,15 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                         </span>
                       </div>
                     </label>
-                    <label className="flex items-start gap-3 p-4 rounded-[10px] border border-[#e5e7eb] bg-white cursor-pointer hover:border-[#0267ff]/40 has-[:checked]:border-[#0267ff]">
-                      <input
-                        type="radio"
-                        name="locationScopeOption"
-                        value="exclude"
-                        checked={locationScopeOption === 'exclude'}
-                        onChange={() => setLocationScopeOption('exclude')}
-                        className="mt-1 size-4 shrink-0 border-[#e5e7eb] text-[#0267ff] focus:ring-[#0267ff]"
-                      />
-                      <div className="flex flex-col gap-1 min-w-0">
-                        <span className="text-[14px] font-medium text-[#0a0a0a]">Exclude products and locations</span>
-                        <span className="text-[12px] font-normal text-[#4b535c]">
-                          Choose specific products, locations, regions, or countries to{' '}
-                          <strong className="font-semibold">exclude</strong> from this schedule.
-                        </span>
-                      </div>
-                    </label>
                   </div>
 
-                  {locationScopeOption !== 'all' && (
-                    <>
-                      <div
-                        className={locationScopeOption === 'select' ? '' : 'hidden'}
-                        aria-hidden={locationScopeOption !== 'select'}
-                      >
-                        <CreateScheduleScopeFilterPanel key="scope-filter-include" />
-                      </div>
-                      <div
-                        className={locationScopeOption === 'exclude' ? '' : 'hidden'}
-                        aria-hidden={locationScopeOption !== 'exclude'}
-                      >
-                        <CreateScheduleScopeFilterPanel key="scope-filter-exclude" />
-                      </div>
-                    </>
+                  {locationScopeOption === 'select' && (
+                    <CreateScheduleScopeFilterPanel
+                      productScopeMode={productScopeMode}
+                      setProductScopeMode={setProductScopeMode}
+                      geoScopeMode={geoScopeMode}
+                      setGeoScopeMode={setGeoScopeMode}
+                    />
                   )}
                 </section>
 
@@ -1713,11 +1418,503 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
             )}
           </div>
 
+          <div className="border border-[#EAEAEA] rounded-[4px] bg-white overflow-hidden">
+            <button
+              type="button"
+              onClick={() => toggleSection('details')}
+              className="w-full flex items-center justify-between px-5 py-4 text-left cursor-pointer hover:bg-[#f9fafb] transition-colors"
+            >
+              <div className="flex flex-col gap-1">
+                <span className="text-[20px] font-medium text-[#212B36] leading-[150%]">
+                  Schedule details
+                </span>
+                <span className="text-[14px] font-normal text-[#4b535c]">
+                  Configure how you want your schedule to run
+                </span>
+              </div>
+              <IconChevronDown
+                className={`size-5 text-[#4b535c] transition-transform shrink-0 ${
+                  openSections.includes('details') ? 'rotate-180' : ''
+                }`}
+              />
+            </button>
+            {openSections.includes('details') && (
+              <div className="px-5 pb-6 pt-2 flex flex-col gap-6 border-t border-[#EAEAEA]">
+                <section className="flex flex-col gap-2">
+                  <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Name schedule</label>
+                  <input
+                    type="text"
+                    placeholder="Placeholder"
+                    value={drawerForm.name}
+                    onChange={(ev) =>
+                      setDrawerForm((f) => ({
+                        ...f,
+                        name: ev.target.value,
+                      }))
+                    }
+                    className="w-full h-14 px-4 rounded-[4px] border border-[#EAEAEA] bg-white text-[16px] text-[#0a0a0a] placeholder:text-[#9CA1AE]"
+                  />
+                  <p className="text-[12px] font-normal text-[#4b535c]">
+                    If not assigned, name will be given automatically
+                  </p>
+                </section>
+
+                <section className="flex flex-col gap-2">
+                  <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Movement type</label>
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setMovementTypeDropdownOpen((o) => !o)}
+                      className="w-full h-14 pl-4 pr-10 rounded-[4px] border border-[#EAEAEA] bg-white text-[16px] text-[#0a0a0a] text-left flex items-center min-w-0"
+                    >
+                      <span
+                        className={`min-w-0 flex-1 truncate text-left ${selectedMovementTypes.length === 0 ? 'text-[#4b535c]' : 'text-[#0a0a0a]'}`}
+                      >
+                        {selectedMovementTypes.length === 0
+                          ? 'Select'
+                          : selectedMovementTypes
+                              .map((id) => MODULE_OPTIONS.find((o) => o.id === id)?.label)
+                              .filter(Boolean)
+                              .join(', ')}
+                      </span>
+                    </button>
+                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
+                      <IconChevronDownSelect />
+                    </span>
+                    {movementTypeDropdownOpen && (
+                      <>
+                        <div
+                          role="presentation"
+                          className="fixed inset-0 z-[29]"
+                          onClick={() => setMovementTypeDropdownOpen(false)}
+                          aria-hidden
+                        />
+                        <div
+                          className="absolute left-0 right-0 top-full z-[30] mt-1 rounded-[4px] border border-[#EAEAEA] bg-white shadow-[0px_8px_25px_0px_rgba(0,0,0,0.12)] overflow-hidden"
+                          onClick={(e) => e.stopPropagation()}
+                          role="presentation"
+                        >
+                          {MODULE_OPTIONS.map((opt) => (
+                            <label
+                              key={opt.id}
+                              className="px-4 py-3 flex items-center gap-3 hover:bg-[#f8f8f8] text-[14px] text-[#0a0a0a] cursor-pointer"
+                            >
+                              <input
+                                type="checkbox"
+                                checked={selectedMovementTypes.includes(opt.id)}
+                                onChange={() =>
+                                  setSelectedMovementTypes((prev) =>
+                                    prev.includes(opt.id)
+                                      ? prev.filter((id) => id !== opt.id)
+                                      : [...prev, opt.id]
+                                  )
+                                }
+                                className="size-4 rounded border-[#d1d5db] text-[#0267ff] focus:ring-[#0267ff] shrink-0"
+                              />
+                              <span>{opt.label}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </section>
+
+                {selectedMovementTypes.includes('replenishment') && (
+                  <section className="flex flex-col gap-3">
+                    <div className="flex flex-col gap-1">
+                      <h3 className="text-[14px] font-medium text-[#0a0a0a]">Select your source location</h3>
+                      <p className="text-[12px] font-normal text-[#4b535c]">
+                        Required for replenishment — this is the location stock will be distributed from.
+                      </p>
+                    </div>
+                    <div className="flex flex-col gap-3">
+                      <label className="flex items-start gap-3 p-4 rounded-[10px] border border-[#e5e7eb] bg-white cursor-pointer hover:border-[#0267ff]/40 has-[:checked]:border-[#0267ff]">
+                        <input
+                          type="radio"
+                          name="sourceLocationOption"
+                          value="central"
+                          checked={sourceLocationOption === 'central'}
+                          onChange={() => setSourceLocationOption('central')}
+                          className="mt-1 size-4 shrink-0 border-[#e5e7eb] text-[#0267ff] focus:ring-[#0267ff]"
+                        />
+                        <div className="flex flex-col gap-1 min-w-0">
+                          <span className="text-[14px] font-medium text-[#0a0a0a]">Central</span>
+                        </div>
+                      </label>
+                      <label className="flex items-start gap-3 p-4 rounded-[10px] border border-[#e5e7eb] bg-white cursor-pointer hover:border-[#0267ff]/40 has-[:checked]:border-[#0267ff]">
+                        <input
+                          type="radio"
+                          name="sourceLocationOption"
+                          value="supplier"
+                          checked={sourceLocationOption === 'supplier'}
+                          onChange={() => setSourceLocationOption('supplier')}
+                          className="mt-1 size-4 shrink-0 border-[#e5e7eb] text-[#0267ff] focus:ring-[#0267ff]"
+                        />
+                        <div className="flex flex-col gap-1 min-w-0">
+                          <span className="text-[14px] font-medium text-[#0a0a0a]">Supplier</span>
+                        </div>
+                      </label>
+                    </div>
+                  </section>
+                )}
+
+                <section className="flex flex-col gap-4">
+                  <p className="text-[14px] font-medium text-[#0a0a0a]">Scheduling Dates</p>
+
+                  <div className="flex flex-col gap-2">
+                    <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Repeat every</label>
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center border border-[#EAEAEA] rounded-[4px] bg-white overflow-hidden h-12">
+                        <input
+                          type="number"
+                          min={1}
+                          value={recurrenceRepeatEvery}
+                          onChange={(e) => setRecurrenceRepeatEvery(Math.max(1, parseInt(e.target.value, 10) || 1))}
+                          className="w-[80px] h-12 py-3 px-4 text-center text-[16px] text-[#0a0a0a] border-none focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                        />
+                        <div className="flex flex-col border-l border-[#EAEAEA] shrink-0">
+                          <button type="button" onClick={() => setRecurrenceRepeatEvery((v) => Math.max(1, v + 1))} className="h-6 w-7 flex items-center justify-center text-[#4b535c] hover:bg-[#f8f8f8] border-b border-[#EAEAEA]">+</button>
+                          <button type="button" onClick={() => setRecurrenceRepeatEvery((v) => Math.max(1, v - 1))} className="h-6 w-7 flex items-center justify-center text-[#4b535c] hover:bg-[#f8f8f8]">−</button>
+                        </div>
+                      </div>
+                      <div className="relative">
+                        <select
+                          value={recurrenceRepeatUnit}
+                          onChange={(e) => setRecurrenceRepeatUnit(e.target.value)}
+                          className="h-12 w-[120px] py-3 px-4 pr-10 rounded-[4px] border border-[#EAEAEA] bg-white text-[16px] text-[#0a0a0a] appearance-none"
+                        >
+                          <option value="day">day</option>
+                          <option value="week">week</option>
+                          <option value="month">month</option>
+                          <option value="year">year</option>
+                        </select>
+                        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
+                          <IconChevronDownSelect />
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {recurrenceRepeatUnit === 'day' && (
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex flex-col gap-1">
+                        <span className="text-[14px] text-[#0a0a0a]">Working days only</span>
+                        <span className="text-[12px] text-[#4b535c]">Schedule will only run on Monday–Friday</span>
+                      </div>
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-checked={workingDaysOnly}
+                        onClick={() => setWorkingDaysOnly((v) => !v)}
+                        className={`relative w-11 h-6 rounded-full transition-colors shrink-0 ${
+                          workingDaysOnly ? 'bg-[#0267ff]' : 'bg-[#e5e7eb]'
+                        }`}
+                      >
+                        <span
+                          className={`absolute top-1 left-1 size-4 rounded-full bg-white transition-transform ${
+                            workingDaysOnly ? 'translate-x-5' : 'translate-x-0'
+                          }`}
+                        />
+                      </button>
+                    </div>
+                  )}
+
+                  {recurrenceRepeatUnit === 'week' && (
+                    <div className="flex flex-col gap-2">
+                      <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Submission day</label>
+                      <div className="flex gap-4">
+                        {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((letter, i) => (
+                          <button
+                            key={i}
+                            type="button"
+                            onClick={() => setRecurrenceSubmissionDayOfWeek(i)}
+                            className={`size-10 rounded-full flex items-center justify-center text-[14px] font-medium shrink-0 transition-colors ${
+                              recurrenceSubmissionDayOfWeek === i
+                                ? 'bg-[#0267FF] text-white'
+                                : 'bg-[#F8F8F8] text-[#4b535c] hover:bg-[#eee]'
+                            }`}
+                          >
+                            {letter}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {recurrenceRepeatUnit === 'year' && (
+                    <div className="flex flex-col gap-2">
+                      <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Submission day</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Jun 10, 2026"
+                        value={recurrenceSubmissionDateYear}
+                        onChange={(e) => setRecurrenceSubmissionDateYear(e.target.value)}
+                        className="w-full max-w-[200px] h-14 px-4 rounded-[4px] border border-[#EAEAEA] bg-white text-[16px] text-[#0a0a0a] placeholder:text-[#9CA1AE]"
+                      />
+                    </div>
+                  )}
+
+                  <div className="flex flex-col gap-2">
+                    <div className="flex items-start gap-4">
+                      {recurrenceRepeatUnit !== 'day' && (
+                        <div className="flex flex-col gap-2">
+                          <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Submission date</label>
+                          <input
+                            type="date"
+                            value={submissionDate}
+                            onChange={(e) => setSubmissionDate(e.target.value)}
+                            className="h-12 w-[200px] px-4 rounded-[4px] border border-[#EAEAEA] bg-white text-[16px] text-[#0a0a0a]"
+                          />
+                        </div>
+                      )}
+                      <div className="flex flex-col gap-2">
+                        <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">
+                          {recurrenceRepeatUnit === 'day' ? 'Daily submission time' : 'Submission time'}
+                        </label>
+                        <div className="relative w-[200px]">
+                          <select
+                            value={recurrenceSubmissionTime}
+                            onChange={(e) => setRecurrenceSubmissionTime(e.target.value)}
+                            className="w-full h-12 py-3 px-4 pr-10 rounded-[4px] border border-[#E9EAEB] bg-white text-[16px] text-[#0a0a0a] appearance-none"
+                          >
+                            {Array.from({ length: 48 }, (_, i) => {
+                              const h = Math.floor(i / 2)
+                              const m = (i % 2) * 30
+                              const label = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
+                              return <option key={label} value={label}>{label}</option>
+                            })}
+                          </select>
+                          <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
+                            <IconChevronDownSelect />
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <p className="text-[12px] text-[#4b535c]">
+                      The deadline by which all approved recommendations will be submitted
+                    </p>
+                  </div>
+
+                  <p className="text-[14px] italic text-[#4b535c]">
+                    New scheduled recommendations available every{' '}
+                    {(() => {
+                      const unit = recurrenceRepeatUnit === 'week' ? 'weeks' : recurrenceRepeatUnit === 'month' ? 'months' : recurrenceRepeatUnit === 'year' ? 'years' : 'days'
+                      const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+                      const dayName = dayNames[recurrenceSubmissionDayOfWeek]
+                      const timeStr = ` at ${recurrenceSubmissionTime}`
+                      let body = ''
+                      if (recurrenceRepeatUnit === 'week') {
+                        body = `${recurrenceRepeatEvery} ${recurrenceRepeatEvery === 1 ? unit.slice(0, -1) : unit} on ${dayName}`
+                      } else if (recurrenceRepeatUnit === 'month') {
+                        body = `${recurrenceRepeatEvery} ${recurrenceRepeatEvery === 1 ? 'month' : unit} on day ${recurrenceSubmissionDayOfMonth}`
+                      } else if (recurrenceRepeatUnit === 'year') {
+                        body = recurrenceSubmissionDateYear
+                          ? `${recurrenceRepeatEvery} ${recurrenceRepeatEvery === 1 ? 'year' : unit} on ${recurrenceSubmissionDateYear}`
+                          : `${recurrenceRepeatEvery} ${recurrenceRepeatEvery === 1 ? 'year' : unit}`
+                      } else {
+                        body = `${recurrenceRepeatEvery} ${recurrenceRepeatEvery === 1 ? 'day' : unit}`
+                      }
+                      const formatSubmissionDate = (iso) => {
+                        if (!iso) return ''
+                        const p = iso.split('-')
+                        if (p.length !== 3) return iso
+                        const [y, m, d] = p
+                        return `${d.padStart(2, '0')}/${m.padStart(2, '0')}/${y}`
+                      }
+                      const dateFmt = formatSubmissionDate(submissionDate)
+                      if (submissionDate && dateFmt) {
+                        return `${body}, next submission ${dateFmt} at ${recurrenceSubmissionTime}`
+                      }
+                      if (recurrenceRepeatUnit === 'year' && !recurrenceSubmissionDateYear) {
+                        return body
+                      }
+                      return `${body}${timeStr}`
+                    })()}
+                  </p>
+                </section>
+
+                <section className="flex flex-col gap-3 p-4 border border-[#e9eaeb] rounded-[6px] bg-white">
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Skip occurrences</label>
+                    <p className="text-[12px] font-normal text-[#4b535c]">
+                      Use this if you want to temporarily run a different schedule — for example, to combine movement types or separate replenishment and rebalancing into one batch.
+                    </p>
+                  </div>
+                  <div className="flex flex-col gap-3">
+                  {recurrenceRepeatUnit === 'day' ? (
+                    <>
+                      <div className="flex flex-col gap-2">
+                        <span className="text-[14px] text-[#0a0a0a]">Skip on</span>
+                        {(() => {
+                          const skipDayOptions = workingDaysOnly
+                            ? [
+                                { label: 'M', value: 'Mon' },
+                                { label: 'T', value: 'Tue' },
+                                { label: 'W', value: 'Wed' },
+                                { label: 'T', value: 'Thu' },
+                                { label: 'F', value: 'Fri' },
+                              ]
+                            : [
+                                { label: 'S', value: 'Sun' },
+                                { label: 'M', value: 'Mon' },
+                                { label: 'T', value: 'Tue' },
+                                { label: 'W', value: 'Wed' },
+                                { label: 'T', value: 'Thu' },
+                                { label: 'F', value: 'Fri' },
+                                { label: 'S', value: 'Sat' },
+                              ]
+
+                          return (
+                            <div className="flex gap-4">
+                              {skipDayOptions.map(({ label, value }) => (
+                                <button
+                                  key={value}
+                                  type="button"
+                                  onClick={() =>
+                                    setSkipDays((prev) =>
+                                      prev.includes(value)
+                                        ? prev.filter((d) => d !== value)
+                                        : [...prev, value]
+                                    )
+                                  }
+                                  className={`size-10 rounded-full flex items-center justify-center text-[14px] font-medium shrink-0 transition-colors ${
+                                    skipDays.includes(value)
+                                      ? 'bg-[#0267FF] text-white'
+                                      : 'bg-[#F8F8F8] text-[#4b535c] hover:bg-[#eee]'
+                                  }`}
+                                >
+                                  {label}
+                                </button>
+                              ))}
+                            </div>
+                          )
+                        })()}
+                      </div>
+                      {skipDays.length > 0 && (
+                        <p className="text-[12px] text-[#4b535c] italic">
+                          This schedule will be skipped on{' '}
+                          {skipDays
+                            .map(
+                              (d) =>
+                                ({
+                                  Sun: 'Sunday',
+                                  Mon: 'Monday',
+                                  Tue: 'Tuesday',
+                                  Wed: 'Wednesday',
+                                  Thu: 'Thursday',
+                                  Fri: 'Friday',
+                                  Sat: 'Saturday',
+                                }[d] ?? d)
+                            )
+                            .join(', ')}
+                        </p>
+                      )}
+                      {skipDays.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => setSkipDays([])}
+                          className="self-start text-[12px] text-[#0267ff] hover:underline"
+                        >
+                          Clear
+                        </button>
+                      )}
+                    </>
+                  ) : (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-[14px] text-[#0a0a0a]">Skip every</span>
+                    <div className="flex items-center border border-[#EAEAEA] rounded-[4px] bg-white overflow-hidden h-12">
+                      <input
+                        type="number"
+                        min={2}
+                        value={skipEveryN}
+                        onChange={(e) => {
+                          const v = e.target.value
+                          if (v === '') {
+                            setSkipEveryN('')
+                            return
+                          }
+                          setSkipEveryN(String(Math.max(2, parseInt(v, 10) || 2)))
+                        }}
+                        className="w-[80px] h-12 py-3 px-4 text-center text-[16px] text-[#0a0a0a] border-none focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      />
+                      <div className="flex flex-col border-l border-[#EAEAEA] shrink-0">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setSkipEveryN((v) =>
+                              String(Math.max(2, (v === '' ? 1 : parseInt(v, 10) || 1) + 1))
+                            )
+                          }
+                          className="h-6 w-7 flex items-center justify-center text-[#4b535c] hover:bg-[#f8f8f8] border-b border-[#EAEAEA]"
+                        >
+                          +
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setSkipEveryN((v) =>
+                              String(Math.max(2, (v === '' ? 2 : parseInt(v, 10) || 2) - 1))
+                            )
+                          }
+                          className="h-6 w-7 flex items-center justify-center text-[#4b535c] hover:bg-[#f8f8f8]"
+                        >
+                          −
+                        </button>
+                      </div>
+                    </div>
+                    <span className="text-[14px] text-[#4b535c] px-3 py-2 rounded-[4px] border border-[#e9eaeb] bg-[#f3f4f6]">
+                      {recurrenceRepeatUnit === 'week' ? 'weeks' : recurrenceRepeatUnit === 'month' ? 'months' : 'days'}
+                    </span>
+                  </div>
+                  )}
+                  {recurrenceRepeatUnit !== 'day' && skipEveryN !== '' && (
+                    <p className="text-[12px] text-[#4b535c] italic">
+                      This schedule will be skipped every {skipEveryN}{' '}
+                      {recurrenceRepeatUnit === 'week'
+                        ? 'weeks'
+                        : recurrenceRepeatUnit === 'month'
+                          ? 'months'
+                          : recurrenceRepeatUnit === 'year'
+                            ? 'years'
+                            : 'days'}
+                    </p>
+                  )}
+                  {recurrenceRepeatUnit !== 'day' && skipEveryN !== '' && (
+                    <button
+                      type="button"
+                      onClick={() => setSkipEveryN('')}
+                      className="self-start text-[12px] text-[#0267ff] hover:underline"
+                    >
+                      Clear
+                    </button>
+                  )}
+                  </div>
+                </section>
+
+                <section className="flex flex-col gap-2">
+                  <p className="text-[14px] font-medium text-[#0a0a0a]">Notify users:</p>
+                  <input
+                    type="text"
+                    placeholder="Enter user emails"
+                    value={drawerForm.notify}
+                    onChange={(ev) =>
+                      setDrawerForm((f) => ({
+                        ...f,
+                        notify: ev.target.value,
+                      }))
+                    }
+                    className="w-full h-14 px-4 rounded-[4px] border border-[#EAEAEA] bg-white text-[16px] text-[#0a0a0a] placeholder:text-[#9CA1AE]"
+                  />
+                </section>
+              </div>
+            )}
+          </div>
+
           <div className="border border-[#EAEAEA] rounded-[4px] bg-white overflow-visible">
             <button
               type="button"
-              onClick={() => toggleAccordion('exceptions')}
-              className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-[#f8f8f8] transition-colors"
+              onClick={() => toggleSection('exceptions')}
+              className="w-full flex items-center justify-between px-5 py-4 text-left cursor-pointer hover:bg-[#f9fafb] transition-colors"
             >
               <div className="flex flex-col gap-1">
                 <span className="text-[20px] font-medium text-[#212B36] leading-[150%]">
@@ -1733,11 +1930,11 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
               </div>
               <IconChevronDown
                 className={`size-5 text-[#4b535c] transition-transform shrink-0 ${
-                  accordionOpen.exceptions ? 'rotate-180' : ''
+                  openSections.includes('exceptions') ? 'rotate-180' : ''
                 }`}
               />
             </button>
-            {accordionOpen.exceptions && (
+            {openSections.includes('exceptions') && (
               <div className="px-5 pb-6 pt-2 flex flex-col gap-6 border-t border-[#EAEAEA]">
                 <section className="flex flex-col gap-3">
                   <h3 className="text-[14px] font-medium text-[#0a0a0a]">Approval mode</h3>
@@ -2852,6 +3049,56 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none"><IconCalendarSidebar className="size-4" /></span>
                 </div>
                 <p className="text-[12px] font-normal text-[#4b535c]">If left empty, rebalancing will be repeating indefinitely</p>
+              </section>
+              <section className="flex flex-col gap-2">
+                <label className="text-[14px] font-normal text-[#4b535c]">Skip dates</label>
+                <p className="text-[12px] font-normal text-[#4b535c]">Pause this schedule for specific upcoming dates</p>
+                {skipDates.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {skipDates.map((date) => (
+                      <span
+                        key={date}
+                        className="inline-flex items-center gap-1.5 rounded-[4px] border border-[#e9eaeb] bg-white px-2.5 py-1 text-[14px] text-[#0a0a0a]"
+                      >
+                        {date}
+                        <button
+                          type="button"
+                          onClick={() => removeSkipDate(date)}
+                          className="text-[#4b535c] hover:text-[#0a0a0a] leading-none"
+                          aria-label={`Remove skip date ${date}`}
+                        >
+                          ×
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+                {skipDatePickerOpen ? (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <input
+                      type="date"
+                      value={skipDateDraft}
+                      onChange={(ev) => setSkipDateDraft(ev.target.value)}
+                      className="h-10 px-3 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#0a0a0a]"
+                    />
+                    <button
+                      type="button"
+                      onClick={confirmSkipDate}
+                      disabled={!skipDateDraft}
+                      className="h-10 px-4 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] font-medium text-[#0a0a0a] hover:bg-[#f3f4f6] disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Add
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setSkipDatePickerOpen(true)}
+                    className="self-start h-10 px-4 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] font-medium text-[#0a0a0a] hover:bg-[#f3f4f6]"
+                  >
+                    Add date
+                  </button>
+                )}
               </section>
               <section className="flex flex-col gap-2">
                 <p className="text-[14px] font-medium text-[#0a0a0a]">Notify users:</p>
