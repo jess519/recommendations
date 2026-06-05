@@ -810,6 +810,12 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
   const [skipEveryN, setSkipEveryN] = useState('')
   const [workingDaysOnly, setWorkingDaysOnly] = useState(false)
   const [skipDays, setSkipDays] = useState([])
+
+  useEffect(() => {
+    if (workingDaysOnly) {
+      setSkipDays((prev) => prev.filter((d) => d !== 'Sun' && d !== 'Sat'))
+    }
+  }, [workingDaysOnly])
   const reviewStatusFilterOptions = [
     { id: 'in review', label: 'In review' },
     { id: 'upcoming', label: 'Upcoming' },
@@ -1635,25 +1641,6 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                       </div>
                     </div>
                   )}
-                  {recurrenceRepeatUnit === 'month' && (
-                    <div className="flex flex-col gap-2">
-                      <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Submission day</label>
-                      <div className="relative max-w-[200px]">
-                        <select
-                          value={recurrenceSubmissionDayOfMonth}
-                          onChange={(e) => setRecurrenceSubmissionDayOfMonth(Number(e.target.value))}
-                          className="w-full h-14 pl-4 pr-10 rounded-[4px] border border-[#EAEAEA] bg-white text-[16px] text-[#0a0a0a] appearance-none"
-                        >
-                          {Array.from({ length: 28 }, (_, i) => i + 1).map((d) => (
-                            <option key={d} value={d}>{d}</option>
-                          ))}
-                        </select>
-                        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
-                          <IconChevronDownSelect />
-                        </span>
-                      </div>
-                    </div>
-                  )}
                   {recurrenceRepeatUnit === 'year' && (
                     <div className="flex flex-col gap-2">
                       <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Submission day</label>
@@ -1669,17 +1656,21 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
 
                   <div className="flex flex-col gap-2">
                     <div className="flex items-start gap-4">
+                      {recurrenceRepeatUnit !== 'day' && (
+                        <div className="flex flex-col gap-2">
+                          <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Submission date</label>
+                          <input
+                            type="date"
+                            value={submissionDate}
+                            onChange={(e) => setSubmissionDate(e.target.value)}
+                            className="h-12 w-[200px] px-4 rounded-[4px] border border-[#EAEAEA] bg-white text-[16px] text-[#0a0a0a]"
+                          />
+                        </div>
+                      )}
                       <div className="flex flex-col gap-2">
-                        <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Submission date</label>
-                        <input
-                          type="date"
-                          value={submissionDate}
-                          onChange={(e) => setSubmissionDate(e.target.value)}
-                          className="h-12 w-[200px] px-4 rounded-[4px] border border-[#EAEAEA] bg-white text-[16px] text-[#0a0a0a]"
-                        />
-                      </div>
-                      <div className="flex flex-col gap-2">
-                        <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Submission time</label>
+                        <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">
+                          {recurrenceRepeatUnit === 'day' ? 'Daily submission time' : 'Submission time'}
+                        </label>
                         <div className="relative w-[200px]">
                           <select
                             value={recurrenceSubmissionTime}
@@ -1755,22 +1746,41 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                       <div className="flex flex-col gap-2">
                         <span className="text-[14px] text-[#0a0a0a]">Skip on</span>
                         <div className="flex gap-4">
-                          {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((letter, i) => (
+                          {(workingDaysOnly
+                            ? [
+                                { label: 'M', value: 'Mon' },
+                                { label: 'T', value: 'Tue' },
+                                { label: 'W', value: 'Wed' },
+                                { label: 'T', value: 'Thu' },
+                                { label: 'F', value: 'Fri' },
+                              ]
+                            : [
+                                { label: 'S', value: 'Sun' },
+                                { label: 'M', value: 'Mon' },
+                                { label: 'T', value: 'Tue' },
+                                { label: 'W', value: 'Wed' },
+                                { label: 'T', value: 'Thu' },
+                                { label: 'F', value: 'Fri' },
+                                { label: 'S', value: 'Sat' },
+                              ]
+                          ).map(({ label, value }) => (
                             <button
-                              key={i}
+                              key={value}
                               type="button"
                               onClick={() =>
                                 setSkipDays((prev) =>
-                                  prev.includes(i) ? prev.filter((d) => d !== i) : [...prev, i].sort((a, b) => a - b)
+                                  prev.includes(value)
+                                    ? prev.filter((d) => d !== value)
+                                    : [...prev, value]
                                 )
                               }
                               className={`size-10 rounded-full flex items-center justify-center text-[14px] font-medium shrink-0 transition-colors ${
-                                skipDays.includes(i)
+                                skipDays.includes(value)
                                   ? 'bg-[#0267FF] text-white'
                                   : 'bg-[#F8F8F8] text-[#4b535c] hover:bg-[#eee]'
                               }`}
                             >
-                              {letter}
+                              {label}
                             </button>
                           ))}
                         </div>
@@ -1779,7 +1789,18 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                         <p className="text-[12px] text-[#4b535c] italic">
                           This schedule will be skipped on{' '}
                           {skipDays
-                            .map((i) => ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][i])
+                            .map(
+                              (d) =>
+                                ({
+                                  Sun: 'Sunday',
+                                  Mon: 'Monday',
+                                  Tue: 'Tuesday',
+                                  Wed: 'Wednesday',
+                                  Thu: 'Thursday',
+                                  Fri: 'Friday',
+                                  Sat: 'Saturday',
+                                }[d] ?? d)
+                            )
                             .join(', ')}
                         </p>
                       )}
