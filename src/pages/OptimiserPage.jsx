@@ -740,11 +740,7 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
   const [activeStatusTab, setActiveStatusTab] = useState('next')
   const [expandedExceptionsScheduleId, setExpandedExceptionsScheduleId] = useState(null)
   const [isCreateSchedulePage, setIsCreateSchedulePage] = useState(false)
-  const [accordionOpen, setAccordionOpen] = useState({
-    details: true,
-    scope: false,
-    exceptions: false,
-  })
+  const [openSections, setOpenSections] = useState(['scope'])
   const [locationScopeOption, setLocationScopeOption] = useState('all')
   const [sourceLocationOption, setSourceLocationOption] = useState('central')
   const [selectedMovementTypes, setSelectedMovementTypes] = useState([])
@@ -1000,12 +996,10 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
     setIsCreateSchedulePage(false)
   }, [resetToRecommendationsLanding])
 
-  const toggleAccordion = (key) => {
-    setAccordionOpen({
-      details: key === 'details',
-      scope: key === 'scope',
-      exceptions: key === 'exceptions',
-    })
+  const toggleSection = (key) => {
+    setOpenSections((prev) =>
+      prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]
+    )
   }
 
   const toggleExceptionAccordion = (exceptionId) => {
@@ -1189,8 +1183,226 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
           <div className="border border-[#EAEAEA] rounded-[4px] bg-white overflow-hidden">
             <button
               type="button"
-              onClick={() => toggleAccordion('details')}
-              className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-[#f8f8f8] transition-colors"
+              onClick={() => toggleSection('scope')}
+              className="w-full flex items-center justify-between px-5 py-4 text-left cursor-pointer hover:bg-[#f9fafb] transition-colors"
+            >
+              <div className="flex flex-col gap-1">
+                <span className="text-[20px] font-medium text-[#212B36] leading-[150%]">
+                  Scope
+                </span>
+                <span className="text-[14px] font-normal text-[#4b535c]">
+                  Define the products, locations, and network for this schedule.
+                </span>
+              </div>
+              <IconChevronDown
+                className={`size-5 text-[#4b535c] transition-transform shrink-0 ${
+                  openSections.includes('scope') ? 'rotate-180' : ''
+                }`}
+              />
+            </button>
+            {openSections.includes('scope') && (
+              <div className="px-5 pb-6 pt-2 flex flex-col gap-6 border-t border-[#EAEAEA]">
+                <section className="flex flex-col gap-3">
+                  <h3 className="text-[14px] font-medium text-[#0a0a0a]">
+                    Which products and locations does this schedule cover?
+                  </h3>
+                  <div className="flex flex-col gap-3">
+                    <label className="flex items-start gap-3 p-4 rounded-[10px] border border-[#e5e7eb] bg-white cursor-pointer hover:border-[#0267ff]/40 has-[:checked]:border-[#0267ff]">
+                      <input
+                        type="radio"
+                        name="locationScopeOption"
+                        value="all"
+                        checked={locationScopeOption === 'all'}
+                        onChange={() => setLocationScopeOption('all')}
+                        className="mt-1 size-4 shrink-0 border-[#e5e7eb] text-[#0267ff] focus:ring-[#0267ff]"
+                      />
+                      <div className="flex flex-col gap-1 min-w-0">
+                        <span className="text-[14px] font-medium text-[#0a0a0a]">All products and locations</span>
+                        <span className="text-[12px] font-normal text-[#4b535c]">
+                          Sol will evaluate your entire product catalogue and network.
+                        </span>
+                      </div>
+                    </label>
+                    <label className="flex items-start gap-3 p-4 rounded-[10px] border border-[#e5e7eb] bg-white cursor-pointer hover:border-[#0267ff]/40 has-[:checked]:border-[#0267ff]">
+                      <input
+                        type="radio"
+                        name="locationScopeOption"
+                        value="select"
+                        checked={locationScopeOption === 'select'}
+                        onChange={() => setLocationScopeOption('select')}
+                        className="mt-1 size-4 shrink-0 border-[#e5e7eb] text-[#0267ff] focus:ring-[#0267ff]"
+                      />
+                      <div className="flex flex-col gap-1 min-w-0">
+                        <span className="text-[14px] font-medium text-[#0a0a0a]">Select products and locations</span>
+                        <span className="text-[12px] font-normal text-[#4b535c]">
+                          Choose specific products, locations, regions, or countries to{' '}
+                          <strong className="font-semibold">include</strong> in this schedule.
+                        </span>
+                      </div>
+                    </label>
+                    <label className="flex items-start gap-3 p-4 rounded-[10px] border border-[#e5e7eb] bg-white cursor-pointer hover:border-[#0267ff]/40 has-[:checked]:border-[#0267ff]">
+                      <input
+                        type="radio"
+                        name="locationScopeOption"
+                        value="exclude"
+                        checked={locationScopeOption === 'exclude'}
+                        onChange={() => setLocationScopeOption('exclude')}
+                        className="mt-1 size-4 shrink-0 border-[#e5e7eb] text-[#0267ff] focus:ring-[#0267ff]"
+                      />
+                      <div className="flex flex-col gap-1 min-w-0">
+                        <span className="text-[14px] font-medium text-[#0a0a0a]">Exclude products and locations</span>
+                        <span className="text-[12px] font-normal text-[#4b535c]">
+                          Choose specific products, locations, regions, or countries to{' '}
+                          <strong className="font-semibold">exclude</strong> from this schedule.
+                        </span>
+                      </div>
+                    </label>
+                  </div>
+
+                  {locationScopeOption !== 'all' && (
+                    <>
+                      <div
+                        className={locationScopeOption === 'select' ? '' : 'hidden'}
+                        aria-hidden={locationScopeOption !== 'select'}
+                      >
+                        <CreateScheduleScopeFilterPanel key="scope-filter-include" />
+                      </div>
+                      <div
+                        className={locationScopeOption === 'exclude' ? '' : 'hidden'}
+                        aria-hidden={locationScopeOption !== 'exclude'}
+                      >
+                        <CreateScheduleScopeFilterPanel key="scope-filter-exclude" />
+                      </div>
+                    </>
+                  )}
+                </section>
+
+                <div className="border-t border-[#e5e7eb] pt-5 mt-5 grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <section className="flex flex-col gap-2 min-w-0">
+                    <h3 className="text-[14px] font-medium text-[#0a0a0a]">Network</h3>
+                    <p className="text-[13px] text-[#4b535c] max-w-[600px]">
+                      We&apos;ll default to your global network set-up in parameters. If the trip configuration or
+                      constraints are different for this schedule, download the template for your location scope, update
+                      it, and upload the specific configuration.
+                    </p>
+                    <div className="flex items-center gap-3 mt-3">
+                      <button
+                        type="button"
+                        className="h-10 px-5 rounded-[6px] bg-[#0267FF] text-white text-[14px] font-medium hover:bg-[#0252cc] flex items-center gap-2"
+                      >
+                        <svg
+                          width="16"
+                          height="16"
+                          viewBox="0 0 16 16"
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="shrink-0"
+                          aria-hidden
+                        >
+                          <path
+                            d="M8 3.5v6M8 9.5l-2.5 2.5M8 9.5l2.5 2.5"
+                            stroke="currentColor"
+                            strokeWidth="1.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                          <path d="M3.5 13h9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                        </svg>
+                        Download template
+                      </button>
+                      <button
+                        type="button"
+                        className="h-10 px-5 rounded-[6px] border border-[#E9EAEB] bg-white text-[14px] font-medium text-[#0a0a0a] hover:bg-[#f8f8f8] flex items-center gap-2"
+                      >
+                        <svg
+                          width="16"
+                          height="16"
+                          viewBox="0 0 16 16"
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="shrink-0"
+                          aria-hidden
+                        >
+                          <path
+                            d="M8 11.5V4M8 4L5.5 6.5M8 4L10.5 6.5"
+                            stroke="currentColor"
+                            strokeWidth="1.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                          <path d="M3.5 13h9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                        </svg>
+                        Upload
+                      </button>
+                    </div>
+                  </section>
+                  <section className="flex flex-col gap-2 min-w-0">
+                    <h3 className="text-[14px] font-medium text-[#0a0a0a]">Trip capacity</h3>
+                    <p className="text-[13px] text-[#4b535c] max-w-[600px]">
+                      We&apos;ll default to your global trip capacity set in parameters. If trip capacity is different
+                      for this schedule, download the template, update it, and upload the specific configuration.
+                    </p>
+                    <div className="flex items-center gap-3 mt-3">
+                      <button
+                        type="button"
+                        className="h-10 px-5 rounded-[6px] bg-[#0267FF] text-white text-[14px] font-medium hover:bg-[#0252cc] flex items-center gap-2"
+                      >
+                        <svg
+                          width="16"
+                          height="16"
+                          viewBox="0 0 16 16"
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="shrink-0"
+                          aria-hidden
+                        >
+                          <path
+                            d="M8 3.5v6M8 9.5l-2.5 2.5M8 9.5l2.5 2.5"
+                            stroke="currentColor"
+                            strokeWidth="1.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                          <path d="M3.5 13h9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                        </svg>
+                        Download template
+                      </button>
+                      <button
+                        type="button"
+                        className="h-10 px-5 rounded-[6px] border border-[#E9EAEB] bg-white text-[14px] font-medium text-[#0a0a0a] hover:bg-[#f8f8f8] flex items-center gap-2"
+                      >
+                        <svg
+                          width="16"
+                          height="16"
+                          viewBox="0 0 16 16"
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="shrink-0"
+                          aria-hidden
+                        >
+                          <path
+                            d="M8 11.5V4M8 4L5.5 6.5M8 4L10.5 6.5"
+                            stroke="currentColor"
+                            strokeWidth="1.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                          <path d="M3.5 13h9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                        </svg>
+                        Upload
+                      </button>
+                    </div>
+                  </section>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="border border-[#EAEAEA] rounded-[4px] bg-white overflow-hidden">
+            <button
+              type="button"
+              onClick={() => toggleSection('details')}
+              className="w-full flex items-center justify-between px-5 py-4 text-left cursor-pointer hover:bg-[#f9fafb] transition-colors"
             >
               <div className="flex flex-col gap-1">
                 <span className="text-[20px] font-medium text-[#212B36] leading-[150%]">
@@ -1202,11 +1414,11 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
               </div>
               <IconChevronDown
                 className={`size-5 text-[#4b535c] transition-transform shrink-0 ${
-                  accordionOpen.details ? 'rotate-180' : ''
+                  openSections.includes('details') ? 'rotate-180' : ''
                 }`}
               />
             </button>
-            {accordionOpen.details && (
+            {openSections.includes('details') && (
               <div className="px-5 pb-6 pt-2 flex flex-col gap-6 border-t border-[#EAEAEA]">
                 <section className="flex flex-col gap-2">
                   <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Name schedule</label>
@@ -1226,6 +1438,106 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                     If not assigned, name will be given automatically
                   </p>
                 </section>
+
+                <section className="flex flex-col gap-2">
+                  <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Movement type</label>
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setMovementTypeDropdownOpen((o) => !o)}
+                      className="w-full h-14 pl-4 pr-10 rounded-[4px] border border-[#EAEAEA] bg-white text-[16px] text-[#0a0a0a] text-left flex items-center min-w-0"
+                    >
+                      <span
+                        className={`min-w-0 flex-1 truncate text-left ${selectedMovementTypes.length === 0 ? 'text-[#4b535c]' : 'text-[#0a0a0a]'}`}
+                      >
+                        {selectedMovementTypes.length === 0
+                          ? 'Select'
+                          : selectedMovementTypes
+                              .map((id) => MODULE_OPTIONS.find((o) => o.id === id)?.label)
+                              .filter(Boolean)
+                              .join(', ')}
+                      </span>
+                    </button>
+                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
+                      <IconChevronDownSelect />
+                    </span>
+                    {movementTypeDropdownOpen && (
+                      <>
+                        <div
+                          role="presentation"
+                          className="fixed inset-0 z-[29]"
+                          onClick={() => setMovementTypeDropdownOpen(false)}
+                          aria-hidden
+                        />
+                        <div
+                          className="absolute left-0 right-0 top-full z-[30] mt-1 rounded-[4px] border border-[#EAEAEA] bg-white shadow-[0px_8px_25px_0px_rgba(0,0,0,0.12)] overflow-hidden"
+                          onClick={(e) => e.stopPropagation()}
+                          role="presentation"
+                        >
+                          {MODULE_OPTIONS.map((opt) => (
+                            <label
+                              key={opt.id}
+                              className="px-4 py-3 flex items-center gap-3 hover:bg-[#f8f8f8] text-[14px] text-[#0a0a0a] cursor-pointer"
+                            >
+                              <input
+                                type="checkbox"
+                                checked={selectedMovementTypes.includes(opt.id)}
+                                onChange={() =>
+                                  setSelectedMovementTypes((prev) =>
+                                    prev.includes(opt.id)
+                                      ? prev.filter((id) => id !== opt.id)
+                                      : [...prev, opt.id]
+                                  )
+                                }
+                                className="size-4 rounded border-[#d1d5db] text-[#0267ff] focus:ring-[#0267ff] shrink-0"
+                              />
+                              <span>{opt.label}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </section>
+
+                {selectedMovementTypes.includes('replenishment') && (
+                  <section className="flex flex-col gap-3">
+                    <div className="flex flex-col gap-1">
+                      <h3 className="text-[14px] font-medium text-[#0a0a0a]">Select your source location</h3>
+                      <p className="text-[12px] font-normal text-[#4b535c]">
+                        Required for replenishment — this is the location stock will be distributed from.
+                      </p>
+                    </div>
+                    <div className="flex flex-col gap-3">
+                      <label className="flex items-start gap-3 p-4 rounded-[10px] border border-[#e5e7eb] bg-white cursor-pointer hover:border-[#0267ff]/40 has-[:checked]:border-[#0267ff]">
+                        <input
+                          type="radio"
+                          name="sourceLocationOption"
+                          value="central"
+                          checked={sourceLocationOption === 'central'}
+                          onChange={() => setSourceLocationOption('central')}
+                          className="mt-1 size-4 shrink-0 border-[#e5e7eb] text-[#0267ff] focus:ring-[#0267ff]"
+                        />
+                        <div className="flex flex-col gap-1 min-w-0">
+                          <span className="text-[14px] font-medium text-[#0a0a0a]">Central</span>
+                        </div>
+                      </label>
+                      <label className="flex items-start gap-3 p-4 rounded-[10px] border border-[#e5e7eb] bg-white cursor-pointer hover:border-[#0267ff]/40 has-[:checked]:border-[#0267ff]">
+                        <input
+                          type="radio"
+                          name="sourceLocationOption"
+                          value="supplier"
+                          checked={sourceLocationOption === 'supplier'}
+                          onChange={() => setSourceLocationOption('supplier')}
+                          className="mt-1 size-4 shrink-0 border-[#e5e7eb] text-[#0267ff] focus:ring-[#0267ff]"
+                        />
+                        <div className="flex flex-col gap-1 min-w-0">
+                          <span className="text-[14px] font-medium text-[#0a0a0a]">Supplier</span>
+                        </div>
+                      </label>
+                    </div>
+                  </section>
+                )}
 
                 <section className="flex flex-col gap-4">
                   <p className="text-[14px] font-medium text-[#0a0a0a]">Scheduling Dates</p>
@@ -1487,329 +1799,11 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
             )}
           </div>
 
-          <div className="border border-[#EAEAEA] rounded-[4px] bg-white overflow-hidden">
-            <button
-              type="button"
-              onClick={() => toggleAccordion('scope')}
-              className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-[#f8f8f8] transition-colors"
-            >
-              <div className="flex flex-col gap-1">
-                <span className="text-[20px] font-medium text-[#212B36] leading-[150%]">
-                  Scope
-                </span>
-                <span className="text-[14px] font-normal text-[#4b535c]">
-                  Define the products, locations, and network for this schedule.
-                </span>
-              </div>
-              <IconChevronDown
-                className={`size-5 text-[#4b535c] transition-transform shrink-0 ${
-                  accordionOpen.scope ? 'rotate-180' : ''
-                }`}
-              />
-            </button>
-            {accordionOpen.scope && (
-              <div className="px-5 pb-6 pt-2 flex flex-col gap-6 border-t border-[#EAEAEA]">
-                <section className="flex flex-col gap-2">
-                  <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Movement type</label>
-                  <div className="relative">
-                    <button
-                      type="button"
-                      onClick={() => setMovementTypeDropdownOpen((o) => !o)}
-                      className="w-full h-14 pl-4 pr-10 rounded-[4px] border border-[#EAEAEA] bg-white text-[16px] text-[#0a0a0a] text-left flex items-center min-w-0"
-                    >
-                      <span
-                        className={`min-w-0 flex-1 truncate text-left ${selectedMovementTypes.length === 0 ? 'text-[#4b535c]' : 'text-[#0a0a0a]'}`}
-                      >
-                        {selectedMovementTypes.length === 0
-                          ? 'Select'
-                          : selectedMovementTypes
-                              .map((id) => MODULE_OPTIONS.find((o) => o.id === id)?.label)
-                              .filter(Boolean)
-                              .join(', ')}
-                      </span>
-                    </button>
-                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
-                      <IconChevronDownSelect />
-                    </span>
-                    {movementTypeDropdownOpen && (
-                      <>
-                        <div
-                          role="presentation"
-                          className="fixed inset-0 z-[29]"
-                          onClick={() => setMovementTypeDropdownOpen(false)}
-                          aria-hidden
-                        />
-                        <div
-                          className="absolute left-0 right-0 top-full z-[30] mt-1 rounded-[4px] border border-[#EAEAEA] bg-white shadow-[0px_8px_25px_0px_rgba(0,0,0,0.12)] overflow-hidden"
-                          onClick={(e) => e.stopPropagation()}
-                          role="presentation"
-                        >
-                          {MODULE_OPTIONS.map((opt) => (
-                            <label
-                              key={opt.id}
-                              className="px-4 py-3 flex items-center gap-3 hover:bg-[#f8f8f8] text-[14px] text-[#0a0a0a] cursor-pointer"
-                            >
-                              <input
-                                type="checkbox"
-                                checked={selectedMovementTypes.includes(opt.id)}
-                                onChange={() =>
-                                  setSelectedMovementTypes((prev) =>
-                                    prev.includes(opt.id)
-                                      ? prev.filter((id) => id !== opt.id)
-                                      : [...prev, opt.id]
-                                  )
-                                }
-                                className="size-4 rounded border-[#d1d5db] text-[#0267ff] focus:ring-[#0267ff] shrink-0"
-                              />
-                              <span>{opt.label}</span>
-                            </label>
-                          ))}
-                        </div>
-                      </>
-                    )}
-                  </div>
-                </section>
-
-                {selectedMovementTypes.includes('replenishment') && (
-                  <section className="flex flex-col gap-3">
-                    <div className="flex flex-col gap-1">
-                      <h3 className="text-[14px] font-medium text-[#0a0a0a]">Select your source location</h3>
-                      <p className="text-[12px] font-normal text-[#4b535c]">
-                        This is the location your products will be distributed from.
-                      </p>
-                    </div>
-                    <div className="flex flex-col gap-3">
-                      <label className="flex items-start gap-3 p-4 rounded-[10px] border border-[#e5e7eb] bg-white cursor-pointer hover:border-[#0267ff]/40 has-[:checked]:border-[#0267ff]">
-                        <input
-                          type="radio"
-                          name="sourceLocationOption"
-                          value="central"
-                          checked={sourceLocationOption === 'central'}
-                          onChange={() => setSourceLocationOption('central')}
-                          className="mt-1 size-4 shrink-0 border-[#e5e7eb] text-[#0267ff] focus:ring-[#0267ff]"
-                        />
-                        <div className="flex flex-col gap-1 min-w-0">
-                          <span className="text-[14px] font-medium text-[#0a0a0a]">Central</span>
-                        </div>
-                      </label>
-                      <label className="flex items-start gap-3 p-4 rounded-[10px] border border-[#e5e7eb] bg-white cursor-pointer hover:border-[#0267ff]/40 has-[:checked]:border-[#0267ff]">
-                        <input
-                          type="radio"
-                          name="sourceLocationOption"
-                          value="supplier"
-                          checked={sourceLocationOption === 'supplier'}
-                          onChange={() => setSourceLocationOption('supplier')}
-                          className="mt-1 size-4 shrink-0 border-[#e5e7eb] text-[#0267ff] focus:ring-[#0267ff]"
-                        />
-                        <div className="flex flex-col gap-1 min-w-0">
-                          <span className="text-[14px] font-medium text-[#0a0a0a]">Supplier</span>
-                        </div>
-                      </label>
-                    </div>
-                  </section>
-                )}
-
-                <section className="flex flex-col gap-3">
-                  <h3 className="text-[14px] font-medium text-[#0a0a0a]">
-                    Which products and locations does this schedule cover?
-                  </h3>
-                  <div className="flex flex-col gap-3">
-                    <label className="flex items-start gap-3 p-4 rounded-[10px] border border-[#e5e7eb] bg-white cursor-pointer hover:border-[#0267ff]/40 has-[:checked]:border-[#0267ff]">
-                      <input
-                        type="radio"
-                        name="locationScopeOption"
-                        value="all"
-                        checked={locationScopeOption === 'all'}
-                        onChange={() => setLocationScopeOption('all')}
-                        className="mt-1 size-4 shrink-0 border-[#e5e7eb] text-[#0267ff] focus:ring-[#0267ff]"
-                      />
-                      <div className="flex flex-col gap-1 min-w-0">
-                        <span className="text-[14px] font-medium text-[#0a0a0a]">All products and locations</span>
-                        <span className="text-[12px] font-normal text-[#4b535c]">
-                          Sol will evaluate your entire product catalogue and network.
-                        </span>
-                      </div>
-                    </label>
-                    <label className="flex items-start gap-3 p-4 rounded-[10px] border border-[#e5e7eb] bg-white cursor-pointer hover:border-[#0267ff]/40 has-[:checked]:border-[#0267ff]">
-                      <input
-                        type="radio"
-                        name="locationScopeOption"
-                        value="select"
-                        checked={locationScopeOption === 'select'}
-                        onChange={() => setLocationScopeOption('select')}
-                        className="mt-1 size-4 shrink-0 border-[#e5e7eb] text-[#0267ff] focus:ring-[#0267ff]"
-                      />
-                      <div className="flex flex-col gap-1 min-w-0">
-                        <span className="text-[14px] font-medium text-[#0a0a0a]">Select products and locations</span>
-                        <span className="text-[12px] font-normal text-[#4b535c]">
-                          Choose specific products, locations, regions, or countries to{' '}
-                          <strong className="font-semibold">include</strong> in this schedule.
-                        </span>
-                      </div>
-                    </label>
-                    <label className="flex items-start gap-3 p-4 rounded-[10px] border border-[#e5e7eb] bg-white cursor-pointer hover:border-[#0267ff]/40 has-[:checked]:border-[#0267ff]">
-                      <input
-                        type="radio"
-                        name="locationScopeOption"
-                        value="exclude"
-                        checked={locationScopeOption === 'exclude'}
-                        onChange={() => setLocationScopeOption('exclude')}
-                        className="mt-1 size-4 shrink-0 border-[#e5e7eb] text-[#0267ff] focus:ring-[#0267ff]"
-                      />
-                      <div className="flex flex-col gap-1 min-w-0">
-                        <span className="text-[14px] font-medium text-[#0a0a0a]">Exclude products and locations</span>
-                        <span className="text-[12px] font-normal text-[#4b535c]">
-                          Choose specific products, locations, regions, or countries to{' '}
-                          <strong className="font-semibold">exclude</strong> from this schedule.
-                        </span>
-                      </div>
-                    </label>
-                  </div>
-
-                  {locationScopeOption !== 'all' && (
-                    <>
-                      <div
-                        className={locationScopeOption === 'select' ? '' : 'hidden'}
-                        aria-hidden={locationScopeOption !== 'select'}
-                      >
-                        <CreateScheduleScopeFilterPanel key="scope-filter-include" />
-                      </div>
-                      <div
-                        className={locationScopeOption === 'exclude' ? '' : 'hidden'}
-                        aria-hidden={locationScopeOption !== 'exclude'}
-                      >
-                        <CreateScheduleScopeFilterPanel key="scope-filter-exclude" />
-                      </div>
-                    </>
-                  )}
-                </section>
-
-                <div className="border-t border-[#e5e7eb] pt-5 mt-5 grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <section className="flex flex-col gap-2 min-w-0">
-                    <h3 className="text-[14px] font-medium text-[#0a0a0a]">Network</h3>
-                    <p className="text-[13px] text-[#4b535c] max-w-[600px]">
-                      We&apos;ll default to your global network set-up in parameters. If the trip configuration or
-                      constraints are different for this schedule, download the template for your location scope, update
-                      it, and upload the specific configuration.
-                    </p>
-                    <div className="flex items-center gap-3 mt-3">
-                      <button
-                        type="button"
-                        className="h-10 px-5 rounded-[6px] bg-[#0267FF] text-white text-[14px] font-medium hover:bg-[#0252cc] flex items-center gap-2"
-                      >
-                        <svg
-                          width="16"
-                          height="16"
-                          viewBox="0 0 16 16"
-                          fill="none"
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="shrink-0"
-                          aria-hidden
-                        >
-                          <path
-                            d="M8 3.5v6M8 9.5l-2.5 2.5M8 9.5l2.5 2.5"
-                            stroke="currentColor"
-                            strokeWidth="1.5"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                          <path d="M3.5 13h9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                        </svg>
-                        Download template
-                      </button>
-                      <button
-                        type="button"
-                        className="h-10 px-5 rounded-[6px] border border-[#E9EAEB] bg-white text-[14px] font-medium text-[#0a0a0a] hover:bg-[#f8f8f8] flex items-center gap-2"
-                      >
-                        <svg
-                          width="16"
-                          height="16"
-                          viewBox="0 0 16 16"
-                          fill="none"
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="shrink-0"
-                          aria-hidden
-                        >
-                          <path
-                            d="M8 11.5V4M8 4L5.5 6.5M8 4L10.5 6.5"
-                            stroke="currentColor"
-                            strokeWidth="1.5"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                          <path d="M3.5 13h9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                        </svg>
-                        Upload
-                      </button>
-                    </div>
-                  </section>
-                  <section className="flex flex-col gap-2 min-w-0">
-                    <h3 className="text-[14px] font-medium text-[#0a0a0a]">Trip capacity</h3>
-                    <p className="text-[13px] text-[#4b535c] max-w-[600px]">
-                      We&apos;ll default to your global trip capacity set in parameters. If trip capacity is different
-                      for this schedule, download the template, update it, and upload the specific configuration.
-                    </p>
-                    <div className="flex items-center gap-3 mt-3">
-                      <button
-                        type="button"
-                        className="h-10 px-5 rounded-[6px] bg-[#0267FF] text-white text-[14px] font-medium hover:bg-[#0252cc] flex items-center gap-2"
-                      >
-                        <svg
-                          width="16"
-                          height="16"
-                          viewBox="0 0 16 16"
-                          fill="none"
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="shrink-0"
-                          aria-hidden
-                        >
-                          <path
-                            d="M8 3.5v6M8 9.5l-2.5 2.5M8 9.5l2.5 2.5"
-                            stroke="currentColor"
-                            strokeWidth="1.5"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                          <path d="M3.5 13h9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                        </svg>
-                        Download template
-                      </button>
-                      <button
-                        type="button"
-                        className="h-10 px-5 rounded-[6px] border border-[#E9EAEB] bg-white text-[14px] font-medium text-[#0a0a0a] hover:bg-[#f8f8f8] flex items-center gap-2"
-                      >
-                        <svg
-                          width="16"
-                          height="16"
-                          viewBox="0 0 16 16"
-                          fill="none"
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="shrink-0"
-                          aria-hidden
-                        >
-                          <path
-                            d="M8 11.5V4M8 4L5.5 6.5M8 4L10.5 6.5"
-                            stroke="currentColor"
-                            strokeWidth="1.5"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                          <path d="M3.5 13h9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                        </svg>
-                        Upload
-                      </button>
-                    </div>
-                  </section>
-                </div>
-              </div>
-            )}
-          </div>
-
           <div className="border border-[#EAEAEA] rounded-[4px] bg-white overflow-visible">
             <button
               type="button"
-              onClick={() => toggleAccordion('exceptions')}
-              className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-[#f8f8f8] transition-colors"
+              onClick={() => toggleSection('exceptions')}
+              className="w-full flex items-center justify-between px-5 py-4 text-left cursor-pointer hover:bg-[#f9fafb] transition-colors"
             >
               <div className="flex flex-col gap-1">
                 <span className="text-[20px] font-medium text-[#212B36] leading-[150%]">
@@ -1825,11 +1819,11 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
               </div>
               <IconChevronDown
                 className={`size-5 text-[#4b535c] transition-transform shrink-0 ${
-                  accordionOpen.exceptions ? 'rotate-180' : ''
+                  openSections.includes('exceptions') ? 'rotate-180' : ''
                 }`}
               />
             </button>
-            {accordionOpen.exceptions && (
+            {openSections.includes('exceptions') && (
               <div className="px-5 pb-6 pt-2 flex flex-col gap-6 border-t border-[#EAEAEA]">
                 <section className="flex flex-col gap-3">
                   <h3 className="text-[14px] font-medium text-[#0a0a0a]">Approval mode</h3>
