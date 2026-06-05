@@ -692,6 +692,9 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
   const [editingScheduleEntry, setEditingScheduleEntry] = useState(null)
   const [drawerForm, setDrawerForm] = useState(DEFAULT_DRAWER_FORM)
   const [scheduleDrawerDays, setScheduleDrawerDays] = useState(() => ({ Wed: true, Sat: true }))
+  const [skipDates, setSkipDates] = useState([])
+  const [skipDatePickerOpen, setSkipDatePickerOpen] = useState(false)
+  const [skipDateDraft, setSkipDateDraft] = useState('')
   const [moduleDropdownOpen, setModuleDropdownOpen] = useState(false)
   const [entryReviewStatus, setEntryReviewStatus] = useState(() => ({
     'entry-1': 'upcoming',   // Replenishment
@@ -709,6 +712,18 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
   const hoverLeaveTimeoutRef = useRef(null)
   const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
   const toggleScheduleDay = (day) => setScheduleDrawerDays((prev) => ({ ...prev, [day]: !prev[day] }))
+  const formatSkipDateDisplay = (isoDate) => {
+    const [y, m, d] = isoDate.split('-')
+    return `${d}/${m}/${y}`
+  }
+  const confirmSkipDate = () => {
+    if (!skipDateDraft) return
+    const formatted = formatSkipDateDisplay(skipDateDraft)
+    setSkipDates((prev) => (prev.includes(formatted) ? prev : [...prev, formatted]))
+    setSkipDateDraft('')
+    setSkipDatePickerOpen(false)
+  }
+  const removeSkipDate = (date) => setSkipDates((prev) => prev.filter((d) => d !== date))
   const typeFilters = [
     { id: 'all', label: 'All', icon: null },
     { id: 'replenishment', label: 'Replenishment', icon: 'replenishment' },
@@ -759,6 +774,7 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
   const [recurrenceSubmissionDateYear, setRecurrenceSubmissionDateYear] = useState('')
   const [recurrenceSubmissionTime, setRecurrenceSubmissionTime] = useState('09:00')
   const [submissionDate, setSubmissionDate] = useState('')
+  const [skipEveryN, setSkipEveryN] = useState('')
   const reviewStatusFilterOptions = [
     { id: 'in review', label: 'In review' },
     { id: 'upcoming', label: 'Upcoming' },
@@ -1374,6 +1390,82 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                       return `${body}${timeStr}`
                     })()}
                   </p>
+                </section>
+
+                <section className="flex flex-col gap-3 p-4 border border-[#e9eaeb] rounded-[6px] bg-white">
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Skip occurrences</label>
+                    <p className="text-[12px] font-normal text-[#4b535c]">
+                      Use this if you want to temporarily run a different schedule — for example, to combine movement types or separate replenishment and rebalancing into one batch.
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-[14px] text-[#0a0a0a]">Skip every</span>
+                    <div className="flex items-center border border-[#EAEAEA] rounded-[4px] bg-white overflow-hidden h-12">
+                      <input
+                        type="number"
+                        min={2}
+                        value={skipEveryN}
+                        onChange={(e) => {
+                          const v = e.target.value
+                          if (v === '') {
+                            setSkipEveryN('')
+                            return
+                          }
+                          setSkipEveryN(String(Math.max(2, parseInt(v, 10) || 2)))
+                        }}
+                        className="w-[80px] h-12 py-3 px-4 text-center text-[16px] text-[#0a0a0a] border-none focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      />
+                      <div className="flex flex-col border-l border-[#EAEAEA] shrink-0">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setSkipEveryN((v) =>
+                              String(Math.max(2, (v === '' ? 1 : parseInt(v, 10) || 1) + 1))
+                            )
+                          }
+                          className="h-6 w-7 flex items-center justify-center text-[#4b535c] hover:bg-[#f8f8f8] border-b border-[#EAEAEA]"
+                        >
+                          +
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setSkipEveryN((v) =>
+                              String(Math.max(2, (v === '' ? 2 : parseInt(v, 10) || 2) - 1))
+                            )
+                          }
+                          className="h-6 w-7 flex items-center justify-center text-[#4b535c] hover:bg-[#f8f8f8]"
+                        >
+                          −
+                        </button>
+                      </div>
+                    </div>
+                    <span className="text-[14px] text-[#4b535c] px-3 py-2 rounded-[4px] border border-[#e9eaeb] bg-[#f3f4f6]">
+                      {recurrenceRepeatUnit === 'week' ? 'weeks' : recurrenceRepeatUnit === 'month' ? 'months' : 'days'}
+                    </span>
+                  </div>
+                  {skipEveryN !== '' && (
+                    <p className="text-[12px] text-[#4b535c] italic">
+                      This schedule will be skipped every {skipEveryN}{' '}
+                      {recurrenceRepeatUnit === 'week'
+                        ? 'weeks'
+                        : recurrenceRepeatUnit === 'month'
+                          ? 'months'
+                          : recurrenceRepeatUnit === 'year'
+                            ? 'years'
+                            : 'days'}
+                    </p>
+                  )}
+                  {skipEveryN !== '' && (
+                    <button
+                      type="button"
+                      onClick={() => setSkipEveryN('')}
+                      className="self-start text-[12px] text-[#0267ff] hover:underline"
+                    >
+                      Clear
+                    </button>
+                  )}
                 </section>
 
                 <section className="flex flex-col gap-2">
@@ -2852,6 +2944,56 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none"><IconCalendarSidebar className="size-4" /></span>
                 </div>
                 <p className="text-[12px] font-normal text-[#4b535c]">If left empty, rebalancing will be repeating indefinitely</p>
+              </section>
+              <section className="flex flex-col gap-2">
+                <label className="text-[14px] font-normal text-[#4b535c]">Skip dates</label>
+                <p className="text-[12px] font-normal text-[#4b535c]">Pause this schedule for specific upcoming dates</p>
+                {skipDates.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {skipDates.map((date) => (
+                      <span
+                        key={date}
+                        className="inline-flex items-center gap-1.5 rounded-[4px] border border-[#e9eaeb] bg-white px-2.5 py-1 text-[14px] text-[#0a0a0a]"
+                      >
+                        {date}
+                        <button
+                          type="button"
+                          onClick={() => removeSkipDate(date)}
+                          className="text-[#4b535c] hover:text-[#0a0a0a] leading-none"
+                          aria-label={`Remove skip date ${date}`}
+                        >
+                          ×
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+                {skipDatePickerOpen ? (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <input
+                      type="date"
+                      value={skipDateDraft}
+                      onChange={(ev) => setSkipDateDraft(ev.target.value)}
+                      className="h-10 px-3 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#0a0a0a]"
+                    />
+                    <button
+                      type="button"
+                      onClick={confirmSkipDate}
+                      disabled={!skipDateDraft}
+                      className="h-10 px-4 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] font-medium text-[#0a0a0a] hover:bg-[#f3f4f6] disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Add
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setSkipDatePickerOpen(true)}
+                    className="self-start h-10 px-4 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] font-medium text-[#0a0a0a] hover:bg-[#f3f4f6]"
+                  >
+                    Add date
+                  </button>
+                )}
               </section>
               <section className="flex flex-col gap-2">
                 <p className="text-[14px] font-medium text-[#0a0a0a]">Notify users:</p>
