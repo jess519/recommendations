@@ -3560,34 +3560,6 @@ export default function ScheduleDetailPage() {
                 View scope
               </button>
             </div>
-            <div
-              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-[#e5e7eb] bg-[#f9fafb] text-[13px]"
-            >
-              <span className="inline-flex items-center gap-2">
-                <span className="text-[11px] font-medium text-[#4b535c] uppercase tracking-wide">
-                  Next event
-                </span>
-                <span className="text-[13px] font-medium text-[#0a0a0a]">UK weekly replenishment</span>
-                <span className="px-1.5 py-0.5 rounded-[4px] text-[11px] font-medium bg-[#eff6ff] text-[#0267ff]">
-                  Replenishment
-                </span>
-              </span>
-              <span className="w-px h-4 bg-[#e5e7eb] mx-2 shrink-0" aria-hidden />
-              <span className="inline-flex items-center gap-1.5 text-[13px] text-[#4b535c]">
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 16 16"
-                  fill="none"
-                  className="shrink-0"
-                  aria-hidden
-                >
-                  <rect x="2" y="3" width="12" height="11" rx="1" stroke="currentColor" strokeWidth="1.2" />
-                  <path d="M2 6h12M5 1v3M11 1v3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
-                </svg>
-                01/06/2026
-              </span>
-            </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <button
