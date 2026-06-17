@@ -138,32 +138,12 @@ const ADV_FILTER_OPTION_SAMPLES = ['10', '50', '100', '500']
 const SCOPE_DEPARTMENT_OPTIONS = ['Apparel', 'Footwear', 'Accessories']
 const SCOPE_LOCATION_TYPE_OPTIONS = ['Store', 'Warehouse', 'Outlet']
 const SCOPE_WAREHOUSE_OPTIONS = ['Europe warehouse', 'US main warehouse', 'Global central warehouse', 'Supplier']
+const SCOPE_SEASONS_OPTIONS = ['SS24', 'AW24', 'SS25', 'AW25', 'Cruise 25', 'Pre-Fall 25']
+const SCOPE_LOCATIONS_OPTIONS = ['Paris flagship', 'London Regent St', 'NY Soho', 'Milan Duomo', 'Berlin Mitte', 'Tokyo Ginza']
+const SCOPE_PRODUCTS_OPTIONS = ['SKU-001 Wool Coat', 'SKU-002 Silk Scarf', 'SKU-003 Leather Bag', 'SKU-004 Cotton Tee', 'SKU-005 Denim Jacket']
 
-function CreateScheduleScopeSelect({ label, placeholder = 'Select', options = [] }) {
-  return (
-    <div className="flex flex-col gap-2">
-      <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">{label}</label>
-      <div className="relative">
-        <select
-          defaultValue=""
-          className="w-full h-14 pl-4 pr-10 rounded-[4px] border border-[#EAEAEA] bg-white text-[16px] text-[#0a0a0a] appearance-none"
-        >
-          <option value="" disabled>
-            {placeholder}
-          </option>
-          {options.map((opt) => (
-            <option key={opt} value={opt}>
-              {opt}
-            </option>
-          ))}
-        </select>
-        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
-          <IconChevronDownSelect />
-        </span>
-      </div>
-    </div>
-  )
-}
+const SCOPE_MULTISELECT_INLINE_WRAPPER_CLASS =
+  'flex-1 min-w-0 [&>div]:gap-0 [&>div>div:first-child]:hidden'
 
 function CreateScheduleScopeMultiSelect({ label, helperText, placeholder = 'Select', options = [], value, onChange }) {
   const [open, setOpen] = useState(false)
@@ -251,25 +231,6 @@ function CreateScheduleScopeMultiSelect({ label, helperText, placeholder = 'Sele
   )
 }
 
-function CreateScheduleScopeSearchInput({ label, placeholder = 'Search' }) {
-  return (
-    <div className="flex flex-col gap-2">
-      <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">{label}</label>
-      <div className="relative">
-        <input
-          type="text"
-          placeholder={placeholder}
-          readOnly
-          className="w-full h-14 pl-4 pr-10 rounded-[4px] border border-[#EAEAEA] bg-white text-[16px] text-[#0a0a0a] placeholder:text-[#9CA1AE]"
-        />
-        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
-          <IconSearch className="size-4" />
-        </span>
-      </div>
-    </div>
-  )
-}
-
 function NetworkStyleDownloadIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className="shrink-0" aria-hidden>
@@ -301,33 +262,50 @@ function NetworkStyleUploadIcon() {
 }
 
 /** Product + geographic scope filters for create schedule scope selection. */
-function CreateScheduleScopeFilterPanel() {
-  const [warehouseValue, setWarehouseValue] = useState([])
-
+function CreateScheduleScopeFilterPanel({
+  warehouseValue,
+  setWarehouseValue,
+  departmentValue,
+  setDepartmentValue,
+  seasonsValue,
+  setSeasonsValue,
+  productsValue,
+  setProductsValue,
+  locationTypesValue,
+  setLocationTypesValue,
+  locationsValue,
+  setLocationsValue,
+}) {
   return (
     <div className="rounded-[4px] border border-[#e5e7eb] bg-[#fafafa] p-4 flex flex-col gap-6">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="flex flex-col gap-4">
           <h4 className="text-[13px] font-medium text-[#0a0a0a] uppercase tracking-[0.04em]">Product scope</h4>
-          <CreateScheduleScopeSelect
+          <CreateScheduleScopeMultiSelect
             label="Departments"
             placeholder="Select departments"
             options={SCOPE_DEPARTMENT_OPTIONS}
+            value={departmentValue}
+            onChange={setDepartmentValue}
           />
-          <CreateScheduleScopeSearchInput label="Seasons" placeholder="Search seasons" />
+          <CreateScheduleScopeMultiSelect
+            label="Seasons"
+            placeholder="Select seasons"
+            options={SCOPE_SEASONS_OPTIONS}
+            value={seasonsValue}
+            onChange={setSeasonsValue}
+          />
           <div className="flex flex-col gap-2">
             <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Products</label>
             <div className="flex items-center gap-2">
-              <div className="relative flex-1 min-w-0">
-                <input
-                  type="text"
-                  placeholder="Search products"
-                  readOnly
-                  className="w-full h-14 pl-4 pr-10 rounded-[4px] border border-[#EAEAEA] bg-white text-[16px] text-[#0a0a0a] placeholder:text-[#9CA1AE]"
+              <div className={SCOPE_MULTISELECT_INLINE_WRAPPER_CLASS}>
+                <CreateScheduleScopeMultiSelect
+                  label="Products"
+                  placeholder="Select products"
+                  options={SCOPE_PRODUCTS_OPTIONS}
+                  value={productsValue}
+                  onChange={setProductsValue}
                 />
-                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
-                  <IconSearch className="size-4" />
-                </span>
               </div>
               <button
                 type="button"
@@ -358,24 +336,24 @@ function CreateScheduleScopeFilterPanel() {
             value={warehouseValue}
             onChange={setWarehouseValue}
           />
-          <CreateScheduleScopeSelect
+          <CreateScheduleScopeMultiSelect
             label="Location Types"
             placeholder="Select location types"
             options={SCOPE_LOCATION_TYPE_OPTIONS}
+            value={locationTypesValue}
+            onChange={setLocationTypesValue}
           />
           <div className="flex flex-col gap-2">
             <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Locations</label>
             <div className="flex items-center gap-2">
-              <div className="relative flex-1 min-w-0">
-                <input
-                  type="text"
-                  placeholder="Search locations"
-                  readOnly
-                  className="w-full h-14 pl-4 pr-10 rounded-[4px] border border-[#EAEAEA] bg-white text-[16px] text-[#0a0a0a] placeholder:text-[#9CA1AE]"
+              <div className={SCOPE_MULTISELECT_INLINE_WRAPPER_CLASS}>
+                <CreateScheduleScopeMultiSelect
+                  label="Locations"
+                  placeholder="Select locations"
+                  options={SCOPE_LOCATIONS_OPTIONS}
+                  value={locationsValue}
+                  onChange={setLocationsValue}
                 />
-                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
-                  <IconSearch className="size-4" />
-                </span>
               </div>
               <button
                 type="button"
@@ -866,6 +844,12 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
   const [isCreateSchedulePage, setIsCreateSchedulePage] = useState(false)
   const [openSections, setOpenSections] = useState(['scope'])
   const [locationScopeOption, setLocationScopeOption] = useState('all')
+  const [warehouseValue, setWarehouseValue] = useState([])
+  const [departmentValue, setDepartmentValue] = useState([])
+  const [seasonsValue, setSeasonsValue] = useState([])
+  const [productsValue, setProductsValue] = useState([])
+  const [locationTypesValue, setLocationTypesValue] = useState([])
+  const [locationsValue, setLocationsValue] = useState([])
   const [sourceLocationOption, setSourceLocationOption] = useState('central')
   const [selectedMovementTypes, setSelectedMovementTypes] = useState([])
   const [movementTypeDropdownOpen, setMovementTypeDropdownOpen] = useState(false)
@@ -1375,7 +1359,20 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                   </div>
 
                   {locationScopeOption === 'select' && (
-                    <CreateScheduleScopeFilterPanel />
+                    <CreateScheduleScopeFilterPanel
+                      warehouseValue={warehouseValue}
+                      setWarehouseValue={setWarehouseValue}
+                      departmentValue={departmentValue}
+                      setDepartmentValue={setDepartmentValue}
+                      seasonsValue={seasonsValue}
+                      setSeasonsValue={setSeasonsValue}
+                      productsValue={productsValue}
+                      setProductsValue={setProductsValue}
+                      locationTypesValue={locationTypesValue}
+                      setLocationTypesValue={setLocationTypesValue}
+                      locationsValue={locationsValue}
+                      setLocationsValue={setLocationsValue}
+                    />
                   )}
                 </section>
 
