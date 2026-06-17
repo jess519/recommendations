@@ -137,6 +137,7 @@ const ADV_FILTER_OPTION_SAMPLES = ['10', '50', '100', '500']
 /** Create schedule — scope filter dummy options (prototype display only) */
 const SCOPE_DEPARTMENT_OPTIONS = ['Apparel', 'Footwear', 'Accessories']
 const SCOPE_LOCATION_TYPE_OPTIONS = ['Store', 'Warehouse', 'Outlet']
+const SCOPE_WAREHOUSE_OPTIONS = ['Europe warehouse', 'US main warehouse', 'Global central warehouse', 'Supplier']
 
 function CreateScheduleScopeSelect({ label, placeholder = 'Select', options = [] }) {
   return (
@@ -159,6 +160,77 @@ function CreateScheduleScopeSelect({ label, placeholder = 'Select', options = []
         <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
           <IconChevronDownSelect />
         </span>
+      </div>
+    </div>
+  )
+}
+
+function CreateScheduleScopeMultiSelect({ label, helperText, placeholder = 'Select', options = [] }) {
+  const [open, setOpen] = useState(false)
+  const [selected, setSelected] = useState([])
+
+  const toggleOption = (opt) => {
+    setSelected((prev) => (prev.includes(opt) ? prev.filter((v) => v !== opt) : [...prev, opt]))
+  }
+
+  const displayText =
+    selected.length === 0
+      ? placeholder
+      : selected.length <= 2
+        ? selected.join(', ')
+        : `${selected.length} selected`
+
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-1">
+        <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">{label}</label>
+        {helperText && <p className="text-[12px] font-normal text-[#4b535c]">{helperText}</p>}
+      </div>
+      <div className="relative">
+        <button
+          type="button"
+          onClick={() => setOpen((o) => !o)}
+          className="w-full h-14 pl-4 pr-10 rounded-[4px] border border-[#EAEAEA] bg-white text-[16px] text-[#0a0a0a] text-left flex items-center min-w-0"
+        >
+          <span
+            className={`min-w-0 flex-1 truncate text-left ${selected.length === 0 ? 'text-[#4b535c]' : 'text-[#0a0a0a]'}`}
+          >
+            {displayText}
+          </span>
+        </button>
+        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
+          <IconChevronDownSelect />
+        </span>
+        {open && (
+          <>
+            <div
+              role="presentation"
+              className="fixed inset-0 z-[29]"
+              onClick={() => setOpen(false)}
+              aria-hidden
+            />
+            <div
+              className="absolute left-0 right-0 top-full z-[30] mt-1 rounded-[4px] border border-[#EAEAEA] bg-white shadow-[0px_8px_25px_0px_rgba(0,0,0,0.12)] overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+              role="presentation"
+            >
+              {options.map((opt) => (
+                <label
+                  key={opt}
+                  className="px-4 py-3 flex items-center gap-3 hover:bg-[#f8f8f8] text-[14px] text-[#0a0a0a] cursor-pointer"
+                >
+                  <input
+                    type="checkbox"
+                    checked={selected.includes(opt)}
+                    onChange={() => toggleOption(opt)}
+                    className="size-4 rounded border-[#d1d5db] text-[#0267ff] focus:ring-[#0267ff] shrink-0"
+                  />
+                  <span>{opt}</span>
+                </label>
+              ))}
+            </div>
+          </>
+        )}
       </div>
     </div>
   )
@@ -261,6 +333,12 @@ function CreateScheduleScopeFilterPanel() {
         </div>
         <div className="flex flex-col gap-4">
           <h4 className="text-[13px] font-medium text-[#0a0a0a] uppercase tracking-[0.04em]">Geographic scope</h4>
+          <CreateScheduleScopeMultiSelect
+            label="Warehouse"
+            helperText="Location where products will be distributed from. If none are selected, we'll use all the warehouses connected in your Network."
+            placeholder="Select warehouses"
+            options={SCOPE_WAREHOUSE_OPTIONS}
+          />
           <CreateScheduleScopeSelect
             label="Location Types"
             placeholder="Select location types"
