@@ -165,20 +165,12 @@ function CreateScheduleScopeSelect({ label, placeholder = 'Select', options = []
   )
 }
 
-function CreateScheduleScopeMultiSelect({ label, helperText, placeholder = 'Select', options = [] }) {
+function CreateScheduleScopeMultiSelect({ label, helperText, placeholder = 'Select', options = [], value, onChange }) {
   const [open, setOpen] = useState(false)
-  const [selected, setSelected] = useState([])
 
   const toggleOption = (opt) => {
-    setSelected((prev) => (prev.includes(opt) ? prev.filter((v) => v !== opt) : [...prev, opt]))
+    onChange(value.includes(opt) ? value.filter((v) => v !== opt) : [...value, opt])
   }
-
-  const displayText =
-    selected.length === 0
-      ? placeholder
-      : selected.length <= 2
-        ? selected.join(', ')
-        : `${selected.length} selected`
 
   return (
     <div className="flex flex-col gap-2">
@@ -187,17 +179,40 @@ function CreateScheduleScopeMultiSelect({ label, helperText, placeholder = 'Sele
         {helperText && <p className="text-[12px] font-normal text-[#4b535c]">{helperText}</p>}
       </div>
       <div className="relative">
-        <button
-          type="button"
+        <div
+          role="combobox"
+          aria-expanded={open}
+          tabIndex={0}
           onClick={() => setOpen((o) => !o)}
-          className="w-full h-14 pl-4 pr-10 rounded-[4px] border border-[#EAEAEA] bg-white text-[16px] text-[#0a0a0a] text-left flex items-center min-w-0"
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault()
+              setOpen((o) => !o)
+            }
+          }}
+          className="w-full h-14 pl-4 pr-10 rounded-[4px] border border-[#EAEAEA] bg-white text-[16px] text-[#0a0a0a] text-left flex items-center gap-2 min-w-0 cursor-pointer"
         >
-          <span
-            className={`min-w-0 flex-1 truncate text-left ${selected.length === 0 ? 'text-[#4b535c]' : 'text-[#0a0a0a]'}`}
-          >
-            {displayText}
-          </span>
-        </button>
+          {value.length === 0 ? (
+            <span className="min-w-0 flex-1 truncate text-left text-[#4b535c]">{placeholder}</span>
+          ) : (
+            <>
+              <span className="inline-flex items-center rounded-full px-2.5 py-1 bg-blue-50 text-[#1d4ed8] text-[13px] font-medium shrink-0">
+                {value.length} selected
+              </span>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onChange([])
+                }}
+                aria-label="Clear selection"
+                className="shrink-0 flex items-center justify-center text-[#4b535c] hover:text-[#0a0a0a] p-1"
+              >
+                <IconClose className="size-3.5" />
+              </button>
+            </>
+          )}
+        </div>
         <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
           <IconChevronDownSelect />
         </span>
@@ -221,7 +236,7 @@ function CreateScheduleScopeMultiSelect({ label, helperText, placeholder = 'Sele
                 >
                   <input
                     type="checkbox"
-                    checked={selected.includes(opt)}
+                    checked={value.includes(opt)}
                     onChange={() => toggleOption(opt)}
                     className="size-4 rounded border-[#d1d5db] text-[#0267ff] focus:ring-[#0267ff] shrink-0"
                   />
@@ -287,6 +302,8 @@ function NetworkStyleUploadIcon() {
 
 /** Product + geographic scope filters for create schedule scope selection. */
 function CreateScheduleScopeFilterPanel() {
+  const [warehouseValue, setWarehouseValue] = useState([])
+
   return (
     <div className="rounded-[4px] border border-[#e5e7eb] bg-[#fafafa] p-4 flex flex-col gap-6">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -338,6 +355,8 @@ function CreateScheduleScopeFilterPanel() {
             helperText="Location where products will be distributed from. If none are selected, we'll use all the warehouses connected in your Network."
             placeholder="Select warehouses"
             options={SCOPE_WAREHOUSE_OPTIONS}
+            value={warehouseValue}
+            onChange={setWarehouseValue}
           />
           <CreateScheduleScopeSelect
             label="Location Types"
