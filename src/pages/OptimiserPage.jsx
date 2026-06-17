@@ -142,6 +142,59 @@ const SCOPE_SEASONS_OPTIONS = ['SS24', 'AW24', 'SS25', 'AW25', 'Cruise 25', 'Pre
 const SCOPE_LOCATIONS_OPTIONS = ['Paris flagship', 'London Regent St', 'NY Soho', 'Milan Duomo', 'Berlin Mitte', 'Tokyo Ginza']
 const SCOPE_PRODUCTS_OPTIONS = ['SKU-001 Wool Coat', 'SKU-002 Silk Scarf', 'SKU-003 Leather Bag', 'SKU-004 Cotton Tee', 'SKU-005 Denim Jacket']
 
+const SCOPE_EXPANDED_FIELD_KEYS = [
+  'brands',
+  'classes',
+  'collectionTypes',
+  'colors',
+  'events',
+  'genders',
+  'manufacturers',
+  'materials',
+  'productGroups',
+  'sizeRuns',
+  'sizes',
+  'skus',
+  'styles',
+  'subClasses',
+  'subDepartments',
+  'countries',
+  'locationClusters',
+  'locationGroups',
+  'regions',
+]
+
+const SCOPE_EXPANDED_PRODUCT_FIELDS = [
+  { key: 'brands', label: 'Brands' },
+  { key: 'classes', label: 'Classes' },
+  { key: 'collectionTypes', label: 'Collection types' },
+  { key: 'colors', label: 'Colors' },
+  { key: 'events', label: 'Events' },
+  { key: 'genders', label: 'Genders' },
+  { key: 'manufacturers', label: 'Manufacturers' },
+  { key: 'materials', label: 'Materials' },
+  { key: 'productGroups', label: 'Product groups' },
+  { key: 'sizeRuns', label: 'Size runs' },
+  { key: 'sizes', label: 'Sizes' },
+  { key: 'skus', label: 'SKUs' },
+  { key: 'styles', label: 'Styles' },
+  { key: 'subClasses', label: 'Sub-classes' },
+  { key: 'subDepartments', label: 'Sub-departments' },
+]
+
+const SCOPE_EXPANDED_LOCATION_FIELDS = [
+  { key: 'countries', label: 'Countries' },
+  { key: 'locationClusters', label: 'Location clusters' },
+  { key: 'locationGroups', label: 'Location groups' },
+  { key: 'regions', label: 'Regions' },
+]
+
+function createInitialExpandedFieldState() {
+  return Object.fromEntries(
+    SCOPE_EXPANDED_FIELD_KEYS.map((key) => [key, { include: [], exclude: [], mode: 'include' }])
+  )
+}
+
 function getScopeExcludeChipText(excludeValues) {
   if (excludeValues.length === 0) return ''
   if (excludeValues.length === 1) return `All except: ${excludeValues[0]}`
@@ -555,6 +608,36 @@ function CreateScheduleScopeFilterPanel({
         </div>
       </div>
     </div>
+  )
+}
+
+function CreateScheduleScopeExpandedFilters({ expandedFieldState, updateExpandedField }) {
+  const renderField = ({ key, label }) => (
+    <CreateScheduleScopeMultiSelect
+      key={key}
+      label={label}
+      placeholder={`Select ${label.toLowerCase()}`}
+      options={[]}
+      includeValues={expandedFieldState[key].include}
+      onIncludeChange={(next) => updateExpandedField(key, { include: next })}
+      excludeValues={expandedFieldState[key].exclude}
+      onExcludeChange={(next) => updateExpandedField(key, { exclude: next })}
+      mode={expandedFieldState[key].mode}
+      onModeChange={(next) => updateExpandedField(key, { mode: next })}
+    />
+  )
+
+  return (
+    <>
+      <h4 className="mt-4 mb-3 text-[13px] font-medium uppercase tracking-wide text-[#4b535c]">Products</h4>
+      <div className="grid grid-cols-3 gap-x-4 gap-y-3">
+        {SCOPE_EXPANDED_PRODUCT_FIELDS.map(renderField)}
+      </div>
+      <h4 className="mt-6 mb-3 text-[13px] font-medium uppercase tracking-wide text-[#4b535c]">Locations</h4>
+      <div className="grid grid-cols-3 gap-x-4 gap-y-3">
+        {SCOPE_EXPANDED_LOCATION_FIELDS.map(renderField)}
+      </div>
+    </>
   )
 }
 
@@ -1041,6 +1124,8 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
   const [productsMode, setProductsMode] = useState('include')
   const [locationTypesMode, setLocationTypesMode] = useState('include')
   const [locationsMode, setLocationsMode] = useState('include')
+  const [isExpanded, setIsExpanded] = useState(false)
+  const [expandedFieldState, setExpandedFieldState] = useState(createInitialExpandedFieldState)
   const [sourceLocationOption, setSourceLocationOption] = useState('central')
   const [selectedMovementTypes, setSelectedMovementTypes] = useState([])
   const [movementTypeDropdownOpen, setMovementTypeDropdownOpen] = useState(false)
@@ -1469,6 +1554,13 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
     return `${prefix}: ${parts.join(' and ')}`
   }
 
+  const updateExpandedField = (fieldKey, updates) => {
+    setExpandedFieldState((prev) => ({
+      ...prev,
+      [fieldKey]: { ...prev[fieldKey], ...updates },
+    }))
+  }
+
   const scopeActiveFilterEntries = [
     {
       fieldKey: 'department',
@@ -1518,6 +1610,22 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
       onClearInclude: () => setLocationsInclude([]),
       onClearExclude: () => setLocationsExclude([]),
     },
+    ...SCOPE_EXPANDED_PRODUCT_FIELDS.map(({ key, label }) => ({
+      fieldKey: key,
+      label,
+      includeValues: expandedFieldState[key].include,
+      excludeValues: expandedFieldState[key].exclude,
+      onClearInclude: () => updateExpandedField(key, { include: [] }),
+      onClearExclude: () => updateExpandedField(key, { exclude: [] }),
+    })),
+    ...SCOPE_EXPANDED_LOCATION_FIELDS.map(({ key, label }) => ({
+      fieldKey: key,
+      label,
+      includeValues: expandedFieldState[key].include,
+      excludeValues: expandedFieldState[key].exclude,
+      onClearInclude: () => updateExpandedField(key, { include: [] }),
+      onClearExclude: () => updateExpandedField(key, { exclude: [] }),
+    })),
   ]
 
   if (isCreateSchedulePage) {
@@ -1641,6 +1749,23 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                       locationsMode={locationsMode}
                       setLocationsMode={setLocationsMode}
                     />
+                      <button
+                        type="button"
+                        onClick={() => setIsExpanded((v) => !v)}
+                        className="mt-4 flex items-center gap-1 text-[14px] font-medium text-[#1d4ed8] hover:underline"
+                      >
+                        {isExpanded ? 'Show fewer filters' : 'Show all filters'}
+                        <IconChevronDown
+                          className={`size-4 shrink-0 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                          aria-hidden
+                        />
+                      </button>
+                      {isExpanded && (
+                        <CreateScheduleScopeExpandedFilters
+                          expandedFieldState={expandedFieldState}
+                          updateExpandedField={updateExpandedField}
+                        />
+                      )}
                     </>
                   )}
                 </section>
