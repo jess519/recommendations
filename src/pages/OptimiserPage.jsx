@@ -266,7 +266,38 @@ function CreateScheduleScopeFilterPanel() {
             placeholder="Select location types"
             options={SCOPE_LOCATION_TYPE_OPTIONS}
           />
-          <CreateScheduleScopeSearchInput label="Locations" placeholder="Search locations" />
+          <div className="flex flex-col gap-2">
+            <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Locations</label>
+            <div className="flex items-center gap-2">
+              <div className="relative flex-1 min-w-0">
+                <input
+                  type="text"
+                  placeholder="Search locations"
+                  readOnly
+                  className="w-full h-14 pl-4 pr-10 rounded-[4px] border border-[#EAEAEA] bg-white text-[16px] text-[#0a0a0a] placeholder:text-[#9CA1AE]"
+                />
+                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
+                  <IconSearch className="size-4" />
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => {}}
+                aria-label="Upload locations"
+                className="h-14 w-14 shrink-0 rounded-[4px] border border-[#E9EAEB] bg-white text-[#0a0a0a] hover:bg-[#f8f8f8] flex items-center justify-center"
+              >
+                <NetworkStyleUploadIcon />
+              </button>
+              <button
+                type="button"
+                onClick={() => {}}
+                aria-label="Download locations"
+                className="h-14 w-14 shrink-0 rounded-[4px] border border-[#E9EAEB] bg-white text-[#0a0a0a] hover:bg-[#f8f8f8] flex items-center justify-center"
+              >
+                <NetworkStyleDownloadIcon />
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
