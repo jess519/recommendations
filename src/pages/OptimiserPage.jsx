@@ -142,20 +142,59 @@ const SCOPE_SEASONS_OPTIONS = ['SS24', 'AW24', 'SS25', 'AW25', 'Cruise 25', 'Pre
 const SCOPE_LOCATIONS_OPTIONS = ['Paris flagship', 'London Regent St', 'NY Soho', 'Milan Duomo', 'Berlin Mitte', 'Tokyo Ginza']
 const SCOPE_PRODUCTS_OPTIONS = ['SKU-001 Wool Coat', 'SKU-002 Silk Scarf', 'SKU-003 Leather Bag', 'SKU-004 Cotton Tee', 'SKU-005 Denim Jacket']
 
-const SCOPE_MULTISELECT_INLINE_WRAPPER_CLASS =
-  'flex-1 min-w-0 [&>div]:gap-0 [&>div>div:first-child]:hidden'
+function getScopeMultiSelectChipText(mode, value) {
+  if (value.length === 0) return ''
+  if (mode === 'include') return `${value.length} selected`
+  if (value.length === 1) return `All except: ${value[0]}`
+  if (value.length === 2) return `All except: ${value[0]}, ${value[1]}`
+  return `All except: ${value[0]}, ${value[1]}, +${value.length - 2} more`
+}
 
-function CreateScheduleScopeMultiSelect({ label, helperText, placeholder = 'Select', options = [], value, onChange }) {
+const scopeModeToggleButtonClass = (active) =>
+  active
+    ? 'h-7 rounded-[4px] px-3 text-[13px] font-medium bg-[#1d4ed8] text-white'
+    : 'h-7 rounded-[4px] px-3 text-[13px] font-medium bg-white text-[#0a0a0a] border border-[#E9EAEB]'
+
+function CreateScheduleScopeMultiSelect({
+  label,
+  helperText,
+  placeholder = 'Select',
+  options = [],
+  value,
+  onChange,
+  mode,
+  onModeChange,
+}) {
   const [open, setOpen] = useState(false)
 
   const toggleOption = (opt) => {
     onChange(value.includes(opt) ? value.filter((v) => v !== opt) : [...value, opt])
   }
 
+  const chipText = getScopeMultiSelectChipText(mode, value)
+
   return (
     <div className="flex flex-col gap-2">
       <div className="flex flex-col gap-1">
-        <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">{label}</label>
+        <div className="flex items-center justify-between gap-2">
+          <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">{label}</label>
+          <div className="flex shrink-0">
+            <button
+              type="button"
+              onClick={() => onModeChange('include')}
+              className={scopeModeToggleButtonClass(mode === 'include')}
+            >
+              Include
+            </button>
+            <button
+              type="button"
+              onClick={() => onModeChange('exclude')}
+              className={scopeModeToggleButtonClass(mode === 'exclude')}
+            >
+              Exclude
+            </button>
+          </div>
+        </div>
         {helperText && <p className="text-[12px] font-normal text-[#4b535c]">{helperText}</p>}
       </div>
       <div className="relative">
@@ -176,8 +215,8 @@ function CreateScheduleScopeMultiSelect({ label, helperText, placeholder = 'Sele
             <span className="min-w-0 flex-1 truncate text-left text-[#4b535c]">{placeholder}</span>
           ) : (
             <>
-              <span className="inline-flex items-center rounded-full px-2.5 py-1 bg-blue-50 text-[#1d4ed8] text-[13px] font-medium shrink-0">
-                {value.length} selected
+              <span className="inline-flex items-center rounded-full px-2.5 py-1 bg-blue-50 text-[#1d4ed8] text-[13px] font-medium shrink-0 max-w-[calc(100%-2rem)] truncate">
+                {chipText}
               </span>
               <button
                 type="button"
@@ -265,16 +304,28 @@ function NetworkStyleUploadIcon() {
 function CreateScheduleScopeFilterPanel({
   warehouseValue,
   setWarehouseValue,
+  warehouseMode,
+  setWarehouseMode,
   departmentValue,
   setDepartmentValue,
+  departmentMode,
+  setDepartmentMode,
   seasonsValue,
   setSeasonsValue,
+  seasonsMode,
+  setSeasonsMode,
   productsValue,
   setProductsValue,
+  productsMode,
+  setProductsMode,
   locationTypesValue,
   setLocationTypesValue,
+  locationTypesMode,
+  setLocationTypesMode,
   locationsValue,
   setLocationsValue,
+  locationsMode,
+  setLocationsMode,
 }) {
   return (
     <div className="rounded-[4px] border border-[#e5e7eb] bg-[#fafafa] p-4 flex flex-col gap-6">
@@ -287,6 +338,8 @@ function CreateScheduleScopeFilterPanel({
             options={SCOPE_DEPARTMENT_OPTIONS}
             value={departmentValue}
             onChange={setDepartmentValue}
+            mode={departmentMode}
+            onModeChange={setDepartmentMode}
           />
           <CreateScheduleScopeMultiSelect
             label="Seasons"
@@ -294,36 +347,37 @@ function CreateScheduleScopeFilterPanel({
             options={SCOPE_SEASONS_OPTIONS}
             value={seasonsValue}
             onChange={setSeasonsValue}
+            mode={seasonsMode}
+            onModeChange={setSeasonsMode}
           />
-          <div className="flex flex-col gap-2">
-            <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Products</label>
-            <div className="flex items-center gap-2">
-              <div className={SCOPE_MULTISELECT_INLINE_WRAPPER_CLASS}>
-                <CreateScheduleScopeMultiSelect
-                  label="Products"
-                  placeholder="Select products"
-                  options={SCOPE_PRODUCTS_OPTIONS}
-                  value={productsValue}
-                  onChange={setProductsValue}
-                />
-              </div>
-              <button
-                type="button"
-                onClick={() => {}}
-                aria-label="Upload products"
-                className="h-14 w-14 shrink-0 rounded-[4px] border border-[#E9EAEB] bg-white text-[#0a0a0a] hover:bg-[#f8f8f8] flex items-center justify-center"
-              >
-                <NetworkStyleUploadIcon />
-              </button>
-              <button
-                type="button"
-                onClick={() => {}}
-                aria-label="Download products"
-                className="h-14 w-14 shrink-0 rounded-[4px] border border-[#E9EAEB] bg-white text-[#0a0a0a] hover:bg-[#f8f8f8] flex items-center justify-center"
-              >
-                <NetworkStyleDownloadIcon />
-              </button>
+          <div className="flex items-end gap-2">
+            <div className="flex-1 min-w-0">
+              <CreateScheduleScopeMultiSelect
+                label="Products"
+                placeholder="Select products"
+                options={SCOPE_PRODUCTS_OPTIONS}
+                value={productsValue}
+                onChange={setProductsValue}
+                mode={productsMode}
+                onModeChange={setProductsMode}
+              />
             </div>
+            <button
+              type="button"
+              onClick={() => {}}
+              aria-label="Upload products"
+              className="h-14 w-14 shrink-0 rounded-[4px] border border-[#E9EAEB] bg-white text-[#0a0a0a] hover:bg-[#f8f8f8] flex items-center justify-center"
+            >
+              <NetworkStyleUploadIcon />
+            </button>
+            <button
+              type="button"
+              onClick={() => {}}
+              aria-label="Download products"
+              className="h-14 w-14 shrink-0 rounded-[4px] border border-[#E9EAEB] bg-white text-[#0a0a0a] hover:bg-[#f8f8f8] flex items-center justify-center"
+            >
+              <NetworkStyleDownloadIcon />
+            </button>
           </div>
         </div>
         <div className="flex flex-col gap-4">
@@ -335,6 +389,8 @@ function CreateScheduleScopeFilterPanel({
             options={SCOPE_WAREHOUSE_OPTIONS}
             value={warehouseValue}
             onChange={setWarehouseValue}
+            mode={warehouseMode}
+            onModeChange={setWarehouseMode}
           />
           <CreateScheduleScopeMultiSelect
             label="Location Types"
@@ -342,36 +398,37 @@ function CreateScheduleScopeFilterPanel({
             options={SCOPE_LOCATION_TYPE_OPTIONS}
             value={locationTypesValue}
             onChange={setLocationTypesValue}
+            mode={locationTypesMode}
+            onModeChange={setLocationTypesMode}
           />
-          <div className="flex flex-col gap-2">
-            <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Locations</label>
-            <div className="flex items-center gap-2">
-              <div className={SCOPE_MULTISELECT_INLINE_WRAPPER_CLASS}>
-                <CreateScheduleScopeMultiSelect
-                  label="Locations"
-                  placeholder="Select locations"
-                  options={SCOPE_LOCATIONS_OPTIONS}
-                  value={locationsValue}
-                  onChange={setLocationsValue}
-                />
-              </div>
-              <button
-                type="button"
-                onClick={() => {}}
-                aria-label="Upload locations"
-                className="h-14 w-14 shrink-0 rounded-[4px] border border-[#E9EAEB] bg-white text-[#0a0a0a] hover:bg-[#f8f8f8] flex items-center justify-center"
-              >
-                <NetworkStyleUploadIcon />
-              </button>
-              <button
-                type="button"
-                onClick={() => {}}
-                aria-label="Download locations"
-                className="h-14 w-14 shrink-0 rounded-[4px] border border-[#E9EAEB] bg-white text-[#0a0a0a] hover:bg-[#f8f8f8] flex items-center justify-center"
-              >
-                <NetworkStyleDownloadIcon />
-              </button>
+          <div className="flex items-end gap-2">
+            <div className="flex-1 min-w-0">
+              <CreateScheduleScopeMultiSelect
+                label="Locations"
+                placeholder="Select locations"
+                options={SCOPE_LOCATIONS_OPTIONS}
+                value={locationsValue}
+                onChange={setLocationsValue}
+                mode={locationsMode}
+                onModeChange={setLocationsMode}
+              />
             </div>
+            <button
+              type="button"
+              onClick={() => {}}
+              aria-label="Upload locations"
+              className="h-14 w-14 shrink-0 rounded-[4px] border border-[#E9EAEB] bg-white text-[#0a0a0a] hover:bg-[#f8f8f8] flex items-center justify-center"
+            >
+              <NetworkStyleUploadIcon />
+            </button>
+            <button
+              type="button"
+              onClick={() => {}}
+              aria-label="Download locations"
+              className="h-14 w-14 shrink-0 rounded-[4px] border border-[#E9EAEB] bg-white text-[#0a0a0a] hover:bg-[#f8f8f8] flex items-center justify-center"
+            >
+              <NetworkStyleDownloadIcon />
+            </button>
           </div>
         </div>
       </div>
@@ -850,6 +907,12 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
   const [productsValue, setProductsValue] = useState([])
   const [locationTypesValue, setLocationTypesValue] = useState([])
   const [locationsValue, setLocationsValue] = useState([])
+  const [warehouseMode, setWarehouseMode] = useState('include')
+  const [departmentMode, setDepartmentMode] = useState('include')
+  const [seasonsMode, setSeasonsMode] = useState('include')
+  const [productsMode, setProductsMode] = useState('include')
+  const [locationTypesMode, setLocationTypesMode] = useState('include')
+  const [locationsMode, setLocationsMode] = useState('include')
   const [sourceLocationOption, setSourceLocationOption] = useState('central')
   const [selectedMovementTypes, setSelectedMovementTypes] = useState([])
   const [movementTypeDropdownOpen, setMovementTypeDropdownOpen] = useState(false)
@@ -1362,16 +1425,28 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                     <CreateScheduleScopeFilterPanel
                       warehouseValue={warehouseValue}
                       setWarehouseValue={setWarehouseValue}
+                      warehouseMode={warehouseMode}
+                      setWarehouseMode={setWarehouseMode}
                       departmentValue={departmentValue}
                       setDepartmentValue={setDepartmentValue}
+                      departmentMode={departmentMode}
+                      setDepartmentMode={setDepartmentMode}
                       seasonsValue={seasonsValue}
                       setSeasonsValue={setSeasonsValue}
+                      seasonsMode={seasonsMode}
+                      setSeasonsMode={setSeasonsMode}
                       productsValue={productsValue}
                       setProductsValue={setProductsValue}
+                      productsMode={productsMode}
+                      setProductsMode={setProductsMode}
                       locationTypesValue={locationTypesValue}
                       setLocationTypesValue={setLocationTypesValue}
+                      locationTypesMode={locationTypesMode}
+                      setLocationTypesMode={setLocationTypesMode}
                       locationsValue={locationsValue}
                       setLocationsValue={setLocationsValue}
+                      locationsMode={locationsMode}
+                      setLocationsMode={setLocationsMode}
                     />
                   )}
                 </section>
