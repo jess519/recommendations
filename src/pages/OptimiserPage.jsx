@@ -214,52 +214,18 @@ function NetworkStyleUploadIcon() {
 }
 
 /** Product + geographic scope filters for create schedule scope selection. */
-function CreateScheduleScopeFilterPanel({
-  productScopeMode,
-  setProductScopeMode,
-  geoScopeMode,
-  setGeoScopeMode,
-}) {
-  const scopeModeToggleClass = (active) =>
-    active
-      ? 'bg-[#0267ff] text-white rounded-[4px] px-2.5 py-1 text-[12px] font-medium'
-      : 'bg-white text-[#4b535c] rounded-[4px] px-2.5 py-1 text-[12px] font-medium border border-[#e9eaeb]'
-
-  const renderScopeModeToggle = (mode, setMode) => (
-    <div className="flex border border-[#e9eaeb] rounded-[4px] overflow-hidden shrink-0">
-      <button
-        type="button"
-        onClick={() => setMode('include')}
-        className={scopeModeToggleClass(mode === 'include')}
-      >
-        Include
-      </button>
-      <button
-        type="button"
-        onClick={() => setMode('exclude')}
-        className={scopeModeToggleClass(mode === 'exclude')}
-      >
-        Exclude
-      </button>
-    </div>
-  )
-
+function CreateScheduleScopeFilterPanel() {
   return (
     <div className="rounded-[4px] border border-[#e5e7eb] bg-[#fafafa] p-4 flex flex-col gap-6">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="flex flex-col gap-4">
-          <div className="flex items-center justify-between gap-2">
-            <h4 className="text-[13px] font-medium text-[#0a0a0a] uppercase tracking-[0.04em]">Product scope</h4>
-            {renderScopeModeToggle(productScopeMode, setProductScopeMode)}
-          </div>
+          <h4 className="text-[13px] font-medium text-[#0a0a0a] uppercase tracking-[0.04em]">Product scope</h4>
           <CreateScheduleScopeSelect
             label="Departments"
             placeholder="Select departments"
             options={SCOPE_DEPARTMENT_OPTIONS}
           />
-          <CreateScheduleScopeSearchInput label="Sub-departments" placeholder="Search sub-departments" />
           <CreateScheduleScopeSearchInput label="Seasons" placeholder="Search seasons" />
-          <CreateScheduleScopeSearchInput label="Events" placeholder="Search events" />
           <div className="flex flex-col gap-2">
             <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Products</label>
             <div className="flex items-center gap-2">
@@ -294,17 +260,12 @@ function CreateScheduleScopeFilterPanel({
           </div>
         </div>
         <div className="flex flex-col gap-4">
-          <div className="flex items-center justify-between gap-2">
-            <h4 className="text-[13px] font-medium text-[#0a0a0a] uppercase tracking-[0.04em]">Geographic scope</h4>
-            {renderScopeModeToggle(geoScopeMode, setGeoScopeMode)}
-          </div>
+          <h4 className="text-[13px] font-medium text-[#0a0a0a] uppercase tracking-[0.04em]">Geographic scope</h4>
           <CreateScheduleScopeSelect
             label="Location Types"
             placeholder="Select location types"
             options={SCOPE_LOCATION_TYPE_OPTIONS}
           />
-          <CreateScheduleScopeSearchInput label="Regions" placeholder="Search regions" />
-          <CreateScheduleScopeSearchInput label="Countries" placeholder="Search countries" />
           <CreateScheduleScopeSearchInput label="Locations" placeholder="Search locations" />
         </div>
       </div>
@@ -777,8 +738,6 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
   const [isCreateSchedulePage, setIsCreateSchedulePage] = useState(false)
   const [openSections, setOpenSections] = useState(['scope'])
   const [locationScopeOption, setLocationScopeOption] = useState('all')
-  const [productScopeMode, setProductScopeMode] = useState('include')
-  const [geoScopeMode, setGeoScopeMode] = useState('include')
   const [sourceLocationOption, setSourceLocationOption] = useState('central')
   const [selectedMovementTypes, setSelectedMovementTypes] = useState([])
   const [movementTypeDropdownOpen, setMovementTypeDropdownOpen] = useState(false)
@@ -1288,12 +1247,7 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                   </div>
 
                   {locationScopeOption === 'select' && (
-                    <CreateScheduleScopeFilterPanel
-                      productScopeMode={productScopeMode}
-                      setProductScopeMode={setProductScopeMode}
-                      geoScopeMode={geoScopeMode}
-                      setGeoScopeMode={setGeoScopeMode}
-                    />
+                    <CreateScheduleScopeFilterPanel />
                   )}
                 </section>
 
