@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, Fragment } from 'react'
 import { Truck, Network, TrendingUp, ShieldCheck } from 'lucide-react'
 import { IconCalendarSidebar, IconPlus, IconReplenishment, IconReorder, IconRebalancing, IconChevronDown, IconList, IconCalendarNote, IconTruck, IconTrendUp, IconLightbulb, IconEdit, IconClose, IconChevronDownSelect, IconArrowLeft, IconSearch } from '../components/icons'
 
@@ -149,6 +149,46 @@ function getScopeExcludeChipText(excludeValues) {
   return `All except: ${excludeValues[0]}, ${excludeValues[1]}, +${excludeValues.length - 2} more`
 }
 
+function ActiveFilterChips({ entries }) {
+  const hasAny = entries.some((e) => e.includeValues.length > 0 || e.excludeValues.length > 0)
+  if (!hasAny) return null
+
+  return (
+    <div className="flex w-full flex-wrap gap-2 py-3">
+      {entries.map((entry) => (
+        <Fragment key={entry.fieldKey}>
+          {entry.includeValues.length >= 1 && (
+            <span className="inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3 py-1.5 text-[13px] font-medium text-[#1d4ed8]">
+              <span>{`${entry.label}: ${entry.includeValues.length} selected`}</span>
+              <button
+                type="button"
+                onClick={entry.onClearInclude}
+                aria-label={`Clear ${entry.label} includes`}
+                className="shrink-0 flex items-center justify-center text-[#1d4ed8] hover:text-[#1e40af]"
+              >
+                <IconClose className="size-3.5" />
+              </button>
+            </span>
+          )}
+          {entry.excludeValues.length >= 1 && (
+            <span className="inline-flex items-center gap-2 rounded-full border border-red-100 bg-red-50 px-3 py-1.5 text-[13px] font-medium text-[#b91c1c]">
+              <span>{`${entry.label}: ${getScopeExcludeChipText(entry.excludeValues)}`}</span>
+              <button
+                type="button"
+                onClick={entry.onClearExclude}
+                aria-label={`Clear ${entry.label} excludes`}
+                className="shrink-0 flex items-center justify-center text-[#b91c1c] hover:text-[#991b1b]"
+              >
+                <IconClose className="size-3.5" />
+              </button>
+            </span>
+          )}
+        </Fragment>
+      ))}
+    </div>
+  )
+}
+
 const scopeModeToggleButtonClass = (active) =>
   active
     ? 'h-7 rounded-[4px] px-3 text-[13px] font-medium bg-[#1d4ed8] text-white'
@@ -208,9 +248,9 @@ function CreateScheduleScopeMultiSelect({
           </button>
         </div>
       </div>
-      <div className="min-h-[18px] h-[54px]">
+      <div className="min-h-[18px]">
         {helperText ? (
-          <p className="text-[12px] font-normal leading-[18px] text-[#4b535c]">{helperText}</p>
+          <p className="text-[12px] leading-[16px] text-[#4b535c]">{helperText}</p>
         ) : (
           <div aria-hidden="true" />
         )}
@@ -387,10 +427,12 @@ function CreateScheduleScopeFilterPanel({
   setLocationsMode,
 }) {
   return (
-    <div className="rounded-[4px] border border-[#e5e7eb] bg-[#fafafa] p-4 flex flex-col gap-6">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="flex flex-col gap-4">
-          <h4 className="text-[13px] font-medium text-[#0a0a0a] uppercase tracking-[0.04em]">Product scope</h4>
+    <div className="rounded-[4px] border border-[#e5e7eb] bg-[#fafafa] p-4">
+      <div className="grid grid-cols-2 gap-x-6 gap-y-3">
+        <h4 className="text-[13px] font-medium text-[#0a0a0a] uppercase tracking-[0.04em]">Product scope</h4>
+        <h4 className="text-[13px] font-medium text-[#0a0a0a] uppercase tracking-[0.04em]">Geographic scope</h4>
+
+        <div className="w-full self-start">
           <CreateScheduleScopeMultiSelect
             label="Departments"
             placeholder="Select departments"
@@ -402,6 +444,23 @@ function CreateScheduleScopeFilterPanel({
             mode={departmentMode}
             onModeChange={setDepartmentMode}
           />
+        </div>
+        <div className="w-full self-start">
+          <CreateScheduleScopeMultiSelect
+            label="Warehouse"
+            helperText="Where products are distributed from. If none selected, we'll use your full network."
+            placeholder="Select warehouses"
+            options={SCOPE_WAREHOUSE_OPTIONS}
+            includeValues={warehouseInclude}
+            onIncludeChange={setWarehouseInclude}
+            excludeValues={warehouseExclude}
+            onExcludeChange={setWarehouseExclude}
+            mode={warehouseMode}
+            onModeChange={setWarehouseMode}
+          />
+        </div>
+
+        <div className="w-full self-start">
           <CreateScheduleScopeMultiSelect
             label="Seasons"
             placeholder="Select seasons"
@@ -413,20 +472,36 @@ function CreateScheduleScopeFilterPanel({
             mode={seasonsMode}
             onModeChange={setSeasonsMode}
           />
-          <div className="flex items-end gap-2">
-            <div className="min-w-0 flex-1">
-              <CreateScheduleScopeMultiSelect
-                label="Products"
-                placeholder="Select products"
-                options={SCOPE_PRODUCTS_OPTIONS}
-                includeValues={productsInclude}
-                onIncludeChange={setProductsInclude}
-                excludeValues={productsExclude}
-                onExcludeChange={setProductsExclude}
-                mode={productsMode}
-                onModeChange={setProductsMode}
-              />
-            </div>
+        </div>
+        <div className="w-full self-start">
+          <CreateScheduleScopeMultiSelect
+            label="Location Types"
+            placeholder="Select location types"
+            options={SCOPE_LOCATION_TYPE_OPTIONS}
+            includeValues={locationTypesInclude}
+            onIncludeChange={setLocationTypesInclude}
+            excludeValues={locationTypesExclude}
+            onExcludeChange={setLocationTypesExclude}
+            mode={locationTypesMode}
+            onModeChange={setLocationTypesMode}
+          />
+        </div>
+
+        <div className="flex w-full items-stretch gap-2 self-start">
+          <div className="min-w-0 flex-1 self-start">
+            <CreateScheduleScopeMultiSelect
+              label="Products"
+              placeholder="Select products"
+              options={SCOPE_PRODUCTS_OPTIONS}
+              includeValues={productsInclude}
+              onIncludeChange={setProductsInclude}
+              excludeValues={productsExclude}
+              onExcludeChange={setProductsExclude}
+              mode={productsMode}
+              onModeChange={setProductsMode}
+            />
+          </div>
+          <div className="flex shrink-0 items-end gap-2 self-stretch">
             <button
               type="button"
               onClick={() => {}}
@@ -445,45 +520,21 @@ function CreateScheduleScopeFilterPanel({
             </button>
           </div>
         </div>
-        <div className="flex flex-col gap-4">
-          <h4 className="text-[13px] font-medium text-[#0a0a0a] uppercase tracking-[0.04em]">Geographic scope</h4>
-          <CreateScheduleScopeMultiSelect
-            label="Warehouse"
-            helperText="Location where products will be distributed from. If none are selected, we'll use all the warehouses connected in your Network."
-            placeholder="Select warehouses"
-            options={SCOPE_WAREHOUSE_OPTIONS}
-            includeValues={warehouseInclude}
-            onIncludeChange={setWarehouseInclude}
-            excludeValues={warehouseExclude}
-            onExcludeChange={setWarehouseExclude}
-            mode={warehouseMode}
-            onModeChange={setWarehouseMode}
-          />
-          <CreateScheduleScopeMultiSelect
-            label="Location Types"
-            placeholder="Select location types"
-            options={SCOPE_LOCATION_TYPE_OPTIONS}
-            includeValues={locationTypesInclude}
-            onIncludeChange={setLocationTypesInclude}
-            excludeValues={locationTypesExclude}
-            onExcludeChange={setLocationTypesExclude}
-            mode={locationTypesMode}
-            onModeChange={setLocationTypesMode}
-          />
-          <div className="flex items-end gap-2">
-            <div className="flex-1 min-w-0">
-              <CreateScheduleScopeMultiSelect
-                label="Locations"
-                placeholder="Select locations"
-                options={SCOPE_LOCATIONS_OPTIONS}
-                includeValues={locationsInclude}
-                onIncludeChange={setLocationsInclude}
-                excludeValues={locationsExclude}
-                onExcludeChange={setLocationsExclude}
-                mode={locationsMode}
-                onModeChange={setLocationsMode}
-              />
-            </div>
+        <div className="flex w-full items-stretch gap-2 self-start">
+          <div className="min-w-0 flex-1 self-start">
+            <CreateScheduleScopeMultiSelect
+              label="Locations"
+              placeholder="Select locations"
+              options={SCOPE_LOCATIONS_OPTIONS}
+              includeValues={locationsInclude}
+              onIncludeChange={setLocationsInclude}
+              excludeValues={locationsExclude}
+              onExcludeChange={setLocationsExclude}
+              mode={locationsMode}
+              onModeChange={setLocationsMode}
+            />
+          </div>
+          <div className="flex shrink-0 items-end gap-2 self-stretch">
             <button
               type="button"
               onClick={() => {}}
@@ -1418,6 +1469,57 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
     return `${prefix}: ${parts.join(' and ')}`
   }
 
+  const scopeActiveFilterEntries = [
+    {
+      fieldKey: 'department',
+      label: 'Department',
+      includeValues: departmentInclude,
+      excludeValues: departmentExclude,
+      onClearInclude: () => setDepartmentInclude([]),
+      onClearExclude: () => setDepartmentExclude([]),
+    },
+    {
+      fieldKey: 'seasons',
+      label: 'Seasons',
+      includeValues: seasonsInclude,
+      excludeValues: seasonsExclude,
+      onClearInclude: () => setSeasonsInclude([]),
+      onClearExclude: () => setSeasonsExclude([]),
+    },
+    {
+      fieldKey: 'products',
+      label: 'Products',
+      includeValues: productsInclude,
+      excludeValues: productsExclude,
+      onClearInclude: () => setProductsInclude([]),
+      onClearExclude: () => setProductsExclude([]),
+    },
+    {
+      fieldKey: 'warehouse',
+      label: 'Warehouse',
+      includeValues: warehouseInclude,
+      excludeValues: warehouseExclude,
+      onClearInclude: () => setWarehouseInclude([]),
+      onClearExclude: () => setWarehouseExclude([]),
+    },
+    {
+      fieldKey: 'locationTypes',
+      label: 'Location Types',
+      includeValues: locationTypesInclude,
+      excludeValues: locationTypesExclude,
+      onClearInclude: () => setLocationTypesInclude([]),
+      onClearExclude: () => setLocationTypesExclude([]),
+    },
+    {
+      fieldKey: 'locations',
+      label: 'Locations',
+      includeValues: locationsInclude,
+      excludeValues: locationsExclude,
+      onClearInclude: () => setLocationsInclude([]),
+      onClearExclude: () => setLocationsExclude([]),
+    },
+  ]
+
   if (isCreateSchedulePage) {
     return (
       <div className="flex flex-col gap-8">
@@ -1499,7 +1601,9 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                   </div>
 
                   {locationScopeOption === 'select' && (
-                    <CreateScheduleScopeFilterPanel
+                    <>
+                      <ActiveFilterChips entries={scopeActiveFilterEntries} />
+                      <CreateScheduleScopeFilterPanel
                       warehouseInclude={warehouseInclude}
                       setWarehouseInclude={setWarehouseInclude}
                       warehouseExclude={warehouseExclude}
@@ -1537,6 +1641,7 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                       locationsMode={locationsMode}
                       setLocationsMode={setLocationsMode}
                     />
+                    </>
                   )}
                 </section>
 
