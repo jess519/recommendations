@@ -142,12 +142,11 @@ const SCOPE_SEASONS_OPTIONS = ['SS24', 'AW24', 'SS25', 'AW25', 'Cruise 25', 'Pre
 const SCOPE_LOCATIONS_OPTIONS = ['Paris flagship', 'London Regent St', 'NY Soho', 'Milan Duomo', 'Berlin Mitte', 'Tokyo Ginza']
 const SCOPE_PRODUCTS_OPTIONS = ['SKU-001 Wool Coat', 'SKU-002 Silk Scarf', 'SKU-003 Leather Bag', 'SKU-004 Cotton Tee', 'SKU-005 Denim Jacket']
 
-function getScopeMultiSelectChipText(mode, value) {
-  if (value.length === 0) return ''
-  if (mode === 'include') return `${value.length} selected`
-  if (value.length === 1) return `All except: ${value[0]}`
-  if (value.length === 2) return `All except: ${value[0]}, ${value[1]}`
-  return `All except: ${value[0]}, ${value[1]}, +${value.length - 2} more`
+function getScopeExcludeChipText(excludeValues) {
+  if (excludeValues.length === 0) return ''
+  if (excludeValues.length === 1) return `All except: ${excludeValues[0]}`
+  if (excludeValues.length === 2) return `All except: ${excludeValues[0]}, ${excludeValues[1]}`
+  return `All except: ${excludeValues[0]}, ${excludeValues[1]}, +${excludeValues.length - 2} more`
 }
 
 const scopeModeToggleButtonClass = (active) =>
@@ -160,18 +159,40 @@ function CreateScheduleScopeMultiSelect({
   helperText,
   placeholder = 'Select',
   options = [],
-  value,
-  onChange,
+  includeValues,
+  onIncludeChange,
+  excludeValues,
+  onExcludeChange,
   mode,
   onModeChange,
 }) {
   const [open, setOpen] = useState(false)
 
+  const activeValues = mode === 'include' ? includeValues : excludeValues
+
   const toggleOption = (opt) => {
-    onChange(value.includes(opt) ? value.filter((v) => v !== opt) : [...value, opt])
+    if (mode === 'include') {
+      if (includeValues.includes(opt)) {
+        onIncludeChange(includeValues.filter((v) => v !== opt))
+      } else {
+        onIncludeChange([...includeValues, opt])
+        if (excludeValues.includes(opt)) {
+          onExcludeChange(excludeValues.filter((v) => v !== opt))
+        }
+      }
+      return
+    }
+    if (excludeValues.includes(opt)) {
+      onExcludeChange(excludeValues.filter((v) => v !== opt))
+    } else {
+      onExcludeChange([...excludeValues, opt])
+      if (includeValues.includes(opt)) {
+        onIncludeChange(includeValues.filter((v) => v !== opt))
+      }
+    }
   }
 
-  const chipText = getScopeMultiSelectChipText(mode, value)
+  const hasSelections = includeValues.length > 0 || excludeValues.length > 0
 
   return (
     <div className="flex flex-col gap-2">
@@ -211,25 +232,43 @@ function CreateScheduleScopeMultiSelect({
           }}
           className="w-full h-14 pl-4 pr-10 rounded-[4px] border border-[#EAEAEA] bg-white text-[16px] text-[#0a0a0a] text-left flex items-center gap-2 min-w-0 cursor-pointer"
         >
-          {value.length === 0 ? (
+          {!hasSelections ? (
             <span className="min-w-0 flex-1 truncate text-left text-[#4b535c]">{placeholder}</span>
           ) : (
-            <>
-              <span className="inline-flex items-center rounded-full px-2.5 py-1 bg-blue-50 text-[#1d4ed8] text-[13px] font-medium shrink-0 max-w-[calc(100%-2rem)] truncate">
-                {chipText}
-              </span>
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onChange([])
-                }}
-                aria-label="Clear selection"
-                className="shrink-0 flex items-center justify-center text-[#4b535c] hover:text-[#0a0a0a] p-1"
-              >
-                <IconClose className="size-3.5" />
-              </button>
-            </>
+            <div className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden">
+              {includeValues.length >= 1 && (
+                <span className="inline-flex max-w-full items-center gap-1 rounded-full bg-blue-50 px-2.5 py-1 text-[13px] font-medium text-[#1d4ed8] shrink-0">
+                  <span className="truncate">{`${includeValues.length} selected`}</span>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onIncludeChange([])
+                    }}
+                    aria-label="Clear included selections"
+                    className="shrink-0 flex items-center justify-center text-[#1d4ed8] hover:text-[#1e40af] p-0.5"
+                  >
+                    <IconClose className="size-3.5" />
+                  </button>
+                </span>
+              )}
+              {excludeValues.length >= 1 && (
+                <span className="inline-flex max-w-full items-center gap-1 rounded-full bg-red-50 px-2.5 py-1 text-[13px] font-medium text-[#b91c1c] shrink-0">
+                  <span className="truncate">{getScopeExcludeChipText(excludeValues)}</span>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onExcludeChange([])
+                    }}
+                    aria-label="Clear excluded selections"
+                    className="shrink-0 flex items-center justify-center text-[#b91c1c] hover:text-[#991b1b] p-0.5"
+                  >
+                    <IconClose className="size-3.5" />
+                  </button>
+                </span>
+              )}
+            </div>
           )}
         </div>
         <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
@@ -255,7 +294,7 @@ function CreateScheduleScopeMultiSelect({
                 >
                   <input
                     type="checkbox"
-                    checked={value.includes(opt)}
+                    checked={activeValues.includes(opt)}
                     onChange={() => toggleOption(opt)}
                     className="size-4 rounded border-[#d1d5db] text-[#0267ff] focus:ring-[#0267ff] shrink-0"
                   />
@@ -302,28 +341,40 @@ function NetworkStyleUploadIcon() {
 
 /** Product + geographic scope filters for create schedule scope selection. */
 function CreateScheduleScopeFilterPanel({
-  warehouseValue,
-  setWarehouseValue,
+  warehouseInclude,
+  setWarehouseInclude,
+  warehouseExclude,
+  setWarehouseExclude,
   warehouseMode,
   setWarehouseMode,
-  departmentValue,
-  setDepartmentValue,
+  departmentInclude,
+  setDepartmentInclude,
+  departmentExclude,
+  setDepartmentExclude,
   departmentMode,
   setDepartmentMode,
-  seasonsValue,
-  setSeasonsValue,
+  seasonsInclude,
+  setSeasonsInclude,
+  seasonsExclude,
+  setSeasonsExclude,
   seasonsMode,
   setSeasonsMode,
-  productsValue,
-  setProductsValue,
+  productsInclude,
+  setProductsInclude,
+  productsExclude,
+  setProductsExclude,
   productsMode,
   setProductsMode,
-  locationTypesValue,
-  setLocationTypesValue,
+  locationTypesInclude,
+  setLocationTypesInclude,
+  locationTypesExclude,
+  setLocationTypesExclude,
   locationTypesMode,
   setLocationTypesMode,
-  locationsValue,
-  setLocationsValue,
+  locationsInclude,
+  setLocationsInclude,
+  locationsExclude,
+  setLocationsExclude,
   locationsMode,
   setLocationsMode,
 }) {
@@ -336,8 +387,10 @@ function CreateScheduleScopeFilterPanel({
             label="Departments"
             placeholder="Select departments"
             options={SCOPE_DEPARTMENT_OPTIONS}
-            value={departmentValue}
-            onChange={setDepartmentValue}
+            includeValues={departmentInclude}
+            onIncludeChange={setDepartmentInclude}
+            excludeValues={departmentExclude}
+            onExcludeChange={setDepartmentExclude}
             mode={departmentMode}
             onModeChange={setDepartmentMode}
           />
@@ -345,8 +398,10 @@ function CreateScheduleScopeFilterPanel({
             label="Seasons"
             placeholder="Select seasons"
             options={SCOPE_SEASONS_OPTIONS}
-            value={seasonsValue}
-            onChange={setSeasonsValue}
+            includeValues={seasonsInclude}
+            onIncludeChange={setSeasonsInclude}
+            excludeValues={seasonsExclude}
+            onExcludeChange={setSeasonsExclude}
             mode={seasonsMode}
             onModeChange={setSeasonsMode}
           />
@@ -356,8 +411,10 @@ function CreateScheduleScopeFilterPanel({
                 label="Products"
                 placeholder="Select products"
                 options={SCOPE_PRODUCTS_OPTIONS}
-                value={productsValue}
-                onChange={setProductsValue}
+                includeValues={productsInclude}
+                onIncludeChange={setProductsInclude}
+                excludeValues={productsExclude}
+                onExcludeChange={setProductsExclude}
                 mode={productsMode}
                 onModeChange={setProductsMode}
               />
@@ -387,8 +444,10 @@ function CreateScheduleScopeFilterPanel({
             helperText="Location where products will be distributed from. If none are selected, we'll use all the warehouses connected in your Network."
             placeholder="Select warehouses"
             options={SCOPE_WAREHOUSE_OPTIONS}
-            value={warehouseValue}
-            onChange={setWarehouseValue}
+            includeValues={warehouseInclude}
+            onIncludeChange={setWarehouseInclude}
+            excludeValues={warehouseExclude}
+            onExcludeChange={setWarehouseExclude}
             mode={warehouseMode}
             onModeChange={setWarehouseMode}
           />
@@ -396,8 +455,10 @@ function CreateScheduleScopeFilterPanel({
             label="Location Types"
             placeholder="Select location types"
             options={SCOPE_LOCATION_TYPE_OPTIONS}
-            value={locationTypesValue}
-            onChange={setLocationTypesValue}
+            includeValues={locationTypesInclude}
+            onIncludeChange={setLocationTypesInclude}
+            excludeValues={locationTypesExclude}
+            onExcludeChange={setLocationTypesExclude}
             mode={locationTypesMode}
             onModeChange={setLocationTypesMode}
           />
@@ -407,8 +468,10 @@ function CreateScheduleScopeFilterPanel({
                 label="Locations"
                 placeholder="Select locations"
                 options={SCOPE_LOCATIONS_OPTIONS}
-                value={locationsValue}
-                onChange={setLocationsValue}
+                includeValues={locationsInclude}
+                onIncludeChange={setLocationsInclude}
+                excludeValues={locationsExclude}
+                onExcludeChange={setLocationsExclude}
                 mode={locationsMode}
                 onModeChange={setLocationsMode}
               />
@@ -901,12 +964,18 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
   const [isCreateSchedulePage, setIsCreateSchedulePage] = useState(false)
   const [openSections, setOpenSections] = useState(['scope'])
   const [locationScopeOption, setLocationScopeOption] = useState('all')
-  const [warehouseValue, setWarehouseValue] = useState([])
-  const [departmentValue, setDepartmentValue] = useState([])
-  const [seasonsValue, setSeasonsValue] = useState([])
-  const [productsValue, setProductsValue] = useState([])
-  const [locationTypesValue, setLocationTypesValue] = useState([])
-  const [locationsValue, setLocationsValue] = useState([])
+  const [warehouseInclude, setWarehouseInclude] = useState([])
+  const [warehouseExclude, setWarehouseExclude] = useState([])
+  const [departmentInclude, setDepartmentInclude] = useState([])
+  const [departmentExclude, setDepartmentExclude] = useState([])
+  const [seasonsInclude, setSeasonsInclude] = useState([])
+  const [seasonsExclude, setSeasonsExclude] = useState([])
+  const [productsInclude, setProductsInclude] = useState([])
+  const [productsExclude, setProductsExclude] = useState([])
+  const [locationTypesInclude, setLocationTypesInclude] = useState([])
+  const [locationTypesExclude, setLocationTypesExclude] = useState([])
+  const [locationsInclude, setLocationsInclude] = useState([])
+  const [locationsExclude, setLocationsExclude] = useState([])
   const [warehouseMode, setWarehouseMode] = useState('include')
   const [departmentMode, setDepartmentMode] = useState('include')
   const [seasonsMode, setSeasonsMode] = useState('include')
@@ -1423,28 +1492,40 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
 
                   {locationScopeOption === 'select' && (
                     <CreateScheduleScopeFilterPanel
-                      warehouseValue={warehouseValue}
-                      setWarehouseValue={setWarehouseValue}
+                      warehouseInclude={warehouseInclude}
+                      setWarehouseInclude={setWarehouseInclude}
+                      warehouseExclude={warehouseExclude}
+                      setWarehouseExclude={setWarehouseExclude}
                       warehouseMode={warehouseMode}
                       setWarehouseMode={setWarehouseMode}
-                      departmentValue={departmentValue}
-                      setDepartmentValue={setDepartmentValue}
+                      departmentInclude={departmentInclude}
+                      setDepartmentInclude={setDepartmentInclude}
+                      departmentExclude={departmentExclude}
+                      setDepartmentExclude={setDepartmentExclude}
                       departmentMode={departmentMode}
                       setDepartmentMode={setDepartmentMode}
-                      seasonsValue={seasonsValue}
-                      setSeasonsValue={setSeasonsValue}
+                      seasonsInclude={seasonsInclude}
+                      setSeasonsInclude={setSeasonsInclude}
+                      seasonsExclude={seasonsExclude}
+                      setSeasonsExclude={setSeasonsExclude}
                       seasonsMode={seasonsMode}
                       setSeasonsMode={setSeasonsMode}
-                      productsValue={productsValue}
-                      setProductsValue={setProductsValue}
+                      productsInclude={productsInclude}
+                      setProductsInclude={setProductsInclude}
+                      productsExclude={productsExclude}
+                      setProductsExclude={setProductsExclude}
                       productsMode={productsMode}
                       setProductsMode={setProductsMode}
-                      locationTypesValue={locationTypesValue}
-                      setLocationTypesValue={setLocationTypesValue}
+                      locationTypesInclude={locationTypesInclude}
+                      setLocationTypesInclude={setLocationTypesInclude}
+                      locationTypesExclude={locationTypesExclude}
+                      setLocationTypesExclude={setLocationTypesExclude}
                       locationTypesMode={locationTypesMode}
                       setLocationTypesMode={setLocationTypesMode}
-                      locationsValue={locationsValue}
-                      setLocationsValue={setLocationsValue}
+                      locationsInclude={locationsInclude}
+                      setLocationsInclude={setLocationsInclude}
+                      locationsExclude={locationsExclude}
+                      setLocationsExclude={setLocationsExclude}
                       locationsMode={locationsMode}
                       setLocationsMode={setLocationsMode}
                     />
