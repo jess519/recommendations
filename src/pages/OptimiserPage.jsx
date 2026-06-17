@@ -275,6 +275,7 @@ function CreateScheduleScopeMultiSelect({
   onExcludeChange,
   mode,
   onModeChange,
+  hideHeader = false,
 }) {
   const [open, setOpen] = useState(false)
 
@@ -298,47 +299,43 @@ function CreateScheduleScopeMultiSelect({
   const hasSelections = includeValues.length > 0 || excludeValues.length > 0
 
   return (
-    <div className="flex flex-col gap-2">
-      <div className="flex min-h-7 items-center justify-between gap-2">
-        <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">{label}</label>
-        <div className="flex shrink-0">
-          <button
-            type="button"
-            onClick={() => onModeChange('include')}
-            className={scopeModeToggleButtonClass(mode === 'include')}
-          >
-            Include
-          </button>
-          <button
-            type="button"
-            onClick={() => onModeChange('exclude')}
-            className={scopeModeToggleButtonClass(mode === 'exclude')}
-          >
-            Exclude
-          </button>
+    <div className="flex flex-col gap-1.5">
+      {!hideHeader && (
+        <div className="flex min-h-7 items-center justify-between gap-2">
+          <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">{label}</label>
+          <div className="flex shrink-0">
+            <button
+              type="button"
+              onClick={() => onModeChange('include')}
+              className={scopeModeToggleButtonClass(mode === 'include')}
+            >
+              Include
+            </button>
+            <button
+              type="button"
+              onClick={() => onModeChange('exclude')}
+              className={scopeModeToggleButtonClass(mode === 'exclude')}
+            >
+              Exclude
+            </button>
+          </div>
         </div>
-      </div>
-      <div className="min-h-[18px]">
-        {helperText ? (
-          <p className="text-[12px] leading-[16px] text-[#4b535c]">{helperText}</p>
-        ) : (
-          <div aria-hidden="true" />
-        )}
-      </div>
-      <div className="relative">
-        <div
-          role="combobox"
-          aria-expanded={open}
-          tabIndex={0}
-          onClick={() => setOpen((o) => !o)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault()
-              setOpen((o) => !o)
-            }
-          }}
-          className="flex h-14 min-h-14 max-h-14 w-full shrink-0 cursor-pointer items-center gap-2 overflow-hidden rounded-[4px] border border-[#EAEAEA] bg-white pl-4 pr-10 text-left text-[16px] text-[#0a0a0a] min-w-0"
-        >
+      )}
+      <div>
+        <div className="relative">
+          <div
+            role="combobox"
+            aria-expanded={open}
+            tabIndex={0}
+            onClick={() => setOpen((o) => !o)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                setOpen((o) => !o)
+              }
+            }}
+            className="flex h-14 min-h-14 max-h-14 w-full shrink-0 cursor-pointer items-center gap-2 overflow-hidden rounded-[4px] border border-[#EAEAEA] bg-white pl-4 pr-10 text-left text-[16px] text-[#0a0a0a] min-w-0"
+          >
           {!hasSelections ? (
             <span className="min-w-0 flex-1 truncate text-left text-[#4b535c]">{placeholder}</span>
           ) : (
@@ -422,6 +419,10 @@ function CreateScheduleScopeMultiSelect({
             </div>
           </>
         )}
+        </div>
+        {helperText ? (
+          <p className="mt-1.5 text-[12px] leading-[16px] text-[#4b535c]">{helperText}</p>
+        ) : null}
       </div>
     </div>
   )
@@ -557,70 +558,114 @@ function CreateScheduleScopeFilterPanel({
           />
         </div>
 
-        <div className="flex w-full items-stretch gap-2 self-start">
-          <div className="min-w-0 flex-1 self-start">
-            <CreateScheduleScopeMultiSelect
-              label="Products"
-              placeholder="Select products"
-              options={SCOPE_PRODUCTS_OPTIONS}
-              includeValues={productsInclude}
-              onIncludeChange={setProductsInclude}
-              excludeValues={productsExclude}
-              onExcludeChange={setProductsExclude}
-              mode={productsMode}
-              onModeChange={setProductsMode}
-            />
+        <div className="flex w-full flex-col gap-1.5 self-start">
+          <div className="flex min-h-7 items-center justify-between gap-2">
+            <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Products</label>
+            <div className="flex shrink-0">
+              <button
+                type="button"
+                onClick={() => setProductsMode('include')}
+                className={scopeModeToggleButtonClass(productsMode === 'include')}
+              >
+                Include
+              </button>
+              <button
+                type="button"
+                onClick={() => setProductsMode('exclude')}
+                className={scopeModeToggleButtonClass(productsMode === 'exclude')}
+              >
+                Exclude
+              </button>
+            </div>
           </div>
-          <div className="flex shrink-0 items-end gap-2 self-stretch">
-            <button
-              type="button"
-              onClick={() => {}}
-              aria-label="Upload products"
-              className="h-14 w-14 shrink-0 rounded-[4px] border border-[#E9EAEB] bg-white text-[#0a0a0a] hover:bg-[#f8f8f8] flex items-center justify-center"
-            >
-              <NetworkStyleUploadIcon />
-            </button>
-            <button
-              type="button"
-              onClick={() => {}}
-              aria-label="Download products"
-              className="h-14 w-14 shrink-0 rounded-[4px] border border-[#E9EAEB] bg-white text-[#0a0a0a] hover:bg-[#f8f8f8] flex items-center justify-center"
-            >
-              <NetworkStyleDownloadIcon />
-            </button>
+          <div className="flex items-stretch gap-2">
+            <div className="min-w-0 flex-1">
+              <CreateScheduleScopeMultiSelect
+                hideHeader
+                label="Products"
+                placeholder="Select products"
+                options={SCOPE_PRODUCTS_OPTIONS}
+                includeValues={productsInclude}
+                onIncludeChange={setProductsInclude}
+                excludeValues={productsExclude}
+                onExcludeChange={setProductsExclude}
+                mode={productsMode}
+                onModeChange={setProductsMode}
+              />
+            </div>
+            <div className="flex shrink-0 items-end gap-2">
+              <button
+                type="button"
+                onClick={() => {}}
+                aria-label="Upload products"
+                className="h-14 w-14 shrink-0 rounded-[4px] border border-[#E9EAEB] bg-white text-[#0a0a0a] hover:bg-[#f8f8f8] flex items-center justify-center"
+              >
+                <NetworkStyleUploadIcon />
+              </button>
+              <button
+                type="button"
+                onClick={() => {}}
+                aria-label="Download products"
+                className="h-14 w-14 shrink-0 rounded-[4px] border border-[#E9EAEB] bg-white text-[#0a0a0a] hover:bg-[#f8f8f8] flex items-center justify-center"
+              >
+                <NetworkStyleDownloadIcon />
+              </button>
+            </div>
           </div>
         </div>
-        <div className="flex w-full items-stretch gap-2 self-start">
-          <div className="min-w-0 flex-1 self-start">
-            <CreateScheduleScopeMultiSelect
-              label="Locations"
-              placeholder="Select locations"
-              options={SCOPE_LOCATIONS_OPTIONS}
-              includeValues={locationsInclude}
-              onIncludeChange={setLocationsInclude}
-              excludeValues={locationsExclude}
-              onExcludeChange={setLocationsExclude}
-              mode={locationsMode}
-              onModeChange={setLocationsMode}
-            />
+        <div className="flex w-full flex-col gap-1.5 self-start">
+          <div className="flex min-h-7 items-center justify-between gap-2">
+            <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Locations</label>
+            <div className="flex shrink-0">
+              <button
+                type="button"
+                onClick={() => setLocationsMode('include')}
+                className={scopeModeToggleButtonClass(locationsMode === 'include')}
+              >
+                Include
+              </button>
+              <button
+                type="button"
+                onClick={() => setLocationsMode('exclude')}
+                className={scopeModeToggleButtonClass(locationsMode === 'exclude')}
+              >
+                Exclude
+              </button>
+            </div>
           </div>
-          <div className="flex shrink-0 items-end gap-2 self-stretch">
-            <button
-              type="button"
-              onClick={() => {}}
-              aria-label="Upload locations"
-              className="h-14 w-14 shrink-0 rounded-[4px] border border-[#E9EAEB] bg-white text-[#0a0a0a] hover:bg-[#f8f8f8] flex items-center justify-center"
-            >
-              <NetworkStyleUploadIcon />
-            </button>
-            <button
-              type="button"
-              onClick={() => {}}
-              aria-label="Download locations"
-              className="h-14 w-14 shrink-0 rounded-[4px] border border-[#E9EAEB] bg-white text-[#0a0a0a] hover:bg-[#f8f8f8] flex items-center justify-center"
-            >
-              <NetworkStyleDownloadIcon />
-            </button>
+          <div className="flex items-stretch gap-2">
+            <div className="min-w-0 flex-1">
+              <CreateScheduleScopeMultiSelect
+                hideHeader
+                label="Locations"
+                placeholder="Select locations"
+                options={SCOPE_LOCATIONS_OPTIONS}
+                includeValues={locationsInclude}
+                onIncludeChange={setLocationsInclude}
+                excludeValues={locationsExclude}
+                onExcludeChange={setLocationsExclude}
+                mode={locationsMode}
+                onModeChange={setLocationsMode}
+              />
+            </div>
+            <div className="flex shrink-0 items-end gap-2">
+              <button
+                type="button"
+                onClick={() => {}}
+                aria-label="Upload locations"
+                className="h-14 w-14 shrink-0 rounded-[4px] border border-[#E9EAEB] bg-white text-[#0a0a0a] hover:bg-[#f8f8f8] flex items-center justify-center"
+              >
+                <NetworkStyleUploadIcon />
+              </button>
+              <button
+                type="button"
+                onClick={() => {}}
+                aria-label="Download locations"
+                className="h-14 w-14 shrink-0 rounded-[4px] border border-[#E9EAEB] bg-white text-[#0a0a0a] hover:bg-[#f8f8f8] flex items-center justify-center"
+              >
+                <NetworkStyleDownloadIcon />
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -989,7 +1034,8 @@ function ScopeAdvancedFilters({ rows, setRows }) {
 
   return (
     <div className="mt-4 rounded-[4px] border border-[#e5e7eb] bg-[#fafafa] p-4">
-      <h4 className="mb-3 text-[13px] font-medium text-[#0a0a0a] uppercase tracking-[0.04em]">Advanced filters</h4>
+      <h4 className="text-[13px] font-medium text-[#0a0a0a] uppercase tracking-[0.04em]">Advanced filters</h4>
+      <p className="mt-1 mb-3 text-[12px] font-normal text-[#4b535c]">Apply to rows where these conditions are met</p>
       <div className="flex flex-col">
         {rows.map((row, rowIdx) => (
           <Fragment key={row.id}>
