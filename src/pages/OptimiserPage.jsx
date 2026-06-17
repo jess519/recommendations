@@ -169,54 +169,51 @@ function CreateScheduleScopeMultiSelect({
   const [open, setOpen] = useState(false)
 
   const activeValues = mode === 'include' ? includeValues : excludeValues
+  const oppositeValues = mode === 'include' ? excludeValues : includeValues
 
   const toggleOption = (opt) => {
+    if (oppositeValues.includes(opt)) return
+
     if (mode === 'include') {
-      if (includeValues.includes(opt)) {
-        onIncludeChange(includeValues.filter((v) => v !== opt))
-      } else {
-        onIncludeChange([...includeValues, opt])
-        if (excludeValues.includes(opt)) {
-          onExcludeChange(excludeValues.filter((v) => v !== opt))
-        }
-      }
+      onIncludeChange(
+        includeValues.includes(opt) ? includeValues.filter((v) => v !== opt) : [...includeValues, opt]
+      )
       return
     }
-    if (excludeValues.includes(opt)) {
-      onExcludeChange(excludeValues.filter((v) => v !== opt))
-    } else {
-      onExcludeChange([...excludeValues, opt])
-      if (includeValues.includes(opt)) {
-        onIncludeChange(includeValues.filter((v) => v !== opt))
-      }
-    }
+    onExcludeChange(
+      excludeValues.includes(opt) ? excludeValues.filter((v) => v !== opt) : [...excludeValues, opt]
+    )
   }
 
   const hasSelections = includeValues.length > 0 || excludeValues.length > 0
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="flex flex-col gap-1">
-        <div className="flex items-center justify-between gap-2">
-          <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">{label}</label>
-          <div className="flex shrink-0">
-            <button
-              type="button"
-              onClick={() => onModeChange('include')}
-              className={scopeModeToggleButtonClass(mode === 'include')}
-            >
-              Include
-            </button>
-            <button
-              type="button"
-              onClick={() => onModeChange('exclude')}
-              className={scopeModeToggleButtonClass(mode === 'exclude')}
-            >
-              Exclude
-            </button>
-          </div>
+      <div className="flex min-h-7 items-center justify-between gap-2">
+        <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">{label}</label>
+        <div className="flex shrink-0">
+          <button
+            type="button"
+            onClick={() => onModeChange('include')}
+            className={scopeModeToggleButtonClass(mode === 'include')}
+          >
+            Include
+          </button>
+          <button
+            type="button"
+            onClick={() => onModeChange('exclude')}
+            className={scopeModeToggleButtonClass(mode === 'exclude')}
+          >
+            Exclude
+          </button>
         </div>
-        {helperText && <p className="text-[12px] font-normal text-[#4b535c]">{helperText}</p>}
+      </div>
+      <div className="min-h-[18px] h-[54px]">
+        {helperText ? (
+          <p className="text-[12px] font-normal leading-[18px] text-[#4b535c]">{helperText}</p>
+        ) : (
+          <div aria-hidden="true" />
+        )}
       </div>
       <div className="relative">
         <div
@@ -230,7 +227,7 @@ function CreateScheduleScopeMultiSelect({
               setOpen((o) => !o)
             }
           }}
-          className="w-full h-14 pl-4 pr-10 rounded-[4px] border border-[#EAEAEA] bg-white text-[16px] text-[#0a0a0a] text-left flex items-center gap-2 min-w-0 cursor-pointer"
+          className="flex h-14 min-h-14 max-h-14 w-full shrink-0 cursor-pointer items-center gap-2 overflow-hidden rounded-[4px] border border-[#EAEAEA] bg-white pl-4 pr-10 text-left text-[16px] text-[#0a0a0a] min-w-0"
         >
           {!hasSelections ? (
             <span className="min-w-0 flex-1 truncate text-left text-[#4b535c]">{placeholder}</span>
@@ -287,20 +284,31 @@ function CreateScheduleScopeMultiSelect({
               onClick={(e) => e.stopPropagation()}
               role="presentation"
             >
-              {options.map((opt) => (
+              {options.map((opt) => {
+                const isLockedInOpposite = oppositeValues.includes(opt)
+                const lockAnnotation = mode === 'include' ? 'In Exclude' : 'In Include'
+
+                return (
                 <label
                   key={opt}
-                  className="px-4 py-3 flex items-center gap-3 hover:bg-[#f8f8f8] text-[14px] text-[#0a0a0a] cursor-pointer"
+                  className={`px-4 py-3 flex items-center gap-3 text-[14px] text-[#0a0a0a] ${
+                    isLockedInOpposite ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[#f8f8f8] cursor-pointer'
+                  }`}
                 >
                   <input
                     type="checkbox"
+                    disabled={isLockedInOpposite}
                     checked={activeValues.includes(opt)}
                     onChange={() => toggleOption(opt)}
-                    className="size-4 rounded border-[#d1d5db] text-[#0267ff] focus:ring-[#0267ff] shrink-0"
+                    className="size-4 rounded border-[#d1d5db] text-[#0267ff] focus:ring-[#0267ff] shrink-0 disabled:cursor-not-allowed"
                   />
                   <span>{opt}</span>
+                  {isLockedInOpposite && (
+                    <span className="text-[11px] text-[#4b535c] italic ml-2">{lockAnnotation}</span>
+                  )}
                 </label>
-              ))}
+                )
+              })}
             </div>
           </>
         )}
@@ -406,7 +414,7 @@ function CreateScheduleScopeFilterPanel({
             onModeChange={setSeasonsMode}
           />
           <div className="flex items-end gap-2">
-            <div className="flex-1 min-w-0">
+            <div className="min-w-0 flex-1">
               <CreateScheduleScopeMultiSelect
                 label="Products"
                 placeholder="Select products"
