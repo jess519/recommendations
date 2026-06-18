@@ -931,6 +931,36 @@ function ScopeAdvancedFilters({ rows, setRows }) {
   )
 }
 
+function ScheduleDetailsBlock({ block, onUpdate }) {
+  return (
+    <div className="rounded-[4px] border border-[#e5e7eb] bg-[#fafafa] p-4">
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-1.5">
+          <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Schedule name</label>
+          <input
+            type="text"
+            value={block.name}
+            onChange={(e) => onUpdate({ name: e.target.value })}
+            placeholder="e.g. Spring/Summer 25 Replenishment"
+            className="h-12 rounded-[4px] border border-[#EAEAEA] px-4 text-[14px] text-[#0a0a0a]"
+          />
+        </div>
+        <CreateScheduleScopeMultiSelect
+          label="Movement type"
+          placeholder="Select movement type"
+          options={['Replenishment', 'Rebalancing']}
+          includeValues={block.movementTypes}
+          onIncludeChange={(next) => onUpdate({ movementTypes: next })}
+          excludeValues={[]}
+          onExcludeChange={() => {}}
+          hideModeToggle={true}
+          showSelectedLabels={true}
+        />
+      </div>
+    </div>
+  )
+}
+
 /* Optimiser page – Figma 174:2696 (Optimiser-Concepts) */
 const DEFAULT_DRAWER_FORM = {
   module: '',
@@ -1030,6 +1060,12 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
   const [targetCoverageUnit, setTargetCoverageUnit] = useState('Weeks')
   const [currentStep, setCurrentStep] = useState(1)
   const [proposalName, setProposalName] = useState('')
+  const [scheduleBlocks, setScheduleBlocks] = useState([
+    { id: 'block-1', name: '', movementTypes: [] },
+  ])
+  const updateScheduleBlock = (blockId, updates) => {
+    setScheduleBlocks((prev) => prev.map((b) => (b.id === blockId ? { ...b, ...updates } : b)))
+  }
   const reviewStatusFilterOptions = [
     { id: 'in review', label: 'In review' },
     { id: 'upcoming', label: 'Upcoming' },
@@ -1600,7 +1636,14 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
           </div>
         )}
 
-        {currentStep === 3 && <div className="min-h-[200px]" />}
+        {currentStep === 3 && (
+          <div className="max-w-[800px]">
+            <ScheduleDetailsBlock
+              block={scheduleBlocks[0]}
+              onUpdate={(updates) => updateScheduleBlock(scheduleBlocks[0].id, updates)}
+            />
+          </div>
+        )}
 
         {currentStep === 4 && (
           <div className="flex max-w-[800px] flex-col gap-4">
