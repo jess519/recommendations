@@ -983,6 +983,38 @@ function buildSchedulingSummary(block) {
   return `${block.repeatEvery} ${unitLabel} on ${capitalizeDay(block.submissionDay)} at ${block.submissionTime}`
 }
 
+function buildBlockSummary(block) {
+  const segments = []
+  const movementTypes = block.movementTypes ?? []
+  const exceptions = block.exceptions ?? []
+
+  if (movementTypes.length === 0) {
+    segments.push('No movement type')
+  } else if (movementTypes.length === 1) {
+    segments.push(movementTypes[0])
+  } else if (movementTypes.length === 2) {
+    segments.push('Replenishment & Rebalancing')
+  } else {
+    segments.push(movementTypes.join(' & '))
+  }
+
+  const unit = formatRepeatUnitLabel(block.repeatEveryUnit, block.repeatEvery)
+  segments.push(`every ${block.repeatEvery} ${unit}`)
+  segments.push(`${capitalizeDay(block.submissionDay)} at ${block.submissionTime}`)
+
+  if (block.approvalMode === 'manual-review') {
+    segments.push('Manual review')
+  } else if (exceptions.length === 0) {
+    segments.push('Auto-approve')
+  } else if (exceptions.length === 1) {
+    segments.push('Auto-approve · 1 exception')
+  } else {
+    segments.push(`Auto-approve · ${exceptions.length} exceptions`)
+  }
+
+  return segments.join(' · ')
+}
+
 function ScheduleDetailsBlock({ block, index, isExpanded, onToggleExpand, onRemove, canRemove, onUpdate }) {
   const exceptions = block.exceptions ?? []
   const headerTitle = block.name.trim() ? block.name : `Untitled schedule ${index + 1}`
@@ -1011,11 +1043,18 @@ function ScheduleDetailsBlock({ block, index, isExpanded, onToggleExpand, onRemo
   return (
     <div className="rounded-[4px] border border-[#e5e7eb] bg-[#fafafa]">
       <div
-        className={`flex h-12 items-center justify-between px-4 ${
-          isExpanded ? 'border-b border-[#e5e7eb]' : ''
+        className={`flex justify-between px-4 ${
+          isExpanded ? 'h-12 items-center border-b border-[#e5e7eb]' : 'h-auto items-center py-2'
         }`}
       >
-        <span className="truncate text-[15px] font-medium text-[#0a0a0a]">{headerTitle}</span>
+        {isExpanded ? (
+          <span className="truncate text-[15px] font-medium text-[#0a0a0a]">{headerTitle}</span>
+        ) : (
+          <div className="min-w-0 flex-1 pr-3">
+            <div className="text-[15px] font-medium text-[#0a0a0a]">{headerTitle}</div>
+            <p className="mt-0.5 text-[12px] text-[#4b535c]">{buildBlockSummary(block)}</p>
+          </div>
+        )}
         <div className="flex shrink-0 items-center gap-2">
           {canRemove && (
             <button
