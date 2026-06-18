@@ -1,6 +1,10 @@
-import { useState, useRef, useEffect } from 'react'
-import { Truck, Network, TrendingUp, ShieldCheck } from 'lucide-react'
-import { IconCalendarSidebar, IconPlus, IconReplenishment, IconReorder, IconRebalancing, IconChevronDown, IconList, IconCalendarNote, IconTruck, IconTrendUp, IconLightbulb, IconEdit, IconClose, IconChevronDownSelect, IconArrowLeft, IconSearch } from '../components/icons'
+import { useState, useRef, useEffect, Fragment } from 'react'
+import { Truck, Network, TrendingUp, ShieldCheck, Pencil } from 'lucide-react'
+import { IconCalendarSidebar, IconPlus, IconReplenishment, IconReorder, IconRebalancing, IconChevronDown, IconList, IconCalendarNote, IconTruck, IconTrendUp, IconLightbulb, IconEdit, IconClose, IconChevronDownSelect, IconArrowLeft } from '../components/icons'
+import {
+  ScheduleBlockApprovalExceptions,
+  createDefaultScheduleExceptions,
+} from '../components/ScheduleBlockApprovalExceptions'
 
 const SAMPLE_CALENDAR_ENTRY = {
   id: 'entry-1',
@@ -100,84 +104,425 @@ const CALENDAR_ENTRIES = [
   SAMPLE_CALENDAR_ENTRY_REBALANCING_3,
 ]
 
-/** Shared sample values for Create schedule scope filters + exception scope filters */
-const FILTER_SAMPLE_VALUES = {
-  class: ['Accessories', 'Bags', 'Shoes', 'Ready-to-wear', 'Leather goods'],
-  department: ['Accessories Men', 'Accessories Women'],
-  gender: ['Men', 'Women', 'Unisex'],
-  product: ['A1252810', 'A12528YY', 'A13314YY', 'B2045100', 'C3091522'],
-  season: ['Fw16', 'Fw18', 'Fw19', 'Ss20', 'Fw24', 'Ss25'],
-  style: [
-    'Angel Pouch Denim Monogram',
-    'Angel Pouch Grained Leather',
-    'Angel Pouch Wings Cow Burnish',
-    'Angel Pouch Wrinkled Patent',
-    'Angel Tote Denim Monogram',
-    'Angel Tote Monogram',
-    'Angel Tote Voltaire',
-    'Angel Tote Wings Cow Burnish',
-    'Angel Tote Wrinkled Patent',
-  ],
-  subDepartment: ['Leather Good', 'Other Acc', 'Perfume Cosmet', 'Shoes'],
-  events: ['25w Carry Over', 'Fw24 Access Out', 'Fw24 Carry Out', 'Fw24 Stc Out', 'Fw25 Drop 1a', 'Fw25 Drop 2a', 'Fw25 Drop 3a', 'Fw25 Drop 4a'],
-  location: ['Opéra', 'Cannes', 'G.I cap 3000', 'Printemps toulon', 'Marais'],
-  region: ['Europe', 'North America', 'Asia Pacific'],
-  locationType: ['Boutique', 'Outlet', 'Department store', 'E-commerce'],
-  countries: ['France', 'Italy', 'UK', 'Germany', 'Spain'],
-  articles: ['ART-001', 'ART-002', 'ART-003', 'ART-004', 'ART-005'],
-  brand: ['Brand A', 'Brand B', 'Brand C'],
-  size: ['XS', 'S', 'M', 'L', 'XL'],
-  manufacturer: ['Manufacturer A', 'Manufacturer B', 'Manufacturer C'],
-  collectionTypes: ['Permanent', 'Seasonal', 'Limited edition', 'Capsule'],
-  currentWarehouse: ['WH Paris', 'WH Lyon', 'WH London'],
-}
-
-const ADV_FILTER_OPTION_SAMPLES = ['10', '50', '100', '500']
-
 /** Create schedule — scope filter dummy options (prototype display only) */
 const SCOPE_DEPARTMENT_OPTIONS = ['Apparel', 'Footwear', 'Accessories']
 const SCOPE_LOCATION_TYPE_OPTIONS = ['Store', 'Warehouse', 'Outlet']
+const SCOPE_WAREHOUSE_OPTIONS = ['Europe warehouse', 'US main warehouse', 'Global central warehouse', 'Supplier']
+const SCOPE_SEASONS_OPTIONS = ['SS24', 'AW24', 'SS25', 'AW25', 'Cruise 25', 'Pre-Fall 25']
+const SCOPE_LOCATIONS_OPTIONS = ['Paris flagship', 'London Regent St', 'NY Soho', 'Milan Duomo', 'Berlin Mitte', 'Tokyo Ginza']
+const SCOPE_PRODUCTS_OPTIONS = ['SKU-001 Wool Coat', 'SKU-002 Silk Scarf', 'SKU-003 Leather Bag', 'SKU-004 Cotton Tee', 'SKU-005 Denim Jacket']
 
-function CreateScheduleScopeSelect({ label, placeholder = 'Select', options = [] }) {
+const SCOPE_EXPANDED_FIELD_KEYS = [
+  'brands',
+  'classes',
+  'collectionTypes',
+  'colors',
+  'events',
+  'genders',
+  'manufacturers',
+  'materials',
+  'productGroups',
+  'sizeRuns',
+  'sizes',
+  'skus',
+  'styles',
+  'subClasses',
+  'subDepartments',
+  'countries',
+  'locationClusters',
+  'locationGroups',
+  'regions',
+]
+
+const SCOPE_EXPANDED_PRODUCT_FIELDS = [
+  { key: 'brands', label: 'Brands' },
+  { key: 'classes', label: 'Classes' },
+  { key: 'collectionTypes', label: 'Collection types' },
+  { key: 'colors', label: 'Colors' },
+  { key: 'events', label: 'Events' },
+  { key: 'genders', label: 'Genders' },
+  { key: 'manufacturers', label: 'Manufacturers' },
+  { key: 'materials', label: 'Materials' },
+  { key: 'productGroups', label: 'Product groups' },
+  { key: 'sizeRuns', label: 'Size runs' },
+  { key: 'sizes', label: 'Sizes' },
+  { key: 'skus', label: 'SKUs' },
+  { key: 'styles', label: 'Styles' },
+  { key: 'subClasses', label: 'Sub-classes' },
+  { key: 'subDepartments', label: 'Sub-departments' },
+]
+
+const SCOPE_EXPANDED_LOCATION_FIELDS = [
+  { key: 'countries', label: 'Countries' },
+  { key: 'locationClusters', label: 'Location clusters' },
+  { key: 'locationGroups', label: 'Location groups' },
+  { key: 'regions', label: 'Regions' },
+]
+
+function createInitialExpandedFieldState() {
+  return Object.fromEntries(
+    SCOPE_EXPANDED_FIELD_KEYS.map((key) => [key, { include: [], exclude: [], mode: 'include' }])
+  )
+}
+
+function getScopeExcludeChipText(excludeValues) {
+  if (excludeValues.length === 0) return ''
+  if (excludeValues.length === 1) return `All except: ${excludeValues[0]}`
+  if (excludeValues.length === 2) return `All except: ${excludeValues[0]}, ${excludeValues[1]}`
+  return `All except: ${excludeValues[0]}, ${excludeValues[1]}, +${excludeValues.length - 2} more`
+}
+
+function ActiveFilterChips({ entries, advancedChips = [] }) {
+  const hasAny =
+    entries.some((e) => e.includeValues.length > 0 || e.excludeValues.length > 0) || advancedChips.length >= 1
+  if (!hasAny) return null
+
   return (
-    <div className="flex flex-col gap-2">
-      <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">{label}</label>
-      <div className="relative">
-        <select
-          defaultValue=""
-          className="w-full h-14 pl-4 pr-10 rounded-[4px] border border-[#EAEAEA] bg-white text-[16px] text-[#0a0a0a] appearance-none"
+    <div className="flex w-full flex-wrap gap-2 py-3">
+      {entries.map((entry) => (
+        <Fragment key={entry.fieldKey}>
+          {entry.includeValues.length >= 1 && (
+            <span className="inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3 py-1.5 text-[13px] font-medium text-[#1d4ed8]">
+              <span>{`${entry.label}: ${entry.includeValues.length} selected`}</span>
+              <button
+                type="button"
+                onClick={entry.onClearInclude}
+                aria-label={`Clear ${entry.label} includes`}
+                className="shrink-0 flex items-center justify-center text-[#1d4ed8] hover:text-[#1e40af]"
+              >
+                <IconClose className="size-3.5" />
+              </button>
+            </span>
+          )}
+          {entry.excludeValues.length >= 1 && (
+            <span className="inline-flex items-center gap-2 rounded-full border border-red-100 bg-red-50 px-3 py-1.5 text-[13px] font-medium text-[#b91c1c]">
+              <span>{`${entry.label}: ${getScopeExcludeChipText(entry.excludeValues)}`}</span>
+              <button
+                type="button"
+                onClick={entry.onClearExclude}
+                aria-label={`Clear ${entry.label} excludes`}
+                className="shrink-0 flex items-center justify-center text-[#b91c1c] hover:text-[#991b1b]"
+              >
+                <IconClose className="size-3.5" />
+              </button>
+            </span>
+          )}
+        </Fragment>
+      ))}
+      {advancedChips.map((chip) => (
+        <span
+          key={chip.id}
+          className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-100 px-3 py-1.5 text-[13px] font-medium text-slate-700"
         >
-          <option value="" disabled>
-            {placeholder}
-          </option>
-          {options.map((opt) => (
-            <option key={opt} value={opt}>
-              {opt}
-            </option>
-          ))}
-        </select>
+          <span>{`${chip.mainColumn}: ${chip.condition.toLowerCase()} ${chip.value}`}</span>
+          <button
+            type="button"
+            onClick={chip.onRemove}
+            aria-label={`Remove ${chip.mainColumn} filter`}
+            className="shrink-0 flex items-center justify-center text-slate-700 hover:text-slate-900"
+          >
+            <IconClose className="size-3.5" />
+          </button>
+        </span>
+      ))}
+    </div>
+  )
+}
+
+const scopeModeToggleButtonClass = (active) =>
+  active
+    ? 'h-7 rounded-[4px] px-3 text-[13px] font-medium bg-[#1d4ed8] text-white'
+    : 'h-7 rounded-[4px] px-3 text-[13px] font-medium bg-white text-[#0a0a0a] border border-[#E9EAEB]'
+
+function CreateScheduleScopeMultiSelect({
+  label,
+  helperText,
+  placeholder = 'Select',
+  options = [],
+  includeValues,
+  onIncludeChange,
+  excludeValues,
+  onExcludeChange,
+  mode,
+  onModeChange,
+  hideHeader = false,
+  hideModeToggle = false,
+  showSelectAll = false,
+  showSelectedLabels = false,
+}) {
+  const [open, setOpen] = useState(false)
+
+  const activeValues = hideModeToggle
+    ? includeValues
+    : mode === 'include'
+      ? includeValues
+      : excludeValues
+  const oppositeValues = hideModeToggle ? [] : mode === 'include' ? excludeValues : includeValues
+  const allSelected = options.length > 0 && includeValues.length === options.length
+
+  const toggleOption = (opt) => {
+    if (!hideModeToggle && oppositeValues.includes(opt)) return
+
+    if (hideModeToggle || mode === 'include') {
+      onIncludeChange(
+        includeValues.includes(opt) ? includeValues.filter((v) => v !== opt) : [...includeValues, opt]
+      )
+      return
+    }
+    onExcludeChange(
+      excludeValues.includes(opt) ? excludeValues.filter((v) => v !== opt) : [...excludeValues, opt]
+    )
+  }
+
+  const toggleSelectAll = () => {
+    if (allSelected) {
+      onIncludeChange([])
+      return
+    }
+    onIncludeChange(options)
+  }
+
+  const hasSelections = hideModeToggle
+    ? includeValues.length > 0
+    : includeValues.length > 0 || excludeValues.length > 0
+
+  return (
+    <div className="flex flex-col gap-1.5">
+      {!hideHeader && (
+        <div className={`flex min-h-7 items-center gap-2 ${hideModeToggle ? '' : 'justify-between'}`}>
+          <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">{label}</label>
+          {!hideModeToggle && (
+            <div className="flex shrink-0">
+              <button
+                type="button"
+                onClick={() => onModeChange('include')}
+                className={scopeModeToggleButtonClass(mode === 'include')}
+              >
+                Include
+              </button>
+              <button
+                type="button"
+                onClick={() => onModeChange('exclude')}
+                className={scopeModeToggleButtonClass(mode === 'exclude')}
+              >
+                Exclude
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+      <div>
+        <div className="relative">
+          <div
+            role="combobox"
+            aria-expanded={open}
+            tabIndex={0}
+            onClick={() => setOpen((o) => !o)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                setOpen((o) => !o)
+              }
+            }}
+            className={`flex h-14 min-h-14 max-h-14 w-full shrink-0 cursor-pointer items-center gap-2 overflow-hidden rounded-[4px] border border-[#EAEAEA] bg-white pl-4 text-left text-[16px] text-[#0a0a0a] min-w-0 ${
+              showSelectedLabels && includeValues.length >= 1 ? 'pr-16' : 'pr-10'
+            }`}
+          >
+          {!hasSelections ? (
+            <span className="min-w-0 flex-1 truncate text-left text-[#4b535c]">{placeholder}</span>
+          ) : showSelectedLabels && includeValues.length >= 1 ? (
+            <>
+              <span className="min-w-0 flex-1 truncate text-left text-[14px] text-[#0a0a0a]">
+                {includeValues.join(', ')}
+              </span>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onIncludeChange([])
+                }}
+                aria-label="Clear included selections"
+                className="shrink-0 flex items-center justify-center text-[#1d4ed8] hover:text-[#1e40af] p-0.5"
+              >
+                <IconClose className="size-3.5" />
+              </button>
+            </>
+          ) : (
+            <div className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden">
+              {includeValues.length >= 1 && (
+                <span className="inline-flex max-w-full items-center gap-1 rounded-full bg-blue-50 px-2.5 py-1 text-[13px] font-medium text-[#1d4ed8] shrink-0">
+                  <span className="truncate">{`${includeValues.length} selected`}</span>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onIncludeChange([])
+                    }}
+                    aria-label="Clear included selections"
+                    className="shrink-0 flex items-center justify-center text-[#1d4ed8] hover:text-[#1e40af] p-0.5"
+                  >
+                    <IconClose className="size-3.5" />
+                  </button>
+                </span>
+              )}
+              {!hideModeToggle && excludeValues.length >= 1 && (
+                <span className="inline-flex max-w-full items-center gap-1 rounded-full bg-red-50 px-2.5 py-1 text-[13px] font-medium text-[#b91c1c] shrink-0">
+                  <span className="truncate">{getScopeExcludeChipText(excludeValues)}</span>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onExcludeChange([])
+                    }}
+                    aria-label="Clear excluded selections"
+                    className="shrink-0 flex items-center justify-center text-[#b91c1c] hover:text-[#991b1b] p-0.5"
+                  >
+                    <IconClose className="size-3.5" />
+                  </button>
+                </span>
+              )}
+            </div>
+          )}
+        </div>
         <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
           <IconChevronDownSelect />
         </span>
+        {open && (
+          <>
+            <div
+              role="presentation"
+              className="fixed inset-0 z-[29]"
+              onClick={() => setOpen(false)}
+              aria-hidden
+            />
+            <div
+              className="absolute left-0 right-0 top-full z-[30] mt-1 rounded-[4px] border border-[#EAEAEA] bg-white shadow-[0px_8px_25px_0px_rgba(0,0,0,0.12)] overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+              role="presentation"
+            >
+              {showSelectAll && (
+                <label className="px-4 py-3 flex items-center gap-3 text-[14px] text-[#0a0a0a] hover:bg-[#f8f8f8] cursor-pointer border-b border-[#e5e7eb]">
+                  <input
+                    type="checkbox"
+                    checked={allSelected}
+                    onChange={toggleSelectAll}
+                    className="size-4 rounded border-[#d1d5db] text-[#0267ff] focus:ring-[#0267ff] shrink-0"
+                  />
+                  <span>Select all</span>
+                </label>
+              )}
+              {options.map((opt) => {
+                const isLockedInOpposite = !hideModeToggle && oppositeValues.includes(opt)
+                const lockAnnotation = mode === 'include' ? 'In Exclude' : 'In Include'
+
+                return (
+                <label
+                  key={opt}
+                  className={`px-4 py-3 flex items-center gap-3 text-[14px] text-[#0a0a0a] ${
+                    isLockedInOpposite ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[#f8f8f8] cursor-pointer'
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    disabled={isLockedInOpposite}
+                    checked={activeValues.includes(opt)}
+                    onChange={() => toggleOption(opt)}
+                    className="size-4 rounded border-[#d1d5db] text-[#0267ff] focus:ring-[#0267ff] shrink-0 disabled:cursor-not-allowed"
+                  />
+                  <span>{opt}</span>
+                  {isLockedInOpposite && (
+                    <span className="text-[11px] text-[#4b535c] italic ml-2">{lockAnnotation}</span>
+                  )}
+                </label>
+                )
+              })}
+            </div>
+          </>
+        )}
+        </div>
+        {helperText ? (
+          <p className="mt-1.5 text-[12px] leading-[16px] text-[#4b535c]">{helperText}</p>
+        ) : null}
       </div>
     </div>
   )
 }
 
-function CreateScheduleScopeSearchInput({ label, placeholder = 'Search' }) {
+function CreateScheduleScopeSingleSelect({
+  label,
+  helperText,
+  placeholder = 'Select',
+  options = [],
+  value,
+  onChange,
+}) {
+  const [open, setOpen] = useState(false)
+  const hasValue = value !== ''
+
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-1.5">
       <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">{label}</label>
-      <div className="relative">
-        <input
-          type="text"
-          placeholder={placeholder}
-          readOnly
-          className="w-full h-14 pl-4 pr-10 rounded-[4px] border border-[#EAEAEA] bg-white text-[16px] text-[#0a0a0a] placeholder:text-[#9CA1AE]"
-        />
-        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
-          <IconSearch className="size-4" />
-        </span>
+      <div>
+        <div className="relative">
+          <div
+            role="combobox"
+            aria-expanded={open}
+            tabIndex={0}
+            onClick={() => setOpen((o) => !o)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                setOpen((o) => !o)
+              }
+            }}
+            className="flex h-14 min-h-14 max-h-14 w-full shrink-0 cursor-pointer items-center gap-2 overflow-hidden rounded-[4px] border border-[#EAEAEA] bg-white pl-4 pr-10 text-left text-[16px] text-[#0a0a0a] min-w-0"
+          >
+            {!hasValue ? (
+              <span className="min-w-0 flex-1 truncate text-left text-[#4b535c]">{placeholder}</span>
+            ) : (
+              <span className="min-w-0 flex-1 truncate text-left text-[#0a0a0a]">{value}</span>
+            )}
+          </div>
+          <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
+            <IconChevronDownSelect />
+          </span>
+          {open && (
+            <>
+              <div
+                role="presentation"
+                className="fixed inset-0 z-[29]"
+                onClick={() => setOpen(false)}
+                aria-hidden
+              />
+              <div
+                className="absolute left-0 right-0 top-full z-[30] mt-1 rounded-[4px] border border-[#EAEAEA] bg-white shadow-[0px_8px_25px_0px_rgba(0,0,0,0.12)] overflow-hidden"
+                onClick={(e) => e.stopPropagation()}
+                role="listbox"
+              >
+                {options.map((opt) => (
+                  <button
+                    key={opt}
+                    type="button"
+                    role="option"
+                    aria-selected={value === opt}
+                    onClick={() => {
+                      onChange(opt)
+                      setOpen(false)
+                    }}
+                    className={`w-full px-4 py-3 text-left text-[14px] text-[#0a0a0a] hover:bg-[#f8f8f8] cursor-pointer ${
+                      value === opt ? 'bg-[#f0f6ff]' : ''
+                    }`}
+                  >
+                    {opt}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+        {helperText ? (
+          <p className="mt-1.5 text-[12px] leading-[16px] text-[#4b535c]">{helperText}</p>
+        ) : null}
       </div>
     </div>
   )
@@ -215,65 +560,140 @@ function NetworkStyleUploadIcon() {
 
 /** Product + geographic scope filters for create schedule scope selection. */
 function CreateScheduleScopeFilterPanel({
-  productScopeMode,
-  setProductScopeMode,
-  geoScopeMode,
-  setGeoScopeMode,
+  warehouseInclude,
+  setWarehouseInclude,
+  warehouseExclude,
+  setWarehouseExclude,
+  warehouseMode,
+  setWarehouseMode,
+  departmentInclude,
+  setDepartmentInclude,
+  departmentExclude,
+  setDepartmentExclude,
+  departmentMode,
+  setDepartmentMode,
+  seasonsInclude,
+  setSeasonsInclude,
+  seasonsExclude,
+  setSeasonsExclude,
+  seasonsMode,
+  setSeasonsMode,
+  productsInclude,
+  setProductsInclude,
+  productsExclude,
+  setProductsExclude,
+  productsMode,
+  setProductsMode,
+  locationTypesInclude,
+  setLocationTypesInclude,
+  locationTypesExclude,
+  setLocationTypesExclude,
+  locationTypesMode,
+  setLocationTypesMode,
+  locationsInclude,
+  setLocationsInclude,
+  locationsExclude,
+  setLocationsExclude,
+  locationsMode,
+  setLocationsMode,
 }) {
-  const scopeModeToggleClass = (active) =>
-    active
-      ? 'bg-[#0267ff] text-white rounded-[4px] px-2.5 py-1 text-[12px] font-medium'
-      : 'bg-white text-[#4b535c] rounded-[4px] px-2.5 py-1 text-[12px] font-medium border border-[#e9eaeb]'
-
-  const renderScopeModeToggle = (mode, setMode) => (
-    <div className="flex border border-[#e9eaeb] rounded-[4px] overflow-hidden shrink-0">
-      <button
-        type="button"
-        onClick={() => setMode('include')}
-        className={scopeModeToggleClass(mode === 'include')}
-      >
-        Include
-      </button>
-      <button
-        type="button"
-        onClick={() => setMode('exclude')}
-        className={scopeModeToggleClass(mode === 'exclude')}
-      >
-        Exclude
-      </button>
-    </div>
-  )
-
   return (
-    <div className="rounded-[4px] border border-[#e5e7eb] bg-[#fafafa] p-4 flex flex-col gap-6">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="flex flex-col gap-4">
-          <div className="flex items-center justify-between gap-2">
-            <h4 className="text-[13px] font-medium text-[#0a0a0a] uppercase tracking-[0.04em]">Product scope</h4>
-            {renderScopeModeToggle(productScopeMode, setProductScopeMode)}
-          </div>
-          <CreateScheduleScopeSelect
+    <div className="rounded-[4px] border border-[#e5e7eb] bg-[#fafafa] p-4">
+      <div className="grid grid-cols-2 gap-x-6 gap-y-3">
+        <h4 className="text-[13px] font-medium text-[#0a0a0a] uppercase tracking-[0.04em]">Product scope</h4>
+        <h4 className="text-[13px] font-medium text-[#0a0a0a] uppercase tracking-[0.04em]">Geographic scope</h4>
+
+        <div className="w-full self-start">
+          <CreateScheduleScopeMultiSelect
             label="Departments"
             placeholder="Select departments"
             options={SCOPE_DEPARTMENT_OPTIONS}
+            includeValues={departmentInclude}
+            onIncludeChange={setDepartmentInclude}
+            excludeValues={departmentExclude}
+            onExcludeChange={setDepartmentExclude}
+            mode={departmentMode}
+            onModeChange={setDepartmentMode}
           />
-          <CreateScheduleScopeSearchInput label="Sub-departments" placeholder="Search sub-departments" />
-          <CreateScheduleScopeSearchInput label="Seasons" placeholder="Search seasons" />
-          <CreateScheduleScopeSearchInput label="Events" placeholder="Search events" />
-          <div className="flex flex-col gap-2">
+        </div>
+        <div className="w-full self-start">
+          <CreateScheduleScopeMultiSelect
+            label="Warehouse"
+            helperText="Where products are distributed from. If none selected, we'll use your full network."
+            placeholder="Select warehouses"
+            options={SCOPE_WAREHOUSE_OPTIONS}
+            includeValues={warehouseInclude}
+            onIncludeChange={setWarehouseInclude}
+            excludeValues={warehouseExclude}
+            onExcludeChange={setWarehouseExclude}
+            mode={warehouseMode}
+            onModeChange={setWarehouseMode}
+          />
+        </div>
+
+        <div className="w-full self-start">
+          <CreateScheduleScopeMultiSelect
+            label="Seasons"
+            placeholder="Select seasons"
+            options={SCOPE_SEASONS_OPTIONS}
+            includeValues={seasonsInclude}
+            onIncludeChange={setSeasonsInclude}
+            excludeValues={seasonsExclude}
+            onExcludeChange={setSeasonsExclude}
+            mode={seasonsMode}
+            onModeChange={setSeasonsMode}
+          />
+        </div>
+        <div className="w-full self-start">
+          <CreateScheduleScopeMultiSelect
+            label="Location Types"
+            placeholder="Select location types"
+            options={SCOPE_LOCATION_TYPE_OPTIONS}
+            includeValues={locationTypesInclude}
+            onIncludeChange={setLocationTypesInclude}
+            excludeValues={locationTypesExclude}
+            onExcludeChange={setLocationTypesExclude}
+            mode={locationTypesMode}
+            onModeChange={setLocationTypesMode}
+          />
+        </div>
+
+        <div className="flex w-full flex-col gap-1.5 self-start">
+          <div className="flex min-h-7 items-center justify-between gap-2">
             <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Products</label>
-            <div className="flex items-center gap-2">
-              <div className="relative flex-1 min-w-0">
-                <input
-                  type="text"
-                  placeholder="Search products"
-                  readOnly
-                  className="w-full h-14 pl-4 pr-10 rounded-[4px] border border-[#EAEAEA] bg-white text-[16px] text-[#0a0a0a] placeholder:text-[#9CA1AE]"
-                />
-                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
-                  <IconSearch className="size-4" />
-                </span>
-              </div>
+            <div className="flex shrink-0">
+              <button
+                type="button"
+                onClick={() => setProductsMode('include')}
+                className={scopeModeToggleButtonClass(productsMode === 'include')}
+              >
+                Include
+              </button>
+              <button
+                type="button"
+                onClick={() => setProductsMode('exclude')}
+                className={scopeModeToggleButtonClass(productsMode === 'exclude')}
+              >
+                Exclude
+              </button>
+            </div>
+          </div>
+          <div className="flex items-stretch gap-2">
+            <div className="min-w-0 flex-1">
+              <CreateScheduleScopeMultiSelect
+                hideHeader
+                label="Products"
+                placeholder="Select products"
+                options={SCOPE_PRODUCTS_OPTIONS}
+                includeValues={productsInclude}
+                onIncludeChange={setProductsInclude}
+                excludeValues={productsExclude}
+                onExcludeChange={setProductsExclude}
+                mode={productsMode}
+                onModeChange={setProductsMode}
+              />
+            </div>
+            <div className="flex shrink-0 items-end gap-2">
               <button
                 type="button"
                 onClick={() => {}}
@@ -293,317 +713,114 @@ function CreateScheduleScopeFilterPanel({
             </div>
           </div>
         </div>
-        <div className="flex flex-col gap-4">
-          <div className="flex items-center justify-between gap-2">
-            <h4 className="text-[13px] font-medium text-[#0a0a0a] uppercase tracking-[0.04em]">Geographic scope</h4>
-            {renderScopeModeToggle(geoScopeMode, setGeoScopeMode)}
+        <div className="flex w-full flex-col gap-1.5 self-start">
+          <div className="flex min-h-7 items-center justify-between gap-2">
+            <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Locations</label>
+            <div className="flex shrink-0">
+              <button
+                type="button"
+                onClick={() => setLocationsMode('include')}
+                className={scopeModeToggleButtonClass(locationsMode === 'include')}
+              >
+                Include
+              </button>
+              <button
+                type="button"
+                onClick={() => setLocationsMode('exclude')}
+                className={scopeModeToggleButtonClass(locationsMode === 'exclude')}
+              >
+                Exclude
+              </button>
+            </div>
           </div>
-          <CreateScheduleScopeSelect
-            label="Location Types"
-            placeholder="Select location types"
-            options={SCOPE_LOCATION_TYPE_OPTIONS}
-          />
-          <CreateScheduleScopeSearchInput label="Regions" placeholder="Search regions" />
-          <CreateScheduleScopeSearchInput label="Countries" placeholder="Search countries" />
-          <CreateScheduleScopeSearchInput label="Locations" placeholder="Search locations" />
+          <div className="flex items-stretch gap-2">
+            <div className="min-w-0 flex-1">
+              <CreateScheduleScopeMultiSelect
+                hideHeader
+                label="Locations"
+                placeholder="Select locations"
+                options={SCOPE_LOCATIONS_OPTIONS}
+                includeValues={locationsInclude}
+                onIncludeChange={setLocationsInclude}
+                excludeValues={locationsExclude}
+                onExcludeChange={setLocationsExclude}
+                mode={locationsMode}
+                onModeChange={setLocationsMode}
+              />
+            </div>
+            <div className="flex shrink-0 items-end gap-2">
+              <button
+                type="button"
+                onClick={() => {}}
+                aria-label="Upload locations"
+                className="h-14 w-14 shrink-0 rounded-[4px] border border-[#E9EAEB] bg-white text-[#0a0a0a] hover:bg-[#f8f8f8] flex items-center justify-center"
+              >
+                <NetworkStyleUploadIcon />
+              </button>
+              <button
+                type="button"
+                onClick={() => {}}
+                aria-label="Download locations"
+                className="h-14 w-14 shrink-0 rounded-[4px] border border-[#E9EAEB] bg-white text-[#0a0a0a] hover:bg-[#f8f8f8] flex items-center justify-center"
+              >
+                <NetworkStyleDownloadIcon />
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
   )
 }
 
-const fe = (id, label, options) => ({ id, label, options })
+function CreateScheduleScopeExpandedFilters({ expandedFieldState, updateExpandedField, advancedRows, setAdvancedRows }) {
+  const renderField = ({ key, label }) => (
+    <CreateScheduleScopeMultiSelect
+      key={key}
+      label={label}
+      placeholder={`Select ${label.toLowerCase()}`}
+      options={[]}
+      includeValues={expandedFieldState[key].include}
+      onIncludeChange={(next) => updateExpandedField(key, { include: next })}
+      excludeValues={expandedFieldState[key].exclude}
+      onExcludeChange={(next) => updateExpandedField(key, { exclude: next })}
+      mode={expandedFieldState[key].mode}
+      onModeChange={(next) => updateExpandedField(key, { mode: next })}
+    />
+  )
 
-const EXC_SCOPE_TRIP = [
-  fe('class', 'Class', FILTER_SAMPLE_VALUES.class),
-  fe('department', 'Department', FILTER_SAMPLE_VALUES.department),
-  fe('gender', 'Gender', FILTER_SAMPLE_VALUES.gender),
-  fe('product', 'Product', FILTER_SAMPLE_VALUES.product),
-  fe('season', 'Season', FILTER_SAMPLE_VALUES.season),
-  fe('style', 'Style', FILTER_SAMPLE_VALUES.style),
-  fe('subDepartment', 'Sub-department', FILTER_SAMPLE_VALUES.subDepartment),
-  fe('events', 'Events', FILTER_SAMPLE_VALUES.events),
-  fe('location', 'Location', FILTER_SAMPLE_VALUES.location),
-  fe('region', 'Region', FILTER_SAMPLE_VALUES.region),
-  fe('locationType', 'Location type', FILTER_SAMPLE_VALUES.locationType),
-  fe('countries', 'Countries', FILTER_SAMPLE_VALUES.countries),
-  fe('articles', 'Articles', FILTER_SAMPLE_VALUES.articles),
-  fe('brand', 'Brand', FILTER_SAMPLE_VALUES.brand),
-]
-const EXC_SCOPE_PRODUCT = [
-  ...EXC_SCOPE_TRIP.slice(0, 8),
-  fe('size', 'Size', FILTER_SAMPLE_VALUES.size),
-  ...EXC_SCOPE_TRIP.slice(8),
-  fe('manufacturer', 'Manufacturer', FILTER_SAMPLE_VALUES.manufacturer),
-  fe('collectionTypes', 'Collection types', FILTER_SAMPLE_VALUES.collectionTypes),
-]
-const EXC_SCOPE_SEND_RECV = [
-  ...EXC_SCOPE_TRIP.slice(0, 8),
-  fe('collectionTypes', 'Collection types', FILTER_SAMPLE_VALUES.collectionTypes),
-  fe('brand', 'Brand', FILTER_SAMPLE_VALUES.brand),
-  fe('articles', 'Articles', FILTER_SAMPLE_VALUES.articles),
-  fe('region', 'Region', FILTER_SAMPLE_VALUES.region),
-  fe('locationType', 'Location type', FILTER_SAMPLE_VALUES.locationType),
-  fe('sendingLocations', 'Sending locations', FILTER_SAMPLE_VALUES.location),
-  fe('receivingLocations', 'Receiving locations', FILTER_SAMPLE_VALUES.location),
-  fe('sendingCountries', 'Sending countries', FILTER_SAMPLE_VALUES.countries),
-  fe('receivingCountries', 'Receiving countries', FILTER_SAMPLE_VALUES.countries),
-]
-
-const EXC_ADV_TRIP = [fe('transferUnits', 'Transfer units', ADV_FILTER_OPTION_SAMPLES)]
+  return (
+    <>
+      <div className="mt-4 rounded-[4px] border border-[#e5e7eb] bg-[#fafafa] p-4">
+        <h4 className="text-[13px] font-medium text-[#0a0a0a] uppercase tracking-[0.04em]">Products</h4>
+        <div className="grid grid-cols-3 gap-x-4 gap-y-3 mt-3">
+          {SCOPE_EXPANDED_PRODUCT_FIELDS.map(renderField)}
+        </div>
+      </div>
+      <div className="mt-4 rounded-[4px] border border-[#e5e7eb] bg-[#fafafa] p-4">
+        <h4 className="text-[13px] font-medium text-[#0a0a0a] uppercase tracking-[0.04em]">Locations</h4>
+        <div className="grid grid-cols-3 gap-x-4 gap-y-3 mt-3">
+          {SCOPE_EXPANDED_LOCATION_FIELDS.map(renderField)}
+        </div>
+      </div>
+      <ScopeAdvancedFilters rows={advancedRows} setRows={setAdvancedRows} />
+    </>
+  )
+}
 
 const EXC_ADV_PRODUCT = [
-  fe('currentUnits', 'Current units', ADV_FILTER_OPTION_SAMPLES),
-  fe('forecast', 'Forecast', ADV_FILTER_OPTION_SAMPLES),
-  fe('transferUnits', 'Transfer units', ADV_FILTER_OPTION_SAMPLES),
-  fe('currentWarehouse', 'Current warehouse', FILTER_SAMPLE_VALUES.currentWarehouse),
-  fe('last7DaysSales', 'Last 7 days sales', ADV_FILTER_OPTION_SAMPLES),
-  fe('last30DaysSales', 'Last 30 days sales', ADV_FILTER_OPTION_SAMPLES),
-  fe('understocksBefore', 'Understocks before', ADV_FILTER_OPTION_SAMPLES),
-  fe('understocksAfter', 'Understocks after', ADV_FILTER_OPTION_SAMPLES),
-  fe('overstocksBefore', 'Overstocks before', ADV_FILTER_OPTION_SAMPLES),
-  fe('overstocksAfter', 'Overstocks after', ADV_FILTER_OPTION_SAMPLES),
-  fe('salesUplift', 'Sales uplift', ADV_FILTER_OPTION_SAMPLES),
+  { id: 'currentUnits', label: 'Current units' },
+  { id: 'forecast', label: 'Forecast' },
+  { id: 'transferUnits', label: 'Transfer units' },
+  { id: 'currentWarehouse', label: 'Current warehouse' },
+  { id: 'last7DaysSales', label: 'Last 7 days sales' },
+  { id: 'last30DaysSales', label: 'Last 30 days sales' },
+  { id: 'understocksBefore', label: 'Understocks before' },
+  { id: 'understocksAfter', label: 'Understocks after' },
+  { id: 'overstocksBefore', label: 'Overstocks before' },
+  { id: 'overstocksAfter', label: 'Overstocks after' },
+  { id: 'salesUplift', label: 'Sales uplift' },
 ]
-
-const EXC_ADV_SENDING = EXC_ADV_PRODUCT.filter((f) => f.id !== 'currentWarehouse')
-
-const EXC_ADV_RECEIVING = EXC_ADV_PRODUCT
-
-const EXCEPTION_FILTER_OPTIONS_BY_LEVEL = {
-  trip: { scope: EXC_SCOPE_TRIP, advanced: EXC_ADV_TRIP },
-  product: { scope: EXC_SCOPE_PRODUCT, advanced: EXC_ADV_PRODUCT },
-  sending_location: { scope: EXC_SCOPE_SEND_RECV, advanced: EXC_ADV_SENDING },
-  receiving_location: { scope: EXC_SCOPE_SEND_RECV, advanced: EXC_ADV_RECEIVING },
-}
-
-function getExceptionLevelConfig(applyAt) {
-  if (!applyAt || !EXCEPTION_FILTER_OPTIONS_BY_LEVEL[applyAt]) return { scope: [], advanced: [] }
-  return EXCEPTION_FILTER_OPTIONS_BY_LEVEL[applyAt]
-}
-
-function getAllExceptionLevelFilters(applyAt) {
-  const { scope, advanced } = getExceptionLevelConfig(applyAt)
-  return [...scope, ...advanced]
-}
-
-function getExceptionLevelFilterDef(applyAt, filterId) {
-  return getAllExceptionLevelFilters(applyAt).find((f) => f.id === filterId)
-}
-
-const APPLY_AT_DISPLAY_LABELS = {
-  trip: 'Trip',
-  product: 'Product',
-  sending_location: 'Sending location',
-  receiving_location: 'Receiving location',
-}
-
-/** Maps applyAt select values to FILTERS_BY_LEVEL keys */
-const APPLY_AT_TO_FILTERS_LEVEL = {
-  trip: 'Trip',
-  product: 'Product',
-  sending_location: 'Sending location',
-  receiving_location: 'Receiving location',
-}
-
-const FILTERS_BY_LEVEL = {
-  Trip: {
-    product: [
-      { id: 'class', label: 'Class', options: ['Accessories', 'Bags', 'Shoes', 'Ready-to-wear', 'Leather goods'] },
-      { id: 'department', label: 'Department', options: ['Accessories Men', 'Accessories Women'] },
-      { id: 'gender', label: 'Gender', options: ['Men', 'Women', 'Unisex'] },
-      { id: 'product', label: 'Product', options: ['A1252810', 'A12528YY', 'A13314YY', 'B2045100', 'C3091522'] },
-      { id: 'season', label: 'Season', options: ['Fw16', 'Fw18', 'Fw19', 'Ss20', 'Fw24', 'Ss25'] },
-      {
-        id: 'style',
-        label: 'Style',
-        options: [
-          'Angel Pouch Denim Monogram',
-          'Angel Pouch Grained Leather',
-          'Angel Pouch Wings Cow Burnish',
-          'Angel Pouch Wrinkled Patent',
-          'Angel Tote Denim Monogram',
-          'Angel Tote Monogram',
-          'Angel Tote Voltaire',
-          'Angel Tote Wings Cow Burnish',
-          'Angel Tote Wrinkled Patent',
-        ],
-      },
-      { id: 'subDepartment', label: 'Sub-department', options: ['Leather Good', 'Other Acc', 'Perfume Cosmet', 'Shoes'] },
-      {
-        id: 'events',
-        label: 'Events',
-        options: ['25w Carry Over', 'Fw24 Access Out', 'Fw24 Carry Out', 'Fw24 Stc Out', 'Fw25 Drop 1a', 'Fw25 Drop 2a', 'Fw25 Drop 3a', 'Fw25 Drop 4a'],
-      },
-      { id: 'articles', label: 'Articles', options: ['ART-001', 'ART-002', 'ART-003', 'ART-004', 'ART-005'] },
-      { id: 'brand', label: 'Brand', options: ['Brand A', 'Brand B', 'Brand C'] },
-    ],
-    geographic: [
-      { id: 'location', label: 'Location', options: ['Opéra', 'Cannes', 'G.I cap 3000', 'Printemps toulon', 'Marais'] },
-      { id: 'region', label: 'Region', options: ['Europe', 'North America', 'Asia Pacific'] },
-      { id: 'locationType', label: 'Location type', options: ['Boutique', 'Outlet', 'Department store', 'E-commerce'] },
-      { id: 'countries', label: 'Countries', options: ['France', 'Italy', 'UK', 'Germany', 'Spain'] },
-    ],
-    advanced: [{ id: 'transferUnits', label: 'Transfer units' }],
-  },
-  Product: {
-    product: [
-      { id: 'class', label: 'Class', options: ['Accessories', 'Bags', 'Shoes', 'Ready-to-wear', 'Leather goods'] },
-      { id: 'department', label: 'Department', options: ['Accessories Men', 'Accessories Women'] },
-      { id: 'gender', label: 'Gender', options: ['Men', 'Women', 'Unisex'] },
-      { id: 'product', label: 'Product', options: ['A1252810', 'A12528YY', 'A13314YY', 'B2045100', 'C3091522'] },
-      { id: 'season', label: 'Season', options: ['Fw16', 'Fw18', 'Fw19', 'Ss20', 'Fw24', 'Ss25'] },
-      {
-        id: 'style',
-        label: 'Style',
-        options: [
-          'Angel Pouch Denim Monogram',
-          'Angel Pouch Grained Leather',
-          'Angel Pouch Wings Cow Burnish',
-          'Angel Pouch Wrinkled Patent',
-          'Angel Tote Denim Monogram',
-          'Angel Tote Monogram',
-          'Angel Tote Voltaire',
-          'Angel Tote Wings Cow Burnish',
-          'Angel Tote Wrinkled Patent',
-        ],
-      },
-      { id: 'subDepartment', label: 'Sub-department', options: ['Leather Good', 'Other Acc', 'Perfume Cosmet', 'Shoes'] },
-      {
-        id: 'events',
-        label: 'Events',
-        options: ['25w Carry Over', 'Fw24 Access Out', 'Fw24 Carry Out', 'Fw24 Stc Out', 'Fw25 Drop 1a', 'Fw25 Drop 2a', 'Fw25 Drop 3a', 'Fw25 Drop 4a'],
-      },
-      { id: 'size', label: 'Size', options: ['XS', 'S', 'M', 'L', 'XL'] },
-      { id: 'articles', label: 'Articles', options: ['ART-001', 'ART-002', 'ART-003', 'ART-004', 'ART-005'] },
-      { id: 'brand', label: 'Brand', options: ['Brand A', 'Brand B', 'Brand C'] },
-      { id: 'manufacturer', label: 'Manufacturer', options: ['Manufacturer A', 'Manufacturer B', 'Manufacturer C'] },
-      { id: 'collectionTypes', label: 'Collection types', options: ['Permanent', 'Seasonal', 'Limited edition', 'Capsule'] },
-    ],
-    geographic: [
-      { id: 'location', label: 'Location', options: ['Opéra', 'Cannes', 'G.I cap 3000', 'Printemps toulon', 'Marais'] },
-      { id: 'region', label: 'Region', options: ['Europe', 'North America', 'Asia Pacific'] },
-      { id: 'locationType', label: 'Location type', options: ['Boutique', 'Outlet', 'Department store', 'E-commerce'] },
-      { id: 'countries', label: 'Countries', options: ['France', 'Italy', 'UK', 'Germany', 'Spain'] },
-    ],
-    advanced: [
-      { id: 'currentUnits', label: 'Current units' },
-      { id: 'forecast', label: 'Forecast' },
-      { id: 'transferUnits', label: 'Transfer units' },
-      { id: 'currentWarehouse', label: 'Current warehouse' },
-      { id: 'last7DaysSales', label: 'Last 7 days sales' },
-      { id: 'last30DaysSales', label: 'Last 30 days sales' },
-      { id: 'understocksBefore', label: 'Understocks before' },
-      { id: 'understocksAfter', label: 'Understocks after' },
-      { id: 'overstocksBefore', label: 'Overstocks before' },
-      { id: 'overstocksAfter', label: 'Overstocks after' },
-      { id: 'salesUplift', label: 'Sales uplift' },
-    ],
-  },
-  'Sending location': {
-    product: [
-      { id: 'class', label: 'Class', options: ['Accessories', 'Bags', 'Shoes', 'Ready-to-wear', 'Leather goods'] },
-      { id: 'department', label: 'Department', options: ['Accessories Men', 'Accessories Women'] },
-      { id: 'gender', label: 'Gender', options: ['Men', 'Women', 'Unisex'] },
-      { id: 'product', label: 'Product', options: ['A1252810', 'A12528YY', 'A13314YY', 'B2045100', 'C3091522'] },
-      { id: 'season', label: 'Season', options: ['Fw16', 'Fw18', 'Fw19', 'Ss20', 'Fw24', 'Ss25'] },
-      {
-        id: 'style',
-        label: 'Style',
-        options: [
-          'Angel Pouch Denim Monogram',
-          'Angel Pouch Grained Leather',
-          'Angel Pouch Wings Cow Burnish',
-          'Angel Pouch Wrinkled Patent',
-          'Angel Tote Denim Monogram',
-          'Angel Tote Monogram',
-          'Angel Tote Voltaire',
-          'Angel Tote Wings Cow Burnish',
-          'Angel Tote Wrinkled Patent',
-        ],
-      },
-      { id: 'subDepartment', label: 'Sub-department', options: ['Leather Good', 'Other Acc', 'Perfume Cosmet', 'Shoes'] },
-      {
-        id: 'events',
-        label: 'Events',
-        options: ['25w Carry Over', 'Fw24 Access Out', 'Fw24 Carry Out', 'Fw24 Stc Out', 'Fw25 Drop 1a', 'Fw25 Drop 2a', 'Fw25 Drop 3a', 'Fw25 Drop 4a'],
-      },
-      { id: 'articles', label: 'Articles', options: ['ART-001', 'ART-002', 'ART-003', 'ART-004', 'ART-005'] },
-      { id: 'brand', label: 'Brand', options: ['Brand A', 'Brand B', 'Brand C'] },
-      { id: 'collectionTypes', label: 'Collection types', options: ['Permanent', 'Seasonal', 'Limited edition', 'Capsule'] },
-    ],
-    geographic: [
-      { id: 'location', label: 'Location', options: ['Opéra', 'Cannes', 'G.I cap 3000', 'Printemps toulon', 'Marais'] },
-      { id: 'region', label: 'Region', options: ['Europe', 'North America', 'Asia Pacific'] },
-      { id: 'locationType', label: 'Location type', options: ['Boutique', 'Outlet', 'Department store', 'E-commerce'] },
-      { id: 'countries', label: 'Countries', options: ['France', 'Italy', 'UK', 'Germany', 'Spain'] },
-    ],
-    advanced: [
-      { id: 'currentUnits', label: 'Current units' },
-      { id: 'forecast', label: 'Forecast' },
-      { id: 'transferUnits', label: 'Transfer units' },
-      { id: 'last7DaysSales', label: 'Last 7 days sales' },
-      { id: 'last30DaysSales', label: 'Last 30 days sales' },
-      { id: 'understocksBefore', label: 'Understocks before' },
-      { id: 'understocksAfter', label: 'Understocks after' },
-      { id: 'overstocksBefore', label: 'Overstocks before' },
-      { id: 'overstocksAfter', label: 'Overstocks after' },
-      { id: 'salesUplift', label: 'Sales uplift' },
-    ],
-  },
-  'Receiving location': {
-    product: [
-      { id: 'class', label: 'Class', options: ['Accessories', 'Bags', 'Shoes', 'Ready-to-wear', 'Leather goods'] },
-      { id: 'department', label: 'Department', options: ['Accessories Men', 'Accessories Women'] },
-      { id: 'gender', label: 'Gender', options: ['Men', 'Women', 'Unisex'] },
-      { id: 'product', label: 'Product', options: ['A1252810', 'A12528YY', 'A13314YY', 'B2045100', 'C3091522'] },
-      { id: 'season', label: 'Season', options: ['Fw16', 'Fw18', 'Fw19', 'Ss20', 'Fw24', 'Ss25'] },
-      {
-        id: 'style',
-        label: 'Style',
-        options: [
-          'Angel Pouch Denim Monogram',
-          'Angel Pouch Grained Leather',
-          'Angel Pouch Wings Cow Burnish',
-          'Angel Pouch Wrinkled Patent',
-          'Angel Tote Denim Monogram',
-          'Angel Tote Monogram',
-          'Angel Tote Voltaire',
-          'Angel Tote Wings Cow Burnish',
-          'Angel Tote Wrinkled Patent',
-        ],
-      },
-      { id: 'subDepartment', label: 'Sub-department', options: ['Leather Good', 'Other Acc', 'Perfume Cosmet', 'Shoes'] },
-      {
-        id: 'events',
-        label: 'Events',
-        options: ['25w Carry Over', 'Fw24 Access Out', 'Fw24 Carry Out', 'Fw24 Stc Out', 'Fw25 Drop 1a', 'Fw25 Drop 2a', 'Fw25 Drop 3a', 'Fw25 Drop 4a'],
-      },
-      { id: 'articles', label: 'Articles', options: ['ART-001', 'ART-002', 'ART-003', 'ART-004', 'ART-005'] },
-      { id: 'brand', label: 'Brand', options: ['Brand A', 'Brand B', 'Brand C'] },
-      { id: 'collectionTypes', label: 'Collection types', options: ['Permanent', 'Seasonal', 'Limited edition', 'Capsule'] },
-    ],
-    geographic: [
-      { id: 'location', label: 'Location', options: ['Opéra', 'Cannes', 'G.I cap 3000', 'Printemps toulon', 'Marais'] },
-      { id: 'region', label: 'Region', options: ['Europe', 'North America', 'Asia Pacific'] },
-      { id: 'locationType', label: 'Location type', options: ['Boutique', 'Outlet', 'Department store', 'E-commerce'] },
-      { id: 'countries', label: 'Countries', options: ['France', 'Italy', 'UK', 'Germany', 'Spain'] },
-    ],
-    advanced: [
-      { id: 'currentUnits', label: 'Current units' },
-      { id: 'forecast', label: 'Forecast' },
-      { id: 'transferUnits', label: 'Transfer units' },
-      { id: 'currentWarehouse', label: 'Current warehouse' },
-      { id: 'last7DaysSales', label: 'Last 7 days sales' },
-      { id: 'last30DaysSales', label: 'Last 30 days sales' },
-      { id: 'understocksBefore', label: 'Understocks before' },
-      { id: 'understocksAfter', label: 'Understocks after' },
-      { id: 'overstocksBefore', label: 'Overstocks before' },
-      { id: 'overstocksAfter', label: 'Overstocks after' },
-      { id: 'salesUplift', label: 'Sales uplift' },
-    ],
-  },
-}
 
 const ADVANCED_CONDITION_OPTIONS = [
   'Equal to',
@@ -613,94 +830,514 @@ const ADVANCED_CONDITION_OPTIONS = [
   'Lower than or equal to',
 ]
 
-function getFiltersConfigForApplyAt(applyAt) {
-  const levelKey = APPLY_AT_TO_FILTERS_LEVEL[applyAt]
-  return levelKey ? FILTERS_BY_LEVEL[levelKey] : null
-}
-
-function classifyFilterSelection(cfg, filterId) {
-  if (!cfg || !filterId) return null
-  const p = cfg.product.find((f) => f.id === filterId)
-  if (p) return { kind: 'scope', def: p }
-  const g = cfg.geographic.find((f) => f.id === filterId)
-  if (g) return { kind: 'scope', def: g }
-  const a = cfg.advanced.find((f) => f.id === filterId)
-  if (a) return { kind: 'advanced', def: a }
-  return null
-}
-
-/** Closed-row summary for scope value trigger; selected text uses text-[#0a0a0a], placeholder uses muted italic. */
-function getScopeValuesTriggerDisplay(values) {
-  const v = Array.isArray(values) ? values : []
-  if (v.length === 0) return { text: 'Click to select...', isPlaceholder: true }
-  if (v.length === 1) return { text: v[0], isPlaceholder: false }
-  if (v.length === 2) return { text: `${v[0]}, ${v[1]}`, isPlaceholder: false }
-  return { text: `${v.length} values selected`, isPlaceholder: false }
-}
-
-function getConditionFilterSelectValue(cond, cfg) {
-  if (!cfg) return ''
-  if (cond.filterType === 'scope' && cond.scopeCategory) return cond.scopeCategory
-  if (cond.filterType === 'advanced' && cond.advancedColumn) {
-    const m = cfg.advanced.find((a) => a.label === cond.advancedColumn)
-    return m?.id ?? ''
-  }
-  return ''
-}
-
-function scopeCategoryLabelForTitle(applyAt, scopeCategoryId) {
-  if (!scopeCategoryId) return ''
-  const def = getExceptionLevelFilterDef(applyAt, scopeCategoryId)
-  return def?.label ?? scopeCategoryId
-}
-
-function applyAtLabelForExceptionTitle(applyAtKey) {
-  if (!applyAtKey) return ''
-  return APPLY_AT_DISPLAY_LABELS[applyAtKey] ?? applyAtKey
-}
-
-/** Single condition summary for exception header (per-condition Apply at level). */
-function buildExceptionConditionSummaryPart(cond) {
-  const level = applyAtLabelForExceptionTitle(cond.applyAt)
-  if (!level) return null
-
-  if (cond.filterType === 'advanced') {
-    if (!cond.advancedColumn || !cond.advancedCondition || cond.advancedValue === undefined || cond.advancedValue === '') {
-      return null
-    }
-    return `${level} ${cond.advancedColumn} ${cond.advancedCondition.toLowerCase()} ${cond.advancedValue}`
+function ScopeAdvancedFilters({ rows, setRows }) {
+  const addRow = () => {
+    setRows((prev) => [
+      ...prev,
+      {
+        id: `scope-adv-${Date.now()}-${prev.length}`,
+        mainColumn: '',
+        condition: '',
+        value: '',
+      },
+    ])
   }
 
-  if (cond.filterType === 'scope' && cond.scopeCategory) {
-    const vals = Array.isArray(cond.scopeValues) ? cond.scopeValues : []
-    if (vals.length === 0) return null
-    const cat = scopeCategoryLabelForTitle(cond.applyAt, cond.scopeCategory)
-    if (!cat) return null
-    if (vals.length === 1) return `${level} ${cat} is ${vals[0]}`
-    if (vals.length <= 3) return `${level} ${cat} in ${vals.join(', ')}`
-    return `${level} ${cat}: ${vals.length} values`
+  const removeRow = (id) => {
+    setRows((prev) => prev.filter((row) => row.id !== id))
   }
 
-  return null
+  const updateRow = (id, updates) => {
+    setRows((prev) => prev.map((row) => (row.id === id ? { ...row, ...updates } : row)))
+  }
+
+  const clearAll = () => setRows([])
+
+  return (
+    <div className="mt-4 rounded-[4px] border border-[#e5e7eb] bg-[#fafafa] p-4">
+      <h4 className="text-[13px] font-medium text-[#0a0a0a] uppercase tracking-[0.04em]">Advanced filters</h4>
+      <p className="mt-1 mb-3 text-[12px] font-normal text-[#4b535c]">Apply to rows where these conditions are met</p>
+      <div className="flex flex-col">
+        {rows.map((row, rowIdx) => (
+          <Fragment key={row.id}>
+            {rowIdx > 0 && (
+              <div className="flex justify-center py-1">
+                <span className="text-[11px] font-medium text-[#9ca3af] uppercase tracking-wider">AND</span>
+              </div>
+            )}
+            <div className="rounded-[4px] border border-[#e5e7eb] bg-[#fafafa] px-3 py-2">
+              <div className="flex flex-wrap items-center gap-2 min-w-0">
+                <div className="relative shrink-0">
+                  <select
+                    value={row.mainColumn}
+                    onChange={(e) => updateRow(row.id, { mainColumn: e.target.value })}
+                    className="h-9 w-[180px] py-0 pl-3 pr-9 rounded-[4px] border border-[#e9eaeb] bg-white text-[13px] text-[#0a0a0a] appearance-none"
+                  >
+                    <option value="">Select column</option>
+                    {EXC_ADV_PRODUCT.map((col) => (
+                      <option key={col.id} value={col.label}>
+                        {col.label}
+                      </option>
+                    ))}
+                  </select>
+                  <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
+                    <IconChevronDownSelect />
+                  </span>
+                </div>
+                <div className="relative shrink-0">
+                  <select
+                    value={row.condition}
+                    onChange={(e) => updateRow(row.id, { condition: e.target.value })}
+                    className="h-9 w-[160px] py-0 pl-3 pr-9 rounded-[4px] border border-[#e9eaeb] bg-white text-[13px] text-[#0a0a0a] appearance-none"
+                  >
+                    <option value="">Select condition</option>
+                    {ADVANCED_CONDITION_OPTIONS.map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                  </select>
+                  <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
+                    <IconChevronDownSelect />
+                  </span>
+                </div>
+                <input
+                  type="text"
+                  value={row.value}
+                  onChange={(e) => updateRow(row.id, { value: e.target.value })}
+                  placeholder="Enter value"
+                  className="h-9 w-[120px] px-3 rounded-[4px] border border-[#e9eaeb] bg-white text-[13px] text-[#0a0a0a] placeholder:text-[#9ca3af]"
+                />
+                <button
+                  type="button"
+                  className="shrink-0 h-8 w-8 flex items-center justify-center rounded-[4px] text-[#4b535c] hover:bg-[#e5e7eb] hover:text-[#0a0a0a] ml-auto"
+                  aria-label="Remove condition"
+                  onClick={() => removeRow(row.id)}
+                >
+                  <IconClose className="size-4" />
+                </button>
+              </div>
+            </div>
+          </Fragment>
+        ))}
+      </div>
+      <div className="mt-3 flex flex-row gap-4">
+        <button type="button" onClick={addRow} className="text-[14px] font-medium text-[#1d4ed8] hover:underline">
+          + Add condition
+        </button>
+        {rows.length >= 1 && (
+          <button type="button" onClick={clearAll} className="text-[14px] font-medium text-[#4b535c] hover:underline">
+            Clear filters
+          </button>
+        )}
+      </div>
+    </div>
+  )
 }
 
-function truncateExceptionTitleDisplay(str, maxLen = 100) {
-  if (str.length <= maxLen) return str
-  const ellipsis = '...'
-  return str.slice(0, Math.max(0, maxLen - ellipsis.length)) + ellipsis
+const SUBMISSION_TIME_OPTIONS = Array.from({ length: 48 }, (_, i) => {
+  const h = Math.floor(i / 2)
+  const m = (i % 2) * 30
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
+})
+
+const SUBMISSION_DAYS = [
+  { key: 'sunday', letter: 'S' },
+  { key: 'monday', letter: 'M' },
+  { key: 'tuesday', letter: 'T' },
+  { key: 'wednesday', letter: 'W' },
+  { key: 'thursday', letter: 'T' },
+  { key: 'friday', letter: 'F' },
+  { key: 'saturday', letter: 'S' },
+]
+
+function formatRepeatUnitLabel(unit, count) {
+  if (count === 1) return unit
+  if (unit === 'day') return 'days'
+  if (unit === 'week') return 'weeks'
+  if (unit === 'month') return 'months'
+  return unit
 }
 
-function createEmptyExceptionCondition(id) {
+function capitalizeDay(day) {
+  if (!day) return ''
+  return day.charAt(0).toUpperCase() + day.slice(1)
+}
+
+function createDefaultScheduleBlock(id) {
   return {
     id,
-    applyAt: '',
-    filterType: '',
-    scopeCategory: '',
-    scopeValues: [],
-    advancedColumn: '',
-    advancedCondition: '',
-    advancedValue: '',
+    name: '',
+    movementTypes: [],
+    repeatEvery: 1,
+    repeatEveryUnit: 'week',
+    submissionDay: 'wednesday',
+    submissionDate: '',
+    submissionTime: '09:00',
+    skipEvery: '',
+    skipEveryUnit: 'weeks',
+    notifyUsers: '',
+    approvalMode: 'auto-approve',
+    exceptions: createDefaultScheduleExceptions(),
   }
+}
+
+function buildSchedulingSummary(block) {
+  const unitLabel = formatRepeatUnitLabel(block.repeatEveryUnit, block.repeatEvery)
+  return `${block.repeatEvery} ${unitLabel} on ${capitalizeDay(block.submissionDay)} at ${block.submissionTime}`
+}
+
+function buildBlockSummary(block) {
+  const segments = []
+  const movementTypes = block.movementTypes ?? []
+  const exceptions = block.exceptions ?? []
+
+  if (movementTypes.length === 0) {
+    segments.push('No movement type')
+  } else if (movementTypes.length === 1) {
+    segments.push(movementTypes[0])
+  } else if (movementTypes.length === 2) {
+    segments.push('Replenishment & Rebalancing')
+  } else {
+    segments.push(movementTypes.join(' & '))
+  }
+
+  const unit = formatRepeatUnitLabel(block.repeatEveryUnit, block.repeatEvery)
+  segments.push(`every ${block.repeatEvery} ${unit}`)
+  segments.push(`${capitalizeDay(block.submissionDay)} at ${block.submissionTime}`)
+
+  if (block.approvalMode === 'manual-review') {
+    segments.push('Manual review')
+  } else if (exceptions.length === 0) {
+    segments.push('Auto-approve')
+  } else if (exceptions.length === 1) {
+    segments.push('Auto-approve · 1 exception')
+  } else {
+    segments.push(`Auto-approve · ${exceptions.length} exceptions`)
+  }
+
+  return segments.join(' · ')
+}
+
+function ScheduleDetailsBlock({ block, index, isExpanded, onToggleExpand, onRemove, canRemove, onUpdate }) {
+  const headerTitle = block.name.trim() ? block.name : `Untitled schedule ${index + 1}`
+
+  return (
+    <div className="rounded-[4px] border border-[#e5e7eb] bg-[#fafafa]">
+      <div
+        className={`flex justify-between px-4 ${
+          isExpanded ? 'h-12 items-center border-b border-[#e5e7eb]' : 'h-auto items-center py-2'
+        }`}
+      >
+        {isExpanded ? (
+          <span className="truncate text-[15px] font-medium text-[#0a0a0a]">{headerTitle}</span>
+        ) : (
+          <div className="min-w-0 flex-1 pr-3">
+            <div className="text-[15px] font-medium text-[#0a0a0a]">{headerTitle}</div>
+            <p className="mt-0.5 text-[12px] text-[#4b535c]">{buildBlockSummary(block)}</p>
+          </div>
+        )}
+        <div className="flex shrink-0 items-center gap-2">
+          {canRemove && (
+            <button
+              type="button"
+              onClick={() => onRemove(block.id)}
+              aria-label="Remove schedule block"
+              className="flex h-7 w-7 items-center justify-center text-[#4b535c] hover:text-[#0a0a0a]"
+            >
+              <IconClose className="size-4" />
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={onToggleExpand}
+            aria-label={isExpanded ? 'Collapse schedule block' : 'Expand schedule block'}
+            aria-expanded={isExpanded}
+            className="flex h-7 w-7 items-center justify-center text-[#4b535c] hover:text-[#0a0a0a]"
+          >
+            <IconChevronDown
+              className={`size-4 shrink-0 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+              aria-hidden
+            />
+          </button>
+        </div>
+      </div>
+
+      {isExpanded && (
+        <div className="p-4">
+          <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-1.5">
+          <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Schedule name</label>
+          <input
+            type="text"
+            value={block.name}
+            onChange={(e) => onUpdate({ name: e.target.value })}
+            placeholder="e.g. Spring/Summer 25 Replenishment"
+            className="h-12 rounded-[4px] border border-[#EAEAEA] px-4 text-[14px] text-[#0a0a0a]"
+          />
+        </div>
+        <CreateScheduleScopeMultiSelect
+          label="Movement type"
+          placeholder="Select movement type"
+          options={['Replenishment', 'Rebalancing']}
+          includeValues={block.movementTypes}
+          onIncludeChange={(next) => onUpdate({ movementTypes: next })}
+          excludeValues={[]}
+          onExcludeChange={() => {}}
+          hideModeToggle={true}
+          showSelectedLabels={true}
+        />
+
+        <section className="mt-4 flex flex-col gap-4">
+          <p className="mb-3 text-[14px] font-medium text-[#0a0a0a]">Scheduling dates</p>
+
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Repeat every</label>
+            <div className="flex items-center gap-2">
+              <div className="flex h-12 items-center overflow-hidden rounded-[4px] border border-[#EAEAEA] bg-white">
+                <input
+                  type="number"
+                  min={1}
+                  value={block.repeatEvery}
+                  onChange={(e) => onUpdate({ repeatEvery: Math.max(1, parseInt(e.target.value, 10) || 1) })}
+                  className="h-12 w-[80px] border-none px-4 py-3 text-center text-[14px] text-[#0a0a0a] [appearance:textfield] focus:outline-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                />
+                <div className="flex shrink-0 flex-col border-l border-[#EAEAEA]">
+                  <button
+                    type="button"
+                    onClick={() => onUpdate({ repeatEvery: Math.max(1, block.repeatEvery + 1) })}
+                    className="flex h-6 w-7 items-center justify-center border-b border-[#EAEAEA] text-[#4b535c] hover:bg-[#f8f8f8]"
+                  >
+                    +
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onUpdate({ repeatEvery: Math.max(1, block.repeatEvery - 1) })}
+                    className="flex h-6 w-7 items-center justify-center text-[#4b535c] hover:bg-[#f8f8f8]"
+                  >
+                    −
+                  </button>
+                </div>
+              </div>
+              <div className="relative">
+                <select
+                  value={block.repeatEveryUnit}
+                  onChange={(e) => onUpdate({ repeatEveryUnit: e.target.value })}
+                  className="h-12 w-[120px] appearance-none rounded-[4px] border border-[#EAEAEA] bg-white px-4 py-3 pr-10 text-[14px] text-[#0a0a0a]"
+                >
+                  <option value="day">day</option>
+                  <option value="week">week</option>
+                  <option value="month">month</option>
+                </select>
+                <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[#4b535c]">
+                  <IconChevronDownSelect />
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Submission day</label>
+            <div className="flex gap-4">
+              {SUBMISSION_DAYS.map(({ key, letter }) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => onUpdate({ submissionDay: key })}
+                  className={`flex size-10 shrink-0 items-center justify-center rounded-full text-[14px] font-medium transition-colors ${
+                    block.submissionDay === key
+                      ? 'bg-[#1d4ed8] text-white'
+                      : 'bg-[#F8F8F8] text-[#4b535c] hover:bg-[#eee]'
+                  }`}
+                >
+                  {letter}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Submission date</label>
+            <input
+              type="date"
+              value={block.submissionDate}
+              onChange={(e) => onUpdate({ submissionDate: e.target.value })}
+              className="h-12 w-[200px] rounded-[4px] border border-[#EAEAEA] bg-white px-4 text-[14px] text-[#0a0a0a]"
+            />
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Submission time</label>
+            <div className="relative w-[200px]">
+              <select
+                value={block.submissionTime}
+                onChange={(e) => onUpdate({ submissionTime: e.target.value })}
+                className="h-12 w-full appearance-none rounded-[4px] border border-[#E9EAEB] bg-white px-4 py-3 pr-10 text-[14px] text-[#0a0a0a]"
+              >
+                {SUBMISSION_TIME_OPTIONS.map((label) => (
+                  <option key={label} value={label}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+              <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[#4b535c]">
+                <IconChevronDownSelect />
+              </span>
+            </div>
+          </div>
+
+          <p className="text-[12px] italic text-[#4b535c]">
+            The deadline by which all approved recommendations will be submitted.
+          </p>
+
+          <p className="text-[12px] italic text-[#4b535c]">
+            New scheduled recommendations available every {buildSchedulingSummary(block)}
+          </p>
+        </section>
+
+        <section className="mt-6 border-t border-[#e5e7eb] pt-6">
+          <p className="mb-3 text-[14px] font-medium text-[#0a0a0a]">Skip occurrences</p>
+          <p className="mb-3 text-[12px] text-[#4b535c]">
+            Use this if you want to temporarily run a different schedule — for example, to combine movement types or
+            separate replenishment and rebalancing into one batch.
+          </p>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Skip every</label>
+            <div className="flex items-center gap-2">
+              <div className="flex h-12 items-center overflow-hidden rounded-[4px] border border-[#EAEAEA] bg-white">
+                <input
+                  type="number"
+                  min={2}
+                  value={block.skipEvery}
+                  onChange={(e) => {
+                    const v = e.target.value
+                    if (v === '') {
+                      onUpdate({ skipEvery: '' })
+                      return
+                    }
+                    onUpdate({ skipEvery: String(Math.max(2, parseInt(v, 10) || 2)) })
+                  }}
+                  placeholder=""
+                  className="h-12 w-[80px] border-none px-4 py-3 text-center text-[14px] text-[#0a0a0a] placeholder:text-[#9ca3af] [appearance:textfield] focus:outline-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                />
+                <div className="flex shrink-0 flex-col border-l border-[#EAEAEA]">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      onUpdate({
+                        skipEvery: String(Math.max(2, (block.skipEvery === '' ? 1 : parseInt(block.skipEvery, 10) || 1) + 1)),
+                      })
+                    }
+                    className="flex h-6 w-7 items-center justify-center border-b border-[#EAEAEA] text-[#4b535c] hover:bg-[#f8f8f8]"
+                  >
+                    +
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (block.skipEvery === '') return
+                      onUpdate({
+                        skipEvery: String(Math.max(2, (parseInt(block.skipEvery, 10) || 2) - 1)),
+                      })
+                    }}
+                    className="flex h-6 w-7 items-center justify-center text-[#4b535c] hover:bg-[#f8f8f8]"
+                  >
+                    −
+                  </button>
+                </div>
+              </div>
+              <div className="relative">
+                <select
+                  value={block.skipEveryUnit}
+                  onChange={(e) => onUpdate({ skipEveryUnit: e.target.value })}
+                  className="h-12 w-[120px] appearance-none rounded-[4px] border border-[#EAEAEA] bg-white px-4 py-3 pr-10 text-[14px] text-[#0a0a0a]"
+                >
+                  <option value="weeks">weeks</option>
+                  <option value="days">days</option>
+                </select>
+                <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[#4b535c]">
+                  <IconChevronDownSelect />
+                </span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="mt-6 border-t border-[#e5e7eb] pt-6">
+          <p className="mb-3 text-[14px] font-medium text-[#0a0a0a]">Notify users</p>
+          <input
+            type="text"
+            value={block.notifyUsers}
+            onChange={(e) => onUpdate({ notifyUsers: e.target.value })}
+            placeholder="Enter user emails (comma-separated)"
+            className="h-12 w-full rounded-[4px] border border-[#EAEAEA] bg-white px-4 text-[14px] text-[#0a0a0a] placeholder:text-[#9ca3af]"
+          />
+        </section>
+
+        <section className="mt-6 border-t border-[#e5e7eb] pt-6">
+          <p className="mb-3 text-[14px] font-medium text-[#0a0a0a]">Approval & submission</p>
+
+          <div className="flex flex-col gap-3">
+            <label
+              className={`flex cursor-pointer items-start gap-3 rounded-[10px] border bg-white p-4 hover:border-[#1d4ed8]/40 has-[:checked]:border-[#1d4ed8] ${
+                block.approvalMode === 'auto-approve' ? 'border-[#1d4ed8]' : 'border-[#e5e7eb]'
+              }`}
+            >
+              <input
+                type="radio"
+                name={`approvalMode-${block.id}`}
+                value="auto-approve"
+                checked={block.approvalMode === 'auto-approve'}
+                onChange={() => onUpdate({ approvalMode: 'auto-approve' })}
+                className="mt-1 size-4 shrink-0 border-[#e5e7eb] text-[#1d4ed8] focus:ring-[#1d4ed8]"
+              />
+              <div className="flex min-w-0 flex-col gap-1">
+                <span className="text-[14px] font-medium text-[#0a0a0a]">Auto-approve recommendations</span>
+                <span className="text-[12px] font-normal text-[#4b535c]">
+                  Recommendations are auto-approved by default. Define exceptions below to flag specific recommendations
+                  for manual review.
+                </span>
+              </div>
+            </label>
+
+            <label
+              className={`flex cursor-pointer items-start gap-3 rounded-[10px] border bg-white p-4 hover:border-[#1d4ed8]/40 has-[:checked]:border-[#1d4ed8] ${
+                block.approvalMode === 'manual-review' ? 'border-[#1d4ed8]' : 'border-[#e5e7eb]'
+              }`}
+            >
+              <input
+                type="radio"
+                name={`approvalMode-${block.id}`}
+                value="manual-review"
+                checked={block.approvalMode === 'manual-review'}
+                onChange={() => onUpdate({ approvalMode: 'manual-review' })}
+                className="mt-1 size-4 shrink-0 border-[#e5e7eb] text-[#1d4ed8] focus:ring-[#1d4ed8]"
+              />
+              <div className="flex min-w-0 flex-col gap-1">
+                <span className="text-[14px] font-medium text-[#0a0a0a]">Manual review required</span>
+                <span className="text-[12px] font-normal text-[#4b535c]">
+                  No recommendations auto-submit. Every recommendation requires user review before the submission
+                  deadline.
+                </span>
+              </div>
+            </label>
+          </div>
+
+          {block.approvalMode === 'auto-approve' && (
+            <div className="mt-4">
+              <h4 className="mb-2 text-[13px] font-medium uppercase tracking-[0.04em] text-[#0a0a0a]">Exceptions</h4>
+              <p className="mb-3 text-[12px] text-[#4b535c]">
+                Recommendations matching these conditions will be flagged for manual review instead of auto-approved.
+              </p>
+              <ScheduleBlockApprovalExceptions block={block} onUpdate={onUpdate} />
+            </div>
+          )}
+        </section>
+          </div>
+        </div>
+      )}
+    </div>
+  )
 }
 
 /* Optimiser page – Figma 174:2696 (Optimiser-Concepts) */
@@ -716,7 +1353,6 @@ const DEFAULT_DRAWER_FORM = {
   endsOn: '',
   notify: '',
 }
-const DAY_OPTIONS = Array.from({ length: 31 }, (_, i) => i + 1)
 const MODULE_OPTIONS = [
   { id: 'replenishment', label: 'Replenishment' },
   { id: 'rebalancing', label: 'Rebalancing' },
@@ -775,47 +1411,56 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
   const [activeStatusTab, setActiveStatusTab] = useState('next')
   const [expandedExceptionsScheduleId, setExpandedExceptionsScheduleId] = useState(null)
   const [isCreateSchedulePage, setIsCreateSchedulePage] = useState(false)
-  const [openSections, setOpenSections] = useState(['scope'])
   const [locationScopeOption, setLocationScopeOption] = useState('all')
-  const [productScopeMode, setProductScopeMode] = useState('include')
-  const [geoScopeMode, setGeoScopeMode] = useState('include')
-  const [sourceLocationOption, setSourceLocationOption] = useState('central')
-  const [selectedMovementTypes, setSelectedMovementTypes] = useState([])
-  const [movementTypeDropdownOpen, setMovementTypeDropdownOpen] = useState(false)
-  /** Create schedule — 'auto' | 'manual' (auto-approve vs review all before submission). */
-  const [approvalMode, setApprovalMode] = useState('auto')
-  const [exceptions, setExceptions] = useState(() => [
-    {
-      id: 'exc-1',
-      expanded: true,
-      conditions: [createEmptyExceptionCondition('cond-1')],
-    },
-  ])
-  const [exceptionConditionNextId, setExceptionConditionNextId] = useState(2)
-  const [exceptionNextId, setExceptionNextId] = useState(2)
-  const [openPopover, setOpenPopover] = useState(null)
-  /** Search for scope value popover; resets when `openPopover` changes (see useEffect below). */
-  const [scopePopoverSearch, setScopePopoverSearch] = useState('')
-
-  useEffect(() => {
-    setScopePopoverSearch('')
-  }, [openPopover])
-  const [recurrenceRepeatEvery, setRecurrenceRepeatEvery] = useState(1)
-  const [recurrenceRepeatUnit, setRecurrenceRepeatUnit] = useState('week')
-  const [recurrenceSubmissionDayOfWeek, setRecurrenceSubmissionDayOfWeek] = useState(3)
-  const [recurrenceSubmissionDayOfMonth, setRecurrenceSubmissionDayOfMonth] = useState(1)
-  const [recurrenceSubmissionDateYear, setRecurrenceSubmissionDateYear] = useState('')
-  const [recurrenceSubmissionTime, setRecurrenceSubmissionTime] = useState('09:00')
-  const [submissionDate, setSubmissionDate] = useState('')
-  const [skipEveryN, setSkipEveryN] = useState('')
-  const [workingDaysOnly, setWorkingDaysOnly] = useState(true)
-  const [skipDays, setSkipDays] = useState([])
-
-  useEffect(() => {
-    if (workingDaysOnly) {
-      setSkipDays((prev) => prev.filter((d) => d !== 'Sun' && d !== 'Sat'))
-    }
-  }, [workingDaysOnly])
+  const [warehouseInclude, setWarehouseInclude] = useState([])
+  const [warehouseExclude, setWarehouseExclude] = useState([])
+  const [departmentInclude, setDepartmentInclude] = useState([])
+  const [departmentExclude, setDepartmentExclude] = useState([])
+  const [seasonsInclude, setSeasonsInclude] = useState([])
+  const [seasonsExclude, setSeasonsExclude] = useState([])
+  const [productsInclude, setProductsInclude] = useState([])
+  const [productsExclude, setProductsExclude] = useState([])
+  const [locationTypesInclude, setLocationTypesInclude] = useState([])
+  const [locationTypesExclude, setLocationTypesExclude] = useState([])
+  const [locationsInclude, setLocationsInclude] = useState([])
+  const [locationsExclude, setLocationsExclude] = useState([])
+  const [warehouseMode, setWarehouseMode] = useState('include')
+  const [departmentMode, setDepartmentMode] = useState('include')
+  const [seasonsMode, setSeasonsMode] = useState('include')
+  const [productsMode, setProductsMode] = useState('include')
+  const [locationTypesMode, setLocationTypesMode] = useState('include')
+  const [locationsMode, setLocationsMode] = useState('include')
+  const [isExpanded, setIsExpanded] = useState(false)
+  const [expandedFieldState, setExpandedFieldState] = useState(createInitialExpandedFieldState)
+  const [advancedRows, setAdvancedRows] = useState([])
+  const [modeOfTransport, setModeOfTransport] = useState('')
+  const [confidenceLevels, setConfidenceLevels] = useState(['Very High', 'High', 'Medium', 'Low', 'Very Low'])
+  const [targetCoverageValue, setTargetCoverageValue] = useState('')
+  const [targetCoverageUnit, setTargetCoverageUnit] = useState('Weeks')
+  const [currentStep, setCurrentStep] = useState(1)
+  const [proposalName, setProposalName] = useState('')
+  const [scheduleBlocks, setScheduleBlocks] = useState([createDefaultScheduleBlock('block-1')])
+  const [expandedBlockId, setExpandedBlockId] = useState('block-1')
+  const updateScheduleBlock = (blockId, updates) => {
+    setScheduleBlocks((prev) => prev.map((b) => (b.id === blockId ? { ...b, ...updates } : b)))
+  }
+  const addScheduleBlock = () => {
+    if (scheduleBlocks.length >= 2) return
+    const newBlock = createDefaultScheduleBlock(`block-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`)
+    setScheduleBlocks((prev) => [...prev, newBlock])
+    setExpandedBlockId(newBlock.id)
+  }
+  const removeScheduleBlock = (blockId) => {
+    setScheduleBlocks((prev) => {
+      if (prev.length <= 1) return prev
+      const next = prev.filter((b) => b.id !== blockId)
+      setExpandedBlockId((prevExpanded) => {
+        if (prevExpanded !== blockId) return prevExpanded
+        return next[0]?.id ?? null
+      })
+      return next
+    })
+  }
   const reviewStatusFilterOptions = [
     { id: 'in review', label: 'In review' },
     { id: 'upcoming', label: 'Upcoming' },
@@ -1041,175 +1686,116 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
     setIsCreateSchedulePage(false)
   }, [resetToRecommendationsLanding])
 
-  const toggleSection = (key) => {
-    setOpenSections((prev) =>
-      prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]
-    )
+  const updateExpandedField = (fieldKey, updates) => {
+    setExpandedFieldState((prev) => ({
+      ...prev,
+      [fieldKey]: { ...prev[fieldKey], ...updates },
+    }))
   }
 
-  const toggleExceptionAccordion = (exceptionId) => {
-    setExceptions((prev) =>
-      prev.map((e) => (e.id === exceptionId ? { ...e, expanded: !e.expanded } : e))
-    )
-  }
+  const scopeActiveFilterEntries = [
+    {
+      fieldKey: 'department',
+      label: 'Department',
+      includeValues: departmentInclude,
+      excludeValues: departmentExclude,
+      onClearInclude: () => setDepartmentInclude([]),
+      onClearExclude: () => setDepartmentExclude([]),
+    },
+    {
+      fieldKey: 'seasons',
+      label: 'Seasons',
+      includeValues: seasonsInclude,
+      excludeValues: seasonsExclude,
+      onClearInclude: () => setSeasonsInclude([]),
+      onClearExclude: () => setSeasonsExclude([]),
+    },
+    {
+      fieldKey: 'products',
+      label: 'Products',
+      includeValues: productsInclude,
+      excludeValues: productsExclude,
+      onClearInclude: () => setProductsInclude([]),
+      onClearExclude: () => setProductsExclude([]),
+    },
+    {
+      fieldKey: 'warehouse',
+      label: 'Warehouse',
+      includeValues: warehouseInclude,
+      excludeValues: warehouseExclude,
+      onClearInclude: () => setWarehouseInclude([]),
+      onClearExclude: () => setWarehouseExclude([]),
+    },
+    {
+      fieldKey: 'locationTypes',
+      label: 'Location Types',
+      includeValues: locationTypesInclude,
+      excludeValues: locationTypesExclude,
+      onClearInclude: () => setLocationTypesInclude([]),
+      onClearExclude: () => setLocationTypesExclude([]),
+    },
+    {
+      fieldKey: 'locations',
+      label: 'Locations',
+      includeValues: locationsInclude,
+      excludeValues: locationsExclude,
+      onClearInclude: () => setLocationsInclude([]),
+      onClearExclude: () => setLocationsExclude([]),
+    },
+    ...SCOPE_EXPANDED_PRODUCT_FIELDS.map(({ key, label }) => ({
+      fieldKey: key,
+      label,
+      includeValues: expandedFieldState[key].include,
+      excludeValues: expandedFieldState[key].exclude,
+      onClearInclude: () => updateExpandedField(key, { include: [] }),
+      onClearExclude: () => updateExpandedField(key, { exclude: [] }),
+    })),
+    ...SCOPE_EXPANDED_LOCATION_FIELDS.map(({ key, label }) => ({
+      fieldKey: key,
+      label,
+      includeValues: expandedFieldState[key].include,
+      excludeValues: expandedFieldState[key].exclude,
+      onClearInclude: () => updateExpandedField(key, { include: [] }),
+      onClearExclude: () => updateExpandedField(key, { exclude: [] }),
+    })),
+  ]
 
-  const removeException = (exceptionId) => {
-    setExceptions((prev) => prev.filter((e) => e.id !== exceptionId))
-  }
+  const advancedChips = advancedRows
+    .filter((row) => row.mainColumn && row.condition && row.value)
+    .map((row) => ({
+      id: row.id,
+      mainColumn: row.mainColumn,
+      condition: row.condition,
+      value: row.value,
+      onRemove: () => setAdvancedRows((prev) => prev.filter((r) => r.id !== row.id)),
+    }))
 
-  const addException = () => {
-    const excId = `exc-${exceptionNextId}`
-    const condId = `cond-${exceptionConditionNextId}`
-    setExceptionNextId((n) => n + 1)
-    setExceptionConditionNextId((n) => n + 1)
-    setExceptions((prev) => {
-      const withExpandedFalse = prev.map((e) => ({ ...e, expanded: false }))
-      return [
-        ...withExpandedFalse,
-        {
-          id: excId,
-          expanded: true,
-          conditions: [createEmptyExceptionCondition(condId)],
-        },
-      ]
-    })
-  }
-
-  const addConditionToException = (exceptionId) => {
-    const newId = `cond-${exceptionConditionNextId}`
-    setExceptionConditionNextId((n) => n + 1)
-    setExceptions((prev) =>
-      prev.map((e) =>
-        e.id === exceptionId ? { ...e, conditions: [...e.conditions, createEmptyExceptionCondition(newId)] } : e
-      )
-    )
-  }
-
-  const removeConditionFromException = (exceptionId, conditionId) => {
-    const freshId = `cond-${exceptionConditionNextId}`
-    setExceptionConditionNextId((n) => n + 1)
-    setExceptions((prev) =>
-      prev.map((e) => {
-        if (e.id !== exceptionId) return e
-        const filtered = e.conditions.filter((c) => c.id !== conditionId)
-        if (filtered.length === 0) {
-          return { ...e, conditions: [createEmptyExceptionCondition(freshId)] }
-        }
-        return { ...e, conditions: filtered }
-      })
-    )
-  }
-
-  const updateConditionField = (exceptionId, conditionId, field, value) => {
-    setExceptions((prev) =>
-      prev.map((e) =>
-        e.id === exceptionId
-          ? {
-              ...e,
-              conditions: e.conditions.map((c) => (c.id === conditionId ? { ...c, [field]: value } : c)),
-            }
-          : e
-      )
-    )
-  }
-
-  const patchCondition = (exceptionId, conditionId, partial) => {
-    setExceptions((prev) =>
-      prev.map((e) =>
-        e.id === exceptionId
-          ? {
-              ...e,
-              conditions: e.conditions.map((c) => (c.id === conditionId ? { ...c, ...partial } : c)),
-            }
-          : e
-      )
-    )
-  }
-
-  const onConditionFilterSelectChange = (exceptionId, condition, filtersCfg, filterId) => {
-    if (!filtersCfg) return
-    if (!filterId) {
-      patchCondition(exceptionId, condition.id, {
-        filterType: '',
-        scopeCategory: '',
-        scopeValues: [],
-        advancedColumn: '',
-        advancedCondition: '',
-        advancedValue: '',
-      })
-      setOpenPopover(null)
-      return
-    }
-    const cls = classifyFilterSelection(filtersCfg, filterId)
-    if (!cls) return
-    if (cls.kind === 'scope') {
-      patchCondition(exceptionId, condition.id, {
-        filterType: 'scope',
-        scopeCategory: filterId,
-        scopeValues: [],
-        advancedColumn: '',
-        advancedCondition: '',
-        advancedValue: '',
-      })
-    } else {
-      patchCondition(exceptionId, condition.id, {
-        filterType: 'advanced',
-        scopeCategory: '',
-        scopeValues: [],
-        advancedColumn: cls.def.label,
-        advancedCondition: '',
-        advancedValue: '',
-      })
-    }
-    setOpenPopover(null)
-  }
-
-  const resetConditionFilters = (exceptionId, conditionId) => {
-    setExceptions((prev) =>
-      prev.map((e) =>
-        e.id === exceptionId
-          ? {
-              ...e,
-              conditions: e.conditions.map((c) =>
-                c.id === conditionId
-                  ? {
-                      ...c,
-                      filterType: '',
-                      scopeCategory: '',
-                      scopeValues: [],
-                      advancedColumn: '',
-                      advancedCondition: '',
-                      advancedValue: '',
-                    }
-                  : c
-              ),
-            }
-          : e
-      )
-    )
-  }
-
-  const clearAllConditionsForException = (exceptionId) => {
-    const freshId = `cond-${exceptionConditionNextId}`
-    setExceptionConditionNextId((n) => n + 1)
-    setOpenPopover(null)
-    setExceptions((prev) =>
-      prev.map((e) => (e.id === exceptionId ? { ...e, conditions: [createEmptyExceptionCondition(freshId)] } : e))
-    )
-  }
-
-  /** Full exception header: "Exception [n]" or "Exception [n]: [part] and [part] ..." (one part per configured condition, each includes its Apply at level). */
-  const getExceptionDisplayName = (exc, excIdx) => {
-    const n = excIdx + 1
-    const prefix = `Exception ${n}`
-    const parts = (exc.conditions || []).map(buildExceptionConditionSummaryPart).filter(Boolean)
-    if (parts.length === 0) return prefix
-    return `${prefix}: ${parts.join(' and ')}`
-  }
+  const CREATE_SCHEDULE_WIZARD_STEPS = [
+    {
+      title: 'Setup',
+      subtitle: 'Configure transport, confidence levels, and target coverage for this proposal.',
+      continueLabel: 'Continue to Scope',
+    },
+    {
+      title: 'Scope',
+      subtitle: 'Define the products, locations, and network for this schedule.',
+      continueLabel: 'Continue to Schedule details',
+    },
+    {
+      title: 'Schedule details',
+      subtitle: 'Define when this proposal runs and how recommendations are approved.',
+      continueLabel: 'Continue to Review',
+    },
+    {
+      title: 'Review',
+      subtitle: 'Review your proposal before creating it.',
+      continueLabel: 'Create proposal',
+    },
+  ]
 
   if (isCreateSchedulePage) {
     return (
-      <div className="flex flex-col gap-8">
+      <div className="mx-auto flex max-w-[1200px] flex-col gap-8 px-6">
         <div className="flex items-center gap-3">
           <button
             type="button"
@@ -1224,29 +1810,120 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
           </h1>
         </div>
 
-        <div className="flex flex-col gap-4">
-          <div className="border border-[#EAEAEA] rounded-[4px] bg-white overflow-hidden">
+        <div className="py-3">
+          <input
+            type="text"
+            placeholder="Untitled proposal"
+            value={proposalName}
+            onChange={(e) => setProposalName(e.target.value)}
+            className="w-full max-w-[480px] border-0 border-b border-transparent bg-transparent text-[20px] font-semibold text-[#0a0a0a] placeholder:text-[#9ca3af] focus:border-[#1d4ed8] focus:outline-none"
+          />
+        </div>
+
+        <div className="mt-2 mb-4 flex w-full gap-1">
+          {[0, 1, 2, 3].map((segmentIndex) => (
+            <div
+              key={segmentIndex}
+              className={`h-1 flex-1 rounded-full ${
+                segmentIndex < currentStep ? 'bg-[#1d4ed8]' : 'bg-[#e5e7eb]'
+              }`}
+            />
+          ))}
+        </div>
+
+        <div className="mb-6 flex items-start justify-between gap-4">
+          <div className="min-w-0">
+            {currentStep === 1 ? (
+              <p className="text-[14px] font-medium text-[#0a0a0a]">Step 1 of 4</p>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setCurrentStep((step) => step - 1)}
+                className="flex cursor-pointer items-center gap-1.5 text-[14px] font-medium text-[#1d4ed8] hover:underline"
+              >
+                ← Step {currentStep} of 4
+              </button>
+            )}
+            <h2 className="mt-1 text-[22px] font-semibold text-[#0a0a0a]">
+              {CREATE_SCHEDULE_WIZARD_STEPS[currentStep - 1].title}
+            </h2>
+            <p className="mt-1 text-[14px] text-[#4b535c]">
+              {CREATE_SCHEDULE_WIZARD_STEPS[currentStep - 1].subtitle}
+            </p>
+          </div>
+          {currentStep < 4 && (
             <button
               type="button"
-              onClick={() => toggleSection('scope')}
-              className="w-full flex items-center justify-between px-5 py-4 text-left cursor-pointer hover:bg-[#f9fafb] transition-colors"
+              onClick={() => setCurrentStep((step) => step + 1)}
+              className="shrink-0 rounded-[4px] bg-[#1d4ed8] px-5 py-2.5 text-[14px] font-medium text-white hover:bg-[#1e40af]"
             >
-              <div className="flex flex-col gap-1">
-                <span className="text-[20px] font-medium text-[#212B36] leading-[150%]">
-                  Scope
-                </span>
-                <span className="text-[14px] font-normal text-[#4b535c]">
-                  Define the products, locations, and network for this schedule.
-                </span>
-              </div>
-              <IconChevronDown
-                className={`size-5 text-[#4b535c] transition-transform shrink-0 ${
-                  openSections.includes('scope') ? 'rotate-180' : ''
-                }`}
-              />
+              {CREATE_SCHEDULE_WIZARD_STEPS[currentStep - 1].continueLabel}
             </button>
-            {openSections.includes('scope') && (
-              <div className="px-5 pb-6 pt-2 flex flex-col gap-6 border-t border-[#EAEAEA]">
+          )}
+        </div>
+
+        {currentStep === 1 && (
+          <>
+            <div className="mb-4">
+              <CreateScheduleScopeSingleSelect
+                label="Mode of transport"
+                helperText="This schedule will apply the transport constraints set in your Network and Trip capacity parameters."
+                placeholder="Select mode of transport"
+                options={['Road', 'Rail', 'Air', 'Foot']}
+                value={modeOfTransport}
+                onChange={setModeOfTransport}
+              />
+            </div>
+            <div className="mb-4">
+              <CreateScheduleScopeMultiSelect
+                label="Confidence level"
+                helperText="Select which Autone confidence recommendations you see in the scheduled proposal"
+                placeholder="Select confidence levels"
+                options={['Very High', 'High', 'Medium', 'Low', 'Very Low']}
+                includeValues={confidenceLevels}
+                onIncludeChange={setConfidenceLevels}
+                excludeValues={[]}
+                onExcludeChange={() => {}}
+                hideModeToggle
+                showSelectAll
+                showSelectedLabels
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Target coverage</label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  placeholder="0"
+                  value={targetCoverageValue}
+                  onChange={(e) => setTargetCoverageValue(e.target.value)}
+                  className="h-14 w-32 shrink-0 rounded-[4px] border border-[#EAEAEA] bg-white px-4 text-[16px] text-[#0a0a0a] placeholder:text-[#9ca3af] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                />
+                <div className="relative shrink-0">
+                  <select
+                    value={targetCoverageUnit}
+                    onChange={(e) => setTargetCoverageUnit(e.target.value)}
+                    className="h-14 w-32 py-0 pl-4 pr-10 rounded-[4px] border border-[#EAEAEA] bg-white text-[16px] text-[#0a0a0a] appearance-none"
+                  >
+                    <option value="Weeks">Weeks</option>
+                    <option value="Days">Days</option>
+                  </select>
+                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
+                    <IconChevronDownSelect />
+                  </span>
+                </div>
+              </div>
+              <p className="mt-1.5 text-[12px] leading-[16px] text-[#4b535c]">
+                Instead of covering you until the next scheduled proposal, input how many weeks of stock you want your
+                locations to hold.
+              </p>
+            </div>
+          </>
+        )}
+
+        {currentStep === 2 && (
+          <div className="border border-[#EAEAEA] rounded-[4px] bg-white overflow-hidden">
+            <div className="px-5 pb-6 pt-2 flex flex-col gap-6">
                 <section className="flex flex-col gap-3">
                   <h3 className="text-[14px] font-medium text-[#0a0a0a]">
                     Which products and locations does this schedule cover?
@@ -1288,1021 +1965,141 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                   </div>
 
                   {locationScopeOption === 'select' && (
-                    <CreateScheduleScopeFilterPanel
-                      productScopeMode={productScopeMode}
-                      setProductScopeMode={setProductScopeMode}
-                      geoScopeMode={geoScopeMode}
-                      setGeoScopeMode={setGeoScopeMode}
-                    />
-                  )}
-                </section>
-
-                <div className="border-t border-[#e5e7eb] pt-5 mt-5 grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <section className="flex flex-col gap-2 min-w-0">
-                    <h3 className="text-[14px] font-medium text-[#0a0a0a]">Network</h3>
-                    <p className="text-[13px] text-[#4b535c] max-w-[600px]">
-                      We&apos;ll default to your global network set-up in parameters. If the trip configuration or
-                      constraints are different for this schedule, download the template for your location scope, update
-                      it, and upload the specific configuration.
-                    </p>
-                    <div className="flex items-center gap-3 mt-3">
-                      <button
-                        type="button"
-                        className="h-10 px-5 rounded-[6px] bg-[#0267FF] text-white text-[14px] font-medium hover:bg-[#0252cc] flex items-center gap-2"
-                      >
-                        <svg
-                          width="16"
-                          height="16"
-                          viewBox="0 0 16 16"
-                          fill="none"
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="shrink-0"
-                          aria-hidden
-                        >
-                          <path
-                            d="M8 3.5v6M8 9.5l-2.5 2.5M8 9.5l2.5 2.5"
-                            stroke="currentColor"
-                            strokeWidth="1.5"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                          <path d="M3.5 13h9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                        </svg>
-                        Download template
-                      </button>
-                      <button
-                        type="button"
-                        className="h-10 px-5 rounded-[6px] border border-[#E9EAEB] bg-white text-[14px] font-medium text-[#0a0a0a] hover:bg-[#f8f8f8] flex items-center gap-2"
-                      >
-                        <svg
-                          width="16"
-                          height="16"
-                          viewBox="0 0 16 16"
-                          fill="none"
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="shrink-0"
-                          aria-hidden
-                        >
-                          <path
-                            d="M8 11.5V4M8 4L5.5 6.5M8 4L10.5 6.5"
-                            stroke="currentColor"
-                            strokeWidth="1.5"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                          <path d="M3.5 13h9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                        </svg>
-                        Upload
-                      </button>
-                    </div>
-                  </section>
-                  <section className="flex flex-col gap-2 min-w-0">
-                    <h3 className="text-[14px] font-medium text-[#0a0a0a]">Trip capacity</h3>
-                    <p className="text-[13px] text-[#4b535c] max-w-[600px]">
-                      We&apos;ll default to your global trip capacity set in parameters. If trip capacity is different
-                      for this schedule, download the template, update it, and upload the specific configuration.
-                    </p>
-                    <div className="flex items-center gap-3 mt-3">
-                      <button
-                        type="button"
-                        className="h-10 px-5 rounded-[6px] bg-[#0267FF] text-white text-[14px] font-medium hover:bg-[#0252cc] flex items-center gap-2"
-                      >
-                        <svg
-                          width="16"
-                          height="16"
-                          viewBox="0 0 16 16"
-                          fill="none"
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="shrink-0"
-                          aria-hidden
-                        >
-                          <path
-                            d="M8 3.5v6M8 9.5l-2.5 2.5M8 9.5l2.5 2.5"
-                            stroke="currentColor"
-                            strokeWidth="1.5"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                          <path d="M3.5 13h9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                        </svg>
-                        Download template
-                      </button>
-                      <button
-                        type="button"
-                        className="h-10 px-5 rounded-[6px] border border-[#E9EAEB] bg-white text-[14px] font-medium text-[#0a0a0a] hover:bg-[#f8f8f8] flex items-center gap-2"
-                      >
-                        <svg
-                          width="16"
-                          height="16"
-                          viewBox="0 0 16 16"
-                          fill="none"
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="shrink-0"
-                          aria-hidden
-                        >
-                          <path
-                            d="M8 11.5V4M8 4L5.5 6.5M8 4L10.5 6.5"
-                            stroke="currentColor"
-                            strokeWidth="1.5"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                          <path d="M3.5 13h9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                        </svg>
-                        Upload
-                      </button>
-                    </div>
-                  </section>
-                </div>
-              </div>
-            )}
-          </div>
-
-          <div className="border border-[#EAEAEA] rounded-[4px] bg-white overflow-hidden">
-            <button
-              type="button"
-              onClick={() => toggleSection('details')}
-              className="w-full flex items-center justify-between px-5 py-4 text-left cursor-pointer hover:bg-[#f9fafb] transition-colors"
-            >
-              <div className="flex flex-col gap-1">
-                <span className="text-[20px] font-medium text-[#212B36] leading-[150%]">
-                  Schedule details
-                </span>
-                <span className="text-[14px] font-normal text-[#4b535c]">
-                  Configure how you want your schedule to run
-                </span>
-              </div>
-              <IconChevronDown
-                className={`size-5 text-[#4b535c] transition-transform shrink-0 ${
-                  openSections.includes('details') ? 'rotate-180' : ''
-                }`}
-              />
-            </button>
-            {openSections.includes('details') && (
-              <div className="px-5 pb-6 pt-2 flex flex-col gap-6 border-t border-[#EAEAEA]">
-                <section className="flex flex-col gap-2">
-                  <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Name schedule</label>
-                  <input
-                    type="text"
-                    placeholder="Placeholder"
-                    value={drawerForm.name}
-                    onChange={(ev) =>
-                      setDrawerForm((f) => ({
-                        ...f,
-                        name: ev.target.value,
-                      }))
-                    }
-                    className="w-full h-14 px-4 rounded-[4px] border border-[#EAEAEA] bg-white text-[16px] text-[#0a0a0a] placeholder:text-[#9CA1AE]"
-                  />
-                  <p className="text-[12px] font-normal text-[#4b535c]">
-                    If not assigned, name will be given automatically
-                  </p>
-                </section>
-
-                <section className="flex flex-col gap-2">
-                  <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Movement type</label>
-                  <div className="relative">
-                    <button
-                      type="button"
-                      onClick={() => setMovementTypeDropdownOpen((o) => !o)}
-                      className="w-full h-14 pl-4 pr-10 rounded-[4px] border border-[#EAEAEA] bg-white text-[16px] text-[#0a0a0a] text-left flex items-center min-w-0"
-                    >
-                      <span
-                        className={`min-w-0 flex-1 truncate text-left ${selectedMovementTypes.length === 0 ? 'text-[#4b535c]' : 'text-[#0a0a0a]'}`}
-                      >
-                        {selectedMovementTypes.length === 0
-                          ? 'Select'
-                          : selectedMovementTypes
-                              .map((id) => MODULE_OPTIONS.find((o) => o.id === id)?.label)
-                              .filter(Boolean)
-                              .join(', ')}
-                      </span>
-                    </button>
-                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
-                      <IconChevronDownSelect />
-                    </span>
-                    {movementTypeDropdownOpen && (
-                      <>
-                        <div
-                          role="presentation"
-                          className="fixed inset-0 z-[29]"
-                          onClick={() => setMovementTypeDropdownOpen(false)}
-                          aria-hidden
-                        />
-                        <div
-                          className="absolute left-0 right-0 top-full z-[30] mt-1 rounded-[4px] border border-[#EAEAEA] bg-white shadow-[0px_8px_25px_0px_rgba(0,0,0,0.12)] overflow-hidden"
-                          onClick={(e) => e.stopPropagation()}
-                          role="presentation"
-                        >
-                          {MODULE_OPTIONS.map((opt) => (
-                            <label
-                              key={opt.id}
-                              className="px-4 py-3 flex items-center gap-3 hover:bg-[#f8f8f8] text-[14px] text-[#0a0a0a] cursor-pointer"
-                            >
-                              <input
-                                type="checkbox"
-                                checked={selectedMovementTypes.includes(opt.id)}
-                                onChange={() =>
-                                  setSelectedMovementTypes((prev) =>
-                                    prev.includes(opt.id)
-                                      ? prev.filter((id) => id !== opt.id)
-                                      : [...prev, opt.id]
-                                  )
-                                }
-                                className="size-4 rounded border-[#d1d5db] text-[#0267ff] focus:ring-[#0267ff] shrink-0"
-                              />
-                              <span>{opt.label}</span>
-                            </label>
-                          ))}
-                        </div>
-                      </>
-                    )}
-                  </div>
-                </section>
-
-                {selectedMovementTypes.includes('replenishment') && (
-                  <section className="flex flex-col gap-3">
-                    <div className="flex flex-col gap-1">
-                      <h3 className="text-[14px] font-medium text-[#0a0a0a]">Select your source location</h3>
-                      <p className="text-[12px] font-normal text-[#4b535c]">
-                        Required for replenishment — this is the location stock will be distributed from.
-                      </p>
-                    </div>
-                    <div className="flex flex-col gap-3">
-                      <label className="flex items-start gap-3 p-4 rounded-[10px] border border-[#e5e7eb] bg-white cursor-pointer hover:border-[#0267ff]/40 has-[:checked]:border-[#0267ff]">
-                        <input
-                          type="radio"
-                          name="sourceLocationOption"
-                          value="central"
-                          checked={sourceLocationOption === 'central'}
-                          onChange={() => setSourceLocationOption('central')}
-                          className="mt-1 size-4 shrink-0 border-[#e5e7eb] text-[#0267ff] focus:ring-[#0267ff]"
-                        />
-                        <div className="flex flex-col gap-1 min-w-0">
-                          <span className="text-[14px] font-medium text-[#0a0a0a]">Central</span>
-                        </div>
-                      </label>
-                      <label className="flex items-start gap-3 p-4 rounded-[10px] border border-[#e5e7eb] bg-white cursor-pointer hover:border-[#0267ff]/40 has-[:checked]:border-[#0267ff]">
-                        <input
-                          type="radio"
-                          name="sourceLocationOption"
-                          value="supplier"
-                          checked={sourceLocationOption === 'supplier'}
-                          onChange={() => setSourceLocationOption('supplier')}
-                          className="mt-1 size-4 shrink-0 border-[#e5e7eb] text-[#0267ff] focus:ring-[#0267ff]"
-                        />
-                        <div className="flex flex-col gap-1 min-w-0">
-                          <span className="text-[14px] font-medium text-[#0a0a0a]">Supplier</span>
-                        </div>
-                      </label>
-                    </div>
-                  </section>
-                )}
-
-                <section className="flex flex-col gap-4">
-                  <p className="text-[14px] font-medium text-[#0a0a0a]">Scheduling Dates</p>
-
-                  <div className="flex flex-col gap-2">
-                    <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Repeat every</label>
-                    <div className="flex items-center gap-2">
-                      <div className="flex items-center border border-[#EAEAEA] rounded-[4px] bg-white overflow-hidden h-12">
-                        <input
-                          type="number"
-                          min={1}
-                          value={recurrenceRepeatEvery}
-                          onChange={(e) => setRecurrenceRepeatEvery(Math.max(1, parseInt(e.target.value, 10) || 1))}
-                          className="w-[80px] h-12 py-3 px-4 text-center text-[16px] text-[#0a0a0a] border-none focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                        />
-                        <div className="flex flex-col border-l border-[#EAEAEA] shrink-0">
-                          <button type="button" onClick={() => setRecurrenceRepeatEvery((v) => Math.max(1, v + 1))} className="h-6 w-7 flex items-center justify-center text-[#4b535c] hover:bg-[#f8f8f8] border-b border-[#EAEAEA]">+</button>
-                          <button type="button" onClick={() => setRecurrenceRepeatEvery((v) => Math.max(1, v - 1))} className="h-6 w-7 flex items-center justify-center text-[#4b535c] hover:bg-[#f8f8f8]">−</button>
-                        </div>
-                      </div>
-                      <div className="relative">
-                        <select
-                          value={recurrenceRepeatUnit}
-                          onChange={(e) => setRecurrenceRepeatUnit(e.target.value)}
-                          className="h-12 w-[120px] py-3 px-4 pr-10 rounded-[4px] border border-[#EAEAEA] bg-white text-[16px] text-[#0a0a0a] appearance-none"
-                        >
-                          <option value="day">day</option>
-                          <option value="week">week</option>
-                          <option value="month">month</option>
-                          <option value="year">year</option>
-                        </select>
-                        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
-                          <IconChevronDownSelect />
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {recurrenceRepeatUnit === 'day' && (
-                    <div className="flex items-center justify-between gap-4">
-                      <div className="flex flex-col gap-1">
-                        <span className="text-[14px] text-[#0a0a0a]">Working days only</span>
-                        <span className="text-[12px] text-[#4b535c]">Schedule will only run on Monday–Friday</span>
-                      </div>
-                      <button
-                        type="button"
-                        role="switch"
-                        aria-checked={workingDaysOnly}
-                        onClick={() => setWorkingDaysOnly((v) => !v)}
-                        className={`relative w-11 h-6 rounded-full transition-colors shrink-0 ${
-                          workingDaysOnly ? 'bg-[#0267ff]' : 'bg-[#e5e7eb]'
-                        }`}
-                      >
-                        <span
-                          className={`absolute top-1 left-1 size-4 rounded-full bg-white transition-transform ${
-                            workingDaysOnly ? 'translate-x-5' : 'translate-x-0'
-                          }`}
-                        />
-                      </button>
-                    </div>
-                  )}
-
-                  {recurrenceRepeatUnit === 'week' && (
-                    <div className="flex flex-col gap-2">
-                      <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Submission day</label>
-                      <div className="flex gap-4">
-                        {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((letter, i) => (
-                          <button
-                            key={i}
-                            type="button"
-                            onClick={() => setRecurrenceSubmissionDayOfWeek(i)}
-                            className={`size-10 rounded-full flex items-center justify-center text-[14px] font-medium shrink-0 transition-colors ${
-                              recurrenceSubmissionDayOfWeek === i
-                                ? 'bg-[#0267FF] text-white'
-                                : 'bg-[#F8F8F8] text-[#4b535c] hover:bg-[#eee]'
-                            }`}
-                          >
-                            {letter}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  {recurrenceRepeatUnit === 'year' && (
-                    <div className="flex flex-col gap-2">
-                      <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Submission day</label>
-                      <input
-                        type="text"
-                        placeholder="e.g. Jun 10, 2026"
-                        value={recurrenceSubmissionDateYear}
-                        onChange={(e) => setRecurrenceSubmissionDateYear(e.target.value)}
-                        className="w-full max-w-[200px] h-14 px-4 rounded-[4px] border border-[#EAEAEA] bg-white text-[16px] text-[#0a0a0a] placeholder:text-[#9CA1AE]"
-                      />
-                    </div>
-                  )}
-
-                  <div className="flex flex-col gap-2">
-                    <div className="flex items-start gap-4">
-                      {recurrenceRepeatUnit !== 'day' && (
-                        <div className="flex flex-col gap-2">
-                          <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Submission date</label>
-                          <input
-                            type="date"
-                            value={submissionDate}
-                            onChange={(e) => setSubmissionDate(e.target.value)}
-                            className="h-12 w-[200px] px-4 rounded-[4px] border border-[#EAEAEA] bg-white text-[16px] text-[#0a0a0a]"
-                          />
-                        </div>
-                      )}
-                      <div className="flex flex-col gap-2">
-                        <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">
-                          {recurrenceRepeatUnit === 'day' ? 'Daily submission time' : 'Submission time'}
-                        </label>
-                        <div className="relative w-[200px]">
-                          <select
-                            value={recurrenceSubmissionTime}
-                            onChange={(e) => setRecurrenceSubmissionTime(e.target.value)}
-                            className="w-full h-12 py-3 px-4 pr-10 rounded-[4px] border border-[#E9EAEB] bg-white text-[16px] text-[#0a0a0a] appearance-none"
-                          >
-                            {Array.from({ length: 48 }, (_, i) => {
-                              const h = Math.floor(i / 2)
-                              const m = (i % 2) * 30
-                              const label = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
-                              return <option key={label} value={label}>{label}</option>
-                            })}
-                          </select>
-                          <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
-                            <IconChevronDownSelect />
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                    <p className="text-[12px] text-[#4b535c]">
-                      The deadline by which all approved recommendations will be submitted
-                    </p>
-                  </div>
-
-                  <p className="text-[14px] italic text-[#4b535c]">
-                    New scheduled recommendations available every{' '}
-                    {(() => {
-                      const unit = recurrenceRepeatUnit === 'week' ? 'weeks' : recurrenceRepeatUnit === 'month' ? 'months' : recurrenceRepeatUnit === 'year' ? 'years' : 'days'
-                      const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
-                      const dayName = dayNames[recurrenceSubmissionDayOfWeek]
-                      const timeStr = ` at ${recurrenceSubmissionTime}`
-                      let body = ''
-                      if (recurrenceRepeatUnit === 'week') {
-                        body = `${recurrenceRepeatEvery} ${recurrenceRepeatEvery === 1 ? unit.slice(0, -1) : unit} on ${dayName}`
-                      } else if (recurrenceRepeatUnit === 'month') {
-                        body = `${recurrenceRepeatEvery} ${recurrenceRepeatEvery === 1 ? 'month' : unit} on day ${recurrenceSubmissionDayOfMonth}`
-                      } else if (recurrenceRepeatUnit === 'year') {
-                        body = recurrenceSubmissionDateYear
-                          ? `${recurrenceRepeatEvery} ${recurrenceRepeatEvery === 1 ? 'year' : unit} on ${recurrenceSubmissionDateYear}`
-                          : `${recurrenceRepeatEvery} ${recurrenceRepeatEvery === 1 ? 'year' : unit}`
-                      } else {
-                        body = `${recurrenceRepeatEvery} ${recurrenceRepeatEvery === 1 ? 'day' : unit}`
-                      }
-                      const formatSubmissionDate = (iso) => {
-                        if (!iso) return ''
-                        const p = iso.split('-')
-                        if (p.length !== 3) return iso
-                        const [y, m, d] = p
-                        return `${d.padStart(2, '0')}/${m.padStart(2, '0')}/${y}`
-                      }
-                      const dateFmt = formatSubmissionDate(submissionDate)
-                      if (submissionDate && dateFmt) {
-                        return `${body}, next submission ${dateFmt} at ${recurrenceSubmissionTime}`
-                      }
-                      if (recurrenceRepeatUnit === 'year' && !recurrenceSubmissionDateYear) {
-                        return body
-                      }
-                      return `${body}${timeStr}`
-                    })()}
-                  </p>
-                </section>
-
-                <section className="flex flex-col gap-3 p-4 border border-[#e9eaeb] rounded-[6px] bg-white">
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Skip occurrences</label>
-                    <p className="text-[12px] font-normal text-[#4b535c]">
-                      Use this if you want to temporarily run a different schedule — for example, to combine movement types or separate replenishment and rebalancing into one batch.
-                    </p>
-                  </div>
-                  <div className="flex flex-col gap-3">
-                  {recurrenceRepeatUnit === 'day' ? (
                     <>
-                      <div className="flex flex-col gap-2">
-                        <span className="text-[14px] text-[#0a0a0a]">Skip on</span>
-                        {(() => {
-                          const skipDayOptions = workingDaysOnly
-                            ? [
-                                { label: 'M', value: 'Mon' },
-                                { label: 'T', value: 'Tue' },
-                                { label: 'W', value: 'Wed' },
-                                { label: 'T', value: 'Thu' },
-                                { label: 'F', value: 'Fri' },
-                              ]
-                            : [
-                                { label: 'S', value: 'Sun' },
-                                { label: 'M', value: 'Mon' },
-                                { label: 'T', value: 'Tue' },
-                                { label: 'W', value: 'Wed' },
-                                { label: 'T', value: 'Thu' },
-                                { label: 'F', value: 'Fri' },
-                                { label: 'S', value: 'Sat' },
-                              ]
-
-                          return (
-                            <div className="flex gap-4">
-                              {skipDayOptions.map(({ label, value }) => (
-                                <button
-                                  key={value}
-                                  type="button"
-                                  onClick={() =>
-                                    setSkipDays((prev) =>
-                                      prev.includes(value)
-                                        ? prev.filter((d) => d !== value)
-                                        : [...prev, value]
-                                    )
-                                  }
-                                  className={`size-10 rounded-full flex items-center justify-center text-[14px] font-medium shrink-0 transition-colors ${
-                                    skipDays.includes(value)
-                                      ? 'bg-[#0267FF] text-white'
-                                      : 'bg-[#F8F8F8] text-[#4b535c] hover:bg-[#eee]'
-                                  }`}
-                                >
-                                  {label}
-                                </button>
-                              ))}
-                            </div>
-                          )
-                        })()}
-                      </div>
-                      {skipDays.length > 0 && (
-                        <p className="text-[12px] text-[#4b535c] italic">
-                          This schedule will be skipped on{' '}
-                          {skipDays
-                            .map(
-                              (d) =>
-                                ({
-                                  Sun: 'Sunday',
-                                  Mon: 'Monday',
-                                  Tue: 'Tuesday',
-                                  Wed: 'Wednesday',
-                                  Thu: 'Thursday',
-                                  Fri: 'Friday',
-                                  Sat: 'Saturday',
-                                }[d] ?? d)
-                            )
-                            .join(', ')}
-                        </p>
-                      )}
-                      {skipDays.length > 0 && (
-                        <button
-                          type="button"
-                          onClick={() => setSkipDays([])}
-                          className="self-start text-[12px] text-[#0267ff] hover:underline"
-                        >
-                          Clear
-                        </button>
+                      <ActiveFilterChips entries={scopeActiveFilterEntries} advancedChips={advancedChips} />
+                      <CreateScheduleScopeFilterPanel
+                      warehouseInclude={warehouseInclude}
+                      setWarehouseInclude={setWarehouseInclude}
+                      warehouseExclude={warehouseExclude}
+                      setWarehouseExclude={setWarehouseExclude}
+                      warehouseMode={warehouseMode}
+                      setWarehouseMode={setWarehouseMode}
+                      departmentInclude={departmentInclude}
+                      setDepartmentInclude={setDepartmentInclude}
+                      departmentExclude={departmentExclude}
+                      setDepartmentExclude={setDepartmentExclude}
+                      departmentMode={departmentMode}
+                      setDepartmentMode={setDepartmentMode}
+                      seasonsInclude={seasonsInclude}
+                      setSeasonsInclude={setSeasonsInclude}
+                      seasonsExclude={seasonsExclude}
+                      setSeasonsExclude={setSeasonsExclude}
+                      seasonsMode={seasonsMode}
+                      setSeasonsMode={setSeasonsMode}
+                      productsInclude={productsInclude}
+                      setProductsInclude={setProductsInclude}
+                      productsExclude={productsExclude}
+                      setProductsExclude={setProductsExclude}
+                      productsMode={productsMode}
+                      setProductsMode={setProductsMode}
+                      locationTypesInclude={locationTypesInclude}
+                      setLocationTypesInclude={setLocationTypesInclude}
+                      locationTypesExclude={locationTypesExclude}
+                      setLocationTypesExclude={setLocationTypesExclude}
+                      locationTypesMode={locationTypesMode}
+                      setLocationTypesMode={setLocationTypesMode}
+                      locationsInclude={locationsInclude}
+                      setLocationsInclude={setLocationsInclude}
+                      locationsExclude={locationsExclude}
+                      setLocationsExclude={setLocationsExclude}
+                      locationsMode={locationsMode}
+                      setLocationsMode={setLocationsMode}
+                    />
+                      <button
+                        type="button"
+                        onClick={() => setIsExpanded((v) => !v)}
+                        className="mt-4 flex items-center gap-1 text-[14px] font-medium text-[#1d4ed8] hover:underline"
+                      >
+                        {isExpanded ? 'Show fewer filters' : 'Show all filters'}
+                        <IconChevronDown
+                          className={`size-4 shrink-0 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                          aria-hidden
+                        />
+                      </button>
+                      {isExpanded && (
+                        <CreateScheduleScopeExpandedFilters
+                          expandedFieldState={expandedFieldState}
+                          updateExpandedField={updateExpandedField}
+                          advancedRows={advancedRows}
+                          setAdvancedRows={setAdvancedRows}
+                        />
                       )}
                     </>
-                  ) : (
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-[14px] text-[#0a0a0a]">Skip every</span>
-                    <div className="flex items-center border border-[#EAEAEA] rounded-[4px] bg-white overflow-hidden h-12">
-                      <input
-                        type="number"
-                        min={2}
-                        value={skipEveryN}
-                        onChange={(e) => {
-                          const v = e.target.value
-                          if (v === '') {
-                            setSkipEveryN('')
-                            return
-                          }
-                          setSkipEveryN(String(Math.max(2, parseInt(v, 10) || 2)))
-                        }}
-                        className="w-[80px] h-12 py-3 px-4 text-center text-[16px] text-[#0a0a0a] border-none focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                      />
-                      <div className="flex flex-col border-l border-[#EAEAEA] shrink-0">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setSkipEveryN((v) =>
-                              String(Math.max(2, (v === '' ? 1 : parseInt(v, 10) || 1) + 1))
-                            )
-                          }
-                          className="h-6 w-7 flex items-center justify-center text-[#4b535c] hover:bg-[#f8f8f8] border-b border-[#EAEAEA]"
-                        >
-                          +
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setSkipEveryN((v) =>
-                              String(Math.max(2, (v === '' ? 2 : parseInt(v, 10) || 2) - 1))
-                            )
-                          }
-                          className="h-6 w-7 flex items-center justify-center text-[#4b535c] hover:bg-[#f8f8f8]"
-                        >
-                          −
-                        </button>
-                      </div>
-                    </div>
-                    <span className="text-[14px] text-[#4b535c] px-3 py-2 rounded-[4px] border border-[#e9eaeb] bg-[#f3f4f6]">
-                      {recurrenceRepeatUnit === 'week' ? 'weeks' : recurrenceRepeatUnit === 'month' ? 'months' : 'days'}
-                    </span>
-                  </div>
                   )}
-                  {recurrenceRepeatUnit !== 'day' && skipEveryN !== '' && (
-                    <p className="text-[12px] text-[#4b535c] italic">
-                      This schedule will be skipped every {skipEveryN}{' '}
-                      {recurrenceRepeatUnit === 'week'
-                        ? 'weeks'
-                        : recurrenceRepeatUnit === 'month'
-                          ? 'months'
-                          : recurrenceRepeatUnit === 'year'
-                            ? 'years'
-                            : 'days'}
-                    </p>
-                  )}
-                  {recurrenceRepeatUnit !== 'day' && skipEveryN !== '' && (
-                    <button
-                      type="button"
-                      onClick={() => setSkipEveryN('')}
-                      className="self-start text-[12px] text-[#0267ff] hover:underline"
-                    >
-                      Clear
-                    </button>
-                  )}
-                  </div>
                 </section>
+            </div>
+          </div>
+        )}
 
-                <section className="flex flex-col gap-2">
-                  <p className="text-[14px] font-medium text-[#0a0a0a]">Notify users:</p>
-                  <input
-                    type="text"
-                    placeholder="Enter user emails"
-                    value={drawerForm.notify}
-                    onChange={(ev) =>
-                      setDrawerForm((f) => ({
-                        ...f,
-                        notify: ev.target.value,
-                      }))
-                    }
-                    className="w-full h-14 px-4 rounded-[4px] border border-[#EAEAEA] bg-white text-[16px] text-[#0a0a0a] placeholder:text-[#9CA1AE]"
-                  />
-                </section>
-              </div>
+        {currentStep === 3 && (
+          <div className="max-w-[800px]">
+            <div className="flex flex-col gap-3">
+              {scheduleBlocks.map((block, index) => (
+                <ScheduleDetailsBlock
+                  key={block.id}
+                  block={block}
+                  index={index}
+                  isExpanded={block.id === expandedBlockId}
+                  onToggleExpand={() =>
+                    setExpandedBlockId((prev) => (prev === block.id ? null : block.id))
+                  }
+                  onRemove={removeScheduleBlock}
+                  canRemove={scheduleBlocks.length > 1}
+                  onUpdate={(updates) => updateScheduleBlock(block.id, updates)}
+                />
+              ))}
+            </div>
+            {scheduleBlocks.length < 2 && (
+              <button
+                type="button"
+                onClick={addScheduleBlock}
+                className="mt-4 flex h-12 w-full items-center justify-center rounded-[4px] border border-dashed border-[#1d4ed8] text-[14px] font-medium text-[#1d4ed8] hover:bg-[#1d4ed8]/5"
+              >
+                + schedule details & rules
+              </button>
             )}
           </div>
+        )}
 
-          <div className="border border-[#EAEAEA] rounded-[4px] bg-white overflow-visible">
+        {currentStep === 4 && (
+          <div className="flex flex-col gap-4">
+            {[
+              { title: 'Setup', step: 1 },
+              { title: 'Scope', step: 2 },
+              { title: 'Schedule details', step: 3 },
+            ].map(({ title, step }) => (
+              <div key={title} className="rounded-[4px] border border-[#e5e7eb] bg-[#fafafa] p-4">
+                <div className="mb-3 flex items-center justify-between">
+                  <h4 className="text-[13px] font-medium text-[#0a0a0a] uppercase tracking-[0.04em]">{title}</h4>
+                  <button
+                    type="button"
+                    onClick={() => setCurrentStep(step)}
+                    className="flex items-center gap-1 text-[14px] font-medium text-[#1d4ed8] hover:underline"
+                  >
+                    <Pencil className="size-4" aria-hidden />
+                    Edit
+                  </button>
+                </div>
+                <p className="text-[14px] italic text-[#4b535c]">Summary will be generated here.</p>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {currentStep === 4 && (
+          <div className="flex items-center justify-end gap-3 pt-6">
             <button
               type="button"
-              onClick={() => toggleSection('exceptions')}
-              className="w-full flex items-center justify-between px-5 py-4 text-left cursor-pointer hover:bg-[#f9fafb] transition-colors"
-            >
-              <div className="flex flex-col gap-1">
-                <span className="text-[20px] font-medium text-[#212B36] leading-[150%]">
-                  Approval &amp; submission
-                </span>
-                {approvalMode === 'auto' && (
-                  <span className="text-[14px] font-normal text-[#4b535c]">
-                    All recommendations generated for this schedule will be auto-approved by default and submitted on
-                    the deadline. Define exception rules below to flag specific recommendations for manual review before
-                    submission.
-                  </span>
-                )}
-              </div>
-              <IconChevronDown
-                className={`size-5 text-[#4b535c] transition-transform shrink-0 ${
-                  openSections.includes('exceptions') ? 'rotate-180' : ''
-                }`}
-              />
+              className="h-12 px-6 rounded-[6px] text-[16px] font-medium text-[#0a0a0a] hover:bg-[#f3f4f6]">
+              Cancel
             </button>
-            {openSections.includes('exceptions') && (
-              <div className="px-5 pb-6 pt-2 flex flex-col gap-6 border-t border-[#EAEAEA]">
-                <section className="flex flex-col gap-3">
-                  <h3 className="text-[14px] font-medium text-[#0a0a0a]">Approval mode</h3>
-                  <div className="flex flex-col gap-3">
-                    <label className="flex items-start gap-3 p-4 rounded-[10px] border border-[#e5e7eb] bg-white cursor-pointer hover:border-[#0267ff]/40 has-[:checked]:border-[#0267ff]">
-                      <input
-                        type="radio"
-                        name="approvalMode"
-                        value="auto"
-                        checked={approvalMode === 'auto'}
-                        onChange={() => setApprovalMode('auto')}
-                        className="mt-1 size-4 shrink-0 border-[#e5e7eb] text-[#0267ff] focus:ring-[#0267ff]"
-                      />
-                      <div className="flex flex-col gap-1 min-w-0">
-                        <span className="text-[14px] font-medium text-[#0a0a0a]">Auto-approve recommendations</span>
-                        <span className="text-[12px] font-normal text-[#4b535c]">
-                          Recommendations are auto-approved by default. Define exceptions below to flag specific
-                          recommendations for manual review.
-                        </span>
-                      </div>
-                    </label>
-                    <label className="flex items-start gap-3 p-4 rounded-[10px] border border-[#e5e7eb] bg-white cursor-pointer hover:border-[#0267ff]/40 has-[:checked]:border-[#0267ff]">
-                      <input
-                        type="radio"
-                        name="approvalMode"
-                        value="manual"
-                        checked={approvalMode === 'manual'}
-                        onChange={() => setApprovalMode('manual')}
-                        className="mt-1 size-4 shrink-0 border-[#e5e7eb] text-[#0267ff] focus:ring-[#0267ff]"
-                      />
-                      <div className="flex flex-col gap-1 min-w-0">
-                        <span className="text-[14px] font-medium text-[#0a0a0a]">
-                          Manually review all recommendations before submission
-                        </span>
-                        <span className="text-[12px] font-normal text-[#4b535c]">
-                          All recommendations will be flagged for manual review before submission. No exceptions
-                          needed.
-                        </span>
-                      </div>
-                    </label>
-                  </div>
-                </section>
-
-                <div
-                  className={approvalMode === 'auto' ? 'flex flex-col gap-4' : 'hidden'}
-                  aria-hidden={approvalMode !== 'auto'}
-                >
-                {exceptions.map((exc, excIdx) => {
-                  const exceptionTitleFull = getExceptionDisplayName(exc, excIdx)
-                  const exceptionTitleDisplay = truncateExceptionTitleDisplay(exceptionTitleFull)
-                  return (
-                  <div key={exc.id} className="border border-[#e5e7eb] rounded-[4px] bg-white overflow-visible">
-                    <div className="flex items-center min-w-0">
-                      <button
-                        type="button"
-                        onClick={() => toggleExceptionAccordion(exc.id)}
-                        className="flex-1 flex items-center justify-between gap-2 min-w-0 px-4 py-3 text-left hover:bg-[#f8f8f8] transition-colors"
-                      >
-                        <span
-                          className="text-[14px] font-medium text-[#0a0a0a] truncate min-w-0 text-left"
-                          title={exceptionTitleFull}
-                        >
-                          {exceptionTitleDisplay}
-                        </span>
-                        <IconChevronDown
-                          className={`size-5 text-[#4b535c] transition-transform shrink-0 ${
-                            exc.expanded ? 'rotate-180' : ''
-                          }`}
-                        />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => removeException(exc.id)}
-                        className="h-10 w-10 flex items-center justify-center text-[#4b535c] hover:bg-[#e5e7eb] shrink-0"
-                        aria-label="Delete exception"
-                      >
-                        <IconClose className="size-4" />
-                      </button>
-                    </div>
-                    {exc.expanded && (
-                      <div className="px-4 pb-4 pt-0 flex flex-col border-t border-[#e5e7eb]">
-                        <div className="flex flex-col w-full mt-4">
-                          {(exc.conditions || []).map((cond, condIdx) => {
-                            const filtersCfg = cond.applyAt ? getFiltersConfigForApplyAt(cond.applyAt) : null
-                            const filterSelectValue = filtersCfg ? getConditionFilterSelectValue(cond, filtersCfg) : ''
-                            const scopeDef =
-                              filtersCfg && cond.filterType === 'scope' && cond.scopeCategory
-                                ? [...filtersCfg.product, ...filtersCfg.geographic].find((f) => f.id === cond.scopeCategory)
-                                : null
-                            const scopeOptions = scopeDef?.options ?? []
-                            const popoverId = `${exc.id}__${cond.id}`
-                            const popoverOpen = openPopover === popoverId
-                            const searchQ = (scopePopoverSearch || '').trim().toLowerCase()
-                            const filteredScopeOptions = scopeOptions.filter(
-                              (name) => !searchQ || name.toLowerCase().includes(searchQ)
-                            )
-                            const selectedScopeVals = Array.isArray(cond.scopeValues) ? cond.scopeValues : []
-                            const allScopeSelected =
-                              scopeOptions.length > 0 &&
-                              selectedScopeVals.length === scopeOptions.length &&
-                              scopeOptions.every((o) => selectedScopeVals.includes(o))
-                            const scopeTrigger = getScopeValuesTriggerDisplay(cond.scopeValues)
-
-                            return (
-                              <div key={cond.id} className="w-full">
-                                {condIdx > 0 && (
-                                  <div className="flex justify-center py-1">
-                                    <span className="text-[11px] font-medium text-[#9ca3af] uppercase tracking-wider">
-                                      AND
-                                    </span>
-                                  </div>
-                                )}
-                                <div className="rounded-[4px] border border-[#e5e7eb] bg-[#fafafa] px-3 py-2">
-                                  <div className="flex flex-wrap items-center gap-2 min-w-0">
-                                    <span className="text-[12px] text-[#4b535c] shrink-0">Apply at</span>
-                                    <div className="relative shrink-0">
-                                      <select
-                                        value={cond.applyAt ?? ''}
-                                        onChange={(e) => {
-                                          const value = e.target.value
-                                          updateConditionField(exc.id, cond.id, 'applyAt', value)
-                                          resetConditionFilters(exc.id, cond.id)
-                                          setOpenPopover(null)
-                                        }}
-                                        className="h-9 w-[170px] py-0 pl-3 pr-9 rounded-[4px] border border-[#e9eaeb] bg-white text-[13px] text-[#0a0a0a] appearance-none"
-                                      >
-                                        <option value="" disabled>
-                                          Select level...
-                                        </option>
-                                        <option value="trip">Trip</option>
-                                        <option value="product">Product</option>
-                                        <option value="sending_location">Sending location</option>
-                                        <option value="receiving_location">Receiving location</option>
-                                      </select>
-                                      <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
-                                        <IconChevronDownSelect />
-                                      </span>
-                                    </div>
-                                    {!cond.applyAt && (
-                                      <span className="text-[13px] text-[#9ca3af] italic flex-1 min-w-[140px]">
-                                        Select a level first
-                                      </span>
-                                    )}
-                                    {cond.applyAt && filtersCfg && (
-                                      <>
-                                        <span className="text-[12px] text-[#4b535c] shrink-0">Filter</span>
-                                        <div className="relative shrink-0">
-                                          <select
-                                            value={filterSelectValue}
-                                            onChange={(e) =>
-                                              onConditionFilterSelectChange(exc.id, cond, filtersCfg, e.target.value)
-                                            }
-                                            className="h-9 w-[180px] py-0 pl-3 pr-9 rounded-[4px] border border-[#e9eaeb] bg-white text-[13px] text-[#0a0a0a] appearance-none"
-                                          >
-                                            <option value="">Select filter...</option>
-                                            <optgroup label="Product">
-                                              {filtersCfg.product.map((f) => (
-                                                <option key={f.id} value={f.id}>
-                                                  {f.label}
-                                                </option>
-                                              ))}
-                                            </optgroup>
-                                            <optgroup label="Geographic">
-                                              {filtersCfg.geographic.map((f) => (
-                                                <option key={f.id} value={f.id}>
-                                                  {f.label}
-                                                </option>
-                                              ))}
-                                            </optgroup>
-                                            <optgroup label="Advanced">
-                                              {filtersCfg.advanced.map((f) => (
-                                                <option key={f.id} value={f.id}>
-                                                  {f.label}
-                                                </option>
-                                              ))}
-                                            </optgroup>
-                                          </select>
-                                          <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
-                                            <IconChevronDownSelect />
-                                          </span>
-                                        </div>
-                                        {cond.filterType === 'scope' && cond.scopeCategory && scopeDef && (
-                                          <div className="relative flex-1 min-w-[120px] max-w-[280px]">
-                                            <button
-                                              type="button"
-                                              onClick={() =>
-                                                setOpenPopover((prev) => (prev === popoverId ? null : popoverId))
-                                              }
-                                              className={`w-full min-h-9 px-2 rounded-[4px] border border-[#e9eaeb] bg-white text-left text-[13px] hover:bg-[#f9fafb] truncate ${
-                                                scopeTrigger.isPlaceholder
-                                                  ? 'text-[#9ca3af] italic'
-                                                  : 'text-[#0a0a0a]'
-                                              }`}
-                                            >
-                                              {scopeTrigger.text}
-                                            </button>
-                                            {popoverOpen && (
-                                              <>
-                                                <div
-                                                  className="fixed inset-0 z-[19]"
-                                                  aria-hidden
-                                                  onClick={() => setOpenPopover(null)}
-                                                />
-                                                <div
-                                                  className="absolute left-0 top-full z-20 mt-1 w-[280px] rounded-[4px] border border-[#e5e7eb] bg-white p-3 shadow-lg"
-                                                  onClick={(e) => e.stopPropagation()}
-                                                  role="presentation"
-                                                >
-                                                  <div className="flex items-start justify-between gap-2 mb-2">
-                                                    <span className="text-[13px] font-semibold text-[#0a0a0a] leading-tight">
-                                                      {scopeDef.label}
-                                                    </span>
-                                                    <button
-                                                      type="button"
-                                                      onClick={() =>
-                                                        allScopeSelected
-                                                          ? updateConditionField(exc.id, cond.id, 'scopeValues', [])
-                                                          : updateConditionField(
-                                                              exc.id,
-                                                              cond.id,
-                                                              'scopeValues',
-                                                              [...scopeOptions]
-                                                            )
-                                                      }
-                                                      className="text-[12px] text-[#0267ff] hover:underline shrink-0"
-                                                    >
-                                                      {allScopeSelected ? 'Deselect all' : 'Select all'}
-                                                    </button>
-                                                  </div>
-                                                  <div className="relative mb-2">
-                                                    <IconSearch className="absolute left-2.5 top-1/2 -translate-y-1/2 size-4 text-[#9ca3af] pointer-events-none" />
-                                                    <input
-                                                      type="text"
-                                                      placeholder="Search"
-                                                      value={scopePopoverSearch}
-                                                      onChange={(e) => setScopePopoverSearch(e.target.value)}
-                                                      className="w-full h-8 pl-9 pr-2 rounded-[4px] border border-[#e5e7eb] bg-white text-[13px] text-[#0a0a0a] placeholder:text-[#9ca3af]"
-                                                    />
-                                                  </div>
-                                                  <div className="flex flex-col max-h-[200px] overflow-y-auto min-h-0 -mx-1">
-                                                    {filteredScopeOptions.map((name) => (
-                                                      <label
-                                                        key={name}
-                                                        className="flex items-center gap-2 py-1.5 px-2 rounded text-[13px] text-[#0a0a0a] cursor-pointer hover:bg-[#f3f4f6]"
-                                                      >
-                                                        <input
-                                                          type="checkbox"
-                                                          checked={selectedScopeVals.includes(name)}
-                                                          onChange={() => {
-                                                            const arr = [...selectedScopeVals]
-                                                            const next = arr.includes(name)
-                                                              ? arr.filter((v) => v !== name)
-                                                              : [...arr, name]
-                                                            updateConditionField(exc.id, cond.id, 'scopeValues', next)
-                                                          }}
-                                                          className="size-4 shrink-0 rounded border-[#d1d5db] text-[#0267ff] focus:ring-[#0267ff]"
-                                                        />
-                                                        <span className="min-w-0 break-words">{name}</span>
-                                                      </label>
-                                                    ))}
-                                                  </div>
-                                                </div>
-                                              </>
-                                            )}
-                                          </div>
-                                        )}
-                                        {cond.filterType === 'advanced' && (
-                                          <>
-                                            <div className="relative shrink-0">
-                                              <select
-                                                value={cond.advancedCondition ?? ''}
-                                                onChange={(e) =>
-                                                  updateConditionField(
-                                                    exc.id,
-                                                    cond.id,
-                                                    'advancedCondition',
-                                                    e.target.value
-                                                  )
-                                                }
-                                                className="h-9 w-[160px] py-0 pl-3 pr-9 rounded-[4px] border border-[#e9eaeb] bg-white text-[13px] text-[#0a0a0a] appearance-none"
-                                              >
-                                                <option value="">Select condition</option>
-                                                {ADVANCED_CONDITION_OPTIONS.map((o) => (
-                                                  <option key={o} value={o}>
-                                                    {o}
-                                                  </option>
-                                                ))}
-                                              </select>
-                                              <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
-                                                <IconChevronDownSelect />
-                                              </span>
-                                            </div>
-                                            <input
-                                              type="text"
-                                              value={cond.advancedValue ?? ''}
-                                              onChange={(e) =>
-                                                updateConditionField(exc.id, cond.id, 'advancedValue', e.target.value)
-                                              }
-                                              placeholder="Value"
-                                              className="h-9 w-[120px] px-3 rounded-[4px] border border-[#e9eaeb] bg-white text-[13px] text-[#0a0a0a] placeholder:text-[#9ca3af]"
-                                            />
-                                          </>
-                                        )}
-                                      </>
-                                    )}
-                                    <button
-                                      type="button"
-                                      className="shrink-0 h-8 w-8 flex items-center justify-center rounded-[4px] text-[#4b535c] hover:bg-[#e5e7eb] hover:text-[#0a0a0a] ml-auto"
-                                      aria-label="Remove condition"
-                                      onClick={() => {
-                                        removeConditionFromException(exc.id, cond.id)
-                                        setOpenPopover((prev) => (prev === popoverId ? null : prev))
-                                      }}
-                                    >
-                                      <IconClose className="size-4" />
-                                    </button>
-                                  </div>
-                                </div>
-                              </div>
-                            )
-                          })}
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => addConditionToException(exc.id)}
-                          className="self-start text-[13px] font-medium text-[#0267FF] hover:underline mt-2"
-                        >
-                          + Add condition
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => clearAllConditionsForException(exc.id)}
-                          className="self-start text-[13px] font-medium text-[#4b535c] hover:text-[#0a0a0a] hover:underline mt-1"
-                        >
-                          Clear filters
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                  )
-                })}
-                <button
-                  type="button"
-                  onClick={addException}
-                  className="self-start text-[13px] font-medium text-[#0267FF] hover:underline"
-                >
-                  + Add exception
-                </button>
-                </div>
-              </div>
-            )}
+            <button
+              type="button"
+              className="h-12 px-6 rounded-[6px] bg-[#0267FF] text-white text-[16px] font-medium hover:bg-[#0252cc]">
+              Create schedule
+            </button>
           </div>
-        </div>
-
-        <div className="flex items-center justify-end gap-3 pt-6">
-          <button
-            type="button"
-            onClick={() => setIsCreateSchedulePage(false)}
-            className="h-12 px-6 rounded-[6px] text-[16px] font-medium text-[#0a0a0a] hover:bg-[#f3f4f6]">
-            Cancel
-          </button>
-          <button
-            type="button"
-            onClick={() => setIsCreateSchedulePage(false)}
-            className="h-12 px-6 rounded-[6px] bg-[#0267FF] text-white text-[16px] font-medium hover:bg-[#0252cc]">
-            Create schedule
-          </button>
-        </div>
+        )}
       </div>
     )
   }
