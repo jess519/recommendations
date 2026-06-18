@@ -937,8 +937,28 @@ const SUBMISSION_TIME_OPTIONS = Array.from({ length: 48 }, (_, i) => {
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
 })
 
-const WEEKDAY_PICKER_LETTERS = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
-const WEEKDAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+const SUBMISSION_DAYS = [
+  { key: 'sunday', letter: 'S' },
+  { key: 'monday', letter: 'M' },
+  { key: 'tuesday', letter: 'T' },
+  { key: 'wednesday', letter: 'W' },
+  { key: 'thursday', letter: 'T' },
+  { key: 'friday', letter: 'F' },
+  { key: 'saturday', letter: 'S' },
+]
+
+function formatRepeatUnitLabel(unit, count) {
+  if (count === 1) return unit
+  if (unit === 'day') return 'days'
+  if (unit === 'week') return 'weeks'
+  if (unit === 'month') return 'months'
+  return unit
+}
+
+function capitalizeDay(day) {
+  if (!day) return ''
+  return day.charAt(0).toUpperCase() + day.slice(1)
+}
 
 function createDefaultScheduleBlock(id) {
   return {
@@ -947,68 +967,46 @@ function createDefaultScheduleBlock(id) {
     movementTypes: [],
     repeatEvery: 1,
     repeatEveryUnit: 'week',
-    submissionDayOfWeek: 3,
-    submissionDayOfMonth: 1,
-    submissionDateYear: '',
+    submissionDay: 'wednesday',
     submissionDate: '',
     submissionTime: '09:00',
-    workingDaysOnly: true,
+    skipEvery: '',
+    skipEveryUnit: 'weeks',
+    notifyUsers: '',
+    approvalMode: 'auto-approve',
+    exceptions: [],
   }
 }
 
 function buildSchedulingSummary(block) {
-  const {
-    repeatEvery,
-    repeatEveryUnit,
-    submissionDayOfWeek,
-    submissionDayOfMonth,
-    submissionDateYear,
-    submissionDate,
-    submissionTime,
-  } = block
-  const unit =
-    repeatEveryUnit === 'week'
-      ? 'weeks'
-      : repeatEveryUnit === 'month'
-        ? 'months'
-        : repeatEveryUnit === 'year'
-          ? 'years'
-          : 'days'
-  const dayName = WEEKDAY_NAMES[submissionDayOfWeek]
-  const timeStr = ` at ${submissionTime}`
-  let body = ''
-
-  if (repeatEveryUnit === 'week') {
-    body = `${repeatEvery} ${repeatEvery === 1 ? unit.slice(0, -1) : unit} on ${dayName}`
-  } else if (repeatEveryUnit === 'month') {
-    body = `${repeatEvery} ${repeatEvery === 1 ? 'month' : unit} on day ${submissionDayOfMonth}`
-  } else if (repeatEveryUnit === 'year') {
-    body = submissionDateYear
-      ? `${repeatEvery} ${repeatEvery === 1 ? 'year' : unit} on ${submissionDateYear}`
-      : `${repeatEvery} ${repeatEvery === 1 ? 'year' : unit}`
-  } else {
-    body = `${repeatEvery} ${repeatEvery === 1 ? 'day' : unit}`
-  }
-
-  const formatSubmissionDate = (iso) => {
-    if (!iso) return ''
-    const p = iso.split('-')
-    if (p.length !== 3) return iso
-    const [y, m, d] = p
-    return `${d.padStart(2, '0')}/${m.padStart(2, '0')}/${y}`
-  }
-
-  const dateFmt = formatSubmissionDate(submissionDate)
-  if (submissionDate && dateFmt) {
-    return `${body}, next submission ${dateFmt} at ${submissionTime}`
-  }
-  if (repeatEveryUnit === 'year' && !submissionDateYear) {
-    return body
-  }
-  return `${body}${timeStr}`
+  const unitLabel = formatRepeatUnitLabel(block.repeatEveryUnit, block.repeatEvery)
+  return `${block.repeatEvery} ${unitLabel} on ${capitalizeDay(block.submissionDay)} at ${block.submissionTime}`
 }
 
 function ScheduleDetailsBlock({ block, onUpdate }) {
+  const exceptions = block.exceptions ?? []
+
+  const addException = () => {
+    onUpdate({
+      exceptions: [
+        ...exceptions,
+        { id: `exc-${Date.now()}-${exceptions.length}`, column: '', condition: '', value: '' },
+      ],
+    })
+  }
+
+  const updateException = (rowId, updates) => {
+    onUpdate({
+      exceptions: exceptions.map((row) => (row.id === rowId ? { ...row, ...updates } : row)),
+    })
+  }
+
+  const removeException = (rowId) => {
+    onUpdate({ exceptions: exceptions.filter((row) => row.id !== rowId) })
+  }
+
+  const clearAllExceptions = () => onUpdate({ exceptions: [] })
+
   return (
     <div className="rounded-[4px] border border-[#e5e7eb] bg-[#fafafa] p-4">
       <div className="flex flex-col gap-4">
@@ -1034,8 +1032,8 @@ function ScheduleDetailsBlock({ block, onUpdate }) {
           showSelectedLabels={true}
         />
 
-        <section className="flex flex-col gap-4">
-          <p className="text-[14px] font-medium text-[#0a0a0a]">Scheduling dates</p>
+        <section className="mt-4 flex flex-col gap-4">
+          <p className="mb-3 text-[14px] font-medium text-[#0a0a0a]">Scheduling dates</p>
 
           <div className="flex flex-col gap-1.5">
             <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Repeat every</label>
@@ -1074,7 +1072,6 @@ function ScheduleDetailsBlock({ block, onUpdate }) {
                   <option value="day">day</option>
                   <option value="week">week</option>
                   <option value="month">month</option>
-                  <option value="year">year</option>
                 </select>
                 <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[#4b535c]">
                   <IconChevronDownSelect />
@@ -1083,108 +1080,285 @@ function ScheduleDetailsBlock({ block, onUpdate }) {
             </div>
           </div>
 
-          {block.repeatEveryUnit === 'day' && (
-            <div className="flex items-center justify-between gap-4">
-              <div className="flex flex-col gap-1">
-                <span className="text-[14px] text-[#0a0a0a]">Working days only</span>
-                <span className="text-[12px] text-[#4b535c]">Schedule will only run on Monday–Friday</span>
-              </div>
-              <button
-                type="button"
-                role="switch"
-                aria-checked={block.workingDaysOnly}
-                onClick={() => onUpdate({ workingDaysOnly: !block.workingDaysOnly })}
-                className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${
-                  block.workingDaysOnly ? 'bg-[#0267ff]' : 'bg-[#e5e7eb]'
-                }`}
-              >
-                <span
-                  className={`absolute left-1 top-1 size-4 rounded-full bg-white transition-transform ${
-                    block.workingDaysOnly ? 'translate-x-5' : 'translate-x-0'
-                  }`}
-                />
-              </button>
-            </div>
-          )}
-
-          {block.repeatEveryUnit === 'week' && (
-            <div className="flex flex-col gap-1.5">
-              <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Submission day</label>
-              <div className="flex gap-4">
-                {WEEKDAY_PICKER_LETTERS.map((letter, i) => (
-                  <button
-                    key={i}
-                    type="button"
-                    onClick={() => onUpdate({ submissionDayOfWeek: i })}
-                    className={`flex size-10 shrink-0 items-center justify-center rounded-full text-[14px] font-medium transition-colors ${
-                      block.submissionDayOfWeek === i
-                        ? 'bg-[#0267FF] text-white'
-                        : 'bg-[#F8F8F8] text-[#4b535c] hover:bg-[#eee]'
-                    }`}
-                  >
-                    {letter}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {block.repeatEveryUnit === 'year' && (
-            <div className="flex flex-col gap-1.5">
-              <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Submission day</label>
-              <input
-                type="text"
-                placeholder="e.g. Jun 10, 2026"
-                value={block.submissionDateYear}
-                onChange={(e) => onUpdate({ submissionDateYear: e.target.value })}
-                className="h-12 max-w-[200px] rounded-[4px] border border-[#EAEAEA] bg-white px-4 text-[14px] text-[#0a0a0a] placeholder:text-[#9CA1AE]"
-              />
-            </div>
-          )}
-
           <div className="flex flex-col gap-1.5">
-            <div className="flex items-start gap-4">
-              {block.repeatEveryUnit !== 'day' && (
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Submission date</label>
-                  <input
-                    type="date"
-                    value={block.submissionDate}
-                    onChange={(e) => onUpdate({ submissionDate: e.target.value })}
-                    className="h-12 w-[200px] rounded-[4px] border border-[#EAEAEA] bg-white px-4 text-[14px] text-[#0a0a0a]"
-                  />
-                </div>
-              )}
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">
-                  {block.repeatEveryUnit === 'day' ? 'Daily submission time' : 'Submission time'}
-                </label>
-                <div className="relative w-[200px]">
-                  <select
-                    value={block.submissionTime}
-                    onChange={(e) => onUpdate({ submissionTime: e.target.value })}
-                    className="h-12 w-full appearance-none rounded-[4px] border border-[#E9EAEB] bg-white px-4 py-3 pr-10 text-[14px] text-[#0a0a0a]"
-                  >
-                    {SUBMISSION_TIME_OPTIONS.map((label) => (
-                      <option key={label} value={label}>
-                        {label}
-                      </option>
-                    ))}
-                  </select>
-                  <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[#4b535c]">
-                    <IconChevronDownSelect />
-                  </span>
-                </div>
-              </div>
+            <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Submission day</label>
+            <div className="flex gap-4">
+              {SUBMISSION_DAYS.map(({ key, letter }) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => onUpdate({ submissionDay: key })}
+                  className={`flex size-10 shrink-0 items-center justify-center rounded-full text-[14px] font-medium transition-colors ${
+                    block.submissionDay === key
+                      ? 'bg-[#1d4ed8] text-white'
+                      : 'bg-[#F8F8F8] text-[#4b535c] hover:bg-[#eee]'
+                  }`}
+                >
+                  {letter}
+                </button>
+              ))}
             </div>
-            <p className="text-[12px] text-[#4b535c]">
-              The deadline by which all approved recommendations will be submitted
-            </p>
           </div>
 
-          <p className="text-[14px] italic text-[#4b535c]">
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Submission date</label>
+            <input
+              type="date"
+              value={block.submissionDate}
+              onChange={(e) => onUpdate({ submissionDate: e.target.value })}
+              className="h-12 w-[200px] rounded-[4px] border border-[#EAEAEA] bg-white px-4 text-[14px] text-[#0a0a0a]"
+            />
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Submission time</label>
+            <div className="relative w-[200px]">
+              <select
+                value={block.submissionTime}
+                onChange={(e) => onUpdate({ submissionTime: e.target.value })}
+                className="h-12 w-full appearance-none rounded-[4px] border border-[#E9EAEB] bg-white px-4 py-3 pr-10 text-[14px] text-[#0a0a0a]"
+              >
+                {SUBMISSION_TIME_OPTIONS.map((label) => (
+                  <option key={label} value={label}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+              <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[#4b535c]">
+                <IconChevronDownSelect />
+              </span>
+            </div>
+          </div>
+
+          <p className="text-[12px] italic text-[#4b535c]">
+            The deadline by which all approved recommendations will be submitted.
+          </p>
+
+          <p className="text-[12px] italic text-[#4b535c]">
             New scheduled recommendations available every {buildSchedulingSummary(block)}
           </p>
+        </section>
+
+        <section className="mt-6 border-t border-[#e5e7eb] pt-6">
+          <p className="mb-3 text-[14px] font-medium text-[#0a0a0a]">Skip occurrences</p>
+          <p className="mb-3 text-[12px] text-[#4b535c]">
+            Use this if you want to temporarily run a different schedule — for example, to combine movement types or
+            separate replenishment and rebalancing into one batch.
+          </p>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Skip every</label>
+            <div className="flex items-center gap-2">
+              <div className="flex h-12 items-center overflow-hidden rounded-[4px] border border-[#EAEAEA] bg-white">
+                <input
+                  type="number"
+                  min={2}
+                  value={block.skipEvery}
+                  onChange={(e) => {
+                    const v = e.target.value
+                    if (v === '') {
+                      onUpdate({ skipEvery: '' })
+                      return
+                    }
+                    onUpdate({ skipEvery: String(Math.max(2, parseInt(v, 10) || 2)) })
+                  }}
+                  placeholder=""
+                  className="h-12 w-[80px] border-none px-4 py-3 text-center text-[14px] text-[#0a0a0a] placeholder:text-[#9ca3af] [appearance:textfield] focus:outline-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                />
+                <div className="flex shrink-0 flex-col border-l border-[#EAEAEA]">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      onUpdate({
+                        skipEvery: String(Math.max(2, (block.skipEvery === '' ? 1 : parseInt(block.skipEvery, 10) || 1) + 1)),
+                      })
+                    }
+                    className="flex h-6 w-7 items-center justify-center border-b border-[#EAEAEA] text-[#4b535c] hover:bg-[#f8f8f8]"
+                  >
+                    +
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (block.skipEvery === '') return
+                      onUpdate({
+                        skipEvery: String(Math.max(2, (parseInt(block.skipEvery, 10) || 2) - 1)),
+                      })
+                    }}
+                    className="flex h-6 w-7 items-center justify-center text-[#4b535c] hover:bg-[#f8f8f8]"
+                  >
+                    −
+                  </button>
+                </div>
+              </div>
+              <div className="relative">
+                <select
+                  value={block.skipEveryUnit}
+                  onChange={(e) => onUpdate({ skipEveryUnit: e.target.value })}
+                  className="h-12 w-[120px] appearance-none rounded-[4px] border border-[#EAEAEA] bg-white px-4 py-3 pr-10 text-[14px] text-[#0a0a0a]"
+                >
+                  <option value="weeks">weeks</option>
+                  <option value="days">days</option>
+                </select>
+                <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[#4b535c]">
+                  <IconChevronDownSelect />
+                </span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="mt-6 border-t border-[#e5e7eb] pt-6">
+          <p className="mb-3 text-[14px] font-medium text-[#0a0a0a]">Notify users</p>
+          <input
+            type="text"
+            value={block.notifyUsers}
+            onChange={(e) => onUpdate({ notifyUsers: e.target.value })}
+            placeholder="Enter user emails (comma-separated)"
+            className="h-12 w-full rounded-[4px] border border-[#EAEAEA] bg-white px-4 text-[14px] text-[#0a0a0a] placeholder:text-[#9ca3af]"
+          />
+        </section>
+
+        <section className="mt-6 border-t border-[#e5e7eb] pt-6">
+          <p className="mb-3 text-[14px] font-medium text-[#0a0a0a]">Approval & submission</p>
+
+          <div className="flex flex-col gap-3">
+            <label
+              className={`flex cursor-pointer items-start gap-3 rounded-[10px] border bg-white p-4 hover:border-[#1d4ed8]/40 has-[:checked]:border-[#1d4ed8] ${
+                block.approvalMode === 'auto-approve' ? 'border-[#1d4ed8]' : 'border-[#e5e7eb]'
+              }`}
+            >
+              <input
+                type="radio"
+                name={`approvalMode-${block.id}`}
+                value="auto-approve"
+                checked={block.approvalMode === 'auto-approve'}
+                onChange={() => onUpdate({ approvalMode: 'auto-approve' })}
+                className="mt-1 size-4 shrink-0 border-[#e5e7eb] text-[#1d4ed8] focus:ring-[#1d4ed8]"
+              />
+              <div className="flex min-w-0 flex-col gap-1">
+                <span className="text-[14px] font-medium text-[#0a0a0a]">Auto-approve recommendations</span>
+                <span className="text-[12px] font-normal text-[#4b535c]">
+                  Recommendations are auto-approved by default. Define exceptions below to flag specific recommendations
+                  for manual review.
+                </span>
+              </div>
+            </label>
+
+            <label
+              className={`flex cursor-pointer items-start gap-3 rounded-[10px] border bg-white p-4 hover:border-[#1d4ed8]/40 has-[:checked]:border-[#1d4ed8] ${
+                block.approvalMode === 'manual-review' ? 'border-[#1d4ed8]' : 'border-[#e5e7eb]'
+              }`}
+            >
+              <input
+                type="radio"
+                name={`approvalMode-${block.id}`}
+                value="manual-review"
+                checked={block.approvalMode === 'manual-review'}
+                onChange={() => onUpdate({ approvalMode: 'manual-review' })}
+                className="mt-1 size-4 shrink-0 border-[#e5e7eb] text-[#1d4ed8] focus:ring-[#1d4ed8]"
+              />
+              <div className="flex min-w-0 flex-col gap-1">
+                <span className="text-[14px] font-medium text-[#0a0a0a]">Manual review required</span>
+                <span className="text-[12px] font-normal text-[#4b535c]">
+                  No recommendations auto-submit. Every recommendation requires user review before the submission
+                  deadline.
+                </span>
+              </div>
+            </label>
+          </div>
+
+          {block.approvalMode === 'auto-approve' && (
+            <div className="mt-4">
+              <h4 className="mb-2 text-[13px] font-medium uppercase tracking-[0.04em] text-[#0a0a0a]">Exceptions</h4>
+              <p className="mb-3 text-[12px] text-[#4b535c]">
+                Recommendations matching these conditions will be flagged for manual review instead of auto-approved.
+              </p>
+
+              {exceptions.length > 0 && (
+                <div className="mb-3 flex flex-col gap-3">
+                  {exceptions.map((row, rowIdx) => (
+                    <Fragment key={row.id}>
+                      {rowIdx > 0 && (
+                        <div className="my-1 flex justify-center">
+                          <span className="text-[12px] text-[#9ca3af]">AND</span>
+                        </div>
+                      )}
+                      <div className="flex items-start gap-2">
+                        <div className="relative min-w-0 shrink-0">
+                          <select
+                            value={row.column}
+                            onChange={(e) => updateException(row.id, { column: e.target.value })}
+                            className="h-9 w-[180px] appearance-none rounded-[4px] border border-[#e9eaeb] bg-white py-0 pl-3 pr-9 text-[13px] text-[#0a0a0a]"
+                          >
+                            <option value="">Select column</option>
+                            {EXC_ADV_PRODUCT.map((col) => (
+                              <option key={col.id} value={col.label}>
+                                {col.label}
+                              </option>
+                            ))}
+                          </select>
+                          <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[#4b535c]">
+                            <IconChevronDownSelect />
+                          </span>
+                        </div>
+                        <div className="relative min-w-0 shrink-0">
+                          <select
+                            value={row.condition}
+                            onChange={(e) => updateException(row.id, { condition: e.target.value })}
+                            className="h-9 w-[160px] appearance-none rounded-[4px] border border-[#e9eaeb] bg-white py-0 pl-3 pr-9 text-[13px] text-[#0a0a0a]"
+                          >
+                            <option value="">Select condition</option>
+                            {ADVANCED_CONDITION_OPTIONS.map((option) => (
+                              <option key={option} value={option}>
+                                {option}
+                              </option>
+                            ))}
+                          </select>
+                          <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[#4b535c]">
+                            <IconChevronDownSelect />
+                          </span>
+                        </div>
+                        <input
+                          type="text"
+                          value={row.value}
+                          onChange={(e) => updateException(row.id, { value: e.target.value })}
+                          placeholder="Enter value"
+                          className="h-9 min-w-0 flex-1 rounded-[4px] border border-[#e9eaeb] bg-white px-3 text-[13px] text-[#0a0a0a] placeholder:text-[#9ca3af]"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeException(row.id)}
+                          aria-label="Remove exception"
+                          className="mt-1.5 shrink-0 text-[#4b535c] hover:text-[#0a0a0a]"
+                        >
+                          <IconClose className="size-4" />
+                        </button>
+                      </div>
+                    </Fragment>
+                  ))}
+                </div>
+              )}
+
+              <div className="flex flex-row gap-4">
+                <button
+                  type="button"
+                  onClick={addException}
+                  className="text-[14px] font-medium text-[#1d4ed8] hover:underline"
+                >
+                  + Add exception
+                </button>
+                {exceptions.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={clearAllExceptions}
+                    className="text-[14px] font-medium text-[#dc2626] hover:underline"
+                  >
+                    Clear all
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
         </section>
       </div>
     </div>
