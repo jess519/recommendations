@@ -983,8 +983,9 @@ function buildSchedulingSummary(block) {
   return `${block.repeatEvery} ${unitLabel} on ${capitalizeDay(block.submissionDay)} at ${block.submissionTime}`
 }
 
-function ScheduleDetailsBlock({ block, onUpdate }) {
+function ScheduleDetailsBlock({ block, index, isExpanded, onToggleExpand, onRemove, canRemove, onUpdate }) {
   const exceptions = block.exceptions ?? []
+  const headerTitle = block.name.trim() ? block.name : `Untitled schedule ${index + 1}`
 
   const addException = () => {
     onUpdate({
@@ -1008,8 +1009,42 @@ function ScheduleDetailsBlock({ block, onUpdate }) {
   const clearAllExceptions = () => onUpdate({ exceptions: [] })
 
   return (
-    <div className="rounded-[4px] border border-[#e5e7eb] bg-[#fafafa] p-4">
-      <div className="flex flex-col gap-4">
+    <div className="rounded-[4px] border border-[#e5e7eb] bg-[#fafafa]">
+      <div
+        className={`flex h-12 items-center justify-between px-4 ${
+          isExpanded ? 'border-b border-[#e5e7eb]' : ''
+        }`}
+      >
+        <span className="truncate text-[15px] font-medium text-[#0a0a0a]">{headerTitle}</span>
+        <div className="flex shrink-0 items-center gap-2">
+          {canRemove && (
+            <button
+              type="button"
+              onClick={() => onRemove(block.id)}
+              aria-label="Remove schedule block"
+              className="flex h-7 w-7 items-center justify-center text-[#4b535c] hover:text-[#0a0a0a]"
+            >
+              <IconClose className="size-4" />
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={onToggleExpand}
+            aria-label={isExpanded ? 'Collapse schedule block' : 'Expand schedule block'}
+            aria-expanded={isExpanded}
+            className="flex h-7 w-7 items-center justify-center text-[#4b535c] hover:text-[#0a0a0a]"
+          >
+            <IconChevronDown
+              className={`size-4 shrink-0 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+              aria-hidden
+            />
+          </button>
+        </div>
+      </div>
+
+      {isExpanded && (
+        <div className="p-4">
+          <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-1.5">
           <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Schedule name</label>
           <input
@@ -1360,7 +1395,9 @@ function ScheduleDetailsBlock({ block, onUpdate }) {
             </div>
           )}
         </section>
-      </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -1465,8 +1502,26 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
   const [currentStep, setCurrentStep] = useState(1)
   const [proposalName, setProposalName] = useState('')
   const [scheduleBlocks, setScheduleBlocks] = useState([createDefaultScheduleBlock('block-1')])
+  const [expandedBlockId, setExpandedBlockId] = useState('block-1')
   const updateScheduleBlock = (blockId, updates) => {
     setScheduleBlocks((prev) => prev.map((b) => (b.id === blockId ? { ...b, ...updates } : b)))
+  }
+  const addScheduleBlock = () => {
+    if (scheduleBlocks.length >= 2) return
+    const newBlock = createDefaultScheduleBlock(`block-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`)
+    setScheduleBlocks((prev) => [...prev, newBlock])
+    setExpandedBlockId(newBlock.id)
+  }
+  const removeScheduleBlock = (blockId) => {
+    setScheduleBlocks((prev) => {
+      if (prev.length <= 1) return prev
+      const next = prev.filter((b) => b.id !== blockId)
+      setExpandedBlockId((prevExpanded) => {
+        if (prevExpanded !== blockId) return prevExpanded
+        return next[0]?.id ?? null
+      })
+      return next
+    })
   }
   const reviewStatusFilterOptions = [
     { id: 'in review', label: 'In review' },
@@ -2039,10 +2094,33 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
         )}
 
         {currentStep === 3 && (
-          <ScheduleDetailsBlock
-            block={scheduleBlocks[0]}
-            onUpdate={(updates) => updateScheduleBlock(scheduleBlocks[0].id, updates)}
-          />
+          <div className="max-w-[800px]">
+            <div className="flex flex-col gap-3">
+              {scheduleBlocks.map((block, index) => (
+                <ScheduleDetailsBlock
+                  key={block.id}
+                  block={block}
+                  index={index}
+                  isExpanded={block.id === expandedBlockId}
+                  onToggleExpand={() =>
+                    setExpandedBlockId((prev) => (prev === block.id ? null : block.id))
+                  }
+                  onRemove={removeScheduleBlock}
+                  canRemove={scheduleBlocks.length > 1}
+                  onUpdate={(updates) => updateScheduleBlock(block.id, updates)}
+                />
+              ))}
+            </div>
+            {scheduleBlocks.length < 2 && (
+              <button
+                type="button"
+                onClick={addScheduleBlock}
+                className="mt-4 flex h-12 w-full items-center justify-center rounded-[4px] border border-dashed border-[#1d4ed8] text-[14px] font-medium text-[#1d4ed8] hover:bg-[#1d4ed8]/5"
+              >
+                + schedule details & rules
+              </button>
+            )}
+          </div>
         )}
 
         {currentStep === 4 && (
