@@ -2039,71 +2039,68 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
           )}
         </div>
 
-        {currentStep === 1 && <div className="min-h-[200px]" />}
+        {currentStep === 1 && (
+          <div className="max-w-[800px]">
+            <div className="mb-4">
+              <CreateScheduleScopeSingleSelect
+                label="Mode of transport"
+                helperText="This schedule will apply the transport constraints set in your Network and Trip capacity parameters."
+                placeholder="Select mode of transport"
+                options={['Road', 'Rail', 'Air', 'Foot']}
+                value={modeOfTransport}
+                onChange={setModeOfTransport}
+              />
+            </div>
+            <div className="mb-4">
+              <CreateScheduleScopeMultiSelect
+                label="Confidence level"
+                helperText="Select which Autone confidence recommendations you see in the scheduled proposal"
+                placeholder="Select confidence levels"
+                options={['Very High', 'High', 'Medium', 'Low', 'Very Low']}
+                includeValues={confidenceLevels}
+                onIncludeChange={setConfidenceLevels}
+                excludeValues={[]}
+                onExcludeChange={() => {}}
+                hideModeToggle
+                showSelectAll
+                showSelectedLabels
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Target coverage</label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  placeholder="0"
+                  value={targetCoverageValue}
+                  onChange={(e) => setTargetCoverageValue(e.target.value)}
+                  className="h-14 w-32 shrink-0 rounded-[4px] border border-[#EAEAEA] bg-white px-4 text-[16px] text-[#0a0a0a] placeholder:text-[#9ca3af] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                />
+                <div className="relative shrink-0">
+                  <select
+                    value={targetCoverageUnit}
+                    onChange={(e) => setTargetCoverageUnit(e.target.value)}
+                    className="h-14 w-32 py-0 pl-4 pr-10 rounded-[4px] border border-[#EAEAEA] bg-white text-[16px] text-[#0a0a0a] appearance-none"
+                  >
+                    <option value="Weeks">Weeks</option>
+                    <option value="Days">Days</option>
+                  </select>
+                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
+                    <IconChevronDownSelect />
+                  </span>
+                </div>
+              </div>
+              <p className="mt-1.5 text-[12px] leading-[16px] text-[#4b535c]">
+                Instead of covering you until the next scheduled proposal, input how many weeks of stock you want your
+                locations to hold.
+              </p>
+            </div>
+          </div>
+        )}
 
         {currentStep === 2 && (
           <div className="border border-[#EAEAEA] rounded-[4px] bg-white overflow-hidden">
             <div className="px-5 pb-6 pt-2 flex flex-col gap-6">
-                <section className="mb-6">
-                  <h4 className="mb-3 text-[13px] font-medium uppercase tracking-[0.04em] text-[#0a0a0a]">
-                    Schedule configuration
-                  </h4>
-                  <div className="mb-4">
-                    <CreateScheduleScopeSingleSelect
-                      label="Mode of transport"
-                      helperText="This schedule will apply the transport constraints set in your Network and Trip capacity parameters."
-                      placeholder="Select mode of transport"
-                      options={['Road', 'Rail', 'Air', 'Foot']}
-                      value={modeOfTransport}
-                      onChange={setModeOfTransport}
-                    />
-                  </div>
-                  <div className="mb-4">
-                    <CreateScheduleScopeMultiSelect
-                      label="Confidence level"
-                      helperText="Select which Autone confidence recommendations you see in the scheduled proposal"
-                      placeholder="Select confidence levels"
-                      options={['Very High', 'High', 'Medium', 'Low', 'Very Low']}
-                      includeValues={confidenceLevels}
-                      onIncludeChange={setConfidenceLevels}
-                      excludeValues={[]}
-                      onExcludeChange={() => {}}
-                      hideModeToggle
-                      showSelectAll
-                      showSelectedLabels
-                    />
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Target coverage</label>
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="number"
-                        placeholder="0"
-                        value={targetCoverageValue}
-                        onChange={(e) => setTargetCoverageValue(e.target.value)}
-                        className="h-14 w-32 shrink-0 rounded-[4px] border border-[#EAEAEA] bg-white px-4 text-[16px] text-[#0a0a0a] placeholder:text-[#9ca3af] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                      />
-                      <div className="relative shrink-0">
-                        <select
-                          value={targetCoverageUnit}
-                          onChange={(e) => setTargetCoverageUnit(e.target.value)}
-                          className="h-14 w-32 py-0 pl-4 pr-10 rounded-[4px] border border-[#EAEAEA] bg-white text-[16px] text-[#0a0a0a] appearance-none"
-                        >
-                          <option value="Weeks">Weeks</option>
-                          <option value="Days">Days</option>
-                        </select>
-                        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
-                          <IconChevronDownSelect />
-                        </span>
-                      </div>
-                    </div>
-                    <p className="mt-1.5 text-[12px] leading-[16px] text-[#4b535c]">
-                      Instead of covering you until the next scheduled proposal, input how many weeks of stock you want
-                      your locations to hold.
-                    </p>
-                  </div>
-                </section>
-                <div className="border-t border-[#e5e7eb]" />
                 <section className="flex flex-col gap-3">
                   <h3 className="text-[14px] font-medium text-[#0a0a0a]">
                     Which products and locations does this schedule cover?
