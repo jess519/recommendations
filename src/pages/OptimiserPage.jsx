@@ -278,6 +278,7 @@ function CreateScheduleScopeMultiSelect({
   hideHeader = false,
   hideModeToggle = false,
   showSelectAll = false,
+  showSelectedLabels = false,
 }) {
   const [open, setOpen] = useState(false)
 
@@ -353,10 +354,29 @@ function CreateScheduleScopeMultiSelect({
                 setOpen((o) => !o)
               }
             }}
-            className="flex h-14 min-h-14 max-h-14 w-full shrink-0 cursor-pointer items-center gap-2 overflow-hidden rounded-[4px] border border-[#EAEAEA] bg-white pl-4 pr-10 text-left text-[16px] text-[#0a0a0a] min-w-0"
+            className={`flex h-14 min-h-14 max-h-14 w-full shrink-0 cursor-pointer items-center gap-2 overflow-hidden rounded-[4px] border border-[#EAEAEA] bg-white pl-4 text-left text-[16px] text-[#0a0a0a] min-w-0 ${
+              showSelectedLabels && includeValues.length >= 1 ? 'pr-16' : 'pr-10'
+            }`}
           >
           {!hasSelections ? (
             <span className="min-w-0 flex-1 truncate text-left text-[#4b535c]">{placeholder}</span>
+          ) : showSelectedLabels && includeValues.length >= 1 ? (
+            <>
+              <span className="min-w-0 flex-1 truncate text-left text-[14px] text-[#0a0a0a]">
+                {includeValues.join(', ')}
+              </span>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onIncludeChange([])
+                }}
+                aria-label="Clear included selections"
+                className="shrink-0 flex items-center justify-center text-[#1d4ed8] hover:text-[#1e40af] p-0.5"
+              >
+                <IconClose className="size-3.5" />
+              </button>
+            </>
           ) : (
             <div className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden">
               {includeValues.length >= 1 && (
@@ -1988,6 +2008,7 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                     onExcludeChange={() => {}}
                     hideModeToggle
                     showSelectAll
+                    showSelectedLabels
                   />
                 </section>
                 <div className="border-t border-[#e5e7eb]" />
