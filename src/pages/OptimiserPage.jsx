@@ -1431,6 +1431,8 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
   const [advancedRows, setAdvancedRows] = useState([])
   const [modeOfTransport, setModeOfTransport] = useState('')
   const [confidenceLevels, setConfidenceLevels] = useState(['Very High', 'High', 'Medium', 'Low', 'Very Low'])
+  const [targetCoverageValue, setTargetCoverageValue] = useState('')
+  const [targetCoverageUnit, setTargetCoverageUnit] = useState('Weeks')
   const [sourceLocationOption, setSourceLocationOption] = useState('central')
   const [selectedMovementTypes, setSelectedMovementTypes] = useState([])
   const [movementTypeDropdownOpen, setMovementTypeDropdownOpen] = useState(false)
@@ -1997,19 +1999,50 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                       onChange={setModeOfTransport}
                     />
                   </div>
-                  <CreateScheduleScopeMultiSelect
-                    label="Confidence level"
-                    helperText="Select which Autone confidence recommendations you see in the scheduled proposal"
-                    placeholder="Select confidence levels"
-                    options={['Very High', 'High', 'Medium', 'Low', 'Very Low']}
-                    includeValues={confidenceLevels}
-                    onIncludeChange={setConfidenceLevels}
-                    excludeValues={[]}
-                    onExcludeChange={() => {}}
-                    hideModeToggle
-                    showSelectAll
-                    showSelectedLabels
-                  />
+                  <div className="mb-4">
+                    <CreateScheduleScopeMultiSelect
+                      label="Confidence level"
+                      helperText="Select which Autone confidence recommendations you see in the scheduled proposal"
+                      placeholder="Select confidence levels"
+                      options={['Very High', 'High', 'Medium', 'Low', 'Very Low']}
+                      includeValues={confidenceLevels}
+                      onIncludeChange={setConfidenceLevels}
+                      excludeValues={[]}
+                      onExcludeChange={() => {}}
+                      hideModeToggle
+                      showSelectAll
+                      showSelectedLabels
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Target coverage</label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="number"
+                        placeholder="0"
+                        value={targetCoverageValue}
+                        onChange={(e) => setTargetCoverageValue(e.target.value)}
+                        className="h-14 w-32 shrink-0 rounded-[4px] border border-[#EAEAEA] bg-white px-4 text-[16px] text-[#0a0a0a] placeholder:text-[#9ca3af] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      />
+                      <div className="relative shrink-0">
+                        <select
+                          value={targetCoverageUnit}
+                          onChange={(e) => setTargetCoverageUnit(e.target.value)}
+                          className="h-14 w-32 py-0 pl-4 pr-10 rounded-[4px] border border-[#EAEAEA] bg-white text-[16px] text-[#0a0a0a] appearance-none"
+                        >
+                          <option value="Weeks">Weeks</option>
+                          <option value="Days">Days</option>
+                        </select>
+                        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
+                          <IconChevronDownSelect />
+                        </span>
+                      </div>
+                    </div>
+                    <p className="mt-1.5 text-[12px] leading-[16px] text-[#4b535c]">
+                      Instead of covering you until the next scheduled proposal, input how many weeks of stock you want
+                      your locations to hold.
+                    </p>
+                  </div>
                 </section>
                 <div className="border-t border-[#e5e7eb]" />
                 <section className="flex flex-col gap-3">
