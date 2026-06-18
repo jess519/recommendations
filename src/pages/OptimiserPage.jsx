@@ -1433,6 +1433,8 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
   const [confidenceLevels, setConfidenceLevels] = useState(['Very High', 'High', 'Medium', 'Low', 'Very Low'])
   const [targetCoverageValue, setTargetCoverageValue] = useState('')
   const [targetCoverageUnit, setTargetCoverageUnit] = useState('Weeks')
+  const [currentStep, setCurrentStep] = useState(1)
+  const [proposalName, setProposalName] = useState('')
   const [sourceLocationOption, setSourceLocationOption] = useState('central')
   const [selectedMovementTypes, setSelectedMovementTypes] = useState([])
   const [movementTypeDropdownOpen, setMovementTypeDropdownOpen] = useState(false)
@@ -1945,6 +1947,29 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
       onRemove: () => setAdvancedRows((prev) => prev.filter((r) => r.id !== row.id)),
     }))
 
+  const CREATE_SCHEDULE_WIZARD_STEPS = [
+    {
+      title: 'Setup',
+      subtitle: 'Configure transport, confidence levels, and target coverage for this proposal.',
+      continueLabel: 'Continue to Scope',
+    },
+    {
+      title: 'Scope',
+      subtitle: 'Define the products, locations, and network for this schedule.',
+      continueLabel: 'Continue to Schedule details',
+    },
+    {
+      title: 'Schedule details',
+      subtitle: 'Define when this proposal runs and how recommendations are approved.',
+      continueLabel: 'Continue to Review',
+    },
+    {
+      title: 'Review',
+      subtitle: 'Review your proposal before creating it.',
+      continueLabel: 'Create proposal',
+    },
+  ]
+
   if (isCreateSchedulePage) {
     return (
       <div className="flex flex-col gap-8">
@@ -1962,29 +1987,65 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
           </h1>
         </div>
 
-        <div className="flex flex-col gap-4">
+        <div className="py-3">
+          <input
+            type="text"
+            placeholder="Untitled proposal"
+            value={proposalName}
+            onChange={(e) => setProposalName(e.target.value)}
+            className="w-full max-w-[480px] border-0 border-b border-transparent bg-transparent text-[20px] font-semibold text-[#0a0a0a] placeholder:text-[#9ca3af] focus:border-[#1d4ed8] focus:outline-none"
+          />
+        </div>
+
+        <div className="mt-2 mb-4 flex w-full gap-1">
+          {[0, 1, 2, 3].map((segmentIndex) => (
+            <div
+              key={segmentIndex}
+              className={`h-1 flex-1 rounded-full ${
+                segmentIndex < currentStep ? 'bg-[#1d4ed8]' : 'bg-[#e5e7eb]'
+              }`}
+            />
+          ))}
+        </div>
+
+        <div className="mb-6 flex items-start justify-between gap-4">
+          <div className="min-w-0">
+            {currentStep === 1 ? (
+              <p className="text-[14px] font-medium text-[#0a0a0a]">Step 1 of 4</p>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setCurrentStep((step) => step - 1)}
+                className="flex cursor-pointer items-center gap-1.5 text-[14px] font-medium text-[#1d4ed8] hover:underline"
+              >
+                ← Step {currentStep} of 4
+              </button>
+            )}
+            <h2 className="mt-1 text-[22px] font-semibold text-[#0a0a0a]">
+              {CREATE_SCHEDULE_WIZARD_STEPS[currentStep - 1].title}
+            </h2>
+            <p className="mt-1 text-[14px] text-[#4b535c]">
+              {CREATE_SCHEDULE_WIZARD_STEPS[currentStep - 1].subtitle}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              if (currentStep < 4) {
+                setCurrentStep((step) => step + 1)
+              }
+            }}
+            className="shrink-0 rounded-[4px] bg-[#1d4ed8] px-5 py-2.5 text-[14px] font-medium text-white hover:bg-[#1e40af]"
+          >
+            {CREATE_SCHEDULE_WIZARD_STEPS[currentStep - 1].continueLabel}
+          </button>
+        </div>
+
+        {currentStep === 1 && <div className="min-h-[200px]" />}
+
+        {currentStep === 2 && (
           <div className="border border-[#EAEAEA] rounded-[4px] bg-white overflow-hidden">
-            <button
-              type="button"
-              onClick={() => toggleSection('scope')}
-              className="w-full flex items-center justify-between px-5 py-4 text-left cursor-pointer hover:bg-[#f9fafb] transition-colors"
-            >
-              <div className="flex flex-col gap-1">
-                <span className="text-[20px] font-medium text-[#212B36] leading-[150%]">
-                  Scope
-                </span>
-                <span className="text-[14px] font-normal text-[#4b535c]">
-                  Define the products, locations, and network for this schedule.
-                </span>
-              </div>
-              <IconChevronDown
-                className={`size-5 text-[#4b535c] transition-transform shrink-0 ${
-                  openSections.includes('scope') ? 'rotate-180' : ''
-                }`}
-              />
-            </button>
-            {openSections.includes('scope') && (
-              <div className="px-5 pb-6 pt-2 flex flex-col gap-6 border-t border-[#EAEAEA]">
+            <div className="px-5 pb-6 pt-2 flex flex-col gap-6">
                 <section className="mb-6">
                   <h4 className="mb-3 text-[13px] font-medium uppercase tracking-[0.04em] text-[#0a0a0a]">
                     Schedule configuration
@@ -2148,32 +2209,14 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                     </>
                   )}
                 </section>
-              </div>
-            )}
+            </div>
           </div>
+        )}
 
+        {currentStep === 3 && (
+          <>
           <div className="border border-[#EAEAEA] rounded-[4px] bg-white overflow-hidden">
-            <button
-              type="button"
-              onClick={() => toggleSection('details')}
-              className="w-full flex items-center justify-between px-5 py-4 text-left cursor-pointer hover:bg-[#f9fafb] transition-colors"
-            >
-              <div className="flex flex-col gap-1">
-                <span className="text-[20px] font-medium text-[#212B36] leading-[150%]">
-                  Schedule details
-                </span>
-                <span className="text-[14px] font-normal text-[#4b535c]">
-                  Configure how you want your schedule to run
-                </span>
-              </div>
-              <IconChevronDown
-                className={`size-5 text-[#4b535c] transition-transform shrink-0 ${
-                  openSections.includes('details') ? 'rotate-180' : ''
-                }`}
-              />
-            </button>
-            {openSections.includes('details') && (
-              <div className="px-5 pb-6 pt-2 flex flex-col gap-6 border-t border-[#EAEAEA]">
+            <div className="px-5 pb-6 pt-2 flex flex-col gap-6">
                 <section className="flex flex-col gap-2">
                   <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Name schedule</label>
                   <input
@@ -2640,36 +2683,11 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                     className="w-full h-14 px-4 rounded-[4px] border border-[#EAEAEA] bg-white text-[16px] text-[#0a0a0a] placeholder:text-[#9CA1AE]"
                   />
                 </section>
-              </div>
-            )}
+            </div>
           </div>
 
           <div className="border border-[#EAEAEA] rounded-[4px] bg-white overflow-visible">
-            <button
-              type="button"
-              onClick={() => toggleSection('exceptions')}
-              className="w-full flex items-center justify-between px-5 py-4 text-left cursor-pointer hover:bg-[#f9fafb] transition-colors"
-            >
-              <div className="flex flex-col gap-1">
-                <span className="text-[20px] font-medium text-[#212B36] leading-[150%]">
-                  Approval &amp; submission
-                </span>
-                {approvalMode === 'auto' && (
-                  <span className="text-[14px] font-normal text-[#4b535c]">
-                    All recommendations generated for this schedule will be auto-approved by default and submitted on
-                    the deadline. Define exception rules below to flag specific recommendations for manual review before
-                    submission.
-                  </span>
-                )}
-              </div>
-              <IconChevronDown
-                className={`size-5 text-[#4b535c] transition-transform shrink-0 ${
-                  openSections.includes('exceptions') ? 'rotate-180' : ''
-                }`}
-              />
-            </button>
-            {openSections.includes('exceptions') && (
-              <div className="px-5 pb-6 pt-2 flex flex-col gap-6 border-t border-[#EAEAEA]">
+            <div className="px-5 pb-6 pt-2 flex flex-col gap-6">
                 <section className="flex flex-col gap-3">
                   <h3 className="text-[14px] font-medium text-[#0a0a0a]">Approval mode</h3>
                   <div className="flex flex-col gap-3">
@@ -3019,9 +3037,11 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                 </button>
                 </div>
               </div>
-            )}
           </div>
-        </div>
+          </>
+        )}
+
+        {currentStep === 4 && <div className="min-h-[200px]" />}
 
         <div className="flex items-center justify-end gap-3 pt-6">
           <button
