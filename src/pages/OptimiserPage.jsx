@@ -931,6 +931,83 @@ function ScopeAdvancedFilters({ rows, setRows }) {
   )
 }
 
+const SUBMISSION_TIME_OPTIONS = Array.from({ length: 48 }, (_, i) => {
+  const h = Math.floor(i / 2)
+  const m = (i % 2) * 30
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
+})
+
+const WEEKDAY_PICKER_LETTERS = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
+const WEEKDAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+
+function createDefaultScheduleBlock(id) {
+  return {
+    id,
+    name: '',
+    movementTypes: [],
+    repeatEvery: 1,
+    repeatEveryUnit: 'week',
+    submissionDayOfWeek: 3,
+    submissionDayOfMonth: 1,
+    submissionDateYear: '',
+    submissionDate: '',
+    submissionTime: '09:00',
+    workingDaysOnly: true,
+  }
+}
+
+function buildSchedulingSummary(block) {
+  const {
+    repeatEvery,
+    repeatEveryUnit,
+    submissionDayOfWeek,
+    submissionDayOfMonth,
+    submissionDateYear,
+    submissionDate,
+    submissionTime,
+  } = block
+  const unit =
+    repeatEveryUnit === 'week'
+      ? 'weeks'
+      : repeatEveryUnit === 'month'
+        ? 'months'
+        : repeatEveryUnit === 'year'
+          ? 'years'
+          : 'days'
+  const dayName = WEEKDAY_NAMES[submissionDayOfWeek]
+  const timeStr = ` at ${submissionTime}`
+  let body = ''
+
+  if (repeatEveryUnit === 'week') {
+    body = `${repeatEvery} ${repeatEvery === 1 ? unit.slice(0, -1) : unit} on ${dayName}`
+  } else if (repeatEveryUnit === 'month') {
+    body = `${repeatEvery} ${repeatEvery === 1 ? 'month' : unit} on day ${submissionDayOfMonth}`
+  } else if (repeatEveryUnit === 'year') {
+    body = submissionDateYear
+      ? `${repeatEvery} ${repeatEvery === 1 ? 'year' : unit} on ${submissionDateYear}`
+      : `${repeatEvery} ${repeatEvery === 1 ? 'year' : unit}`
+  } else {
+    body = `${repeatEvery} ${repeatEvery === 1 ? 'day' : unit}`
+  }
+
+  const formatSubmissionDate = (iso) => {
+    if (!iso) return ''
+    const p = iso.split('-')
+    if (p.length !== 3) return iso
+    const [y, m, d] = p
+    return `${d.padStart(2, '0')}/${m.padStart(2, '0')}/${y}`
+  }
+
+  const dateFmt = formatSubmissionDate(submissionDate)
+  if (submissionDate && dateFmt) {
+    return `${body}, next submission ${dateFmt} at ${submissionTime}`
+  }
+  if (repeatEveryUnit === 'year' && !submissionDateYear) {
+    return body
+  }
+  return `${body}${timeStr}`
+}
+
 function ScheduleDetailsBlock({ block, onUpdate }) {
   return (
     <div className="rounded-[4px] border border-[#e5e7eb] bg-[#fafafa] p-4">
@@ -956,6 +1033,159 @@ function ScheduleDetailsBlock({ block, onUpdate }) {
           hideModeToggle={true}
           showSelectedLabels={true}
         />
+
+        <section className="flex flex-col gap-4">
+          <p className="text-[14px] font-medium text-[#0a0a0a]">Scheduling dates</p>
+
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Repeat every</label>
+            <div className="flex items-center gap-2">
+              <div className="flex h-12 items-center overflow-hidden rounded-[4px] border border-[#EAEAEA] bg-white">
+                <input
+                  type="number"
+                  min={1}
+                  value={block.repeatEvery}
+                  onChange={(e) => onUpdate({ repeatEvery: Math.max(1, parseInt(e.target.value, 10) || 1) })}
+                  className="h-12 w-[80px] border-none px-4 py-3 text-center text-[14px] text-[#0a0a0a] [appearance:textfield] focus:outline-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                />
+                <div className="flex shrink-0 flex-col border-l border-[#EAEAEA]">
+                  <button
+                    type="button"
+                    onClick={() => onUpdate({ repeatEvery: Math.max(1, block.repeatEvery + 1) })}
+                    className="flex h-6 w-7 items-center justify-center border-b border-[#EAEAEA] text-[#4b535c] hover:bg-[#f8f8f8]"
+                  >
+                    +
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onUpdate({ repeatEvery: Math.max(1, block.repeatEvery - 1) })}
+                    className="flex h-6 w-7 items-center justify-center text-[#4b535c] hover:bg-[#f8f8f8]"
+                  >
+                    −
+                  </button>
+                </div>
+              </div>
+              <div className="relative">
+                <select
+                  value={block.repeatEveryUnit}
+                  onChange={(e) => onUpdate({ repeatEveryUnit: e.target.value })}
+                  className="h-12 w-[120px] appearance-none rounded-[4px] border border-[#EAEAEA] bg-white px-4 py-3 pr-10 text-[14px] text-[#0a0a0a]"
+                >
+                  <option value="day">day</option>
+                  <option value="week">week</option>
+                  <option value="month">month</option>
+                  <option value="year">year</option>
+                </select>
+                <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[#4b535c]">
+                  <IconChevronDownSelect />
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {block.repeatEveryUnit === 'day' && (
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex flex-col gap-1">
+                <span className="text-[14px] text-[#0a0a0a]">Working days only</span>
+                <span className="text-[12px] text-[#4b535c]">Schedule will only run on Monday–Friday</span>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={block.workingDaysOnly}
+                onClick={() => onUpdate({ workingDaysOnly: !block.workingDaysOnly })}
+                className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${
+                  block.workingDaysOnly ? 'bg-[#0267ff]' : 'bg-[#e5e7eb]'
+                }`}
+              >
+                <span
+                  className={`absolute left-1 top-1 size-4 rounded-full bg-white transition-transform ${
+                    block.workingDaysOnly ? 'translate-x-5' : 'translate-x-0'
+                  }`}
+                />
+              </button>
+            </div>
+          )}
+
+          {block.repeatEveryUnit === 'week' && (
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Submission day</label>
+              <div className="flex gap-4">
+                {WEEKDAY_PICKER_LETTERS.map((letter, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => onUpdate({ submissionDayOfWeek: i })}
+                    className={`flex size-10 shrink-0 items-center justify-center rounded-full text-[14px] font-medium transition-colors ${
+                      block.submissionDayOfWeek === i
+                        ? 'bg-[#0267FF] text-white'
+                        : 'bg-[#F8F8F8] text-[#4b535c] hover:bg-[#eee]'
+                    }`}
+                  >
+                    {letter}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {block.repeatEveryUnit === 'year' && (
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Submission day</label>
+              <input
+                type="text"
+                placeholder="e.g. Jun 10, 2026"
+                value={block.submissionDateYear}
+                onChange={(e) => onUpdate({ submissionDateYear: e.target.value })}
+                className="h-12 max-w-[200px] rounded-[4px] border border-[#EAEAEA] bg-white px-4 text-[14px] text-[#0a0a0a] placeholder:text-[#9CA1AE]"
+              />
+            </div>
+          )}
+
+          <div className="flex flex-col gap-1.5">
+            <div className="flex items-start gap-4">
+              {block.repeatEveryUnit !== 'day' && (
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Submission date</label>
+                  <input
+                    type="date"
+                    value={block.submissionDate}
+                    onChange={(e) => onUpdate({ submissionDate: e.target.value })}
+                    className="h-12 w-[200px] rounded-[4px] border border-[#EAEAEA] bg-white px-4 text-[14px] text-[#0a0a0a]"
+                  />
+                </div>
+              )}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">
+                  {block.repeatEveryUnit === 'day' ? 'Daily submission time' : 'Submission time'}
+                </label>
+                <div className="relative w-[200px]">
+                  <select
+                    value={block.submissionTime}
+                    onChange={(e) => onUpdate({ submissionTime: e.target.value })}
+                    className="h-12 w-full appearance-none rounded-[4px] border border-[#E9EAEB] bg-white px-4 py-3 pr-10 text-[14px] text-[#0a0a0a]"
+                  >
+                    {SUBMISSION_TIME_OPTIONS.map((label) => (
+                      <option key={label} value={label}>
+                        {label}
+                      </option>
+                    ))}
+                  </select>
+                  <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[#4b535c]">
+                    <IconChevronDownSelect />
+                  </span>
+                </div>
+              </div>
+            </div>
+            <p className="text-[12px] text-[#4b535c]">
+              The deadline by which all approved recommendations will be submitted
+            </p>
+          </div>
+
+          <p className="text-[14px] italic text-[#4b535c]">
+            New scheduled recommendations available every {buildSchedulingSummary(block)}
+          </p>
+        </section>
       </div>
     </div>
   )
@@ -1060,9 +1290,7 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
   const [targetCoverageUnit, setTargetCoverageUnit] = useState('Weeks')
   const [currentStep, setCurrentStep] = useState(1)
   const [proposalName, setProposalName] = useState('')
-  const [scheduleBlocks, setScheduleBlocks] = useState([
-    { id: 'block-1', name: '', movementTypes: [] },
-  ])
+  const [scheduleBlocks, setScheduleBlocks] = useState([createDefaultScheduleBlock('block-1')])
   const updateScheduleBlock = (blockId, updates) => {
     setScheduleBlocks((prev) => prev.map((b) => (b.id === blockId ? { ...b, ...updates } : b)))
   }
@@ -1400,7 +1628,7 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
 
   if (isCreateSchedulePage) {
     return (
-      <div className="flex flex-col gap-8">
+      <div className="mx-auto flex max-w-[1200px] flex-col gap-8 px-6">
         <div className="flex items-center gap-3">
           <button
             type="button"
@@ -1468,7 +1696,7 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
         </div>
 
         {currentStep === 1 && (
-          <div className="max-w-[800px]">
+          <>
             <div className="mb-4">
               <CreateScheduleScopeSingleSelect
                 label="Mode of transport"
@@ -1523,7 +1751,7 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                 locations to hold.
               </p>
             </div>
-          </div>
+          </>
         )}
 
         {currentStep === 2 && (
@@ -1637,16 +1865,14 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
         )}
 
         {currentStep === 3 && (
-          <div className="max-w-[800px]">
-            <ScheduleDetailsBlock
-              block={scheduleBlocks[0]}
-              onUpdate={(updates) => updateScheduleBlock(scheduleBlocks[0].id, updates)}
-            />
-          </div>
+          <ScheduleDetailsBlock
+            block={scheduleBlocks[0]}
+            onUpdate={(updates) => updateScheduleBlock(scheduleBlocks[0].id, updates)}
+          />
         )}
 
         {currentStep === 4 && (
-          <div className="flex max-w-[800px] flex-col gap-4">
+          <div className="flex flex-col gap-4">
             {[
               { title: 'Setup', step: 1 },
               { title: 'Scope', step: 2 },
