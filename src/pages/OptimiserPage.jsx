@@ -276,16 +276,23 @@ function CreateScheduleScopeMultiSelect({
   mode,
   onModeChange,
   hideHeader = false,
+  hideModeToggle = false,
+  showSelectAll = false,
 }) {
   const [open, setOpen] = useState(false)
 
-  const activeValues = mode === 'include' ? includeValues : excludeValues
-  const oppositeValues = mode === 'include' ? excludeValues : includeValues
+  const activeValues = hideModeToggle
+    ? includeValues
+    : mode === 'include'
+      ? includeValues
+      : excludeValues
+  const oppositeValues = hideModeToggle ? [] : mode === 'include' ? excludeValues : includeValues
+  const allSelected = options.length > 0 && includeValues.length === options.length
 
   const toggleOption = (opt) => {
-    if (oppositeValues.includes(opt)) return
+    if (!hideModeToggle && oppositeValues.includes(opt)) return
 
-    if (mode === 'include') {
+    if (hideModeToggle || mode === 'include') {
       onIncludeChange(
         includeValues.includes(opt) ? includeValues.filter((v) => v !== opt) : [...includeValues, opt]
       )
@@ -296,29 +303,41 @@ function CreateScheduleScopeMultiSelect({
     )
   }
 
-  const hasSelections = includeValues.length > 0 || excludeValues.length > 0
+  const toggleSelectAll = () => {
+    if (allSelected) {
+      onIncludeChange([])
+      return
+    }
+    onIncludeChange(options)
+  }
+
+  const hasSelections = hideModeToggle
+    ? includeValues.length > 0
+    : includeValues.length > 0 || excludeValues.length > 0
 
   return (
     <div className="flex flex-col gap-1.5">
       {!hideHeader && (
-        <div className="flex min-h-7 items-center justify-between gap-2">
+        <div className={`flex min-h-7 items-center gap-2 ${hideModeToggle ? '' : 'justify-between'}`}>
           <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">{label}</label>
-          <div className="flex shrink-0">
-            <button
-              type="button"
-              onClick={() => onModeChange('include')}
-              className={scopeModeToggleButtonClass(mode === 'include')}
-            >
-              Include
-            </button>
-            <button
-              type="button"
-              onClick={() => onModeChange('exclude')}
-              className={scopeModeToggleButtonClass(mode === 'exclude')}
-            >
-              Exclude
-            </button>
-          </div>
+          {!hideModeToggle && (
+            <div className="flex shrink-0">
+              <button
+                type="button"
+                onClick={() => onModeChange('include')}
+                className={scopeModeToggleButtonClass(mode === 'include')}
+              >
+                Include
+              </button>
+              <button
+                type="button"
+                onClick={() => onModeChange('exclude')}
+                className={scopeModeToggleButtonClass(mode === 'exclude')}
+              >
+                Exclude
+              </button>
+            </div>
+          )}
         </div>
       )}
       <div>
@@ -356,7 +375,7 @@ function CreateScheduleScopeMultiSelect({
                   </button>
                 </span>
               )}
-              {excludeValues.length >= 1 && (
+              {!hideModeToggle && excludeValues.length >= 1 && (
                 <span className="inline-flex max-w-full items-center gap-1 rounded-full bg-red-50 px-2.5 py-1 text-[13px] font-medium text-[#b91c1c] shrink-0">
                   <span className="truncate">{getScopeExcludeChipText(excludeValues)}</span>
                   <button
@@ -391,8 +410,19 @@ function CreateScheduleScopeMultiSelect({
               onClick={(e) => e.stopPropagation()}
               role="presentation"
             >
+              {showSelectAll && (
+                <label className="px-4 py-3 flex items-center gap-3 text-[14px] text-[#0a0a0a] hover:bg-[#f8f8f8] cursor-pointer border-b border-[#e5e7eb]">
+                  <input
+                    type="checkbox"
+                    checked={allSelected}
+                    onChange={toggleSelectAll}
+                    className="size-4 rounded border-[#d1d5db] text-[#0267ff] focus:ring-[#0267ff] shrink-0"
+                  />
+                  <span>Select all</span>
+                </label>
+              )}
               {options.map((opt) => {
-                const isLockedInOpposite = oppositeValues.includes(opt)
+                const isLockedInOpposite = !hideModeToggle && oppositeValues.includes(opt)
                 const lockAnnotation = mode === 'include' ? 'In Exclude' : 'In Include'
 
                 return (
@@ -1380,6 +1410,7 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
   const [expandedFieldState, setExpandedFieldState] = useState(createInitialExpandedFieldState)
   const [advancedRows, setAdvancedRows] = useState([])
   const [modeOfTransport, setModeOfTransport] = useState('')
+  const [confidenceLevels, setConfidenceLevels] = useState(['Very High', 'High', 'Medium', 'Low', 'Very Low'])
   const [sourceLocationOption, setSourceLocationOption] = useState('central')
   const [selectedMovementTypes, setSelectedMovementTypes] = useState([])
   const [movementTypeDropdownOpen, setMovementTypeDropdownOpen] = useState(false)
@@ -1936,13 +1967,27 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                   <h4 className="mb-3 text-[13px] font-medium uppercase tracking-[0.04em] text-[#0a0a0a]">
                     Schedule configuration
                   </h4>
-                  <CreateScheduleScopeSingleSelect
-                    label="Mode of transport"
-                    helperText="This schedule will apply the transport constraints set in your Network and Trip capacity parameters."
-                    placeholder="Select mode of transport"
-                    options={['Road', 'Rail', 'Air', 'Foot']}
-                    value={modeOfTransport}
-                    onChange={setModeOfTransport}
+                  <div className="mb-4">
+                    <CreateScheduleScopeSingleSelect
+                      label="Mode of transport"
+                      helperText="This schedule will apply the transport constraints set in your Network and Trip capacity parameters."
+                      placeholder="Select mode of transport"
+                      options={['Road', 'Rail', 'Air', 'Foot']}
+                      value={modeOfTransport}
+                      onChange={setModeOfTransport}
+                    />
+                  </div>
+                  <CreateScheduleScopeMultiSelect
+                    label="Confidence level"
+                    helperText="Select which Autone confidence recommendations you see in the scheduled proposal"
+                    placeholder="Select confidence levels"
+                    options={['Very High', 'High', 'Medium', 'Low', 'Very Low']}
+                    includeValues={confidenceLevels}
+                    onIncludeChange={setConfidenceLevels}
+                    excludeValues={[]}
+                    onExcludeChange={() => {}}
+                    hideModeToggle
+                    showSelectAll
                   />
                 </section>
                 <div className="border-t border-[#e5e7eb]" />
