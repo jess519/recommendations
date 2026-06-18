@@ -1,6 +1,10 @@
 import { useState, useRef, useEffect, Fragment } from 'react'
 import { Truck, Network, TrendingUp, ShieldCheck, Pencil } from 'lucide-react'
 import { IconCalendarSidebar, IconPlus, IconReplenishment, IconReorder, IconRebalancing, IconChevronDown, IconList, IconCalendarNote, IconTruck, IconTrendUp, IconLightbulb, IconEdit, IconClose, IconChevronDownSelect, IconArrowLeft } from '../components/icons'
+import {
+  ScheduleBlockApprovalExceptions,
+  createDefaultScheduleExceptions,
+} from '../components/ScheduleBlockApprovalExceptions'
 
 const SAMPLE_CALENDAR_ENTRY = {
   id: 'entry-1',
@@ -974,7 +978,7 @@ function createDefaultScheduleBlock(id) {
     skipEveryUnit: 'weeks',
     notifyUsers: '',
     approvalMode: 'auto-approve',
-    exceptions: [],
+    exceptions: createDefaultScheduleExceptions(),
   }
 }
 
@@ -1016,29 +1020,7 @@ function buildBlockSummary(block) {
 }
 
 function ScheduleDetailsBlock({ block, index, isExpanded, onToggleExpand, onRemove, canRemove, onUpdate }) {
-  const exceptions = block.exceptions ?? []
   const headerTitle = block.name.trim() ? block.name : `Untitled schedule ${index + 1}`
-
-  const addException = () => {
-    onUpdate({
-      exceptions: [
-        ...exceptions,
-        { id: `exc-${Date.now()}-${exceptions.length}`, column: '', condition: '', value: '' },
-      ],
-    })
-  }
-
-  const updateException = (rowId, updates) => {
-    onUpdate({
-      exceptions: exceptions.map((row) => (row.id === rowId ? { ...row, ...updates } : row)),
-    })
-  }
-
-  const removeException = (rowId) => {
-    onUpdate({ exceptions: exceptions.filter((row) => row.id !== rowId) })
-  }
-
-  const clearAllExceptions = () => onUpdate({ exceptions: [] })
 
   return (
     <div className="rounded-[4px] border border-[#e5e7eb] bg-[#fafafa]">
@@ -1347,90 +1329,7 @@ function ScheduleDetailsBlock({ block, index, isExpanded, onToggleExpand, onRemo
               <p className="mb-3 text-[12px] text-[#4b535c]">
                 Recommendations matching these conditions will be flagged for manual review instead of auto-approved.
               </p>
-
-              {exceptions.length > 0 && (
-                <div className="mb-3 flex flex-col gap-3">
-                  {exceptions.map((row, rowIdx) => (
-                    <Fragment key={row.id}>
-                      {rowIdx > 0 && (
-                        <div className="my-1 flex justify-center">
-                          <span className="text-[12px] text-[#9ca3af]">AND</span>
-                        </div>
-                      )}
-                      <div className="flex items-start gap-2">
-                        <div className="relative min-w-0 shrink-0">
-                          <select
-                            value={row.column}
-                            onChange={(e) => updateException(row.id, { column: e.target.value })}
-                            className="h-9 w-[180px] appearance-none rounded-[4px] border border-[#e9eaeb] bg-white py-0 pl-3 pr-9 text-[13px] text-[#0a0a0a]"
-                          >
-                            <option value="">Select column</option>
-                            {EXC_ADV_PRODUCT.map((col) => (
-                              <option key={col.id} value={col.label}>
-                                {col.label}
-                              </option>
-                            ))}
-                          </select>
-                          <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[#4b535c]">
-                            <IconChevronDownSelect />
-                          </span>
-                        </div>
-                        <div className="relative min-w-0 shrink-0">
-                          <select
-                            value={row.condition}
-                            onChange={(e) => updateException(row.id, { condition: e.target.value })}
-                            className="h-9 w-[160px] appearance-none rounded-[4px] border border-[#e9eaeb] bg-white py-0 pl-3 pr-9 text-[13px] text-[#0a0a0a]"
-                          >
-                            <option value="">Select condition</option>
-                            {ADVANCED_CONDITION_OPTIONS.map((option) => (
-                              <option key={option} value={option}>
-                                {option}
-                              </option>
-                            ))}
-                          </select>
-                          <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[#4b535c]">
-                            <IconChevronDownSelect />
-                          </span>
-                        </div>
-                        <input
-                          type="text"
-                          value={row.value}
-                          onChange={(e) => updateException(row.id, { value: e.target.value })}
-                          placeholder="Enter value"
-                          className="h-9 min-w-0 flex-1 rounded-[4px] border border-[#e9eaeb] bg-white px-3 text-[13px] text-[#0a0a0a] placeholder:text-[#9ca3af]"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => removeException(row.id)}
-                          aria-label="Remove exception"
-                          className="mt-1.5 shrink-0 text-[#4b535c] hover:text-[#0a0a0a]"
-                        >
-                          <IconClose className="size-4" />
-                        </button>
-                      </div>
-                    </Fragment>
-                  ))}
-                </div>
-              )}
-
-              <div className="flex flex-row gap-4">
-                <button
-                  type="button"
-                  onClick={addException}
-                  className="text-[14px] font-medium text-[#1d4ed8] hover:underline"
-                >
-                  + Add exception
-                </button>
-                {exceptions.length > 0 && (
-                  <button
-                    type="button"
-                    onClick={clearAllExceptions}
-                    className="text-[14px] font-medium text-[#dc2626] hover:underline"
-                  >
-                    Clear all
-                  </button>
-                )}
-              </div>
+              <ScheduleBlockApprovalExceptions block={block} onUpdate={onUpdate} />
             </div>
           )}
         </section>
