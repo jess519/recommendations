@@ -2028,17 +2028,15 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
               {CREATE_SCHEDULE_WIZARD_STEPS[currentStep - 1].subtitle}
             </p>
           </div>
-          <button
-            type="button"
-            onClick={() => {
-              if (currentStep < 4) {
-                setCurrentStep((step) => step + 1)
-              }
-            }}
-            className="shrink-0 rounded-[4px] bg-[#1d4ed8] px-5 py-2.5 text-[14px] font-medium text-white hover:bg-[#1e40af]"
-          >
-            {CREATE_SCHEDULE_WIZARD_STEPS[currentStep - 1].continueLabel}
-          </button>
+          {currentStep < 4 && (
+            <button
+              type="button"
+              onClick={() => setCurrentStep((step) => step + 1)}
+              className="shrink-0 rounded-[4px] bg-[#1d4ed8] px-5 py-2.5 text-[14px] font-medium text-white hover:bg-[#1e40af]"
+            >
+              {CREATE_SCHEDULE_WIZARD_STEPS[currentStep - 1].continueLabel}
+            </button>
+          )}
         </div>
 
         {currentStep === 1 && <div className="min-h-[200px]" />}
@@ -3043,20 +3041,20 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
 
         {currentStep === 4 && <div className="min-h-[200px]" />}
 
-        <div className="flex items-center justify-end gap-3 pt-6">
-          <button
-            type="button"
-            onClick={() => setIsCreateSchedulePage(false)}
-            className="h-12 px-6 rounded-[6px] text-[16px] font-medium text-[#0a0a0a] hover:bg-[#f3f4f6]">
-            Cancel
-          </button>
-          <button
-            type="button"
-            onClick={() => setIsCreateSchedulePage(false)}
-            className="h-12 px-6 rounded-[6px] bg-[#0267FF] text-white text-[16px] font-medium hover:bg-[#0252cc]">
-            Create schedule
-          </button>
-        </div>
+        {currentStep === 4 && (
+          <div className="flex items-center justify-end gap-3 pt-6">
+            <button
+              type="button"
+              className="h-12 px-6 rounded-[6px] text-[16px] font-medium text-[#0a0a0a] hover:bg-[#f3f4f6]">
+              Cancel
+            </button>
+            <button
+              type="button"
+              className="h-12 px-6 rounded-[6px] bg-[#0267FF] text-white text-[16px] font-medium hover:bg-[#0252cc]">
+              Create schedule
+            </button>
+          </div>
+        )}
       </div>
     )
   }
