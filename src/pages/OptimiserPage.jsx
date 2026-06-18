@@ -428,6 +428,86 @@ function CreateScheduleScopeMultiSelect({
   )
 }
 
+function CreateScheduleScopeSingleSelect({
+  label,
+  helperText,
+  placeholder = 'Select',
+  options = [],
+  value,
+  onChange,
+}) {
+  const [open, setOpen] = useState(false)
+  const hasValue = value !== ''
+
+  return (
+    <div className="flex flex-col gap-1.5">
+      <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">{label}</label>
+      <div>
+        <div className="relative">
+          <div
+            role="combobox"
+            aria-expanded={open}
+            tabIndex={0}
+            onClick={() => setOpen((o) => !o)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                setOpen((o) => !o)
+              }
+            }}
+            className="flex h-14 min-h-14 max-h-14 w-full shrink-0 cursor-pointer items-center gap-2 overflow-hidden rounded-[4px] border border-[#EAEAEA] bg-white pl-4 pr-10 text-left text-[16px] text-[#0a0a0a] min-w-0"
+          >
+            {!hasValue ? (
+              <span className="min-w-0 flex-1 truncate text-left text-[#4b535c]">{placeholder}</span>
+            ) : (
+              <span className="min-w-0 flex-1 truncate text-left text-[#0a0a0a]">{value}</span>
+            )}
+          </div>
+          <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
+            <IconChevronDownSelect />
+          </span>
+          {open && (
+            <>
+              <div
+                role="presentation"
+                className="fixed inset-0 z-[29]"
+                onClick={() => setOpen(false)}
+                aria-hidden
+              />
+              <div
+                className="absolute left-0 right-0 top-full z-[30] mt-1 rounded-[4px] border border-[#EAEAEA] bg-white shadow-[0px_8px_25px_0px_rgba(0,0,0,0.12)] overflow-hidden"
+                onClick={(e) => e.stopPropagation()}
+                role="listbox"
+              >
+                {options.map((opt) => (
+                  <button
+                    key={opt}
+                    type="button"
+                    role="option"
+                    aria-selected={value === opt}
+                    onClick={() => {
+                      onChange(opt)
+                      setOpen(false)
+                    }}
+                    className={`w-full px-4 py-3 text-left text-[14px] text-[#0a0a0a] hover:bg-[#f8f8f8] cursor-pointer ${
+                      value === opt ? 'bg-[#f0f6ff]' : ''
+                    }`}
+                  >
+                    {opt}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+        {helperText ? (
+          <p className="mt-1.5 text-[12px] leading-[16px] text-[#4b535c]">{helperText}</p>
+        ) : null}
+      </div>
+    </div>
+  )
+}
+
 function NetworkStyleDownloadIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className="shrink-0" aria-hidden>
@@ -1299,6 +1379,7 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
   const [isExpanded, setIsExpanded] = useState(false)
   const [expandedFieldState, setExpandedFieldState] = useState(createInitialExpandedFieldState)
   const [advancedRows, setAdvancedRows] = useState([])
+  const [modeOfTransport, setModeOfTransport] = useState('')
   const [sourceLocationOption, setSourceLocationOption] = useState('central')
   const [selectedMovementTypes, setSelectedMovementTypes] = useState([])
   const [movementTypeDropdownOpen, setMovementTypeDropdownOpen] = useState(false)
@@ -1851,6 +1932,20 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
             </button>
             {openSections.includes('scope') && (
               <div className="px-5 pb-6 pt-2 flex flex-col gap-6 border-t border-[#EAEAEA]">
+                <section className="mb-6">
+                  <h4 className="mb-3 text-[13px] font-medium uppercase tracking-[0.04em] text-[#0a0a0a]">
+                    Schedule configuration
+                  </h4>
+                  <CreateScheduleScopeSingleSelect
+                    label="Mode of transport"
+                    helperText="This schedule will apply the transport constraints set in your Network and Trip capacity parameters."
+                    placeholder="Select mode of transport"
+                    options={['Road', 'Rail', 'Air', 'Foot']}
+                    value={modeOfTransport}
+                    onChange={setModeOfTransport}
+                  />
+                </section>
+                <div className="border-t border-[#e5e7eb]" />
                 <section className="flex flex-col gap-3">
                   <h3 className="text-[14px] font-medium text-[#0a0a0a]">
                     Which products and locations does this schedule cover?
