@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, Fragment } from 'react'
-import { Truck, Network, TrendingUp, ShieldCheck } from 'lucide-react'
+import { Truck, Network, TrendingUp, ShieldCheck, Pencil } from 'lucide-react'
 import { IconCalendarSidebar, IconPlus, IconReplenishment, IconReorder, IconRebalancing, IconChevronDown, IconList, IconCalendarNote, IconTruck, IconTrendUp, IconLightbulb, IconEdit, IconClose, IconChevronDownSelect, IconArrowLeft, IconSearch } from '../components/icons'
 
 const SAMPLE_CALENDAR_ENTRY = {
@@ -3036,7 +3036,30 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
           </>
         )}
 
-        {currentStep === 4 && <div className="min-h-[200px]" />}
+        {currentStep === 4 && (
+          <div className="flex max-w-[800px] flex-col gap-4">
+            {[
+              { title: 'Setup', step: 1 },
+              { title: 'Scope', step: 2 },
+              { title: 'Schedule details', step: 3 },
+            ].map(({ title, step }) => (
+              <div key={title} className="rounded-[4px] border border-[#e5e7eb] bg-[#fafafa] p-4">
+                <div className="mb-3 flex items-center justify-between">
+                  <h4 className="text-[13px] font-medium text-[#0a0a0a] uppercase tracking-[0.04em]">{title}</h4>
+                  <button
+                    type="button"
+                    onClick={() => setCurrentStep(step)}
+                    className="flex items-center gap-1 text-[14px] font-medium text-[#1d4ed8] hover:underline"
+                  >
+                    <Pencil className="size-4" aria-hidden />
+                    Edit
+                  </button>
+                </div>
+                <p className="text-[14px] italic text-[#4b535c]">Summary will be generated here.</p>
+              </div>
+            ))}
+          </div>
+        )}
 
         {currentStep === 4 && (
           <div className="flex items-center justify-end gap-3 pt-6">
