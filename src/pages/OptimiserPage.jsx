@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, Fragment } from 'react'
-import { Truck, Network, TrendingUp, ShieldCheck, Pencil } from 'lucide-react'
+import { Truck, Network, TrendingUp, ShieldCheck, Pencil, Check, Plus } from 'lucide-react'
 import { IconCalendarSidebar, IconPlus, IconReplenishment, IconReorder, IconRebalancing, IconChevronDown, IconList, IconCalendarNote, IconTruck, IconTrendUp, IconLightbulb, IconEdit, IconClose, IconChevronDownSelect, IconArrowLeft } from '../components/icons'
 import {
   ScheduleBlockApprovalExceptions,
@@ -579,7 +579,32 @@ function CreateScheduleScopeFilterPanel({
   setLocationsExclude,
   locationsMode,
   setLocationsMode,
+  extraVisibleFilters,
+  expandedFieldState,
+  updateExpandedField,
 }) {
+  const renderExtraField = ({ key, label }) => (
+    <CreateScheduleScopeMultiSelect
+      key={key}
+      label={label}
+      placeholder={`Select ${label.toLowerCase()}`}
+      options={[]}
+      includeValues={expandedFieldState[key].include}
+      onIncludeChange={(next) => updateExpandedField(key, { include: next })}
+      excludeValues={expandedFieldState[key].exclude}
+      onExcludeChange={(next) => updateExpandedField(key, { exclude: next })}
+      mode={expandedFieldState[key].mode}
+      onModeChange={(next) => updateExpandedField(key, { mode: next })}
+    />
+  )
+
+  const visibleProductExtras = SCOPE_EXPANDED_PRODUCT_FIELDS.filter(({ key }) =>
+    extraVisibleFilters.includes(key)
+  )
+  const visibleLocationExtras = SCOPE_EXPANDED_LOCATION_FIELDS.filter(({ key }) =>
+    extraVisibleFilters.includes(key)
+  )
+
   return (
     <div className="rounded-[4px] border border-[#e5e7eb] bg-[#fafafa] p-4">
       <div className="grid grid-cols-2 gap-x-6 gap-y-3">
@@ -751,42 +776,78 @@ function CreateScheduleScopeFilterPanel({
             </div>
           </div>
         </div>
+        {visibleProductExtras.map((field) => (
+          <div key={field.key} className="col-start-1 w-full self-start">
+            {renderExtraField(field)}
+          </div>
+        ))}
+        {visibleLocationExtras.map((field) => (
+          <div key={field.key} className="col-start-2 w-full self-start">
+            {renderExtraField(field)}
+          </div>
+        ))}
       </div>
     </div>
   )
 }
 
-function CreateScheduleScopeExpandedFilters({ expandedFieldState, updateExpandedField }) {
-  const renderField = ({ key, label }) => (
-    <CreateScheduleScopeMultiSelect
-      key={key}
-      label={label}
-      placeholder={`Select ${label.toLowerCase()}`}
-      options={[]}
-      includeValues={expandedFieldState[key].include}
-      onIncludeChange={(next) => updateExpandedField(key, { include: next })}
-      excludeValues={expandedFieldState[key].exclude}
-      onExcludeChange={(next) => updateExpandedField(key, { exclude: next })}
-      mode={expandedFieldState[key].mode}
-      onModeChange={(next) => updateExpandedField(key, { mode: next })}
-    />
+function CreateScheduleMoreFiltersMenu({
+  isOpen,
+  onToggle,
+  onClose,
+  extraVisibleFilters,
+  onToggleExtraFilter,
+}) {
+  const containerRef = useRef(null)
+
+  useEffect(() => {
+    if (!isOpen) return undefined
+    const handleClickOutside = (event) => {
+      if (containerRef.current && !containerRef.current.contains(event.target)) {
+        onClose()
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [isOpen, onClose])
+
+  const renderSection = (title, fields) => (
+    <div>
+      <p className="px-4 py-2 text-[12px] font-medium uppercase tracking-[0.04em] text-[#4b535c]">{title}</p>
+      {fields.map(({ key, label }) => {
+        const isSelected = extraVisibleFilters.includes(key)
+        return (
+          <button
+            key={key}
+            type="button"
+            onClick={() => onToggleExtraFilter(key)}
+            className="flex w-full items-center justify-between px-4 py-2 text-left text-[14px] text-[#0a0a0a] hover:bg-[#f5f5f5]"
+          >
+            <span>{label}</span>
+            {isSelected && <Check className="h-4 w-4 text-[#1d4ed8]" aria-hidden />}
+          </button>
+        )
+      })}
+    </div>
   )
 
   return (
-    <>
-      <div className="mt-4 rounded-[4px] border border-[#e5e7eb] bg-[#fafafa] p-4">
-        <h4 className="text-[13px] font-medium text-[#0a0a0a] uppercase tracking-[0.04em]">Products</h4>
-        <div className="grid grid-cols-3 gap-x-4 gap-y-3 mt-3">
-          {SCOPE_EXPANDED_PRODUCT_FIELDS.map(renderField)}
+    <div ref={containerRef} className="relative">
+      <button
+        type="button"
+        onClick={onToggle}
+        className="mt-3 flex items-center gap-1 py-2 text-[14px] font-medium text-[#1d4ed8] hover:underline"
+      >
+        <Plus className="size-4 shrink-0" aria-hidden />
+        More filters
+      </button>
+      {isOpen && (
+        <div className="absolute left-0 top-full z-30 mt-1 w-[280px] rounded-[4px] border border-[#e5e7eb] bg-white py-2 shadow-md">
+          {renderSection('PRODUCTS', SCOPE_EXPANDED_PRODUCT_FIELDS)}
+          {renderSection('LOCATIONS', SCOPE_EXPANDED_LOCATION_FIELDS)}
         </div>
-      </div>
-      <div className="mt-4 rounded-[4px] border border-[#e5e7eb] bg-[#fafafa] p-4">
-        <h4 className="text-[13px] font-medium text-[#0a0a0a] uppercase tracking-[0.04em]">Locations</h4>
-        <div className="grid grid-cols-3 gap-x-4 gap-y-3 mt-3">
-          {SCOPE_EXPANDED_LOCATION_FIELDS.map(renderField)}
-        </div>
-      </div>
-    </>
+      )}
+    </div>
   )
 }
 
@@ -1285,7 +1346,8 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
   const [productsMode, setProductsMode] = useState('include')
   const [locationTypesMode, setLocationTypesMode] = useState('include')
   const [locationsMode, setLocationsMode] = useState('include')
-  const [isExpanded, setIsExpanded] = useState(false)
+  const [extraVisibleFilters, setExtraVisibleFilters] = useState([])
+  const [isMoreFiltersOpen, setIsMoreFiltersOpen] = useState(false)
   const [expandedFieldState, setExpandedFieldState] = useState(createInitialExpandedFieldState)
   const [modeOfTransport, setModeOfTransport] = useState('')
   const [confidenceLevels, setConfidenceLevels] = useState(['Very High', 'High', 'Medium', 'Low', 'Very Low'])
@@ -1547,6 +1609,15 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
     }))
   }
 
+  const toggleExtraFilter = (fieldKey) => {
+    if (extraVisibleFilters.includes(fieldKey)) {
+      updateExpandedField(fieldKey, { include: [], exclude: [] })
+      setExtraVisibleFilters((prev) => prev.filter((k) => k !== fieldKey))
+    } else {
+      setExtraVisibleFilters((prev) => [...prev, fieldKey])
+    }
+  }
+
   const scopeActiveFilterEntries = [
     {
       fieldKey: 'department',
@@ -1596,22 +1667,26 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
       onClearInclude: () => setLocationsInclude([]),
       onClearExclude: () => setLocationsExclude([]),
     },
-    ...SCOPE_EXPANDED_PRODUCT_FIELDS.map(({ key, label }) => ({
+    ...SCOPE_EXPANDED_PRODUCT_FIELDS.filter(({ key }) => extraVisibleFilters.includes(key)).map(
+      ({ key, label }) => ({
       fieldKey: key,
       label,
       includeValues: expandedFieldState[key].include,
       excludeValues: expandedFieldState[key].exclude,
       onClearInclude: () => updateExpandedField(key, { include: [] }),
       onClearExclude: () => updateExpandedField(key, { exclude: [] }),
-    })),
-    ...SCOPE_EXPANDED_LOCATION_FIELDS.map(({ key, label }) => ({
+    })
+    ),
+    ...SCOPE_EXPANDED_LOCATION_FIELDS.filter(({ key }) => extraVisibleFilters.includes(key)).map(
+      ({ key, label }) => ({
       fieldKey: key,
       label,
       includeValues: expandedFieldState[key].include,
       excludeValues: expandedFieldState[key].exclude,
       onClearInclude: () => updateExpandedField(key, { include: [] }),
       onClearExclude: () => updateExpandedField(key, { exclude: [] }),
-    })),
+    })
+    ),
   ]
 
   const CREATE_SCHEDULE_WIZARD_STEPS = [
@@ -1848,24 +1923,17 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                       setLocationsExclude={setLocationsExclude}
                       locationsMode={locationsMode}
                       setLocationsMode={setLocationsMode}
+                      extraVisibleFilters={extraVisibleFilters}
+                      expandedFieldState={expandedFieldState}
+                      updateExpandedField={updateExpandedField}
                     />
-                      <button
-                        type="button"
-                        onClick={() => setIsExpanded((v) => !v)}
-                        className="mt-4 flex items-center gap-1 text-[14px] font-medium text-[#1d4ed8] hover:underline"
-                      >
-                        {isExpanded ? 'Show fewer filters' : 'Show all filters'}
-                        <IconChevronDown
-                          className={`size-4 shrink-0 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
-                          aria-hidden
-                        />
-                      </button>
-                      {isExpanded && (
-                        <CreateScheduleScopeExpandedFilters
-                          expandedFieldState={expandedFieldState}
-                          updateExpandedField={updateExpandedField}
-                        />
-                      )}
+                      <CreateScheduleMoreFiltersMenu
+                        isOpen={isMoreFiltersOpen}
+                        onToggle={() => setIsMoreFiltersOpen((v) => !v)}
+                        onClose={() => setIsMoreFiltersOpen(false)}
+                        extraVisibleFilters={extraVisibleFilters}
+                        onToggleExtraFilter={toggleExtraFilter}
+                      />
                     </>
                   )}
                 </section>
