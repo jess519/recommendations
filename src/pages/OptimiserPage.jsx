@@ -1841,7 +1841,7 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
         )}
 
         {currentStep === 2 && (
-          <div className="border border-[#EAEAEA] rounded-[4px] bg-white overflow-hidden">
+          <div className="border border-[#EAEAEA] rounded-[4px] bg-white overflow-visible">
             <div className="px-5 pb-6 pt-2 flex flex-col gap-6">
                 <section className="flex flex-col gap-3">
                   <h3 className="text-[14px] font-medium text-[#0a0a0a]">
