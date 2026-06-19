@@ -1744,11 +1744,6 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
 
   const CREATE_SCHEDULE_WIZARD_STEPS = [
     {
-      title: 'Setup',
-      subtitle: 'Configure transport, confidence levels, and target coverage for this proposal.',
-      continueLabel: 'Continue to Scope',
-    },
-    {
       title: 'Scope',
       subtitle: 'Define the products, locations, and network for this schedule.',
       continueLabel: 'Continue to Schedule details',
@@ -1793,7 +1788,7 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
         </div>
 
         <div className="mt-2 mb-4 flex w-full gap-1">
-          {[0, 1, 2, 3].map((segmentIndex) => (
+          {[0, 1, 2].map((segmentIndex) => (
             <div
               key={segmentIndex}
               className={`h-1 flex-1 rounded-full ${
@@ -1806,14 +1801,14 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
         <div className="mb-6 flex items-start justify-between gap-4">
           <div className="min-w-0">
             {currentStep === 1 ? (
-              <p className="text-[14px] font-medium text-[#0a0a0a]">Step 1 of 4</p>
+              <p className="text-[14px] font-medium text-[#0a0a0a]">Step 1 of 3</p>
             ) : (
               <button
                 type="button"
                 onClick={() => setCurrentStep((step) => step - 1)}
                 className="flex cursor-pointer items-center gap-1.5 text-[14px] font-medium text-[#1d4ed8] hover:underline"
               >
-                ← Step {currentStep} of 4
+                ← Step {currentStep} of 3
               </button>
             )}
             <h2 className="mt-1 text-[22px] font-semibold text-[#0a0a0a]">
@@ -1823,7 +1818,7 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
               {CREATE_SCHEDULE_WIZARD_STEPS[currentStep - 1].subtitle}
             </p>
           </div>
-          {currentStep < 4 && (
+          {currentStep < 3 && (
             <button
               type="button"
               onClick={() => setCurrentStep((step) => step + 1)}
@@ -1834,9 +1829,7 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
           )}
         </div>
 
-        {currentStep === 1 && <div className="min-h-[200px]" />}
-
-        {currentStep === 2 && (
+        {currentStep === 1 && (
           <div className="border border-[#EAEAEA] rounded-[4px] bg-white overflow-visible">
             <div className="px-5 pb-6 pt-2 flex flex-col gap-6">
                 <section className="flex flex-col gap-3">
@@ -1937,7 +1930,7 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
           </div>
         )}
 
-        {currentStep === 3 && (
+        {currentStep === 2 && (
           <div className="max-w-[800px]">
             <div className="flex flex-col gap-3">
               {scheduleBlocks.map((block, index) => (
@@ -1967,12 +1960,11 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
           </div>
         )}
 
-        {currentStep === 4 && (
+        {currentStep === 3 && (
           <div className="flex flex-col gap-4">
             {[
-              { title: 'Setup', step: 1 },
-              { title: 'Scope', step: 2 },
-              { title: 'Schedule details', step: 3 },
+              { title: 'Scope', step: 1 },
+              { title: 'Schedule details', step: 2 },
             ].map(({ title, step }) => (
               <div key={title} className="rounded-[4px] border border-[#e5e7eb] bg-[#fafafa] p-4">
                 <div className="mb-3 flex items-center justify-between">
@@ -1992,7 +1984,7 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
           </div>
         )}
 
-        {currentStep === 4 && (
+        {currentStep === 3 && (
           <div className="flex items-center justify-end gap-3 pt-6">
             <button
               type="button"
