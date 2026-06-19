@@ -589,7 +589,11 @@ export function ScheduleBlockApprovalExceptions({ block, onUpdate }) {
                   </div>
                 )}
                 <div className="rounded-[4px] border border-[#e5e7eb] bg-[#fafafa] px-3 py-2">
-                  <div className="flex flex-wrap items-center gap-2 min-w-0">
+                  <div
+                    className={`flex min-w-0 items-center gap-2 ${
+                      cond.filterType === 'advanced' ? 'flex-nowrap' : 'flex-wrap'
+                    }`}
+                  >
                     <span className="text-[12px] text-[#4b535c] shrink-0">Apply at</span>
                     <div className="relative shrink-0">
                       <select
@@ -755,7 +759,7 @@ export function ScheduleBlockApprovalExceptions({ block, onUpdate }) {
                                     e.target.value
                                   )
                                 }
-                                className="h-9 w-[160px] py-0 pl-3 pr-9 rounded-[4px] border border-[#e9eaeb] bg-white text-[13px] text-[#0a0a0a] appearance-none"
+                                className="h-9 w-[150px] min-w-0 max-w-[150px] truncate py-0 pl-3 pr-9 rounded-[4px] border border-[#e9eaeb] bg-white text-[13px] text-[#0a0a0a] appearance-none"
                               >
                                 <option value="">Select condition</option>
                                 {ADVANCED_CONDITION_OPTIONS.map((o) => (
@@ -775,7 +779,7 @@ export function ScheduleBlockApprovalExceptions({ block, onUpdate }) {
                                 updateConditionField(exc.id, cond.id, 'advancedValue', e.target.value)
                               }
                               placeholder="Value"
-                              className="h-9 w-[120px] px-3 rounded-[4px] border border-[#e9eaeb] bg-white text-[13px] text-[#0a0a0a] placeholder:text-[#9ca3af]"
+                              className="h-9 min-w-0 flex-1 rounded-[4px] border border-[#e9eaeb] bg-white px-3 text-[13px] text-[#0a0a0a] placeholder:text-[#9ca3af]"
                             />
                           </>
                         )}

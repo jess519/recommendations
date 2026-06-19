@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, Fragment } from 'react'
-import { Truck, Network, TrendingUp, ShieldCheck, Pencil } from 'lucide-react'
+import { Truck, Network, TrendingUp, ShieldCheck, Pencil, Check, Plus } from 'lucide-react'
 import { IconCalendarSidebar, IconPlus, IconReplenishment, IconReorder, IconRebalancing, IconChevronDown, IconList, IconCalendarNote, IconTruck, IconTrendUp, IconLightbulb, IconEdit, IconClose, IconChevronDownSelect, IconArrowLeft } from '../components/icons'
 import {
   ScheduleBlockApprovalExceptions,
@@ -172,9 +172,8 @@ function getScopeExcludeChipText(excludeValues) {
   return `All except: ${excludeValues[0]}, ${excludeValues[1]}, +${excludeValues.length - 2} more`
 }
 
-function ActiveFilterChips({ entries, advancedChips = [] }) {
-  const hasAny =
-    entries.some((e) => e.includeValues.length > 0 || e.excludeValues.length > 0) || advancedChips.length >= 1
+function ActiveFilterChips({ entries }) {
+  const hasAny = entries.some((e) => e.includeValues.length > 0 || e.excludeValues.length > 0)
   if (!hasAny) return null
 
   return (
@@ -208,22 +207,6 @@ function ActiveFilterChips({ entries, advancedChips = [] }) {
             </span>
           )}
         </Fragment>
-      ))}
-      {advancedChips.map((chip) => (
-        <span
-          key={chip.id}
-          className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-100 px-3 py-1.5 text-[13px] font-medium text-slate-700"
-        >
-          <span>{`${chip.mainColumn}: ${chip.condition.toLowerCase()} ${chip.value}`}</span>
-          <button
-            type="button"
-            onClick={chip.onRemove}
-            aria-label={`Remove ${chip.mainColumn} filter`}
-            className="shrink-0 flex items-center justify-center text-slate-700 hover:text-slate-900"
-          >
-            <IconClose className="size-3.5" />
-          </button>
-        </span>
       ))}
     </div>
   )
@@ -596,7 +579,32 @@ function CreateScheduleScopeFilterPanel({
   setLocationsExclude,
   locationsMode,
   setLocationsMode,
+  extraVisibleFilters,
+  expandedFieldState,
+  updateExpandedField,
 }) {
+  const renderExtraField = ({ key, label }) => (
+    <CreateScheduleScopeMultiSelect
+      key={key}
+      label={label}
+      placeholder={`Select ${label.toLowerCase()}`}
+      options={[]}
+      includeValues={expandedFieldState[key].include}
+      onIncludeChange={(next) => updateExpandedField(key, { include: next })}
+      excludeValues={expandedFieldState[key].exclude}
+      onExcludeChange={(next) => updateExpandedField(key, { exclude: next })}
+      mode={expandedFieldState[key].mode}
+      onModeChange={(next) => updateExpandedField(key, { mode: next })}
+    />
+  )
+
+  const visibleProductExtras = SCOPE_EXPANDED_PRODUCT_FIELDS.filter(({ key }) =>
+    extraVisibleFilters.includes(key)
+  )
+  const visibleLocationExtras = SCOPE_EXPANDED_LOCATION_FIELDS.filter(({ key }) =>
+    extraVisibleFilters.includes(key)
+  )
+
   return (
     <div className="rounded-[4px] border border-[#e5e7eb] bg-[#fafafa] p-4">
       <div className="grid grid-cols-2 gap-x-6 gap-y-3">
@@ -768,169 +776,77 @@ function CreateScheduleScopeFilterPanel({
             </div>
           </div>
         </div>
+        {visibleProductExtras.map((field) => (
+          <div key={field.key} className="col-start-1 w-full self-start">
+            {renderExtraField(field)}
+          </div>
+        ))}
+        {visibleLocationExtras.map((field) => (
+          <div key={field.key} className="col-start-2 w-full self-start">
+            {renderExtraField(field)}
+          </div>
+        ))}
       </div>
     </div>
   )
 }
 
-function CreateScheduleScopeExpandedFilters({ expandedFieldState, updateExpandedField, advancedRows, setAdvancedRows }) {
-  const renderField = ({ key, label }) => (
-    <CreateScheduleScopeMultiSelect
-      key={key}
-      label={label}
-      placeholder={`Select ${label.toLowerCase()}`}
-      options={[]}
-      includeValues={expandedFieldState[key].include}
-      onIncludeChange={(next) => updateExpandedField(key, { include: next })}
-      excludeValues={expandedFieldState[key].exclude}
-      onExcludeChange={(next) => updateExpandedField(key, { exclude: next })}
-      mode={expandedFieldState[key].mode}
-      onModeChange={(next) => updateExpandedField(key, { mode: next })}
-    />
-  )
+function CreateScheduleMoreFiltersMenu({
+  isOpen,
+  onToggle,
+  onClose,
+  extraVisibleFilters,
+  onToggleExtraFilter,
+}) {
+  const containerRef = useRef(null)
 
-  return (
-    <>
-      <div className="mt-4 rounded-[4px] border border-[#e5e7eb] bg-[#fafafa] p-4">
-        <h4 className="text-[13px] font-medium text-[#0a0a0a] uppercase tracking-[0.04em]">Products</h4>
-        <div className="grid grid-cols-3 gap-x-4 gap-y-3 mt-3">
-          {SCOPE_EXPANDED_PRODUCT_FIELDS.map(renderField)}
-        </div>
-      </div>
-      <div className="mt-4 rounded-[4px] border border-[#e5e7eb] bg-[#fafafa] p-4">
-        <h4 className="text-[13px] font-medium text-[#0a0a0a] uppercase tracking-[0.04em]">Locations</h4>
-        <div className="grid grid-cols-3 gap-x-4 gap-y-3 mt-3">
-          {SCOPE_EXPANDED_LOCATION_FIELDS.map(renderField)}
-        </div>
-      </div>
-      <ScopeAdvancedFilters rows={advancedRows} setRows={setAdvancedRows} />
-    </>
-  )
-}
+  useEffect(() => {
+    if (!isOpen) return undefined
+    const handleClickOutside = (event) => {
+      if (containerRef.current && !containerRef.current.contains(event.target)) {
+        onClose()
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [isOpen, onClose])
 
-const EXC_ADV_PRODUCT = [
-  { id: 'currentUnits', label: 'Current units' },
-  { id: 'forecast', label: 'Forecast' },
-  { id: 'transferUnits', label: 'Transfer units' },
-  { id: 'currentWarehouse', label: 'Current warehouse' },
-  { id: 'last7DaysSales', label: 'Last 7 days sales' },
-  { id: 'last30DaysSales', label: 'Last 30 days sales' },
-  { id: 'understocksBefore', label: 'Understocks before' },
-  { id: 'understocksAfter', label: 'Understocks after' },
-  { id: 'overstocksBefore', label: 'Overstocks before' },
-  { id: 'overstocksAfter', label: 'Overstocks after' },
-  { id: 'salesUplift', label: 'Sales uplift' },
-]
-
-const ADVANCED_CONDITION_OPTIONS = [
-  'Equal to',
-  'Greater than',
-  'Lower than',
-  'Greater than or equal to',
-  'Lower than or equal to',
-]
-
-function ScopeAdvancedFilters({ rows, setRows }) {
-  const addRow = () => {
-    setRows((prev) => [
-      ...prev,
-      {
-        id: `scope-adv-${Date.now()}-${prev.length}`,
-        mainColumn: '',
-        condition: '',
-        value: '',
-      },
-    ])
-  }
-
-  const removeRow = (id) => {
-    setRows((prev) => prev.filter((row) => row.id !== id))
-  }
-
-  const updateRow = (id, updates) => {
-    setRows((prev) => prev.map((row) => (row.id === id ? { ...row, ...updates } : row)))
-  }
-
-  const clearAll = () => setRows([])
-
-  return (
-    <div className="mt-4 rounded-[4px] border border-[#e5e7eb] bg-[#fafafa] p-4">
-      <h4 className="text-[13px] font-medium text-[#0a0a0a] uppercase tracking-[0.04em]">Advanced filters</h4>
-      <p className="mt-1 mb-3 text-[12px] font-normal text-[#4b535c]">Apply to rows where these conditions are met</p>
-      <div className="flex flex-col">
-        {rows.map((row, rowIdx) => (
-          <Fragment key={row.id}>
-            {rowIdx > 0 && (
-              <div className="flex justify-center py-1">
-                <span className="text-[11px] font-medium text-[#9ca3af] uppercase tracking-wider">AND</span>
-              </div>
-            )}
-            <div className="rounded-[4px] border border-[#e5e7eb] bg-[#fafafa] px-3 py-2">
-              <div className="flex flex-wrap items-center gap-2 min-w-0">
-                <div className="relative shrink-0">
-                  <select
-                    value={row.mainColumn}
-                    onChange={(e) => updateRow(row.id, { mainColumn: e.target.value })}
-                    className="h-9 w-[180px] py-0 pl-3 pr-9 rounded-[4px] border border-[#e9eaeb] bg-white text-[13px] text-[#0a0a0a] appearance-none"
-                  >
-                    <option value="">Select column</option>
-                    {EXC_ADV_PRODUCT.map((col) => (
-                      <option key={col.id} value={col.label}>
-                        {col.label}
-                      </option>
-                    ))}
-                  </select>
-                  <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
-                    <IconChevronDownSelect />
-                  </span>
-                </div>
-                <div className="relative shrink-0">
-                  <select
-                    value={row.condition}
-                    onChange={(e) => updateRow(row.id, { condition: e.target.value })}
-                    className="h-9 w-[160px] py-0 pl-3 pr-9 rounded-[4px] border border-[#e9eaeb] bg-white text-[13px] text-[#0a0a0a] appearance-none"
-                  >
-                    <option value="">Select condition</option>
-                    {ADVANCED_CONDITION_OPTIONS.map((option) => (
-                      <option key={option} value={option}>
-                        {option}
-                      </option>
-                    ))}
-                  </select>
-                  <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
-                    <IconChevronDownSelect />
-                  </span>
-                </div>
-                <input
-                  type="text"
-                  value={row.value}
-                  onChange={(e) => updateRow(row.id, { value: e.target.value })}
-                  placeholder="Enter value"
-                  className="h-9 w-[120px] px-3 rounded-[4px] border border-[#e9eaeb] bg-white text-[13px] text-[#0a0a0a] placeholder:text-[#9ca3af]"
-                />
-                <button
-                  type="button"
-                  className="shrink-0 h-8 w-8 flex items-center justify-center rounded-[4px] text-[#4b535c] hover:bg-[#e5e7eb] hover:text-[#0a0a0a] ml-auto"
-                  aria-label="Remove condition"
-                  onClick={() => removeRow(row.id)}
-                >
-                  <IconClose className="size-4" />
-                </button>
-              </div>
-            </div>
-          </Fragment>
-        ))}
-      </div>
-      <div className="mt-3 flex flex-row gap-4">
-        <button type="button" onClick={addRow} className="text-[14px] font-medium text-[#1d4ed8] hover:underline">
-          + Add condition
-        </button>
-        {rows.length >= 1 && (
-          <button type="button" onClick={clearAll} className="text-[14px] font-medium text-[#4b535c] hover:underline">
-            Clear filters
+  const renderSection = (title, fields) => (
+    <div>
+      <p className="px-4 py-2 text-[12px] font-medium uppercase tracking-[0.04em] text-[#4b535c]">{title}</p>
+      {fields.map(({ key, label }) => {
+        const isSelected = extraVisibleFilters.includes(key)
+        return (
+          <button
+            key={key}
+            type="button"
+            onClick={() => onToggleExtraFilter(key)}
+            className="flex w-full items-center justify-between px-4 py-2 text-left text-[14px] text-[#0a0a0a] hover:bg-[#f5f5f5]"
+          >
+            <span>{label}</span>
+            {isSelected && <Check className="h-4 w-4 text-[#1d4ed8]" aria-hidden />}
           </button>
-        )}
-      </div>
+        )
+      })}
+    </div>
+  )
+
+  return (
+    <div ref={containerRef} className="relative">
+      <button
+        type="button"
+        onClick={onToggle}
+        className="mt-3 flex items-center gap-1 py-2 text-[14px] font-medium text-[#1d4ed8] hover:underline"
+      >
+        <Plus className="size-4 shrink-0" aria-hidden />
+        More filters
+      </button>
+      {isOpen && (
+        <div className="absolute left-0 top-full z-30 mt-1 w-[280px] rounded-[4px] border border-[#e5e7eb] bg-white py-2 shadow-md">
+          {renderSection('PRODUCTS', SCOPE_EXPANDED_PRODUCT_FIELDS)}
+          {renderSection('LOCATIONS', SCOPE_EXPANDED_LOCATION_FIELDS)}
+        </div>
+      )}
     </div>
   )
 }
@@ -969,11 +885,18 @@ function createDefaultScheduleBlock(id) {
     id,
     name: '',
     movementTypes: [],
+    networkTag: '',
+    confidenceLevels: ['Very High', 'High', 'Medium', 'Low', 'Very Low'],
+    targetCoverageValue: '',
+    targetCoverageUnit: 'Weeks',
     repeatEvery: 1,
     repeatEveryUnit: 'week',
     submissionDay: 'wednesday',
     submissionDate: '',
     submissionTime: '09:00',
+    generationDay: 'wednesday',
+    generationDate: '',
+    generationTime: '09:00',
     skipEvery: '',
     skipEveryUnit: 'weeks',
     notifyUsers: '',
@@ -982,9 +905,44 @@ function createDefaultScheduleBlock(id) {
   }
 }
 
-function buildSchedulingSummary(block) {
-  const unitLabel = formatRepeatUnitLabel(block.repeatEveryUnit, block.repeatEvery)
-  return `${block.repeatEvery} ${unitLabel} on ${capitalizeDay(block.submissionDay)} at ${block.submissionTime}`
+function ScheduleDayOfWeekSelector({ value, onChange }) {
+  return (
+    <div className="flex gap-4">
+      {SUBMISSION_DAYS.map(({ key, letter }) => (
+        <button
+          key={key}
+          type="button"
+          onClick={() => onChange(key)}
+          className={`flex size-10 shrink-0 items-center justify-center rounded-full text-[14px] font-medium transition-colors ${
+            value === key ? 'bg-[#1d4ed8] text-white' : 'bg-[#F8F8F8] text-[#4b535c] hover:bg-[#eee]'
+          }`}
+        >
+          {letter}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+function ScheduleTimeSelect({ value, onChange }) {
+  return (
+    <div className="relative w-[110px] shrink-0">
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="h-12 w-full appearance-none rounded-[4px] border border-[#E9EAEB] bg-white px-4 py-3 pr-10 text-[14px] text-[#0a0a0a]"
+      >
+        {SUBMISSION_TIME_OPTIONS.map((label) => (
+          <option key={label} value={label}>
+            {label}
+          </option>
+        ))}
+      </select>
+      <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[#4b535c]">
+        <IconChevronDownSelect />
+      </span>
+    </div>
+  )
 }
 
 function buildBlockSummary(block) {
@@ -1088,6 +1046,59 @@ function ScheduleDetailsBlock({ block, index, isExpanded, onToggleExpand, onRemo
           showSelectedLabels={true}
         />
 
+        <CreateScheduleScopeSingleSelect
+          label="Network tag"
+          helperText="This schedule will apply the tagged constraints set in your Network and Trip capacity parameters."
+          placeholder="Select network tag"
+          options={['Paris courier', 'Weekly replen', 'Saturday replan', 'Weekend rebal']}
+          value={block.networkTag}
+          onChange={(next) => onUpdate({ networkTag: next })}
+        />
+
+        <CreateScheduleScopeMultiSelect
+          label="Confidence level"
+          helperText="Select which Autone confidence recommendations you see in the scheduled proposal."
+          placeholder="Select confidence levels"
+          options={['Very High', 'High', 'Medium', 'Low', 'Very Low']}
+          includeValues={block.confidenceLevels}
+          onIncludeChange={(next) => onUpdate({ confidenceLevels: next })}
+          excludeValues={[]}
+          onExcludeChange={() => {}}
+          hideModeToggle={true}
+          showSelectAll={true}
+          showSelectedLabels={true}
+        />
+
+        <div className="flex flex-col gap-1.5">
+          <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Target coverage</label>
+          <div className="flex items-center gap-2">
+            <input
+              type="number"
+              placeholder="0"
+              value={block.targetCoverageValue}
+              onChange={(e) => onUpdate({ targetCoverageValue: e.target.value })}
+              className="h-12 w-[100px] shrink-0 rounded-[4px] border border-[#EAEAEA] bg-white px-4 text-[14px] text-[#0a0a0a] placeholder:text-[#9ca3af] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+            />
+            <div className="relative shrink-0">
+              <select
+                value={block.targetCoverageUnit}
+                onChange={(e) => onUpdate({ targetCoverageUnit: e.target.value })}
+                className="h-12 w-[120px] appearance-none rounded-[4px] border border-[#EAEAEA] bg-white py-0 pl-4 pr-10 text-[14px] text-[#0a0a0a]"
+              >
+                <option value="Weeks">Weeks</option>
+                <option value="Days">Days</option>
+              </select>
+              <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[#4b535c]">
+                <IconChevronDownSelect />
+              </span>
+            </div>
+          </div>
+          <p className="text-[12px] text-[#4b535c]">
+            Instead of covering you until the next scheduled proposal, input how many weeks of stock you want your
+            locations to hold.
+          </p>
+        </div>
+
         <section className="mt-4 flex flex-col gap-4">
           <p className="mb-3 text-[14px] font-medium text-[#0a0a0a]">Scheduling dates</p>
 
@@ -1136,63 +1147,60 @@ function ScheduleDetailsBlock({ block, index, isExpanded, onToggleExpand, onRemo
             </div>
           </div>
 
-          <div className="flex flex-col gap-1.5">
-            <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Submission day</label>
-            <div className="flex gap-4">
-              {SUBMISSION_DAYS.map(({ key, letter }) => (
-                <button
-                  key={key}
-                  type="button"
-                  onClick={() => onUpdate({ submissionDay: key })}
-                  className={`flex size-10 shrink-0 items-center justify-center rounded-full text-[14px] font-medium transition-colors ${
-                    block.submissionDay === key
-                      ? 'bg-[#1d4ed8] text-white'
-                      : 'bg-[#F8F8F8] text-[#4b535c] hover:bg-[#eee]'
-                  }`}
-                >
-                  {letter}
-                </button>
-              ))}
+          <div>
+            <p className="mt-3 text-[13px] font-medium text-[#0a0a0a]">When recommendations become available</p>
+            <p className="mb-2 text-[12px] text-[#4b535c]">
+              When the next batch of recommendations is created and ready to review.
+            </p>
+            <div className="flex items-center gap-3">
+              {block.repeatEveryUnit === 'week' && (
+                <ScheduleDayOfWeekSelector
+                  value={block.generationDay}
+                  onChange={(next) => onUpdate({ generationDay: next })}
+                />
+              )}
+              {block.repeatEveryUnit === 'month' && (
+                <input
+                  type="date"
+                  value={block.generationDate}
+                  onChange={(e) => onUpdate({ generationDate: e.target.value })}
+                  className="h-12 w-[160px] shrink-0 rounded-[4px] border border-[#EAEAEA] bg-white px-4 text-[14px] text-[#0a0a0a]"
+                />
+              )}
+              <ScheduleTimeSelect
+                value={block.generationTime}
+                onChange={(next) => onUpdate({ generationTime: next })}
+              />
             </div>
           </div>
 
-          <div className="flex flex-col gap-1.5">
-            <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Submission date</label>
-            <input
-              type="date"
-              value={block.submissionDate}
-              onChange={(e) => onUpdate({ submissionDate: e.target.value })}
-              className="h-12 w-[200px] rounded-[4px] border border-[#EAEAEA] bg-white px-4 text-[14px] text-[#0a0a0a]"
-            />
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Submission time</label>
-            <div className="relative w-[200px]">
-              <select
+          <div>
+            <p className="mt-4 text-[13px] font-medium text-[#0a0a0a]">Submission deadline (Optional)</p>
+            <p className="mb-2 text-[12px] text-[#4b535c]">
+              The deadline by which all approved recommendations will be auto-submitted. Leave blank if you don&apos;t
+              want auto-submission.
+            </p>
+            <div className="flex items-center gap-3">
+              {block.repeatEveryUnit === 'week' && (
+                <ScheduleDayOfWeekSelector
+                  value={block.submissionDay}
+                  onChange={(next) => onUpdate({ submissionDay: next })}
+                />
+              )}
+              {block.repeatEveryUnit === 'month' && (
+                <input
+                  type="date"
+                  value={block.submissionDate}
+                  onChange={(e) => onUpdate({ submissionDate: e.target.value })}
+                  className="h-12 w-[160px] shrink-0 rounded-[4px] border border-[#EAEAEA] bg-white px-4 text-[14px] text-[#0a0a0a]"
+                />
+              )}
+              <ScheduleTimeSelect
                 value={block.submissionTime}
-                onChange={(e) => onUpdate({ submissionTime: e.target.value })}
-                className="h-12 w-full appearance-none rounded-[4px] border border-[#E9EAEB] bg-white px-4 py-3 pr-10 text-[14px] text-[#0a0a0a]"
-              >
-                {SUBMISSION_TIME_OPTIONS.map((label) => (
-                  <option key={label} value={label}>
-                    {label}
-                  </option>
-                ))}
-              </select>
-              <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[#4b535c]">
-                <IconChevronDownSelect />
-              </span>
+                onChange={(next) => onUpdate({ submissionTime: next })}
+              />
             </div>
           </div>
-
-          <p className="text-[12px] italic text-[#4b535c]">
-            The deadline by which all approved recommendations will be submitted.
-          </p>
-
-          <p className="text-[12px] italic text-[#4b535c]">
-            New scheduled recommendations available every {buildSchedulingSummary(block)}
-          </p>
         </section>
 
         <section className="mt-6 border-t border-[#e5e7eb] pt-6">
@@ -1265,6 +1273,9 @@ function ScheduleDetailsBlock({ block, index, isExpanded, onToggleExpand, onRemo
 
         <section className="mt-6 border-t border-[#e5e7eb] pt-6">
           <p className="mb-3 text-[14px] font-medium text-[#0a0a0a]">Notify users</p>
+          <p className="mb-3 text-[12px] text-[#4b535c]">
+            Notified when a new proposal is created, as the submission deadline approaches and when a batch is submitted.
+          </p>
           <input
             type="text"
             value={block.notifyUsers}
@@ -1430,13 +1441,9 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
   const [productsMode, setProductsMode] = useState('include')
   const [locationTypesMode, setLocationTypesMode] = useState('include')
   const [locationsMode, setLocationsMode] = useState('include')
-  const [isExpanded, setIsExpanded] = useState(false)
+  const [extraVisibleFilters, setExtraVisibleFilters] = useState([])
+  const [isMoreFiltersOpen, setIsMoreFiltersOpen] = useState(false)
   const [expandedFieldState, setExpandedFieldState] = useState(createInitialExpandedFieldState)
-  const [advancedRows, setAdvancedRows] = useState([])
-  const [modeOfTransport, setModeOfTransport] = useState('')
-  const [confidenceLevels, setConfidenceLevels] = useState(['Very High', 'High', 'Medium', 'Low', 'Very Low'])
-  const [targetCoverageValue, setTargetCoverageValue] = useState('')
-  const [targetCoverageUnit, setTargetCoverageUnit] = useState('Weeks')
   const [currentStep, setCurrentStep] = useState(1)
   const [proposalName, setProposalName] = useState('')
   const [scheduleBlocks, setScheduleBlocks] = useState([createDefaultScheduleBlock('block-1')])
@@ -1693,6 +1700,15 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
     }))
   }
 
+  const toggleExtraFilter = (fieldKey) => {
+    if (extraVisibleFilters.includes(fieldKey)) {
+      updateExpandedField(fieldKey, { include: [], exclude: [] })
+      setExtraVisibleFilters((prev) => prev.filter((k) => k !== fieldKey))
+    } else {
+      setExtraVisibleFilters((prev) => [...prev, fieldKey])
+    }
+  }
+
   const scopeActiveFilterEntries = [
     {
       fieldKey: 'department',
@@ -1742,40 +1758,29 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
       onClearInclude: () => setLocationsInclude([]),
       onClearExclude: () => setLocationsExclude([]),
     },
-    ...SCOPE_EXPANDED_PRODUCT_FIELDS.map(({ key, label }) => ({
+    ...SCOPE_EXPANDED_PRODUCT_FIELDS.filter(({ key }) => extraVisibleFilters.includes(key)).map(
+      ({ key, label }) => ({
       fieldKey: key,
       label,
       includeValues: expandedFieldState[key].include,
       excludeValues: expandedFieldState[key].exclude,
       onClearInclude: () => updateExpandedField(key, { include: [] }),
       onClearExclude: () => updateExpandedField(key, { exclude: [] }),
-    })),
-    ...SCOPE_EXPANDED_LOCATION_FIELDS.map(({ key, label }) => ({
+    })
+    ),
+    ...SCOPE_EXPANDED_LOCATION_FIELDS.filter(({ key }) => extraVisibleFilters.includes(key)).map(
+      ({ key, label }) => ({
       fieldKey: key,
       label,
       includeValues: expandedFieldState[key].include,
       excludeValues: expandedFieldState[key].exclude,
       onClearInclude: () => updateExpandedField(key, { include: [] }),
       onClearExclude: () => updateExpandedField(key, { exclude: [] }),
-    })),
+    })
+    ),
   ]
 
-  const advancedChips = advancedRows
-    .filter((row) => row.mainColumn && row.condition && row.value)
-    .map((row) => ({
-      id: row.id,
-      mainColumn: row.mainColumn,
-      condition: row.condition,
-      value: row.value,
-      onRemove: () => setAdvancedRows((prev) => prev.filter((r) => r.id !== row.id)),
-    }))
-
   const CREATE_SCHEDULE_WIZARD_STEPS = [
-    {
-      title: 'Setup',
-      subtitle: 'Configure transport, confidence levels, and target coverage for this proposal.',
-      continueLabel: 'Continue to Scope',
-    },
     {
       title: 'Scope',
       subtitle: 'Define the products, locations, and network for this schedule.',
@@ -1821,7 +1826,7 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
         </div>
 
         <div className="mt-2 mb-4 flex w-full gap-1">
-          {[0, 1, 2, 3].map((segmentIndex) => (
+          {[0, 1, 2].map((segmentIndex) => (
             <div
               key={segmentIndex}
               className={`h-1 flex-1 rounded-full ${
@@ -1834,14 +1839,14 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
         <div className="mb-6 flex items-start justify-between gap-4">
           <div className="min-w-0">
             {currentStep === 1 ? (
-              <p className="text-[14px] font-medium text-[#0a0a0a]">Step 1 of 4</p>
+              <p className="text-[14px] font-medium text-[#0a0a0a]">Step 1 of 3</p>
             ) : (
               <button
                 type="button"
                 onClick={() => setCurrentStep((step) => step - 1)}
                 className="flex cursor-pointer items-center gap-1.5 text-[14px] font-medium text-[#1d4ed8] hover:underline"
               >
-                ← Step {currentStep} of 4
+                ← Step {currentStep} of 3
               </button>
             )}
             <h2 className="mt-1 text-[22px] font-semibold text-[#0a0a0a]">
@@ -1851,7 +1856,7 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
               {CREATE_SCHEDULE_WIZARD_STEPS[currentStep - 1].subtitle}
             </p>
           </div>
-          {currentStep < 4 && (
+          {currentStep < 3 && (
             <button
               type="button"
               onClick={() => setCurrentStep((step) => step + 1)}
@@ -1863,66 +1868,7 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
         </div>
 
         {currentStep === 1 && (
-          <>
-            <div className="mb-4">
-              <CreateScheduleScopeSingleSelect
-                label="Mode of transport"
-                helperText="This schedule will apply the transport constraints set in your Network and Trip capacity parameters."
-                placeholder="Select mode of transport"
-                options={['Road', 'Rail', 'Air', 'Foot']}
-                value={modeOfTransport}
-                onChange={setModeOfTransport}
-              />
-            </div>
-            <div className="mb-4">
-              <CreateScheduleScopeMultiSelect
-                label="Confidence level"
-                helperText="Select which Autone confidence recommendations you see in the scheduled proposal"
-                placeholder="Select confidence levels"
-                options={['Very High', 'High', 'Medium', 'Low', 'Very Low']}
-                includeValues={confidenceLevels}
-                onIncludeChange={setConfidenceLevels}
-                excludeValues={[]}
-                onExcludeChange={() => {}}
-                hideModeToggle
-                showSelectAll
-                showSelectedLabels
-              />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Target coverage</label>
-              <div className="flex items-center gap-2">
-                <input
-                  type="number"
-                  placeholder="0"
-                  value={targetCoverageValue}
-                  onChange={(e) => setTargetCoverageValue(e.target.value)}
-                  className="h-14 w-32 shrink-0 rounded-[4px] border border-[#EAEAEA] bg-white px-4 text-[16px] text-[#0a0a0a] placeholder:text-[#9ca3af] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                />
-                <div className="relative shrink-0">
-                  <select
-                    value={targetCoverageUnit}
-                    onChange={(e) => setTargetCoverageUnit(e.target.value)}
-                    className="h-14 w-32 py-0 pl-4 pr-10 rounded-[4px] border border-[#EAEAEA] bg-white text-[16px] text-[#0a0a0a] appearance-none"
-                  >
-                    <option value="Weeks">Weeks</option>
-                    <option value="Days">Days</option>
-                  </select>
-                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
-                    <IconChevronDownSelect />
-                  </span>
-                </div>
-              </div>
-              <p className="mt-1.5 text-[12px] leading-[16px] text-[#4b535c]">
-                Instead of covering you until the next scheduled proposal, input how many weeks of stock you want your
-                locations to hold.
-              </p>
-            </div>
-          </>
-        )}
-
-        {currentStep === 2 && (
-          <div className="border border-[#EAEAEA] rounded-[4px] bg-white overflow-hidden">
+          <div className="border border-[#EAEAEA] rounded-[4px] bg-white overflow-visible">
             <div className="px-5 pb-6 pt-2 flex flex-col gap-6">
                 <section className="flex flex-col gap-3">
                   <h3 className="text-[14px] font-medium text-[#0a0a0a]">
@@ -1966,7 +1912,7 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
 
                   {locationScopeOption === 'select' && (
                     <>
-                      <ActiveFilterChips entries={scopeActiveFilterEntries} advancedChips={advancedChips} />
+                      <ActiveFilterChips entries={scopeActiveFilterEntries} />
                       <CreateScheduleScopeFilterPanel
                       warehouseInclude={warehouseInclude}
                       setWarehouseInclude={setWarehouseInclude}
@@ -2004,26 +1950,17 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                       setLocationsExclude={setLocationsExclude}
                       locationsMode={locationsMode}
                       setLocationsMode={setLocationsMode}
+                      extraVisibleFilters={extraVisibleFilters}
+                      expandedFieldState={expandedFieldState}
+                      updateExpandedField={updateExpandedField}
                     />
-                      <button
-                        type="button"
-                        onClick={() => setIsExpanded((v) => !v)}
-                        className="mt-4 flex items-center gap-1 text-[14px] font-medium text-[#1d4ed8] hover:underline"
-                      >
-                        {isExpanded ? 'Show fewer filters' : 'Show all filters'}
-                        <IconChevronDown
-                          className={`size-4 shrink-0 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
-                          aria-hidden
-                        />
-                      </button>
-                      {isExpanded && (
-                        <CreateScheduleScopeExpandedFilters
-                          expandedFieldState={expandedFieldState}
-                          updateExpandedField={updateExpandedField}
-                          advancedRows={advancedRows}
-                          setAdvancedRows={setAdvancedRows}
-                        />
-                      )}
+                      <CreateScheduleMoreFiltersMenu
+                        isOpen={isMoreFiltersOpen}
+                        onToggle={() => setIsMoreFiltersOpen((v) => !v)}
+                        onClose={() => setIsMoreFiltersOpen(false)}
+                        extraVisibleFilters={extraVisibleFilters}
+                        onToggleExtraFilter={toggleExtraFilter}
+                      />
                     </>
                   )}
                 </section>
@@ -2031,7 +1968,7 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
           </div>
         )}
 
-        {currentStep === 3 && (
+        {currentStep === 2 && (
           <div className="max-w-[800px]">
             <div className="flex flex-col gap-3">
               {scheduleBlocks.map((block, index) => (
@@ -2061,12 +1998,11 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
           </div>
         )}
 
-        {currentStep === 4 && (
+        {currentStep === 3 && (
           <div className="flex flex-col gap-4">
             {[
-              { title: 'Setup', step: 1 },
-              { title: 'Scope', step: 2 },
-              { title: 'Schedule details', step: 3 },
+              { title: 'Scope', step: 1 },
+              { title: 'Schedule details', step: 2 },
             ].map(({ title, step }) => (
               <div key={title} className="rounded-[4px] border border-[#e5e7eb] bg-[#fafafa] p-4">
                 <div className="mb-3 flex items-center justify-between">
@@ -2086,7 +2022,7 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
           </div>
         )}
 
-        {currentStep === 4 && (
+        {currentStep === 3 && (
           <div className="flex items-center justify-end gap-3 pt-6">
             <button
               type="button"
