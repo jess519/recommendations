@@ -172,9 +172,8 @@ function getScopeExcludeChipText(excludeValues) {
   return `All except: ${excludeValues[0]}, ${excludeValues[1]}, +${excludeValues.length - 2} more`
 }
 
-function ActiveFilterChips({ entries, advancedChips = [] }) {
-  const hasAny =
-    entries.some((e) => e.includeValues.length > 0 || e.excludeValues.length > 0) || advancedChips.length >= 1
+function ActiveFilterChips({ entries }) {
+  const hasAny = entries.some((e) => e.includeValues.length > 0 || e.excludeValues.length > 0)
   if (!hasAny) return null
 
   return (
@@ -208,22 +207,6 @@ function ActiveFilterChips({ entries, advancedChips = [] }) {
             </span>
           )}
         </Fragment>
-      ))}
-      {advancedChips.map((chip) => (
-        <span
-          key={chip.id}
-          className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-100 px-3 py-1.5 text-[13px] font-medium text-slate-700"
-        >
-          <span>{`${chip.mainColumn}: ${chip.condition.toLowerCase()} ${chip.value}`}</span>
-          <button
-            type="button"
-            onClick={chip.onRemove}
-            aria-label={`Remove ${chip.mainColumn} filter`}
-            className="shrink-0 flex items-center justify-center text-slate-700 hover:text-slate-900"
-          >
-            <IconClose className="size-3.5" />
-          </button>
-        </span>
       ))}
     </div>
   )
@@ -773,7 +756,7 @@ function CreateScheduleScopeFilterPanel({
   )
 }
 
-function CreateScheduleScopeExpandedFilters({ expandedFieldState, updateExpandedField, advancedRows, setAdvancedRows }) {
+function CreateScheduleScopeExpandedFilters({ expandedFieldState, updateExpandedField }) {
   const renderField = ({ key, label }) => (
     <CreateScheduleScopeMultiSelect
       key={key}
@@ -803,135 +786,7 @@ function CreateScheduleScopeExpandedFilters({ expandedFieldState, updateExpanded
           {SCOPE_EXPANDED_LOCATION_FIELDS.map(renderField)}
         </div>
       </div>
-      <ScopeAdvancedFilters rows={advancedRows} setRows={setAdvancedRows} />
     </>
-  )
-}
-
-const EXC_ADV_PRODUCT = [
-  { id: 'currentUnits', label: 'Current units' },
-  { id: 'forecast', label: 'Forecast' },
-  { id: 'transferUnits', label: 'Transfer units' },
-  { id: 'currentWarehouse', label: 'Current warehouse' },
-  { id: 'last7DaysSales', label: 'Last 7 days sales' },
-  { id: 'last30DaysSales', label: 'Last 30 days sales' },
-  { id: 'understocksBefore', label: 'Understocks before' },
-  { id: 'understocksAfter', label: 'Understocks after' },
-  { id: 'overstocksBefore', label: 'Overstocks before' },
-  { id: 'overstocksAfter', label: 'Overstocks after' },
-  { id: 'salesUplift', label: 'Sales uplift' },
-]
-
-const ADVANCED_CONDITION_OPTIONS = [
-  'Equal to',
-  'Greater than',
-  'Lower than',
-  'Greater than or equal to',
-  'Lower than or equal to',
-]
-
-function ScopeAdvancedFilters({ rows, setRows }) {
-  const addRow = () => {
-    setRows((prev) => [
-      ...prev,
-      {
-        id: `scope-adv-${Date.now()}-${prev.length}`,
-        mainColumn: '',
-        condition: '',
-        value: '',
-      },
-    ])
-  }
-
-  const removeRow = (id) => {
-    setRows((prev) => prev.filter((row) => row.id !== id))
-  }
-
-  const updateRow = (id, updates) => {
-    setRows((prev) => prev.map((row) => (row.id === id ? { ...row, ...updates } : row)))
-  }
-
-  const clearAll = () => setRows([])
-
-  return (
-    <div className="mt-4 rounded-[4px] border border-[#e5e7eb] bg-[#fafafa] p-4">
-      <h4 className="text-[13px] font-medium text-[#0a0a0a] uppercase tracking-[0.04em]">Advanced filters</h4>
-      <p className="mt-1 mb-3 text-[12px] font-normal text-[#4b535c]">Apply to rows where these conditions are met</p>
-      <div className="flex flex-col">
-        {rows.map((row, rowIdx) => (
-          <Fragment key={row.id}>
-            {rowIdx > 0 && (
-              <div className="flex justify-center py-1">
-                <span className="text-[11px] font-medium text-[#9ca3af] uppercase tracking-wider">AND</span>
-              </div>
-            )}
-            <div className="rounded-[4px] border border-[#e5e7eb] bg-[#fafafa] px-3 py-2">
-              <div className="flex flex-wrap items-center gap-2 min-w-0">
-                <div className="relative shrink-0">
-                  <select
-                    value={row.mainColumn}
-                    onChange={(e) => updateRow(row.id, { mainColumn: e.target.value })}
-                    className="h-9 w-[180px] py-0 pl-3 pr-9 rounded-[4px] border border-[#e9eaeb] bg-white text-[13px] text-[#0a0a0a] appearance-none"
-                  >
-                    <option value="">Select column</option>
-                    {EXC_ADV_PRODUCT.map((col) => (
-                      <option key={col.id} value={col.label}>
-                        {col.label}
-                      </option>
-                    ))}
-                  </select>
-                  <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
-                    <IconChevronDownSelect />
-                  </span>
-                </div>
-                <div className="relative shrink-0">
-                  <select
-                    value={row.condition}
-                    onChange={(e) => updateRow(row.id, { condition: e.target.value })}
-                    className="h-9 w-[160px] py-0 pl-3 pr-9 rounded-[4px] border border-[#e9eaeb] bg-white text-[13px] text-[#0a0a0a] appearance-none"
-                  >
-                    <option value="">Select condition</option>
-                    {ADVANCED_CONDITION_OPTIONS.map((option) => (
-                      <option key={option} value={option}>
-                        {option}
-                      </option>
-                    ))}
-                  </select>
-                  <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
-                    <IconChevronDownSelect />
-                  </span>
-                </div>
-                <input
-                  type="text"
-                  value={row.value}
-                  onChange={(e) => updateRow(row.id, { value: e.target.value })}
-                  placeholder="Enter value"
-                  className="h-9 w-[120px] px-3 rounded-[4px] border border-[#e9eaeb] bg-white text-[13px] text-[#0a0a0a] placeholder:text-[#9ca3af]"
-                />
-                <button
-                  type="button"
-                  className="shrink-0 h-8 w-8 flex items-center justify-center rounded-[4px] text-[#4b535c] hover:bg-[#e5e7eb] hover:text-[#0a0a0a] ml-auto"
-                  aria-label="Remove condition"
-                  onClick={() => removeRow(row.id)}
-                >
-                  <IconClose className="size-4" />
-                </button>
-              </div>
-            </div>
-          </Fragment>
-        ))}
-      </div>
-      <div className="mt-3 flex flex-row gap-4">
-        <button type="button" onClick={addRow} className="text-[14px] font-medium text-[#1d4ed8] hover:underline">
-          + Add condition
-        </button>
-        {rows.length >= 1 && (
-          <button type="button" onClick={clearAll} className="text-[14px] font-medium text-[#4b535c] hover:underline">
-            Clear filters
-          </button>
-        )}
-      </div>
-    </div>
   )
 }
 
@@ -1432,7 +1287,6 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
   const [locationsMode, setLocationsMode] = useState('include')
   const [isExpanded, setIsExpanded] = useState(false)
   const [expandedFieldState, setExpandedFieldState] = useState(createInitialExpandedFieldState)
-  const [advancedRows, setAdvancedRows] = useState([])
   const [modeOfTransport, setModeOfTransport] = useState('')
   const [confidenceLevels, setConfidenceLevels] = useState(['Very High', 'High', 'Medium', 'Low', 'Very Low'])
   const [targetCoverageValue, setTargetCoverageValue] = useState('')
@@ -1760,16 +1614,6 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
     })),
   ]
 
-  const advancedChips = advancedRows
-    .filter((row) => row.mainColumn && row.condition && row.value)
-    .map((row) => ({
-      id: row.id,
-      mainColumn: row.mainColumn,
-      condition: row.condition,
-      value: row.value,
-      onRemove: () => setAdvancedRows((prev) => prev.filter((r) => r.id !== row.id)),
-    }))
-
   const CREATE_SCHEDULE_WIZARD_STEPS = [
     {
       title: 'Setup',
@@ -1966,7 +1810,7 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
 
                   {locationScopeOption === 'select' && (
                     <>
-                      <ActiveFilterChips entries={scopeActiveFilterEntries} advancedChips={advancedChips} />
+                      <ActiveFilterChips entries={scopeActiveFilterEntries} />
                       <CreateScheduleScopeFilterPanel
                       warehouseInclude={warehouseInclude}
                       setWarehouseInclude={setWarehouseInclude}
@@ -2020,8 +1864,6 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
                         <CreateScheduleScopeExpandedFilters
                           expandedFieldState={expandedFieldState}
                           updateExpandedField={updateExpandedField}
-                          advancedRows={advancedRows}
-                          setAdvancedRows={setAdvancedRows}
                         />
                       )}
                     </>
