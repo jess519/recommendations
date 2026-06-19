@@ -894,6 +894,9 @@ function createDefaultScheduleBlock(id) {
     submissionDay: 'wednesday',
     submissionDate: '',
     submissionTime: '09:00',
+    generationDay: 'wednesday',
+    generationDate: '',
+    generationTime: '09:00',
     skipEvery: '',
     skipEveryUnit: 'weeks',
     notifyUsers: '',
@@ -902,9 +905,44 @@ function createDefaultScheduleBlock(id) {
   }
 }
 
-function buildSchedulingSummary(block) {
-  const unitLabel = formatRepeatUnitLabel(block.repeatEveryUnit, block.repeatEvery)
-  return `${block.repeatEvery} ${unitLabel} on ${capitalizeDay(block.submissionDay)} at ${block.submissionTime}`
+function ScheduleDayOfWeekSelector({ value, onChange }) {
+  return (
+    <div className="flex gap-4">
+      {SUBMISSION_DAYS.map(({ key, letter }) => (
+        <button
+          key={key}
+          type="button"
+          onClick={() => onChange(key)}
+          className={`flex size-10 shrink-0 items-center justify-center rounded-full text-[14px] font-medium transition-colors ${
+            value === key ? 'bg-[#1d4ed8] text-white' : 'bg-[#F8F8F8] text-[#4b535c] hover:bg-[#eee]'
+          }`}
+        >
+          {letter}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+function ScheduleTimeSelect({ value, onChange }) {
+  return (
+    <div className="relative w-[110px] shrink-0">
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="h-12 w-full appearance-none rounded-[4px] border border-[#E9EAEB] bg-white px-4 py-3 pr-10 text-[14px] text-[#0a0a0a]"
+      >
+        {SUBMISSION_TIME_OPTIONS.map((label) => (
+          <option key={label} value={label}>
+            {label}
+          </option>
+        ))}
+      </select>
+      <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[#4b535c]">
+        <IconChevronDownSelect />
+      </span>
+    </div>
+  )
 }
 
 function buildBlockSummary(block) {
@@ -1109,63 +1147,60 @@ function ScheduleDetailsBlock({ block, index, isExpanded, onToggleExpand, onRemo
             </div>
           </div>
 
-          <div className="flex flex-col gap-1.5">
-            <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Submission day</label>
-            <div className="flex gap-4">
-              {SUBMISSION_DAYS.map(({ key, letter }) => (
-                <button
-                  key={key}
-                  type="button"
-                  onClick={() => onUpdate({ submissionDay: key })}
-                  className={`flex size-10 shrink-0 items-center justify-center rounded-full text-[14px] font-medium transition-colors ${
-                    block.submissionDay === key
-                      ? 'bg-[#1d4ed8] text-white'
-                      : 'bg-[#F8F8F8] text-[#4b535c] hover:bg-[#eee]'
-                  }`}
-                >
-                  {letter}
-                </button>
-              ))}
+          <div>
+            <p className="mt-3 text-[13px] font-medium text-[#0a0a0a]">When recommendations become available</p>
+            <p className="mb-2 text-[12px] text-[#4b535c]">
+              When the next batch of recommendations is created and ready to review.
+            </p>
+            <div className="flex items-center gap-3">
+              {block.repeatEveryUnit === 'week' && (
+                <ScheduleDayOfWeekSelector
+                  value={block.generationDay}
+                  onChange={(next) => onUpdate({ generationDay: next })}
+                />
+              )}
+              {block.repeatEveryUnit === 'month' && (
+                <input
+                  type="date"
+                  value={block.generationDate}
+                  onChange={(e) => onUpdate({ generationDate: e.target.value })}
+                  className="h-12 w-[160px] shrink-0 rounded-[4px] border border-[#EAEAEA] bg-white px-4 text-[14px] text-[#0a0a0a]"
+                />
+              )}
+              <ScheduleTimeSelect
+                value={block.generationTime}
+                onChange={(next) => onUpdate({ generationTime: next })}
+              />
             </div>
           </div>
 
-          <div className="flex flex-col gap-1.5">
-            <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Submission date</label>
-            <input
-              type="date"
-              value={block.submissionDate}
-              onChange={(e) => onUpdate({ submissionDate: e.target.value })}
-              className="h-12 w-[200px] rounded-[4px] border border-[#EAEAEA] bg-white px-4 text-[14px] text-[#0a0a0a]"
-            />
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Submission time</label>
-            <div className="relative w-[200px]">
-              <select
+          <div>
+            <p className="mt-4 text-[13px] font-medium text-[#0a0a0a]">Submission deadline (Optional)</p>
+            <p className="mb-2 text-[12px] text-[#4b535c]">
+              The deadline by which all approved recommendations will be auto-submitted. Leave blank if you don&apos;t
+              want auto-submission.
+            </p>
+            <div className="flex items-center gap-3">
+              {block.repeatEveryUnit === 'week' && (
+                <ScheduleDayOfWeekSelector
+                  value={block.submissionDay}
+                  onChange={(next) => onUpdate({ submissionDay: next })}
+                />
+              )}
+              {block.repeatEveryUnit === 'month' && (
+                <input
+                  type="date"
+                  value={block.submissionDate}
+                  onChange={(e) => onUpdate({ submissionDate: e.target.value })}
+                  className="h-12 w-[160px] shrink-0 rounded-[4px] border border-[#EAEAEA] bg-white px-4 text-[14px] text-[#0a0a0a]"
+                />
+              )}
+              <ScheduleTimeSelect
                 value={block.submissionTime}
-                onChange={(e) => onUpdate({ submissionTime: e.target.value })}
-                className="h-12 w-full appearance-none rounded-[4px] border border-[#E9EAEB] bg-white px-4 py-3 pr-10 text-[14px] text-[#0a0a0a]"
-              >
-                {SUBMISSION_TIME_OPTIONS.map((label) => (
-                  <option key={label} value={label}>
-                    {label}
-                  </option>
-                ))}
-              </select>
-              <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[#4b535c]">
-                <IconChevronDownSelect />
-              </span>
+                onChange={(next) => onUpdate({ submissionTime: next })}
+              />
             </div>
           </div>
-
-          <p className="text-[12px] italic text-[#4b535c]">
-            The deadline by which all approved recommendations will be submitted.
-          </p>
-
-          <p className="text-[12px] italic text-[#4b535c]">
-            New scheduled recommendations available every {buildSchedulingSummary(block)}
-          </p>
         </section>
 
         <section className="mt-6 border-t border-[#e5e7eb] pt-6">
@@ -1238,6 +1273,9 @@ function ScheduleDetailsBlock({ block, index, isExpanded, onToggleExpand, onRemo
 
         <section className="mt-6 border-t border-[#e5e7eb] pt-6">
           <p className="mb-3 text-[14px] font-medium text-[#0a0a0a]">Notify users</p>
+          <p className="mb-3 text-[12px] text-[#4b535c]">
+            Notified when a new proposal is created, as the submission deadline approaches and when a batch is submitted.
+          </p>
           <input
             type="text"
             value={block.notifyUsers}
