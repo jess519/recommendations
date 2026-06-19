@@ -885,6 +885,10 @@ function createDefaultScheduleBlock(id) {
     id,
     name: '',
     movementTypes: [],
+    networkTag: '',
+    confidenceLevels: ['Very High', 'High', 'Medium', 'Low', 'Very Low'],
+    targetCoverageValue: '',
+    targetCoverageUnit: 'Weeks',
     repeatEvery: 1,
     repeatEveryUnit: 'week',
     submissionDay: 'wednesday',
@@ -1003,6 +1007,59 @@ function ScheduleDetailsBlock({ block, index, isExpanded, onToggleExpand, onRemo
           hideModeToggle={true}
           showSelectedLabels={true}
         />
+
+        <CreateScheduleScopeSingleSelect
+          label="Network tag"
+          helperText="This schedule will apply the tagged constraints set in your Network and Trip capacity parameters."
+          placeholder="Select network tag"
+          options={['Paris courier', 'Weekly replen', 'Saturday replan', 'Weekend rebal']}
+          value={block.networkTag}
+          onChange={(next) => onUpdate({ networkTag: next })}
+        />
+
+        <CreateScheduleScopeMultiSelect
+          label="Confidence level"
+          helperText="Select which Autone confidence recommendations you see in the scheduled proposal."
+          placeholder="Select confidence levels"
+          options={['Very High', 'High', 'Medium', 'Low', 'Very Low']}
+          includeValues={block.confidenceLevels}
+          onIncludeChange={(next) => onUpdate({ confidenceLevels: next })}
+          excludeValues={[]}
+          onExcludeChange={() => {}}
+          hideModeToggle={true}
+          showSelectAll={true}
+          showSelectedLabels={true}
+        />
+
+        <div className="flex flex-col gap-1.5">
+          <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Target coverage</label>
+          <div className="flex items-center gap-2">
+            <input
+              type="number"
+              placeholder="0"
+              value={block.targetCoverageValue}
+              onChange={(e) => onUpdate({ targetCoverageValue: e.target.value })}
+              className="h-12 w-[100px] shrink-0 rounded-[4px] border border-[#EAEAEA] bg-white px-4 text-[14px] text-[#0a0a0a] placeholder:text-[#9ca3af] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+            />
+            <div className="relative shrink-0">
+              <select
+                value={block.targetCoverageUnit}
+                onChange={(e) => onUpdate({ targetCoverageUnit: e.target.value })}
+                className="h-12 w-[120px] appearance-none rounded-[4px] border border-[#EAEAEA] bg-white py-0 pl-4 pr-10 text-[14px] text-[#0a0a0a]"
+              >
+                <option value="Weeks">Weeks</option>
+                <option value="Days">Days</option>
+              </select>
+              <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[#4b535c]">
+                <IconChevronDownSelect />
+              </span>
+            </div>
+          </div>
+          <p className="text-[12px] text-[#4b535c]">
+            Instead of covering you until the next scheduled proposal, input how many weeks of stock you want your
+            locations to hold.
+          </p>
+        </div>
 
         <section className="mt-4 flex flex-col gap-4">
           <p className="mb-3 text-[14px] font-medium text-[#0a0a0a]">Scheduling dates</p>
@@ -1349,10 +1406,6 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
   const [extraVisibleFilters, setExtraVisibleFilters] = useState([])
   const [isMoreFiltersOpen, setIsMoreFiltersOpen] = useState(false)
   const [expandedFieldState, setExpandedFieldState] = useState(createInitialExpandedFieldState)
-  const [modeOfTransport, setModeOfTransport] = useState('')
-  const [confidenceLevels, setConfidenceLevels] = useState(['Very High', 'High', 'Medium', 'Low', 'Very Low'])
-  const [targetCoverageValue, setTargetCoverageValue] = useState('')
-  const [targetCoverageUnit, setTargetCoverageUnit] = useState('Weeks')
   const [currentStep, setCurrentStep] = useState(1)
   const [proposalName, setProposalName] = useState('')
   const [scheduleBlocks, setScheduleBlocks] = useState([createDefaultScheduleBlock('block-1')])
@@ -1781,64 +1834,7 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
           )}
         </div>
 
-        {currentStep === 1 && (
-          <>
-            <div className="mb-4">
-              <CreateScheduleScopeSingleSelect
-                label="Mode of transport"
-                helperText="This schedule will apply the transport constraints set in your Network and Trip capacity parameters."
-                placeholder="Select mode of transport"
-                options={['Road', 'Rail', 'Air', 'Foot']}
-                value={modeOfTransport}
-                onChange={setModeOfTransport}
-              />
-            </div>
-            <div className="mb-4">
-              <CreateScheduleScopeMultiSelect
-                label="Confidence level"
-                helperText="Select which Autone confidence recommendations you see in the scheduled proposal"
-                placeholder="Select confidence levels"
-                options={['Very High', 'High', 'Medium', 'Low', 'Very Low']}
-                includeValues={confidenceLevels}
-                onIncludeChange={setConfidenceLevels}
-                excludeValues={[]}
-                onExcludeChange={() => {}}
-                hideModeToggle
-                showSelectAll
-                showSelectedLabels
-              />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Target coverage</label>
-              <div className="flex items-center gap-2">
-                <input
-                  type="number"
-                  placeholder="0"
-                  value={targetCoverageValue}
-                  onChange={(e) => setTargetCoverageValue(e.target.value)}
-                  className="h-14 w-32 shrink-0 rounded-[4px] border border-[#EAEAEA] bg-white px-4 text-[16px] text-[#0a0a0a] placeholder:text-[#9ca3af] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                />
-                <div className="relative shrink-0">
-                  <select
-                    value={targetCoverageUnit}
-                    onChange={(e) => setTargetCoverageUnit(e.target.value)}
-                    className="h-14 w-32 py-0 pl-4 pr-10 rounded-[4px] border border-[#EAEAEA] bg-white text-[16px] text-[#0a0a0a] appearance-none"
-                  >
-                    <option value="Weeks">Weeks</option>
-                    <option value="Days">Days</option>
-                  </select>
-                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
-                    <IconChevronDownSelect />
-                  </span>
-                </div>
-              </div>
-              <p className="mt-1.5 text-[12px] leading-[16px] text-[#4b535c]">
-                Instead of covering you until the next scheduled proposal, input how many weeks of stock you want your
-                locations to hold.
-              </p>
-            </div>
-          </>
-        )}
+        {currentStep === 1 && <div className="min-h-[200px]" />}
 
         {currentStep === 2 && (
           <div className="border border-[#EAEAEA] rounded-[4px] bg-white overflow-visible">
