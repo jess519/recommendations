@@ -603,6 +603,135 @@ const CHART_DATA = Array.from({ length: 22 }, (_, i) => {
   }
 })
 
+// ============================================================
+// EXPLORER TAB MOCK DATA
+// ============================================================
+
+const EXPLORER_WAREHOUSE = 'Log01 entrepot logtex'
+
+const EXPLORER_STORES = [
+  'Opéra',
+  'G.L. Haussmann Maro',
+  'La Défense',
+  'Cap 3000',
+  'Lyon Herriot',
+  'Printemps Lille',
+]
+
+const EXPLORER_PRODUCTS = [
+  {
+    id: 'exp-p1',
+    name: 'Ang-sac pte main',
+    baseSku: 'A1252810',
+    colour: 'Noir',
+    sizes: ['XS', 'S', 'M', 'L'],
+    movementTypes: ['replenishment', 'rebalancing'],
+  },
+  {
+    id: 'exp-p2',
+    name: 'Croi-sac zip l',
+    baseSku: 'A1398810',
+    colour: 'Noir',
+    sizes: ['L'],
+    movementTypes: ['replenishment'],
+  },
+  {
+    id: 'exp-p3',
+    name: 'Pre-sac seau m',
+    baseSku: 'A101080',
+    colour: 'Bleu petrole',
+    sizes: ['M'],
+    movementTypes: ['replenishment'],
+  },
+  {
+    id: 'exp-p4',
+    name: 'Croi-sac zip s',
+    baseSku: 'A1398811',
+    colour: 'Noir',
+    sizes: ['S'],
+    movementTypes: ['rebalancing'],
+  },
+  {
+    id: 'exp-p5',
+    name: 'Pre-sac seau s',
+    baseSku: 'A101081',
+    colour: 'Bleu petrole',
+    sizes: ['S'],
+    movementTypes: ['rebalancing'],
+  },
+]
+
+const STATUS_CYCLE = [
+  'approved_by_system', 'approved_by_system', 'approved_by_system',
+  'unapproved', 'unapproved', 'unapproved',
+  'needs_review_from_user', 'needs_review_from_user',
+  'last_edited_by_user', 'last_edited_by_user',
+  'approved_by_user',
+]
+
+const CONFIDENCE_CYCLE = ['very_high', 'high', 'high', 'medium', 'medium', 'low', 'very_low']
+const BADGE_CYCLE = [['REV'], ['VIS'], ['REV', 'VIS'], ['REV'], ['VIS']]
+
+function buildExplorerRow(rowIndex, product, size, fromLoc, toLoc, movementType) {
+  return {
+    id: `exp-row-${rowIndex}`,
+    productId: product.id,
+    productName: product.name,
+    sku: `${product.baseSku}-${size}`,
+    size,
+    colour: product.colour,
+    fromLocation: fromLoc,
+    toLocation: toLoc,
+    movementType,
+    transfers: 1 + (rowIndex * 3) % 15,
+    revenue: `€${(0.5 + (rowIndex * 0.37) % 4.5).toFixed(2)}K`,
+    recommended: '1',
+    recommendedBadges: BADGE_CYCLE[rowIndex % BADGE_CYCLE.length],
+    recommendedSub: rowIndex % 3 === 0 ? '2' : undefined,
+    confidence: CONFIDENCE_CYCLE[rowIndex % CONFIDENCE_CYCLE.length],
+    coverage: `${1 + (rowIndex * 2) % 8} weeks`,
+    coverageWeeks: 1 + (rowIndex * 2) % 8,
+    nextEvent: { name: rowIndex % 2 === 0 ? 'No event' : 'Rebal cycle', date: '15/03/2026' },
+    sales: `${(rowIndex * 2) % 15} sold L7D`,
+    forecast: `${((rowIndex * 0.31) % 3 + 0.5).toFixed(2)} units/week`,
+    stockInCirculation: `${10 + (rowIndex * 5) % 50} units`,
+    warehouseUnits: 5 + (rowIndex * 7) % 80,
+    status: STATUS_CYCLE[rowIndex % STATUS_CYCLE.length],
+    approvedByUser: false,
+    editedByUser: false,
+  }
+}
+
+function buildExplorerData() {
+  const rows = []
+  let rowIndex = 0
+
+  EXPLORER_PRODUCTS.forEach((product) => {
+    product.sizes.forEach((size) => {
+      product.movementTypes.forEach((movementType) => {
+        if (movementType === 'replenishment') {
+          EXPLORER_STORES.forEach((store) => {
+            rows.push(buildExplorerRow(rowIndex++, product, size, EXPLORER_WAREHOUSE, store, 'replenishment'))
+          })
+        } else {
+          for (let i = 0; i < 6; i++) {
+            const fromIdx = i
+            const toIdx = (i + 2) % EXPLORER_STORES.length
+            if (fromIdx !== toIdx) {
+              rows.push(buildExplorerRow(rowIndex++, product, size, EXPLORER_STORES[fromIdx], EXPLORER_STORES[toIdx], 'rebalancing'))
+            }
+          }
+        }
+      })
+    })
+  })
+
+  return rows
+}
+
+// eslint-disable-next-line no-unused-vars -- wired in Explorer tab (commit 3)
+const EXPLORER_DATA = buildExplorerData()
+
 function IconCheck() {
   return (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="shrink-0" aria-hidden>
