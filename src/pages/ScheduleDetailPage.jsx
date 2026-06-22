@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback, useLayoutEffect } from 'react'
+import { useState, useEffect, useRef, useCallback, useLayoutEffect, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import { ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts'
 import { IconSearch, IconChevronDown, IconChevronRight, IconShare, IconDocument, IconClose, IconInfo as DsIconInfo, IconArrowLeft, IconGears, IconTruckTu, IconPackageTu, IconRebalancing, IconReplenishment, IconCalendarNote, IconTrendUp, IconFilterFunnel, IconColumnSettings, IconSortOrder, IconSave } from '../components/icons'
@@ -673,6 +673,12 @@ const CONFIDENCE_CYCLE = ['very_high', 'high', 'high', 'medium', 'medium', 'low'
 const BADGE_CYCLE = [['REV'], ['VIS'], ['REV', 'VIS'], ['REV'], ['VIS']]
 
 function buildExplorerRow(rowIndex, product, size, fromLoc, toLoc, movementType) {
+  const coverageTarget = 4
+  const coverageWeeks = 1 + (rowIndex * 2) % 8
+  const isOnTarget = coverageWeeks >= coverageTarget
+  const coverage = isOnTarget
+    ? 'All SKUs in target'
+    : `${Math.round(((coverageTarget - coverageWeeks) / coverageTarget) * 100)}% below target`
   return {
     id: `exp-row-${rowIndex}`,
     productId: product.id,
@@ -689,8 +695,10 @@ function buildExplorerRow(rowIndex, product, size, fromLoc, toLoc, movementType)
     recommendedBadges: BADGE_CYCLE[rowIndex % BADGE_CYCLE.length],
     recommendedSub: rowIndex % 3 === 0 ? '2' : undefined,
     confidence: CONFIDENCE_CYCLE[rowIndex % CONFIDENCE_CYCLE.length],
-    coverage: `${1 + (rowIndex * 2) % 8} weeks`,
-    coverageWeeks: 1 + (rowIndex * 2) % 8,
+    coverage,
+    coverageWeeks,
+    coverageTarget,
+    coverageStatus: isOnTarget ? 'on_target' : 'below_target',
     nextEvent: { name: rowIndex % 2 === 0 ? 'No event' : 'Rebal cycle', date: '15/03/2026' },
     sales: `${(rowIndex * 2) % 15} sold L7D`,
     forecast: `${((rowIndex * 0.31) % 3 + 0.5).toFixed(2)} units/week`,
@@ -3517,6 +3525,30 @@ function LocationsTab({ recalculatedTimestamp, onDrawerFiltersActiveChange }) {
   )
 }
 
+function ExplorerCoverageCell({ coverageWeeks, coverage }) {
+  const isBelowTarget = coverage?.includes('below target')
+  const badgeText = isBelowTarget ? coverage.replace(' below target', ' of SKUs below target') : coverage
+  return (
+    <div className="flex flex-col items-start gap-1">
+      <span className="text-[14px] text-[#0a0a0a] font-medium">{Number(coverageWeeks).toFixed(1)} wks</span>
+      {coverage && (
+        <span
+          className={`px-1.5 py-0.5 rounded-[4px] text-[11px] font-medium ${
+            isBelowTarget ? 'bg-[#fee2e2] text-[#E30D3C]' : 'bg-[#dcfce7] text-[#166534]'
+          }`}
+        >
+          {badgeText}
+        </span>
+      )}
+    </div>
+  )
+}
+
+function parseExplorerRevenueK(revenueStr) {
+  const match = revenueStr.match(/€([\d.]+)K/)
+  return match ? parseFloat(match[1], 10) : 0
+}
+
 function ExplorerStatusBadge({ value }) {
   const opt = STATUS_OPTIONS.find((o) => o.id === value) || STATUS_OPTIONS.find((o) => o.id === 'unapproved')
   const badgeClass = STATUS_BADGE_CLASSES[value] || STATUS_BADGE_CLASSES.unapproved
@@ -3550,80 +3582,140 @@ const EXPLORER_TABLE_COLUMNS = [
 ]
 
 function ExplorerTable({ data }) {
-  const thClass =
-    'bg-[#f5f5f5] text-[12px] font-medium text-[#0a0a0a] uppercase tracking-[0.04em] px-3 py-2 border-b border-[#e5e7eb] text-left align-top'
-  const tdClass = 'px-3 py-3 align-top border-b border-[#e5e7eb]'
+  const totals = useMemo(() => {
+    const sumTransfers = data.reduce((sum, row) => sum + row.transfers, 0)
+    const sumRevenueK = data.reduce((sum, row) => sum + parseExplorerRevenueK(row.revenue), 0)
+    const sumRecommended = data.reduce((sum, row) => sum + parseInt(row.recommended, 10), 0)
+    return {
+      skuLocations: `${data.length} SKU-locations`,
+      transfers: `${sumTransfers} units`,
+      revenue: `€${sumRevenueK.toFixed(1)}K`,
+      recommended: `${sumRecommended} units`,
+    }
+  }, [data])
+
+  const explorerThClass =
+    'sticky top-0 z-20 bg-white h-[62px] min-h-[62px] px-3 text-left align-middle font-medium text-[#0a0a0a] box-border'
+  const explorerStatusThClass =
+    'sticky top-0 right-0 z-30 bg-white h-[62px] min-h-[62px] px-3 text-right align-middle font-medium text-[#0a0a0a] box-border border-l border-[#e5e7eb] shadow-[-4px_0_12px_-6px_rgba(15,23,42,0.12)]'
+  const explorerTotalsThClass = 'sticky top-[62px] z-20 bg-white py-2 px-3 text-[12px] font-medium text-[#0a0a0a]'
+  const explorerTotalsEmptyThClass = 'sticky top-[62px] z-20 bg-white py-2 px-3'
+  const explorerStatusTotalsThClass =
+    'sticky top-[62px] right-0 z-30 bg-white py-2 px-3 border-l border-[#e5e7eb] shadow-[-4px_0_12px_-6px_rgba(15,23,42,0.12)]'
+  const explorerTdClass = 'py-3 px-3 align-top'
+  const explorerStatusTdClass =
+    'sticky right-0 z-30 bg-white py-3 px-3 align-top text-right border-l border-[#e5e7eb] shadow-[-4px_0_12px_-6px_rgba(15,23,42,0.12)] group-hover:bg-[#f9fafb]'
+
+  const headerGrip = (
+    <span className="inline-flex shrink-0 select-none" aria-hidden>
+      <IconColumnDragHandle />
+    </span>
+  )
 
   return (
-    <div className="w-full overflow-x-auto">
-      <table className="w-full border-collapse">
-        <thead>
-          <tr>
-            {EXPLORER_TABLE_COLUMNS.map((col) => (
-              <th key={col.key} className={`${col.minW} ${thClass}`}>
-                {col.label}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {data.map((row) => (
-            <tr key={row.id} className="text-[14px] text-[#0a0a0a] hover:bg-[#f5f5f5]">
-              <td className={`${tdClass} min-w-[260px]`}>
-                <div className="flex flex-col gap-0.5">
-                  <span className="text-[14px] font-medium text-[#0a0a0a]">{row.productName}</span>
-                  <span className="text-[12px] text-[#4b535c]">{row.sku}</span>
-                  <span className="text-[12px] text-[#4b535c]">{row.colour}</span>
-                </div>
-              </td>
-              <td className={`${tdClass} min-w-[150px]`}>{row.fromLocation}</td>
-              <td className={`${tdClass} min-w-[150px]`}>{row.toLocation}</td>
-              <td className={`${tdClass} min-w-[100px]`}>
-                <MovementTypePills movementType={[row.movementType]} />
-              </td>
-              <td className={`${tdClass} min-w-[90px] font-medium`}>{row.transfers}</td>
-              <td className={`${tdClass} min-w-[110px]`}>{row.revenue}</td>
-              <td className={`${tdClass} min-w-[140px]`}>
-                <div className="flex flex-col gap-1">
-                  <span className="inline-flex flex-wrap items-center gap-0.5">
-                    {row.recommended}
-                    {row.recommendedBadges?.map((badge) => (
-                      <span
-                        key={badge}
-                        className="bg-[#eef2ff] text-[#1d4ed8] text-[10px] font-medium px-1.5 py-0.5 rounded ml-1"
-                      >
-                        {badge}
-                      </span>
-                    ))}
-                  </span>
-                  {row.recommendedSub != null && (
-                    <span className="text-[12px] text-[#4b535c]">{row.recommendedSub}</span>
-                  )}
-                </div>
-              </td>
-              <td className={`${tdClass} min-w-[110px]`}>
-                <ConfidencePill value={row.confidence} />
-              </td>
-              <td className={`${tdClass} min-w-[100px]`}>{row.coverage}</td>
-              <td className={`${tdClass} min-w-[130px]`}>
-                {row.nextEvent && (
-                  <div className="flex flex-col gap-0.5">
-                    <span className="text-[14px] text-[#0a0a0a]">{row.nextEvent.name}</span>
-                    <span className="text-[12px] text-[#4b535c]">{row.nextEvent.date}</span>
-                  </div>
-                )}
-              </td>
-              <td className={`${tdClass} min-w-[120px]`}>{row.sales}</td>
-              <td className={`${tdClass} min-w-[130px]`}>{row.forecast}</td>
-              <td className={`${tdClass} min-w-[140px]`}>{row.stockInCirculation}</td>
-              <td className={`${tdClass} min-w-[110px]`}>{row.warehouseUnits}</td>
-              <td className={`${tdClass} min-w-[150px]`}>
-                <ExplorerStatusBadge value={row.status} />
-              </td>
+    <div className="border border-[#e5e7eb] rounded-[8px] overflow-hidden bg-white">
+      <div className="max-h-[min(65vh,800px)] overflow-x-auto overflow-y-auto">
+        <table className="w-full text-[14px] bg-white">
+          <thead className="bg-white">
+            <tr className="border-b border-[#e5e7eb]">
+              {EXPLORER_TABLE_COLUMNS.map((col) => {
+                const isStatus = col.key === 'status'
+                return (
+                  <th
+                    key={col.key}
+                    className={`${col.minW} ${isStatus ? explorerStatusThClass : explorerThClass}`}
+                  >
+                    <span
+                      className={`inline-flex min-w-0 items-center gap-2 ${isStatus ? 'w-full justify-end' : ''}`}
+                    >
+                      {headerGrip}
+                      {col.label}
+                    </span>
+                  </th>
+                )
+              })}
             </tr>
-          ))}
-        </tbody>
-      </table>
+            <tr className="border-b border-[#e5e7eb]">
+              <th className={`${explorerTotalsThClass} min-w-[260px]`}>{totals.skuLocations}</th>
+              <th className={`${explorerTotalsEmptyThClass} min-w-[150px]`} />
+              <th className={`${explorerTotalsEmptyThClass} min-w-[150px]`} />
+              <th className={`${explorerTotalsEmptyThClass} min-w-[100px]`} />
+              <th className={`${explorerTotalsThClass} min-w-[90px]`}>{totals.transfers}</th>
+              <th className={`${explorerTotalsThClass} min-w-[110px]`}>{totals.revenue}</th>
+              <th className={`${explorerTotalsThClass} min-w-[140px]`}>{totals.recommended}</th>
+              <th className={`${explorerTotalsEmptyThClass} min-w-[110px]`} />
+              <th className={`${explorerTotalsEmptyThClass} min-w-[100px]`} />
+              <th className={`${explorerTotalsEmptyThClass} min-w-[130px]`} />
+              <th className={`${explorerTotalsEmptyThClass} min-w-[120px]`} />
+              <th className={`${explorerTotalsEmptyThClass} min-w-[130px]`} />
+              <th className={`${explorerTotalsEmptyThClass} min-w-[140px]`} />
+              <th className={`${explorerTotalsEmptyThClass} min-w-[110px]`} />
+              <th className={`${explorerStatusTotalsThClass} min-w-[150px]`} />
+            </tr>
+          </thead>
+          <tbody>
+            {data.map((row) => (
+              <tr key={row.id} className="group border-b border-[#e5e7eb] bg-white hover:bg-[#f9fafb]">
+                <td className={`${explorerTdClass} min-w-[260px]`}>
+                  <div className="flex flex-col gap-0.5">
+                    <span className="font-medium text-[#0a0a0a]">{row.productName}</span>
+                    <span className="text-[12px] text-[#4b535c]">{row.sku}</span>
+                    <span className="text-[12px] text-[#4b535c]">{row.colour}</span>
+                  </div>
+                </td>
+                <td className={`${explorerTdClass} min-w-[150px] text-[#0a0a0a]`}>{row.fromLocation}</td>
+                <td className={`${explorerTdClass} min-w-[150px] text-[#0a0a0a]`}>{row.toLocation}</td>
+                <td className={`${explorerTdClass} min-w-[100px]`}>
+                  <MovementTypePills movementType={[row.movementType]} />
+                </td>
+                <td className={`${explorerTdClass} min-w-[90px] font-medium text-[#0a0a0a]`}>{row.transfers}</td>
+                <td className={`${explorerTdClass} min-w-[110px] text-[#0a0a0a]`}>{row.revenue}</td>
+                <td className={`${explorerTdClass} min-w-[140px]`}>
+                  <div className="flex flex-col gap-1">
+                    <span className="inline-flex flex-wrap items-center gap-0.5 text-[#0a0a0a]">
+                      {row.recommended}
+                      {row.recommendedBadges?.map((badge) => (
+                        <span
+                          key={badge}
+                          className="bg-[#eef2ff] text-[#1d4ed8] text-[10px] font-medium px-1.5 py-0.5 rounded ml-1"
+                        >
+                          {badge}
+                        </span>
+                      ))}
+                    </span>
+                    {row.recommendedSub != null && (
+                      <span className="text-[12px] text-[#4b535c]">{row.recommendedSub}</span>
+                    )}
+                  </div>
+                </td>
+                <td className={`${explorerTdClass} min-w-[110px]`}>
+                  <ConfidencePill value={row.confidence} />
+                </td>
+                <td className={`${explorerTdClass} min-w-[100px]`}>
+                  <ExplorerCoverageCell coverageWeeks={row.coverageWeeks} coverage={row.coverage} />
+                </td>
+                <td className={`${explorerTdClass} min-w-[130px]`}>
+                  {row.nextEvent && (
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-[#0a0a0a]">{row.nextEvent.name}</span>
+                      <span className="text-[12px] text-[#4b535c]">{row.nextEvent.date}</span>
+                    </div>
+                  )}
+                </td>
+                <td className={`${explorerTdClass} min-w-[120px] text-[#0a0a0a]`}>{row.sales}</td>
+                <td className={`${explorerTdClass} min-w-[130px] text-[#0a0a0a]`}>{row.forecast}</td>
+                <td className={`${explorerTdClass} min-w-[140px] text-[#0a0a0a]`}>{row.stockInCirculation}</td>
+                <td className={`${explorerTdClass} min-w-[110px] text-[#0a0a0a]`}>{row.warehouseUnits}</td>
+                <td className={`${explorerStatusTdClass} min-w-[150px]`}>
+                  <div className="flex justify-end">
+                    <ExplorerStatusBadge value={row.status} />
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   )
 }
