@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useLayoutEffect, useMemo } from 'react'
 import { createPortal } from 'react-dom'
+import { Filter } from 'lucide-react'
 import { ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts'
 import { IconSearch, IconChevronDown, IconChevronRight, IconShare, IconDocument, IconClose, IconInfo as DsIconInfo, IconArrowLeft, IconGears, IconTruckTu, IconPackageTu, IconRebalancing, IconReplenishment, IconCalendarNote, IconTrendUp, IconFilterFunnel, IconColumnSettings, IconSortOrder, IconSave } from '../components/icons'
 function IconInfo() {
@@ -3645,6 +3646,25 @@ function filterExplorerRows(
   })
 }
 
+const EXPLORER_TABLE_COLUMN_COUNT = EXPLORER_TABLE_COLUMNS.length
+
+function ExplorerEmptyState() {
+  return (
+    <tr>
+      <td colSpan={EXPLORER_TABLE_COLUMN_COUNT} className="py-20 px-6">
+        <div className="flex flex-col items-center text-center">
+          <Filter className="w-16 h-16 text-[#9ca3af] mb-4" aria-hidden />
+          <p className="text-[18px] font-medium text-[#0a0a0a]">Dataset is too large</p>
+          <p className="mt-2 text-[14px] text-[#4b535c] max-w-[420px]">
+            You&apos;re trying to load 318,239 SKU-locations but the maximum is 300,000. Apply filters to
+            reduce the dataset size.
+          </p>
+        </div>
+      </td>
+    </tr>
+  )
+}
+
 function ExplorerTable({ data }) {
   const [explorerSearch, setExplorerSearch] = useState('')
   const [explorerDepartmentFilters, setExplorerDepartmentFilters] = useState([])
@@ -3660,6 +3680,12 @@ function ExplorerTable({ data }) {
     explorerMovementTypeFilters.length +
     explorerConfidenceFilters.length +
     explorerStatusFilters.length
+
+  const hasAnyFilter =
+    explorerDepartmentFilters.length > 0 ||
+    explorerMovementTypeFilters.length > 0 ||
+    explorerConfidenceFilters.length > 0 ||
+    explorerStatusFilters.length > 0
 
   const clearAllExplorerFilters = () => {
     setExplorerDepartmentFilters([])
@@ -3990,6 +4016,7 @@ function ExplorerTable({ data }) {
                 )
               })}
             </tr>
+            {hasAnyFilter && (
             <tr className="border-b border-[#e5e7eb]">
               <th className={`${explorerTotalsThClass} min-w-[260px]`}>{totals.skuLocations}</th>
               <th className={`${explorerTotalsEmptyThClass} min-w-[150px]`} />
@@ -4007,9 +4034,13 @@ function ExplorerTable({ data }) {
               <th className={`${explorerTotalsEmptyThClass} min-w-[110px]`} />
               <th className={`${explorerStatusTotalsThClass} min-w-[150px]`} />
             </tr>
+            )}
           </thead>
           <tbody>
-            {filteredData.map((row) => (
+            {!hasAnyFilter ? (
+              <ExplorerEmptyState />
+            ) : (
+              filteredData.map((row) => (
               <tr key={row.id} className="group border-b border-[#e5e7eb] bg-white hover:bg-[#f9fafb]">
                 <td className={`${explorerTdClass} min-w-[260px]`}>
                   <div className="flex flex-col gap-0.5">
@@ -4067,7 +4098,8 @@ function ExplorerTable({ data }) {
                   </div>
                 </td>
               </tr>
-            ))}
+              ))
+            )}
           </tbody>
         </table>
       </div>
