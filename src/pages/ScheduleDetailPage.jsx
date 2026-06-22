@@ -729,7 +729,6 @@ function buildExplorerData() {
   return rows
 }
 
-// eslint-disable-next-line no-unused-vars -- wired in Explorer tab (commit 3)
 const EXPLORER_DATA = buildExplorerData()
 
 function IconCheck() {
@@ -3776,6 +3775,7 @@ export default function ScheduleDetailPage() {
               { id: 'products', label: 'Products' },
               { id: 'locations', label: 'Locations' },
               { id: 'trips', label: 'Trips' },
+              { id: 'explorer', label: 'Explorer' },
             ].map((tab) => {
               const isActive = activeTab === tab.id
               return (
@@ -3857,8 +3857,24 @@ export default function ScheduleDetailPage() {
           </div>
         </div>
 
-        {activeTab === 'trips' ? (
-          selectedTrip ? (
+        {activeTab === 'products' ? (
+          <ProductsDrilldown
+            trip={TRIPS_OPERA[0]}
+            onBack={() => {}}
+            showBackButton={false}
+            recalculatedTimestamp={recalculatedTimestamp}
+            onDrawerFiltersActiveChange={setProductsDrawerFiltersActive}
+          />
+        ) : activeTab === 'locations' ? (
+          <LocationsTab
+            recalculatedTimestamp={recalculatedTimestamp}
+            onDrawerFiltersActiveChange={setLocationsDrawerFiltersActive}
+          />
+        ) : activeTab === 'explorer' ? (
+          <div className="px-6 py-12 text-center text-[#4b535c]">
+            Explorer table — coming in next commit ({EXPLORER_DATA.length} rows in dataset)
+          </div>
+        ) : selectedTrip ? (
             <ProductsDrilldown
               trip={selectedTrip}
               onBack={() => setSelectedTrip(null)}
@@ -4431,21 +4447,7 @@ export default function ScheduleDetailPage() {
               </div>
             </div>
           </div>
-          )
-        ) : activeTab === 'products' ? (
-          <ProductsDrilldown
-            trip={TRIPS_OPERA[0]}
-            onBack={() => {}}
-            showBackButton={false}
-            recalculatedTimestamp={recalculatedTimestamp}
-            onDrawerFiltersActiveChange={setProductsDrawerFiltersActive}
-          />
-        ) : activeTab === 'locations' ? (
-          <LocationsTab
-            recalculatedTimestamp={recalculatedTimestamp}
-            onDrawerFiltersActiveChange={setLocationsDrawerFiltersActive}
-          />
-        ) : null}
+        )}
 
       {selectedTripIds.size > 0 && activeTab === 'trips' && (
         <div
