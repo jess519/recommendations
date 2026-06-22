@@ -3581,18 +3581,57 @@ const EXPLORER_TABLE_COLUMNS = [
   { key: 'status', label: 'Status', minW: 'min-w-[150px]' },
 ]
 
+const EXPLORER_STATUS_FILTER_OPTIONS = [
+  { id: 'approved', label: 'Approved' },
+  { id: 'unapproved', label: 'Unapproved' },
+  { id: 'needs_review', label: 'Needs review' },
+  { id: 'edited', label: 'Edited' },
+]
+
+const EXPLORER_STATUS_FILTER_LABELS = {
+  approved: 'Approved',
+  unapproved: 'Unapproved',
+  needs_review: 'Needs review',
+  edited: 'Edited',
+}
+
+function filterExplorerRowsByStatus(rows, statusFilters) {
+  if (statusFilters.length === 0) return rows
+  return rows.filter((row) => {
+    const rowStatus = getRowStatus(row)
+    return statusFilters.some((f) => {
+      if (f === 'approved') return rowStatus === 'approved_by_system' || rowStatus === 'approved_by_user'
+      if (f === 'unapproved') return rowStatus === 'unapproved'
+      if (f === 'needs_review') return rowStatus === 'needs_review_from_user'
+      if (f === 'edited') return rowStatus === 'last_edited_by_user'
+      return false
+    })
+  })
+}
+
 function ExplorerTable({ data }) {
+  const [explorerSearch, setExplorerSearch] = useState('')
+  const [explorerStatusFilters, setExplorerStatusFilters] = useState([])
+  const [explorerActiveQuickFilter, setExplorerActiveQuickFilter] = useState(null)
+  const [explorerIncludeZeroTransfers, setExplorerIncludeZeroTransfers] = useState(false)
+  const [explorerFiltersDropdownOpen, setExplorerFiltersDropdownOpen] = useState(false)
+
+  const filteredData = useMemo(
+    () => filterExplorerRowsByStatus(data, explorerStatusFilters),
+    [data, explorerStatusFilters]
+  )
+
   const totals = useMemo(() => {
-    const sumTransfers = data.reduce((sum, row) => sum + row.transfers, 0)
-    const sumRevenueK = data.reduce((sum, row) => sum + parseExplorerRevenueK(row.revenue), 0)
-    const sumRecommended = data.reduce((sum, row) => sum + parseInt(row.recommended, 10), 0)
+    const sumTransfers = filteredData.reduce((sum, row) => sum + row.transfers, 0)
+    const sumRevenueK = filteredData.reduce((sum, row) => sum + parseExplorerRevenueK(row.revenue), 0)
+    const sumRecommended = filteredData.reduce((sum, row) => sum + parseInt(row.recommended, 10), 0)
     return {
-      skuLocations: `${data.length} SKU-locations`,
+      skuLocations: `${filteredData.length} SKU-locations`,
       transfers: `${sumTransfers} units`,
       revenue: `€${sumRevenueK.toFixed(1)}K`,
       recommended: `${sumRecommended} units`,
     }
-  }, [data])
+  }, [filteredData])
 
   const explorerThClass =
     'sticky top-0 z-20 bg-white h-[62px] min-h-[62px] px-3 text-left align-middle font-medium text-[#0a0a0a] box-border'
@@ -3613,6 +3652,135 @@ function ExplorerTable({ data }) {
   )
 
   return (
+    <div className="flex flex-col gap-[15px]">
+      <div className="flex flex-wrap items-center gap-3 mb-4 min-w-0">
+        <div className="flex items-center gap-3 shrink-0">
+          <div className="flex items-center h-10 rounded-[4px] border border-[#e9eaeb] bg-white w-[200px] max-w-[280px]">
+            <input
+              type="text"
+              placeholder="Search…"
+              value={explorerSearch}
+              onChange={(e) => setExplorerSearch(e.target.value)}
+              className="flex-1 min-w-0 h-full pl-4 pr-2 border-0 bg-transparent rounded-[4px] text-[14px] text-[#0a0a0a] placeholder:text-[#9ca3af] focus:outline-none focus:ring-0"
+            />
+            <span className="pr-3 shrink-0 text-[#9ca3af]">
+              <IconSearch className="size-4" />
+            </span>
+          </div>
+          <div className="relative shrink-0">
+            <button
+              type="button"
+              onClick={() => setExplorerFiltersDropdownOpen((o) => !o)}
+              className="h-10 px-4 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#22272f] hover:bg-[#f3f4f6] shrink-0 flex items-center gap-2"
+            >
+              <IconFilterFunnel />
+              Filters
+              {explorerStatusFilters.length > 0 && (
+                <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-[#0267ff] text-white text-[11px] font-medium leading-none">
+                  {explorerStatusFilters.length}
+                </span>
+              )}
+            </button>
+            {explorerFiltersDropdownOpen && (
+              <>
+                <div
+                  className="fixed inset-0 z-[60]"
+                  aria-hidden
+                  onClick={() => setExplorerFiltersDropdownOpen(false)}
+                />
+                <div className="absolute left-0 top-full mt-1 z-[70] min-w-[200px] rounded-[6px] border border-[#e5e7eb] bg-white py-2 shadow-lg">
+                  <div className="px-3 py-1.5 text-[12px] font-medium text-[#4b535c] uppercase tracking-wide">
+                    Status
+                  </div>
+                  {EXPLORER_STATUS_FILTER_OPTIONS.map((opt) => (
+                    <label
+                      key={opt.id}
+                      className="flex items-center gap-2 px-3 py-1.5 hover:bg-[#f3f4f6] cursor-pointer"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={explorerStatusFilters.includes(opt.id)}
+                        onChange={(e) => {
+                          setExplorerStatusFilters((prev) =>
+                            e.target.checked ? [...prev, opt.id] : prev.filter((x) => x !== opt.id)
+                          )
+                        }}
+                        className="size-4 rounded border-[#d1d5db] text-[#0267ff]"
+                      />
+                      <span className="text-[14px] text-[#0a0a0a]">{opt.label}</span>
+                    </label>
+                  ))}
+                  {explorerStatusFilters.length > 0 && (
+                    <div className="border-t border-[#e5e7eb] mt-1 pt-1 px-3">
+                      <button
+                        type="button"
+                        onClick={() => setExplorerStatusFilters([])}
+                        className="text-[13px] font-medium text-[#0267ff] hover:underline"
+                      >
+                        Clear all
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+        <div className="flex min-w-0 flex-1 items-center overflow-x-auto">
+          <ScheduleQuickFilterChips
+            activeId={explorerActiveQuickFilter}
+            onChange={setExplorerActiveQuickFilter}
+          />
+        </div>
+        <div className="flex flex-1 justify-end items-center gap-2 shrink-0 min-w-fit">
+          <span className="text-[14px] text-[#4b535c] whitespace-nowrap">Include zero transfers</span>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={explorerIncludeZeroTransfers}
+            aria-label="Include zero transfers"
+            onClick={() => setExplorerIncludeZeroTransfers((on) => !on)}
+            className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${
+              explorerIncludeZeroTransfers ? 'bg-[#1d4ed8]' : 'bg-[#d1d5db]'
+            }`}
+          >
+            <span
+              className={`inline-block size-4 rounded-full bg-white shadow transition-transform ${
+                explorerIncludeZeroTransfers ? 'translate-x-[18px]' : 'translate-x-0.5'
+              }`}
+            />
+          </button>
+        </div>
+      </div>
+
+      {explorerStatusFilters.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2 mb-3">
+          {explorerStatusFilters.map((f) => (
+            <span
+              key={f}
+              className="inline-flex items-center gap-1.5 pl-3 pr-1.5 py-1.5 rounded-[4px] bg-[#f3f4f6] text-[#4b535c] border border-[#e5e7eb]"
+            >
+              <span>Status: {EXPLORER_STATUS_FILTER_LABELS[f]}</span>
+              <button
+                type="button"
+                onClick={() => setExplorerStatusFilters((prev) => prev.filter((x) => x !== f))}
+                className="p-0.5 rounded-[4px] text-[#6b7280] hover:bg-[#e5e7eb] hover:text-[#374151]"
+                aria-label={`Remove filter: Status ${EXPLORER_STATUS_FILTER_LABELS[f]}`}
+              >
+                <IconClose className="size-3.5" />
+              </button>
+            </span>
+          ))}
+          <button
+            type="button"
+            onClick={() => setExplorerStatusFilters([])}
+            className="text-[12px] font-medium text-[#4b535c] hover:text-[#0a0a0a]"
+          >
+            Clear all
+          </button>
+        </div>
+      )}
+
     <div className="border border-[#e5e7eb] rounded-[8px] overflow-hidden bg-white">
       <div className="max-h-[min(65vh,800px)] overflow-x-auto overflow-y-auto">
         <table className="w-full text-[14px] bg-white">
@@ -3654,7 +3822,7 @@ function ExplorerTable({ data }) {
             </tr>
           </thead>
           <tbody>
-            {data.map((row) => (
+            {filteredData.map((row) => (
               <tr key={row.id} className="group border-b border-[#e5e7eb] bg-white hover:bg-[#f9fafb]">
                 <td className={`${explorerTdClass} min-w-[260px]`}>
                   <div className="flex flex-col gap-0.5">
@@ -3716,6 +3884,7 @@ function ExplorerTable({ data }) {
           </tbody>
         </table>
       </div>
+    </div>
     </div>
   )
 }
