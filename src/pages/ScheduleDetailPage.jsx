@@ -3517,6 +3517,117 @@ function LocationsTab({ recalculatedTimestamp, onDrawerFiltersActiveChange }) {
   )
 }
 
+function ExplorerStatusBadge({ value }) {
+  const opt = STATUS_OPTIONS.find((o) => o.id === value) || STATUS_OPTIONS.find((o) => o.id === 'unapproved')
+  const badgeClass = STATUS_BADGE_CLASSES[value] || STATUS_BADGE_CLASSES.unapproved
+  const displayLabel = opt?.displayLabel ?? 'Unapproved'
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-[6px] border text-[12px] font-medium border-transparent ${badgeClass}`}
+    >
+      <span className={`size-2 rounded-full shrink-0 ${opt.dotClass}`} aria-hidden />
+      <span className="truncate">{displayLabel}</span>
+    </span>
+  )
+}
+
+const EXPLORER_TABLE_COLUMNS = [
+  { key: 'productDetails', label: 'Product details', minW: 'min-w-[260px]' },
+  { key: 'fromLocation', label: 'From location', minW: 'min-w-[150px]' },
+  { key: 'toLocation', label: 'To location', minW: 'min-w-[150px]' },
+  { key: 'movementType', label: 'Movement type', minW: 'min-w-[100px]' },
+  { key: 'transfers', label: 'Transfers', minW: 'min-w-[90px]' },
+  { key: 'revenue', label: 'Revenue increase', minW: 'min-w-[110px]' },
+  { key: 'recommended', label: 'Recommended transfers', minW: 'min-w-[140px]' },
+  { key: 'confidence', label: 'Confidence', minW: 'min-w-[110px]' },
+  { key: 'coverage', label: 'Coverage', minW: 'min-w-[100px]' },
+  { key: 'nextEvent', label: 'Next event', minW: 'min-w-[130px]' },
+  { key: 'sales', label: 'Sales', minW: 'min-w-[120px]' },
+  { key: 'forecast', label: 'Forecast', minW: 'min-w-[130px]' },
+  { key: 'stockInCirculation', label: 'Stock in circulation', minW: 'min-w-[140px]' },
+  { key: 'warehouseUnits', label: 'Warehouse units', minW: 'min-w-[110px]' },
+  { key: 'status', label: 'Status', minW: 'min-w-[150px]' },
+]
+
+function ExplorerTable({ data }) {
+  const thClass =
+    'bg-[#f5f5f5] text-[12px] font-medium text-[#0a0a0a] uppercase tracking-[0.04em] px-3 py-2 border-b border-[#e5e7eb] text-left align-top'
+  const tdClass = 'px-3 py-3 align-top border-b border-[#e5e7eb]'
+
+  return (
+    <div className="w-full overflow-x-auto">
+      <table className="w-full border-collapse">
+        <thead>
+          <tr>
+            {EXPLORER_TABLE_COLUMNS.map((col) => (
+              <th key={col.key} className={`${col.minW} ${thClass}`}>
+                {col.label}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {data.map((row) => (
+            <tr key={row.id} className="text-[14px] text-[#0a0a0a] hover:bg-[#f5f5f5]">
+              <td className={`${tdClass} min-w-[260px]`}>
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-[14px] font-medium text-[#0a0a0a]">{row.productName}</span>
+                  <span className="text-[12px] text-[#4b535c]">{row.sku}</span>
+                  <span className="text-[12px] text-[#4b535c]">{row.colour}</span>
+                </div>
+              </td>
+              <td className={`${tdClass} min-w-[150px]`}>{row.fromLocation}</td>
+              <td className={`${tdClass} min-w-[150px]`}>{row.toLocation}</td>
+              <td className={`${tdClass} min-w-[100px]`}>
+                <MovementTypePills movementType={[row.movementType]} />
+              </td>
+              <td className={`${tdClass} min-w-[90px] font-medium`}>{row.transfers}</td>
+              <td className={`${tdClass} min-w-[110px]`}>{row.revenue}</td>
+              <td className={`${tdClass} min-w-[140px]`}>
+                <div className="flex flex-col gap-1">
+                  <span className="inline-flex flex-wrap items-center gap-0.5">
+                    {row.recommended}
+                    {row.recommendedBadges?.map((badge) => (
+                      <span
+                        key={badge}
+                        className="bg-[#eef2ff] text-[#1d4ed8] text-[10px] font-medium px-1.5 py-0.5 rounded ml-1"
+                      >
+                        {badge}
+                      </span>
+                    ))}
+                  </span>
+                  {row.recommendedSub != null && (
+                    <span className="text-[12px] text-[#4b535c]">{row.recommendedSub}</span>
+                  )}
+                </div>
+              </td>
+              <td className={`${tdClass} min-w-[110px]`}>
+                <ConfidencePill value={row.confidence} />
+              </td>
+              <td className={`${tdClass} min-w-[100px]`}>{row.coverage}</td>
+              <td className={`${tdClass} min-w-[130px]`}>
+                {row.nextEvent && (
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-[14px] text-[#0a0a0a]">{row.nextEvent.name}</span>
+                    <span className="text-[12px] text-[#4b535c]">{row.nextEvent.date}</span>
+                  </div>
+                )}
+              </td>
+              <td className={`${tdClass} min-w-[120px]`}>{row.sales}</td>
+              <td className={`${tdClass} min-w-[130px]`}>{row.forecast}</td>
+              <td className={`${tdClass} min-w-[140px]`}>{row.stockInCirculation}</td>
+              <td className={`${tdClass} min-w-[110px]`}>{row.warehouseUnits}</td>
+              <td className={`${tdClass} min-w-[150px]`}>
+                <ExplorerStatusBadge value={row.status} />
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
 export default function ScheduleDetailPage() {
   const [activeTab, setActiveTab] = useState('products')
   const [viewShowsFullDataset, setViewShowsFullDataset] = useState(true)
@@ -3871,9 +3982,7 @@ export default function ScheduleDetailPage() {
             onDrawerFiltersActiveChange={setLocationsDrawerFiltersActive}
           />
         ) : activeTab === 'explorer' ? (
-          <div className="px-6 py-12 text-center text-[#4b535c]">
-            Explorer table — coming in next commit ({EXPLORER_DATA.length} rows in dataset)
-          </div>
+          <ExplorerTable data={EXPLORER_DATA} />
         ) : selectedTrip ? (
             <ProductsDrilldown
               trip={selectedTrip}
