@@ -624,6 +624,7 @@ const EXPLORER_PRODUCTS = [
     name: 'Ang-sac pte main',
     baseSku: 'A1252810',
     colour: 'Noir',
+    department: 'Handbags',
     sizes: ['XS', 'S', 'M', 'L'],
     movementTypes: ['replenishment', 'rebalancing'],
   },
@@ -632,6 +633,7 @@ const EXPLORER_PRODUCTS = [
     name: 'Croi-sac zip l',
     baseSku: 'A1398810',
     colour: 'Noir',
+    department: 'Crossbody',
     sizes: ['L'],
     movementTypes: ['replenishment'],
   },
@@ -640,6 +642,7 @@ const EXPLORER_PRODUCTS = [
     name: 'Pre-sac seau m',
     baseSku: 'A101080',
     colour: 'Bleu petrole',
+    department: 'Bucket bags',
     sizes: ['M'],
     movementTypes: ['replenishment'],
   },
@@ -648,6 +651,7 @@ const EXPLORER_PRODUCTS = [
     name: 'Croi-sac zip s',
     baseSku: 'A1398811',
     colour: 'Noir',
+    department: 'Crossbody',
     sizes: ['S'],
     movementTypes: ['rebalancing'],
   },
@@ -656,9 +660,25 @@ const EXPLORER_PRODUCTS = [
     name: 'Pre-sac seau s',
     baseSku: 'A101081',
     colour: 'Bleu petrole',
+    department: 'Bucket bags',
     sizes: ['S'],
     movementTypes: ['rebalancing'],
   },
+]
+
+const DEPARTMENT_FILTER_OPTIONS = ['Handbags', 'Crossbody', 'Bucket bags']
+
+const MOVEMENT_TYPE_FILTER_OPTIONS = [
+  { id: 'replenishment', label: 'Replenishment' },
+  { id: 'rebalancing', label: 'Rebalancing' },
+]
+
+const CONFIDENCE_FILTER_OPTIONS = [
+  { id: 'very_high', label: 'Very high' },
+  { id: 'high', label: 'High' },
+  { id: 'medium', label: 'Medium' },
+  { id: 'low', label: 'Low' },
+  { id: 'very_low', label: 'Very low' },
 ]
 
 const STATUS_CYCLE = [
@@ -686,6 +706,7 @@ function buildExplorerRow(rowIndex, product, size, fromLoc, toLoc, movementType)
     sku: `${product.baseSku}-${size}`,
     size,
     colour: product.colour,
+    department: product.department,
     fromLocation: fromLoc,
     toLocation: toLoc,
     movementType,
@@ -3595,30 +3616,67 @@ const EXPLORER_STATUS_FILTER_LABELS = {
   edited: 'Edited',
 }
 
-function filterExplorerRowsByStatus(rows, statusFilters) {
-  if (statusFilters.length === 0) return rows
+function filterExplorerRows(
+  rows,
+  { departmentFilters, movementTypeFilters, confidenceFilters, statusFilters }
+) {
   return rows.filter((row) => {
-    const rowStatus = getRowStatus(row)
-    return statusFilters.some((f) => {
-      if (f === 'approved') return rowStatus === 'approved_by_system' || rowStatus === 'approved_by_user'
-      if (f === 'unapproved') return rowStatus === 'unapproved'
-      if (f === 'needs_review') return rowStatus === 'needs_review_from_user'
-      if (f === 'edited') return rowStatus === 'last_edited_by_user'
+    if (departmentFilters.length > 0 && !departmentFilters.includes(row.department)) {
       return false
-    })
+    }
+    if (movementTypeFilters.length > 0 && !movementTypeFilters.includes(row.movementType)) {
+      return false
+    }
+    if (confidenceFilters.length > 0 && !confidenceFilters.includes(row.confidence)) {
+      return false
+    }
+    if (statusFilters.length > 0) {
+      const rowStatus = getRowStatus(row)
+      const statusMatch = statusFilters.some((f) => {
+        if (f === 'approved') return rowStatus === 'approved_by_system' || rowStatus === 'approved_by_user'
+        if (f === 'unapproved') return rowStatus === 'unapproved'
+        if (f === 'needs_review') return rowStatus === 'needs_review_from_user'
+        if (f === 'edited') return rowStatus === 'last_edited_by_user'
+        return false
+      })
+      if (!statusMatch) return false
+    }
+    return true
   })
 }
 
 function ExplorerTable({ data }) {
   const [explorerSearch, setExplorerSearch] = useState('')
+  const [explorerDepartmentFilters, setExplorerDepartmentFilters] = useState([])
+  const [explorerMovementTypeFilters, setExplorerMovementTypeFilters] = useState([])
+  const [explorerConfidenceFilters, setExplorerConfidenceFilters] = useState([])
   const [explorerStatusFilters, setExplorerStatusFilters] = useState([])
   const [explorerActiveQuickFilter, setExplorerActiveQuickFilter] = useState(null)
   const [explorerIncludeZeroTransfers, setExplorerIncludeZeroTransfers] = useState(false)
   const [explorerFiltersDropdownOpen, setExplorerFiltersDropdownOpen] = useState(false)
 
+  const explorerFilterCount =
+    explorerDepartmentFilters.length +
+    explorerMovementTypeFilters.length +
+    explorerConfidenceFilters.length +
+    explorerStatusFilters.length
+
+  const clearAllExplorerFilters = () => {
+    setExplorerDepartmentFilters([])
+    setExplorerMovementTypeFilters([])
+    setExplorerConfidenceFilters([])
+    setExplorerStatusFilters([])
+  }
+
   const filteredData = useMemo(
-    () => filterExplorerRowsByStatus(data, explorerStatusFilters),
-    [data, explorerStatusFilters]
+    () =>
+      filterExplorerRows(data, {
+        departmentFilters: explorerDepartmentFilters,
+        movementTypeFilters: explorerMovementTypeFilters,
+        confidenceFilters: explorerConfidenceFilters,
+        statusFilters: explorerStatusFilters,
+      }),
+    [data, explorerDepartmentFilters, explorerMovementTypeFilters, explorerConfidenceFilters, explorerStatusFilters]
   )
 
   const totals = useMemo(() => {
@@ -3675,9 +3733,9 @@ function ExplorerTable({ data }) {
             >
               <IconFilterFunnel />
               Filters
-              {explorerStatusFilters.length > 0 && (
+              {explorerFilterCount > 0 && (
                 <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-[#0267ff] text-white text-[11px] font-medium leading-none">
-                  {explorerStatusFilters.length}
+                  {explorerFilterCount}
                 </span>
               )}
             </button>
@@ -3688,33 +3746,108 @@ function ExplorerTable({ data }) {
                   aria-hidden
                   onClick={() => setExplorerFiltersDropdownOpen(false)}
                 />
-                <div className="absolute left-0 top-full mt-1 z-[70] min-w-[200px] rounded-[6px] border border-[#e5e7eb] bg-white py-2 shadow-lg">
-                  <div className="px-3 py-1.5 text-[12px] font-medium text-[#4b535c] uppercase tracking-wide">
-                    Status
+                <div className="absolute left-0 top-full mt-1 z-[70] min-w-[220px] rounded-[6px] border border-[#e5e7eb] bg-white py-2 px-3 shadow-lg">
+                  <div>
+                    <div className="text-[12px] font-medium uppercase tracking-[0.04em] text-[#4b535c] mb-2">
+                      Department
+                    </div>
+                    {DEPARTMENT_FILTER_OPTIONS.map((dept) => (
+                      <label
+                        key={dept}
+                        className="flex items-center gap-2 px-0 py-1.5 hover:bg-[#f3f4f6] cursor-pointer rounded-[4px]"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={explorerDepartmentFilters.includes(dept)}
+                          onChange={(e) => {
+                            setExplorerDepartmentFilters((prev) =>
+                              e.target.checked ? [...prev, dept] : prev.filter((x) => x !== dept)
+                            )
+                          }}
+                          className="size-4 rounded border-[#d1d5db] text-[#0267ff]"
+                        />
+                        <span className="text-[14px] text-[#0a0a0a]">{dept}</span>
+                      </label>
+                    ))}
                   </div>
-                  {EXPLORER_STATUS_FILTER_OPTIONS.map((opt) => (
-                    <label
-                      key={opt.id}
-                      className="flex items-center gap-2 px-3 py-1.5 hover:bg-[#f3f4f6] cursor-pointer"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={explorerStatusFilters.includes(opt.id)}
-                        onChange={(e) => {
-                          setExplorerStatusFilters((prev) =>
-                            e.target.checked ? [...prev, opt.id] : prev.filter((x) => x !== opt.id)
-                          )
-                        }}
-                        className="size-4 rounded border-[#d1d5db] text-[#0267ff]"
-                      />
-                      <span className="text-[14px] text-[#0a0a0a]">{opt.label}</span>
-                    </label>
-                  ))}
-                  {explorerStatusFilters.length > 0 && (
-                    <div className="border-t border-[#e5e7eb] mt-1 pt-1 px-3">
+
+                  <div className="border-t border-[#e5e7eb] pt-3 mt-3">
+                    <div className="text-[12px] font-medium uppercase tracking-[0.04em] text-[#4b535c] mb-2">
+                      Movement type
+                    </div>
+                    {MOVEMENT_TYPE_FILTER_OPTIONS.map((opt) => (
+                      <label
+                        key={opt.id}
+                        className="flex items-center gap-2 px-0 py-1.5 hover:bg-[#f3f4f6] cursor-pointer rounded-[4px]"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={explorerMovementTypeFilters.includes(opt.id)}
+                          onChange={(e) => {
+                            setExplorerMovementTypeFilters((prev) =>
+                              e.target.checked ? [...prev, opt.id] : prev.filter((x) => x !== opt.id)
+                            )
+                          }}
+                          className="size-4 rounded border-[#d1d5db] text-[#0267ff]"
+                        />
+                        <span className="text-[14px] text-[#0a0a0a]">{opt.label}</span>
+                      </label>
+                    ))}
+                  </div>
+
+                  <div className="border-t border-[#e5e7eb] pt-3 mt-3">
+                    <div className="text-[12px] font-medium uppercase tracking-[0.04em] text-[#4b535c] mb-2">
+                      Confidence
+                    </div>
+                    {CONFIDENCE_FILTER_OPTIONS.map((opt) => (
+                      <label
+                        key={opt.id}
+                        className="flex items-center gap-2 px-0 py-1.5 hover:bg-[#f3f4f6] cursor-pointer rounded-[4px]"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={explorerConfidenceFilters.includes(opt.id)}
+                          onChange={(e) => {
+                            setExplorerConfidenceFilters((prev) =>
+                              e.target.checked ? [...prev, opt.id] : prev.filter((x) => x !== opt.id)
+                            )
+                          }}
+                          className="size-4 rounded border-[#d1d5db] text-[#0267ff]"
+                        />
+                        <span className="text-[14px] text-[#0a0a0a]">{opt.label}</span>
+                      </label>
+                    ))}
+                  </div>
+
+                  <div className="border-t border-[#e5e7eb] pt-3 mt-3">
+                    <div className="text-[12px] font-medium uppercase tracking-[0.04em] text-[#4b535c] mb-2">
+                      Status
+                    </div>
+                    {EXPLORER_STATUS_FILTER_OPTIONS.map((opt) => (
+                      <label
+                        key={opt.id}
+                        className="flex items-center gap-2 px-0 py-1.5 hover:bg-[#f3f4f6] cursor-pointer rounded-[4px]"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={explorerStatusFilters.includes(opt.id)}
+                          onChange={(e) => {
+                            setExplorerStatusFilters((prev) =>
+                              e.target.checked ? [...prev, opt.id] : prev.filter((x) => x !== opt.id)
+                            )
+                          }}
+                          className="size-4 rounded border-[#d1d5db] text-[#0267ff]"
+                        />
+                        <span className="text-[14px] text-[#0a0a0a]">{opt.label}</span>
+                      </label>
+                    ))}
+                  </div>
+
+                  {explorerFilterCount > 0 && (
+                    <div className="border-t border-[#e5e7eb] mt-3 pt-3">
                       <button
                         type="button"
-                        onClick={() => setExplorerStatusFilters([])}
+                        onClick={clearAllExplorerFilters}
                         className="text-[13px] font-medium text-[#0267ff] hover:underline"
                       >
                         Clear all
@@ -3753,11 +3886,65 @@ function ExplorerTable({ data }) {
         </div>
       </div>
 
-      {explorerStatusFilters.length > 0 && (
+      {explorerFilterCount > 0 && (
         <div className="flex flex-wrap items-center gap-2 mb-3">
+          {explorerDepartmentFilters.map((dept) => (
+            <span
+              key={`dept-${dept}`}
+              className="inline-flex items-center gap-1.5 pl-3 pr-1.5 py-1.5 rounded-[4px] bg-[#f3f4f6] text-[#4b535c] border border-[#e5e7eb]"
+            >
+              <span>Department: {dept}</span>
+              <button
+                type="button"
+                onClick={() => setExplorerDepartmentFilters((prev) => prev.filter((x) => x !== dept))}
+                className="p-0.5 rounded-[4px] text-[#6b7280] hover:bg-[#e5e7eb] hover:text-[#374151]"
+                aria-label={`Remove filter: Department ${dept}`}
+              >
+                <IconClose className="size-3.5" />
+              </button>
+            </span>
+          ))}
+          {explorerMovementTypeFilters.map((id) => {
+            const label = MOVEMENT_TYPE_FILTER_OPTIONS.find((o) => o.id === id)?.label ?? id
+            return (
+              <span
+                key={`movement-${id}`}
+                className="inline-flex items-center gap-1.5 pl-3 pr-1.5 py-1.5 rounded-[4px] bg-[#f3f4f6] text-[#4b535c] border border-[#e5e7eb]"
+              >
+                <span>Movement type: {label}</span>
+                <button
+                  type="button"
+                  onClick={() => setExplorerMovementTypeFilters((prev) => prev.filter((x) => x !== id))}
+                  className="p-0.5 rounded-[4px] text-[#6b7280] hover:bg-[#e5e7eb] hover:text-[#374151]"
+                  aria-label={`Remove filter: Movement type ${label}`}
+                >
+                  <IconClose className="size-3.5" />
+                </button>
+              </span>
+            )
+          })}
+          {explorerConfidenceFilters.map((id) => {
+            const label = CONFIDENCE_FILTER_OPTIONS.find((o) => o.id === id)?.label ?? id
+            return (
+              <span
+                key={`confidence-${id}`}
+                className="inline-flex items-center gap-1.5 pl-3 pr-1.5 py-1.5 rounded-[4px] bg-[#f3f4f6] text-[#4b535c] border border-[#e5e7eb]"
+              >
+                <span>Confidence: {label}</span>
+                <button
+                  type="button"
+                  onClick={() => setExplorerConfidenceFilters((prev) => prev.filter((x) => x !== id))}
+                  className="p-0.5 rounded-[4px] text-[#6b7280] hover:bg-[#e5e7eb] hover:text-[#374151]"
+                  aria-label={`Remove filter: Confidence ${label}`}
+                >
+                  <IconClose className="size-3.5" />
+                </button>
+              </span>
+            )
+          })}
           {explorerStatusFilters.map((f) => (
             <span
-              key={f}
+              key={`status-${f}`}
               className="inline-flex items-center gap-1.5 pl-3 pr-1.5 py-1.5 rounded-[4px] bg-[#f3f4f6] text-[#4b535c] border border-[#e5e7eb]"
             >
               <span>Status: {EXPLORER_STATUS_FILTER_LABELS[f]}</span>
@@ -3773,7 +3960,7 @@ function ExplorerTable({ data }) {
           ))}
           <button
             type="button"
-            onClick={() => setExplorerStatusFilters([])}
+            onClick={clearAllExplorerFilters}
             className="text-[12px] font-medium text-[#4b535c] hover:text-[#0a0a0a]"
           >
             Clear all
