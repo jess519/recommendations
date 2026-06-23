@@ -936,6 +936,7 @@ function createDefaultScheduleBlock(id) {
     networkTag: '',
     tripCapacityTag: '',
     confidenceLevels: ['Very High', 'High', 'Medium', 'Low', 'Very Low'],
+    aggressiveness: '',
     targetCoverageValue: '',
     targetCoverageUnit: 'Weeks',
     repeatEvery: 1,
@@ -1125,6 +1126,15 @@ function ScheduleDetailsBlock({ block, index, isExpanded, onToggleExpand, onRemo
           hideModeToggle={true}
           showSelectAll={true}
           showSelectedLabels={true}
+        />
+
+        <CreateScheduleScopeSingleSelect
+          label="Aggressiveness"
+          helperText="Higher aggressiveness adds more safety stock to this schedule's recommendations."
+          placeholder="Select aggressiveness"
+          options={['Conservative', 'Balanced', 'Aggressive']}
+          value={block.aggressiveness}
+          onChange={(next) => onUpdate({ aggressiveness: next })}
         />
 
         <div className="flex flex-col gap-1.5">
