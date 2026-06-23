@@ -1137,17 +1137,18 @@ function ScheduleDetailsBlock({ block, index, isExpanded, onToggleExpand, onRemo
         />
 
         <section className="mt-4 flex flex-col gap-4">
-          <p className="mb-3 text-[14px] font-medium text-[#0a0a0a]">Schedule reasoning</p>
-
-          <div className="flex flex-col items-end gap-1">
-            <div className="flex items-center gap-2">
+          <div className="flex items-center justify-between gap-4">
+            <p className="text-[14px] font-medium text-[#0a0a0a]">Schedule reasoning</p>
+            <div className="flex shrink-0 items-center gap-2">
               <span className="text-[14px] text-[#4b535c] whitespace-nowrap">Basic</span>
               <ScheduleBasicModeSwitch
                 checked={block.basicMode}
                 onChange={() => onUpdate({ basicMode: !block.basicMode })}
               />
             </div>
-            <p className="max-w-[320px] text-right text-[12px] leading-[16px] text-[#4b535c]">
+          </div>
+          <div className="flex w-full flex-col items-end gap-1">
+            <p className="w-full whitespace-nowrap text-right text-[11px] leading-[14px] text-[#4b535c]">
               Use target coverage instead of next schedule date, confidence and aggressiveness.
             </p>
             <p className="text-right text-[12px] leading-[16px] text-[#9ca3af]">For simpler setups.</p>
