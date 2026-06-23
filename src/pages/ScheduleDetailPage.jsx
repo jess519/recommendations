@@ -1450,7 +1450,15 @@ function TuTruckTransferHoverCard({ trip, loc, truckUnits, borderClassName }) {
   )
 }
 
-function StockAnalysisDrilldown({ product, trip, onBack, setExplorerProductNameFilters, setActiveTab }) {
+function StockAnalysisDrilldown({
+  product,
+  trip,
+  onBack,
+  setExplorerProductNameFilters,
+  setActiveTab,
+  productStatusOverrides,
+  setProductStatusOverrides,
+}) {
   const [selectedTransferDetail, setSelectedTransferDetail] = useState(null)
   const [approvedLocations, setApprovedLocations] = useState({})
   const [selectedLocationIds, setSelectedLocationIds] = useState(new Set())
@@ -1547,15 +1555,25 @@ function StockAnalysisDrilldown({ product, trip, onBack, setExplorerProductNameF
           <span className="font-medium text-[#0a0a0a]">Transfers</span>
         </nav>
         </div>
-        {showExplorerProductLink && (
-          <button
-            type="button"
-            onClick={handleEditProductOnExplorer}
-            className="text-[13px] font-medium text-[#0267ff] hover:underline shrink-0"
-          >
-            Edit product on the Explorer tab
-          </button>
-        )}
+        <div className="flex items-center gap-3 shrink-0">
+          <StatusDropdown
+            rowId={`drilldown-product-${product.id}`}
+            value={productStatusOverrides[product.id] ?? getRowStatus(product)}
+            userName={product.approvedByUser || product.editedByUser}
+            onChange={(statusId) =>
+              setProductStatusOverrides((prev) => ({ ...prev, [product.id]: statusId }))
+            }
+          />
+          {showExplorerProductLink && (
+            <button
+              type="button"
+              onClick={handleEditProductOnExplorer}
+              className="text-[13px] font-medium text-[#0267ff] hover:underline shrink-0"
+            >
+              Edit product on the Explorer tab
+            </button>
+          )}
+        </div>
       </div>
 
       <p className="text-[13px] text-[#878D94] mb-2">
@@ -1936,6 +1954,8 @@ function ProductsDrilldown({
         onBack={() => setSelectedProduct(null)}
         setExplorerProductNameFilters={setExplorerProductNameFilters}
         setActiveTab={setActiveTab}
+        productStatusOverrides={productStatusOverrides}
+        setProductStatusOverrides={setProductStatusOverrides}
       />
     )
   }
