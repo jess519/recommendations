@@ -901,6 +901,10 @@ const QUICK_FILTER_CHIPS = [
   { id: 'needs_review', label: 'Needs review' },
   { id: 'broken_size_run', label: 'Broken size run' },
   { id: 'stale_stock', label: 'Stale stock' },
+  { id: 'bestsellers', label: 'Bestsellers' },
+  { id: 'selling_fast', label: 'Selling fast' },
+  { id: 'new_in', label: 'New in' },
+  { id: 'slowing_down', label: 'Slowing down' },
 ]
 
 function ScheduleQuickFilterChips({ activeId, onChange }) {
@@ -3959,7 +3963,6 @@ function ExplorerTable({ data }) {
   const [explorerStatusOverrides, setExplorerStatusOverrides] = useState({})
   const [explorerTransferOverrides, setExplorerTransferOverrides] = useState({})
   const [explorerActiveQuickFilter, setExplorerActiveQuickFilter] = useState(null)
-  const [explorerIncludeZeroTransfers, setExplorerIncludeZeroTransfers] = useState(false)
   const [explorerFiltersDropdownOpen, setExplorerFiltersDropdownOpen] = useState(false)
   const [explorerSelectedRowIds, setExplorerSelectedRowIds] = useState(new Set())
   const [explorerBulkChangeStatusOpen, setExplorerBulkChangeStatusOpen] = useState(false)
@@ -4265,31 +4268,10 @@ function ExplorerTable({ data }) {
             )}
           </div>
         </div>
-        <div className="flex min-w-0 flex-1 items-center overflow-x-auto">
-          <ScheduleQuickFilterChips
-            activeId={explorerActiveQuickFilter}
-            onChange={setExplorerActiveQuickFilter}
-          />
-        </div>
-        <div className="flex flex-1 justify-end items-center gap-2 shrink-0 min-w-fit">
-          <span className="text-[14px] text-[#4b535c] whitespace-nowrap">Include zero transfers</span>
-          <button
-            type="button"
-            role="switch"
-            aria-checked={explorerIncludeZeroTransfers}
-            aria-label="Include zero transfers"
-            onClick={() => setExplorerIncludeZeroTransfers((on) => !on)}
-            className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${
-              explorerIncludeZeroTransfers ? 'bg-[#1d4ed8]' : 'bg-[#d1d5db]'
-            }`}
-          >
-            <span
-              className={`inline-block size-4 rounded-full bg-white shadow transition-transform ${
-                explorerIncludeZeroTransfers ? 'translate-x-[18px]' : 'translate-x-0.5'
-              }`}
-            />
-          </button>
-        </div>
+        <ScheduleQuickFilterChips
+          activeId={explorerActiveQuickFilter}
+          onChange={setExplorerActiveQuickFilter}
+        />
       </div>
 
       {explorerFilterCount > 0 && (
@@ -4524,6 +4506,7 @@ export default function ScheduleDetailPage() {
   const [viewShowsFullDataset, setViewShowsFullDataset] = useState(true)
   const [selectedView, setSelectedView] = useState('Show all recommendations')
   const [viewDropdownOpen, setViewDropdownOpen] = useState(false)
+  const [includeZeroTransfers, setIncludeZeroTransfers] = useState(false)
   const [tripStatusOverrides, setTripStatusOverrides] = useState({})
   const [selectedTrip, setSelectedTrip] = useState(null)
   const [selectedTripIds, setSelectedTripIds] = useState(new Set())
@@ -4855,6 +4838,25 @@ export default function ScheduleDetailPage() {
                   </ul>
                 </>
               )}
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <span className="text-[14px] text-[#4b535c] whitespace-nowrap">Include zero transfers</span>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={includeZeroTransfers}
+                aria-label="Include zero transfers"
+                onClick={() => setIncludeZeroTransfers((on) => !on)}
+                className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${
+                  includeZeroTransfers ? 'bg-[#1d4ed8]' : 'bg-[#d1d5db]'
+                }`}
+              >
+                <span
+                  className={`inline-block size-4 rounded-full bg-white shadow transition-transform ${
+                    includeZeroTransfers ? 'translate-x-[18px]' : 'translate-x-0.5'
+                  }`}
+                />
+              </button>
             </div>
           </div>
         </div>
