@@ -3954,18 +3954,25 @@ function ExplorerEmptyState() {
   )
 }
 
-function ExplorerTable({ data, onDrawerFiltersActiveChange }) {
+function ExplorerTable({
+  data,
+  onDrawerFiltersActiveChange,
+  explorerStatusOverrides,
+  setExplorerStatusOverrides,
+  explorerTransferOverrides,
+  setExplorerTransferOverrides,
+  explorerSelectedRowIds,
+  setExplorerSelectedRowIds,
+}) {
   const [explorerSearch, setExplorerSearch] = useState('')
   const [explorerDepartmentFilters, setExplorerDepartmentFilters] = useState([])
   const [explorerMovementTypeFilters, setExplorerMovementTypeFilters] = useState([])
   const [explorerConfidenceFilters, setExplorerConfidenceFilters] = useState([])
   const [explorerStatusFilters, setExplorerStatusFilters] = useState([])
-  const [explorerStatusOverrides, setExplorerStatusOverrides] = useState({})
-  const [explorerTransferOverrides, setExplorerTransferOverrides] = useState({})
   const [explorerActiveQuickFilter, setExplorerActiveQuickFilter] = useState(null)
   const [explorerFiltersDropdownOpen, setExplorerFiltersDropdownOpen] = useState(false)
-  const [explorerSelectedRowIds, setExplorerSelectedRowIds] = useState(new Set())
   const [explorerBulkChangeStatusOpen, setExplorerBulkChangeStatusOpen] = useState(false)
+  const [explorerBulkChangeUnitsOpen, setExplorerBulkChangeUnitsOpen] = useState(false)
   const explorerSelectAllRef = useRef(null)
 
   const handleExplorerStatusChange = (rowId, newStatus) => {
@@ -4003,6 +4010,32 @@ function ExplorerTable({ data, onDrawerFiltersActiveChange }) {
     })
     setExplorerBulkChangeStatusOpen(false)
     clearExplorerSelection()
+  }
+
+  const handleBulkUnitsChange = (action) => {
+    if (!explorerSelectedRowIds.size) return
+
+    const transferUpdates = {}
+    const statusUpdates = {}
+
+    explorerSelectedRowIds.forEach((rowId) => {
+      const row = data.find((r) => r.id === rowId)
+      if (!row) return
+      const effectiveCurrent = getEffectiveTransfers(row)
+      const newValue =
+        action === 'set_zero' ? 0 : Math.max(0, effectiveCurrent + action)
+      if (newValue !== effectiveCurrent) {
+        transferUpdates[rowId] = newValue
+        statusUpdates[rowId] = 'last_edited_by_user'
+      }
+    })
+
+    if (Object.keys(transferUpdates).length > 0) {
+      setExplorerTransferOverrides((prev) => ({ ...prev, ...transferUpdates }))
+      setExplorerStatusOverrides((prev) => ({ ...prev, ...statusUpdates }))
+    }
+
+    setExplorerBulkChangeUnitsOpen(false)
   }
 
   const getEffectiveStatus = (row) => explorerStatusOverrides[row.id] ?? getRowStatus(row)
@@ -4468,7 +4501,10 @@ function ExplorerTable({ data, onDrawerFiltersActiveChange }) {
           <div className="relative">
             <button
               type="button"
-              onClick={() => setExplorerBulkChangeStatusOpen((o) => !o)}
+              onClick={() => {
+                setExplorerBulkChangeUnitsOpen(false)
+                setExplorerBulkChangeStatusOpen((o) => !o)
+              }}
               className="px-4 py-2 rounded-[4px] text-[14px] font-medium text-white hover:bg-white/10"
             >
               Change status
@@ -4499,6 +4535,56 @@ function ExplorerTable({ data, onDrawerFiltersActiveChange }) {
               </>
             )}
           </div>
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => {
+                setExplorerBulkChangeStatusOpen(false)
+                setExplorerBulkChangeUnitsOpen((o) => !o)
+              }}
+              className="px-4 py-2 rounded-[4px] text-[14px] font-medium text-white hover:bg-white/10"
+            >
+              Change units
+            </button>
+            {explorerBulkChangeUnitsOpen && (
+              <>
+                <div
+                  className="fixed inset-0 z-[60]"
+                  aria-hidden
+                  onClick={() => setExplorerBulkChangeUnitsOpen(false)}
+                />
+                <div
+                  className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 z-[70] min-w-[180px] rounded-[6px] border border-[#e5e7eb] bg-white py-1 shadow-lg"
+                  style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}
+                >
+                  <div className="px-3 py-2 text-[12px] font-medium text-[#4b535c]">Adjust by</div>
+                  {[
+                    { action: 1, label: '+1' },
+                    { action: 2, label: '+2' },
+                    { action: -1, label: '−1' },
+                    { action: -2, label: '−2' },
+                  ].map(({ action, label }) => (
+                    <button
+                      key={label}
+                      type="button"
+                      onClick={() => handleBulkUnitsChange(action)}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-left text-[13px] font-medium text-[#0a0a0a] hover:bg-[#f3f4f6]"
+                    >
+                      {label}
+                    </button>
+                  ))}
+                  <div className="border-t border-[#e5e7eb] my-1" role="separator" />
+                  <button
+                    type="button"
+                    onClick={() => handleBulkUnitsChange('set_zero')}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-left text-[13px] font-medium text-[#0a0a0a] hover:bg-[#f3f4f6]"
+                  >
+                    Set all to 0
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
         </div>
       )}
     </div>
@@ -4511,6 +4597,9 @@ export default function ScheduleDetailPage() {
   const [selectedView, setSelectedView] = useState('Show all recommendations')
   const [viewDropdownOpen, setViewDropdownOpen] = useState(false)
   const [includeZeroTransfers, setIncludeZeroTransfers] = useState(false)
+  const [explorerStatusOverrides, setExplorerStatusOverrides] = useState({})
+  const [explorerTransferOverrides, setExplorerTransferOverrides] = useState({})
+  const [explorerSelectedRowIds, setExplorerSelectedRowIds] = useState(new Set())
   const [tripStatusOverrides, setTripStatusOverrides] = useState({})
   const [selectedTrip, setSelectedTrip] = useState(null)
   const [selectedTripIds, setSelectedTripIds] = useState(new Set())
@@ -4881,7 +4970,16 @@ export default function ScheduleDetailPage() {
             onDrawerFiltersActiveChange={setLocationsDrawerFiltersActive}
           />
         ) : activeTab === 'explorer' ? (
-          <ExplorerTable data={EXPLORER_DATA} onDrawerFiltersActiveChange={setExplorerDrawerFiltersActive} />
+          <ExplorerTable
+            data={EXPLORER_DATA}
+            onDrawerFiltersActiveChange={setExplorerDrawerFiltersActive}
+            explorerStatusOverrides={explorerStatusOverrides}
+            setExplorerStatusOverrides={setExplorerStatusOverrides}
+            explorerTransferOverrides={explorerTransferOverrides}
+            setExplorerTransferOverrides={setExplorerTransferOverrides}
+            explorerSelectedRowIds={explorerSelectedRowIds}
+            setExplorerSelectedRowIds={setExplorerSelectedRowIds}
+          />
         ) : selectedTrip ? (
             <ProductsDrilldown
               trip={selectedTrip}
