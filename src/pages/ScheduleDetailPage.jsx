@@ -4954,7 +4954,58 @@ function ExplorerTable({
   )
 }
 
+function SummaryPage() {
+  const [activeTab, setActiveTab] = useState('product')
+
+  return (
+    <div className="flex flex-col gap-[15px]">
+      <h1 className="text-[24px] font-medium text-[#0a0a0a]">Summary</h1>
+      <div className="flex items-center justify-between gap-4">
+        <nav className="flex items-center gap-6 h-11">
+          {[
+            { id: 'product', label: 'Product' },
+            { id: 'location', label: 'Location' },
+            { id: 'status', label: 'Status' },
+          ].map((tab) => {
+            const isActive = activeTab === tab.id
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveTab(tab.id)}
+                className={`pb-2 text-[14px] font-medium border-b-2 ${
+                  isActive
+                    ? 'text-[#0a0a0a] border-[#2EB8C2]'
+                    : 'text-[#4b535c] border-transparent hover:text-[#0a0a0a]'
+                }`}
+              >
+                {tab.label}
+              </button>
+            )
+          })}
+        </nav>
+        <button
+          type="button"
+          className="h-10 px-4 rounded-[4px] bg-[#0267ff] text-white text-[14px] font-medium flex items-center gap-2 hover:bg-[#0252cc] shrink-0"
+        >
+          Submit recommendations
+        </button>
+      </div>
+      {activeTab === 'product' && (
+        <div className="text-[14px] text-[#4b535c]">Product content</div>
+      )}
+      {activeTab === 'location' && (
+        <div className="text-[14px] text-[#4b535c]">Location content</div>
+      )}
+      {activeTab === 'status' && (
+        <div className="text-[14px] text-[#4b535c]">Status content</div>
+      )}
+    </div>
+  )
+}
+
 export default function ScheduleDetailPage() {
+  const [showSummary, setShowSummary] = useState(false)
   const [activeTab, setActiveTab] = useState('products')
   const [viewShowsFullDataset, setViewShowsFullDataset] = useState(true)
   const [selectedView, setSelectedView] = useState('Show all recommendations')
@@ -5185,12 +5236,15 @@ export default function ScheduleDetailPage() {
             >
               Re-calculate
             </button>
-            <button
-              type="button"
-              className="h-10 px-4 rounded-[4px] bg-[#0267ff] text-white text-[14px] font-medium flex items-center gap-2 hover:bg-[#0252cc]"
-            >
-              Submit recommendations
-            </button>
+            {!showSummary && (
+              <button
+                type="button"
+                onClick={() => setShowSummary(true)}
+                className="h-10 px-4 rounded-[4px] bg-[#0267ff] text-white text-[14px] font-medium flex items-center gap-2 hover:bg-[#0252cc]"
+              >
+                Continue to summary
+              </button>
+            )}
           </div>
         </div>
       </header>
@@ -5217,6 +5271,9 @@ export default function ScheduleDetailPage() {
         </div>
       )}
 
+      {showSummary ? (
+        <SummaryPage />
+      ) : (
       <div className="flex flex-col gap-[15px]">
         <div className="flex items-center justify-between gap-4">
           <nav className="flex items-center gap-6 h-11">
@@ -5986,6 +6043,7 @@ export default function ScheduleDetailPage() {
         </div>
       )}
       </div>
+      )}
     </div>
   )
 }
