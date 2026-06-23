@@ -4960,37 +4960,29 @@ function SummaryPage() {
   return (
     <div className="flex flex-col gap-[15px]">
       <h1 className="text-[24px] font-medium text-[#0a0a0a]">Summary</h1>
-      <div className="flex items-center justify-between gap-4">
-        <nav className="flex items-center gap-6 h-11">
-          {[
-            { id: 'product', label: 'Product' },
-            { id: 'location', label: 'Location' },
-            { id: 'status', label: 'Status' },
-          ].map((tab) => {
-            const isActive = activeTab === tab.id
-            return (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => setActiveTab(tab.id)}
-                className={`pb-2 text-[14px] font-medium border-b-2 ${
-                  isActive
-                    ? 'text-[#0a0a0a] border-[#2EB8C2]'
-                    : 'text-[#4b535c] border-transparent hover:text-[#0a0a0a]'
-                }`}
-              >
-                {tab.label}
-              </button>
-            )
-          })}
-        </nav>
-        <button
-          type="button"
-          className="h-10 px-4 rounded-[4px] bg-[#0267ff] text-white text-[14px] font-medium flex items-center gap-2 hover:bg-[#0252cc] shrink-0"
-        >
-          Submit recommendations
-        </button>
-      </div>
+      <nav className="flex items-center gap-6 h-11">
+        {[
+          { id: 'product', label: 'Product' },
+          { id: 'location', label: 'Location' },
+          { id: 'status', label: 'Status' },
+        ].map((tab) => {
+          const isActive = activeTab === tab.id
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setActiveTab(tab.id)}
+              className={`pb-2 text-[14px] font-medium border-b-2 ${
+                isActive
+                  ? 'text-[#0a0a0a] border-[#2EB8C2]'
+                  : 'text-[#4b535c] border-transparent hover:text-[#0a0a0a]'
+              }`}
+            >
+              {tab.label}
+            </button>
+          )
+        })}
+      </nav>
       {activeTab === 'product' && (
         <div className="text-[14px] text-[#4b535c]">Product content</div>
       )}
@@ -5214,29 +5206,40 @@ export default function ScheduleDetailPage() {
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            <button
-              type="button"
-              className="h-9 w-9 flex items-center justify-center rounded-[4px] border border-[#e5e7eb] bg-white text-[#4b535c] hover:bg-[#f3f4f6]"
-              aria-label="Share"
-            >
-              <IconShare />
-            </button>
-            <button
-              type="button"
-              className="h-9 w-9 flex items-center justify-center rounded-[4px] border border-[#e5e7eb] bg-white text-[#4b535c] hover:bg-[#f3f4f6]"
-              aria-label="Download"
-            >
-              <IconDocument />
-            </button>
-            <button
-              type="button"
-              onClick={handleRecalculate}
-              className="h-10 px-4 rounded-[4px] border border-[#00050a] bg-white text-[#00050a] text-[14px] font-medium flex items-center gap-2 hover:bg-[#f3f4f6]"
-              style={{ display: hasRecalculated ? 'none' : undefined }}
-            >
-              Re-calculate
-            </button>
             {!showSummary && (
+              <>
+                <button
+                  type="button"
+                  className="h-9 w-9 flex items-center justify-center rounded-[4px] border border-[#e5e7eb] bg-white text-[#4b535c] hover:bg-[#f3f4f6]"
+                  aria-label="Share"
+                >
+                  <IconShare />
+                </button>
+                <button
+                  type="button"
+                  className="h-9 w-9 flex items-center justify-center rounded-[4px] border border-[#e5e7eb] bg-white text-[#4b535c] hover:bg-[#f3f4f6]"
+                  aria-label="Download"
+                >
+                  <IconDocument />
+                </button>
+                <button
+                  type="button"
+                  onClick={handleRecalculate}
+                  className="h-10 px-4 rounded-[4px] border border-[#00050a] bg-white text-[#00050a] text-[14px] font-medium flex items-center gap-2 hover:bg-[#f3f4f6]"
+                  style={{ display: hasRecalculated ? 'none' : undefined }}
+                >
+                  Re-calculate
+                </button>
+              </>
+            )}
+            {showSummary ? (
+              <button
+                type="button"
+                className="h-10 px-4 rounded-[4px] bg-[#0267ff] text-white text-[14px] font-medium flex items-center gap-2 hover:bg-[#0252cc]"
+              >
+                Submit recommendations
+              </button>
+            ) : (
               <button
                 type="button"
                 onClick={() => setShowSummary(true)}
@@ -5249,7 +5252,7 @@ export default function ScheduleDetailPage() {
         </div>
       </header>
 
-      {!staleDataBannerDismissed && !hasRecalculated && (
+      {!showSummary && !staleDataBannerDismissed && !hasRecalculated && (
         <div className="w-full rounded-[6px] border border-solid border-[#0267ff] bg-[#ebf3ff] p-4 flex items-start gap-3 min-w-0">
           <DsIconInfo className="size-6 shrink-0 text-[#0267ff]" aria-hidden />
           <div className="flex min-w-0 flex-1 flex-col gap-1">
