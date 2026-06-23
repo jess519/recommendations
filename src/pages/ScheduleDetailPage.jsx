@@ -1515,6 +1515,18 @@ function EditableTuTransferBadge({
   )
 }
 
+function locationVisibleForTripTypeFilters(loc, tripTypeFilters) {
+  if (loc.tuWarehouse != null) return true
+  const showRebal = tripTypeFilters.includes('rebalancing')
+  const showReplen = tripTypeFilters.includes('replenishment')
+  const truckCount = loc.tuTruck?.length ?? 0
+  const replenCount = loc.tuReplen?.length ?? 0
+  if (showReplen && replenCount > 0) return true
+  if (showRebal && truckCount > 0) return true
+  if (showRebal && truckCount === 0 && replenCount === 0) return true
+  return false
+}
+
 function StockAnalysisDrilldown({
   product,
   trip,
@@ -1530,8 +1542,25 @@ function StockAnalysisDrilldown({
   const [tuBoxOverrides, setTuBoxOverrides] = useState({})
   const [editingTuBoxKey, setEditingTuBoxKey] = useState(null)
   const [editingTuBoxValue, setEditingTuBoxValue] = useState('')
+  const [drilldownTripTypeFilters, setDrilldownTripTypeFilters] = useState([
+    'rebalancing',
+    'replenishment',
+  ])
+  const [drilldownFiltersOpen, setDrilldownFiltersOpen] = useState(false)
   const locations = LOCATIONS_BY_PRODUCT[product.id] || DEFAULT_LOCATIONS
   const breadcrumbFrom = `${trip.from} [${trip.fromCode}]`
+
+  useEffect(() => {
+    setDrilldownTripTypeFilters(['rebalancing', 'replenishment'])
+  }, [product.id])
+
+  const showRebalancing = drilldownTripTypeFilters.includes('rebalancing')
+  const showReplenishment = drilldownTripTypeFilters.includes('replenishment')
+
+  const filteredLocations = useMemo(
+    () => locations.filter((loc) => locationVisibleForTripTypeFilters(loc, drilldownTripTypeFilters)),
+    [locations, drilldownTripTypeFilters]
+  )
 
   const tuBoxKey = (locId, type, index) => `${product.id}-${locId}-${type}-${index}`
 
@@ -1567,8 +1596,8 @@ function StockAnalysisDrilldown({
   }
 
   const toggleAllLocationsSelection = () => {
-    const allIds = locations.map((loc) => loc.id)
-    const allSelected = allIds.every((id) => selectedLocationIds.has(id))
+    const allIds = filteredLocations.map((loc) => loc.id)
+    const allSelected = allIds.length > 0 && allIds.every((id) => selectedLocationIds.has(id))
     setSelectedLocationIds(allSelected ? new Set() : new Set(allIds))
   }
 
@@ -1599,19 +1628,27 @@ function StockAnalysisDrilldown({
     setActiveTab('explorer')
   }
 
-  const summaryStock = locations.reduce(
-    (acc, loc) => {
-      const [before, after] = loc.stock.split(' → ').map(Number)
-      return { before: acc.before + (before || 0), after: acc.after + (after || 0) }
-    },
-    { before: 0, after: 0 }
+  const summaryStock = useMemo(
+    () =>
+      filteredLocations.reduce(
+        (acc, loc) => {
+          const [before, after] = loc.stock.split(' → ').map(Number)
+          return { before: acc.before + (before || 0), after: acc.after + (after || 0) }
+        },
+        { before: 0, after: 0 }
+      ),
+    [filteredLocations]
   )
-  const summaryTU = locations.reduce(
-    (acc, loc) => {
-      const [before, after] = loc.tu.split(' → ').map(Number)
-      return { before: acc.before + (before || 0), after: acc.after + (after || 0) }
-    },
-    { before: 0, after: 0 }
+  const summaryTU = useMemo(
+    () =>
+      filteredLocations.reduce(
+        (acc, loc) => {
+          const [before, after] = loc.tu.split(' → ').map(Number)
+          return { before: acc.before + (before || 0), after: acc.after + (after || 0) }
+        },
+        { before: 0, after: 0 }
+      ),
+    [filteredLocations]
   )
 
   if (selectedTransferDetail) {
@@ -1691,13 +1728,87 @@ function StockAnalysisDrilldown({
             <IconChevronDown className="size-4" />
           </span>
         </div>
-        <button type="button" className="h-12 w-12 flex items-center justify-center rounded-[4px] border border-[#E9EAEB] bg-white hover:bg-white shrink-0" aria-label="Filter">
-          <IconFilterFunnel />
-        </button>
+        <div className="relative shrink-0">
+          <button
+            type="button"
+            onClick={() => setDrilldownFiltersOpen((o) => !o)}
+            className="h-12 w-12 flex items-center justify-center rounded-[4px] border border-[#E9EAEB] bg-white hover:bg-white shrink-0 relative"
+            aria-label="Filter"
+          >
+            <IconFilterFunnel />
+            {drilldownTripTypeFilters.length > 0 && (
+              <span className="absolute -top-1 -right-1 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-[#0267ff] text-white text-[11px] font-medium leading-none">
+                {drilldownTripTypeFilters.length}
+              </span>
+            )}
+          </button>
+          {drilldownFiltersOpen && (
+            <>
+              <div
+                className="fixed inset-0 z-[60]"
+                aria-hidden
+                onClick={() => setDrilldownFiltersOpen(false)}
+              />
+              <div className="absolute left-0 top-full mt-1 z-[70] min-w-[220px] rounded-[6px] border border-[#e5e7eb] bg-white py-2 px-3 shadow-lg">
+                <div>
+                  <div className="text-[12px] font-medium uppercase tracking-[0.04em] text-[#4b535c] mb-2">
+                    Trip type
+                  </div>
+                  {MOVEMENT_TYPE_FILTER_OPTIONS.map((opt) => (
+                    <label
+                      key={opt.id}
+                      className="flex items-center gap-2 px-0 py-1.5 hover:bg-[#f3f4f6] cursor-pointer rounded-[4px]"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={drilldownTripTypeFilters.includes(opt.id)}
+                        onChange={(e) => {
+                          setDrilldownTripTypeFilters((prev) =>
+                            e.target.checked
+                              ? [...prev, opt.id]
+                              : prev.filter((x) => x !== opt.id)
+                          )
+                        }}
+                        className="size-4 rounded border-[#d1d5db] text-[#0267ff]"
+                      />
+                      <span className="text-[14px] text-[#0a0a0a]">{opt.label}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+        </div>
         <button type="button" className="h-12 w-12 flex items-center justify-center rounded-[4px] border border-[#E9EAEB] bg-white hover:bg-white shrink-0" aria-label="Column settings">
           <IconColumnSettings />
         </button>
       </div>
+
+      {drilldownTripTypeFilters.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2 mb-3">
+          {drilldownTripTypeFilters.map((id) => {
+            const label = MOVEMENT_TYPE_FILTER_OPTIONS.find((o) => o.id === id)?.label ?? id
+            return (
+              <span
+                key={`trip-type-${id}`}
+                className="inline-flex items-center gap-1.5 pl-3 pr-1.5 py-1.5 rounded-[4px] bg-[#f3f4f6] text-[#4b535c] border border-[#e5e7eb]"
+              >
+                <span>Trip type: {label}</span>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setDrilldownTripTypeFilters((prev) => prev.filter((x) => x !== id))
+                  }
+                  className="p-0.5 rounded-[4px] text-[#6b7280] hover:bg-[#e5e7eb] hover:text-[#374151]"
+                  aria-label={`Remove filter: Trip type ${label}`}
+                >
+                  <IconClose className="size-3.5" />
+                </button>
+              </span>
+            )
+          })}
+        </div>
+      )}
 
       <div className="border border-[#e5e7eb] rounded-[4px] overflow-hidden bg-white">
         <div className="max-h-[min(65vh,800px)] overflow-x-auto overflow-y-auto">
@@ -1710,7 +1821,10 @@ function StockAnalysisDrilldown({
                   type="checkbox"
                   className="size-4 rounded border-[#E9EAEB] text-[#0267ff]"
                   aria-label="Select all"
-                  checked={locations.length > 0 && locations.every((loc) => selectedLocationIds.has(loc.id))}
+                  checked={
+                    filteredLocations.length > 0 &&
+                    filteredLocations.every((loc) => selectedLocationIds.has(loc.id))
+                  }
                   onChange={toggleAllLocationsSelection}
                 />
               </th>
@@ -1753,7 +1867,7 @@ function StockAnalysisDrilldown({
             </tr>
           </thead>
           <tbody>
-            {locations.map((loc) => (
+            {filteredLocations.map((loc) => (
               <tr key={loc.id} className="border-b border-[#E9EAEB] bg-white hover:bg-white">
                 <td className="w-10 max-w-[40px] py-3 px-2">
                   <button
@@ -1803,7 +1917,8 @@ function StockAnalysisDrilldown({
                           </span>
                         </TuHoverPopover>
                       )}
-                      {loc.tuTruck?.map((n, i) => {
+                      {showRebalancing &&
+                        loc.tuTruck?.map((n, i) => {
                         const key = tuBoxKey(loc.id, 'truck', i)
                         const effectiveValue = getEffectiveTuBoxValue(key, n)
                         return (
@@ -1829,7 +1944,8 @@ function StockAnalysisDrilldown({
                           />
                         )
                       })}
-                      {loc.tuReplen?.map((n, i) => {
+                      {showReplenishment &&
+                        loc.tuReplen?.map((n, i) => {
                         const key = tuBoxKey(loc.id, 'replen', i)
                         const effectiveValue = getEffectiveTuBoxValue(key, n)
                         return (
@@ -1855,7 +1971,9 @@ function StockAnalysisDrilldown({
                           />
                         )
                       })}
-                      {loc.tuWarehouse == null && !loc.tuTruck?.length && (
+                      {showRebalancing &&
+                        loc.tuWarehouse == null &&
+                        !loc.tuTruck?.length && (
                         <TuHoverPopover
                           panel={
                             <TuTruckTransferHoverCard
