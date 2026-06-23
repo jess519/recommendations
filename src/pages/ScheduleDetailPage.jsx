@@ -4954,6 +4954,249 @@ function ExplorerTable({
   )
 }
 
+const SUMMARY_PRODUCT_BY_DEPARTMENT = [
+  { name: 'Handbags', revenue: '€4.82K', units: 28, unitsApproved: 22, unitsUnapproved: 6, stockouts: '3 → 1', warehouseUnits: '142 → 128' },
+  { name: 'Crossbody', revenue: '€3.15K', units: 19, unitsApproved: 15, unitsUnapproved: 4, stockouts: '2 → 0', warehouseUnits: '98 → 86' },
+  { name: 'Bucket bags', revenue: '€2.41K', units: 14, unitsApproved: 11, unitsUnapproved: 3, stockouts: '1 → 1', warehouseUnits: '76 → 68' },
+  { name: 'Totes', revenue: '€1.89K', units: 11, unitsApproved: 9, unitsUnapproved: 0, stockouts: '0 → 0', warehouseUnits: '54 → 49' },
+  { name: 'Clutches', revenue: '€1.26K', units: 8, unitsApproved: 6, unitsUnapproved: 2, stockouts: '1 → 0', warehouseUnits: '42 → 38' },
+]
+
+const SUMMARY_PRODUCT_BY_PRODUCT = [
+  { name: 'Croi-sac zip l', revenue: '€1.48K', units: 3, unitsApproved: 3, unitsUnapproved: 0, stockouts: '0 → 0', warehouseUnits: '52 → 48' },
+  { name: 'Ang-sac pte main m', revenue: '€1.89K', units: 3, unitsApproved: 2, unitsUnapproved: 1, stockouts: '1 → 0', warehouseUnits: '48 → 42' },
+  { name: 'Pre-sac seau m', revenue: '€1.12K', units: 2, unitsApproved: 0, unitsUnapproved: 2, stockouts: '0 → 1', warehouseUnits: '58 → 51' },
+  { name: 'Croi-sac zip s', revenue: '€0.98K', units: 1, unitsApproved: 1, unitsUnapproved: 0, stockouts: '0 → 0', warehouseUnits: '55 → 50' },
+  { name: 'Pre-sac seau s', revenue: '€0.76K', units: 2, unitsApproved: 1, unitsUnapproved: 1, stockouts: '0 → 1', warehouseUnits: '50 → 45' },
+  { name: 'Ang-sac pte main s', revenue: '€0.65K', units: 4, unitsApproved: 2, unitsUnapproved: 2, stockouts: '0 → 0', warehouseUnits: '57 → 44' },
+]
+
+const SUMMARY_PRODUCT_BY_SEASON = [
+  { name: 'SS26', revenue: '€5.94K', units: 32, unitsApproved: 26, unitsUnapproved: 6, stockouts: '4 → 2', warehouseUnits: '186 → 168' },
+  { name: 'FW25', revenue: '€4.21K', units: 24, unitsApproved: 19, unitsUnapproved: 5, stockouts: '2 → 1', warehouseUnits: '142 → 128' },
+  { name: 'SS25', revenue: '€2.87K', units: 16, unitsApproved: 14, unitsUnapproved: 2, stockouts: '1 → 0', warehouseUnits: '98 → 88' },
+  { name: 'FW24', revenue: '€1.52K', units: 8, unitsApproved: 7, unitsUnapproved: 1, stockouts: '0 → 0', warehouseUnits: '62 → 55' },
+]
+
+const SUMMARY_PRODUCT_BY_PRODUCT_GROUP = [
+  { name: 'Sac zip', revenue: '€2.46K', units: 4, unitsApproved: 4, unitsUnapproved: 0, stockouts: '0 → 0', warehouseUnits: '107 → 98' },
+  { name: 'Sac seau', revenue: '€1.88K', units: 4, unitsApproved: 1, unitsUnapproved: 3, stockouts: '0 → 2', warehouseUnits: '108 → 96' },
+  { name: 'Ang-sac pte main', revenue: '€2.54K', units: 7, unitsApproved: 4, unitsUnapproved: 3, stockouts: '1 → 0', warehouseUnits: '105 → 86' },
+  { name: 'Sac bandoulière', revenue: '€1.12K', units: 5, unitsApproved: 4, unitsUnapproved: 1, stockouts: '1 → 1', warehouseUnits: '72 → 64' },
+  { name: 'Mini sac', revenue: '€0.94K', units: 3, unitsApproved: 3, unitsUnapproved: 0, stockouts: '0 → 0', warehouseUnits: '48 → 42' },
+]
+
+const SUMMARY_LOCATION_BY_LOCATION = [
+  { name: 'Opéra', revenue: '€2.18K', units: 12, unitsApproved: 10, unitsUnapproved: 2, stockouts: '1 → 0', warehouseUnits: '52 → 48' },
+  { name: 'G.L. Haussmann Maro', revenue: '€1.64K', units: 9, unitsApproved: 8, unitsUnapproved: 1, stockouts: '0 → 0', warehouseUnits: '58 → 51' },
+  { name: 'La Défense', revenue: '€1.42K', units: 8, unitsApproved: 7, unitsUnapproved: 1, stockouts: '0 → 0', warehouseUnits: '48 → 42' },
+  { name: 'Cap 3000', revenue: '€0.89K', units: 4, unitsApproved: 3, unitsUnapproved: 1, stockouts: '0 → 0', warehouseUnits: '40 → 36' },
+  { name: 'Lyon Herriot', revenue: '€0.76K', units: 3, unitsApproved: 2, unitsUnapproved: 1, stockouts: '0 → 0', warehouseUnits: '35 → 30' },
+  { name: 'Printemps Lille', revenue: '€1.21K', units: 6, unitsApproved: 5, unitsUnapproved: 1, stockouts: '0 → 0', warehouseUnits: '57 → 44' },
+]
+
+const SUMMARY_LOCATION_BY_LOCATION_TYPE = [
+  { name: 'Store', revenue: '€5.82K', units: 34, unitsApproved: 28, unitsUnapproved: 6, stockouts: '2 → 1', warehouseUnits: '198 → 178' },
+  { name: 'Outlet', revenue: '€1.24K', units: 8, unitsApproved: 6, unitsUnapproved: 2, stockouts: '1 → 0', warehouseUnits: '62 → 54' },
+  { name: 'Warehouse', revenue: '€0.94K', units: 5, unitsApproved: 4, unitsUnapproved: 1, stockouts: '0 → 0', warehouseUnits: '120 → 108' },
+  { name: 'E-commerce', revenue: '€1.10K', units: 6, unitsApproved: 5, unitsUnapproved: 1, stockouts: '0 → 0', warehouseUnits: '48 → 42' },
+]
+
+const SUMMARY_LOCATION_BY_COUNTRY = [
+  { name: 'France', revenue: '€6.48K', units: 38, unitsApproved: 31, unitsUnapproved: 7, stockouts: '3 → 1', warehouseUnits: '224 → 202' },
+  { name: 'Belgium', revenue: '€1.12K', units: 7, unitsApproved: 5, unitsUnapproved: 2, stockouts: '1 → 0', warehouseUnits: '58 → 52' },
+  { name: 'Spain', revenue: '€0.98K', units: 5, unitsApproved: 4, unitsUnapproved: 1, stockouts: '0 → 0', warehouseUnits: '48 → 42' },
+  { name: 'United Kingdom', revenue: '€0.52K', units: 3, unitsApproved: 3, unitsUnapproved: 0, stockouts: '0 → 0', warehouseUnits: '32 → 28' },
+]
+
+const SUMMARY_STATUS_ROWS = [
+  { name: 'Approved', revenue: '€5.12K', units: 31, stockouts: '2 → 0', warehouseUnits: '186 → 168' },
+  { name: 'Needs review', revenue: '€1.84K', units: 12, stockouts: '1 → 1', warehouseUnits: '98 → 88' },
+  { name: 'Unapproved', revenue: '€1.14K', units: 10, stockouts: '1 → 2', warehouseUnits: '78 → 68' },
+]
+
+const SUMMARY_PRODUCT_DIMENSIONS = [
+  { id: 'department', label: 'Department', rows: SUMMARY_PRODUCT_BY_DEPARTMENT },
+  { id: 'product', label: 'Product', rows: SUMMARY_PRODUCT_BY_PRODUCT },
+  { id: 'season', label: 'Season', rows: SUMMARY_PRODUCT_BY_SEASON },
+  { id: 'product_group', label: 'Product group', rows: SUMMARY_PRODUCT_BY_PRODUCT_GROUP },
+]
+
+const SUMMARY_LOCATION_DIMENSIONS = [
+  { id: 'location', label: 'Location', rows: SUMMARY_LOCATION_BY_LOCATION },
+  { id: 'location_type', label: 'Location type', rows: SUMMARY_LOCATION_BY_LOCATION_TYPE },
+  { id: 'country', label: 'Country', rows: SUMMARY_LOCATION_BY_COUNTRY },
+]
+
+function SummaryDimensionSelect({ value, onChange, options }) {
+  return (
+    <div className="relative shrink-0">
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="h-10 pl-4 pr-10 rounded-[4px] border border-[#E9EAEB] bg-white text-[14px] text-[#0a0a0a] appearance-none min-w-[180px]"
+        aria-label="Group by dimension"
+      >
+        {options.map((opt) => (
+          <option key={opt.id} value={opt.id}>
+            {opt.label}
+          </option>
+        ))}
+      </select>
+      <span className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-[#4b535c]">
+        <IconChevronDown className="size-4" />
+      </span>
+    </div>
+  )
+}
+
+function SummaryRevenueCell({ value }) {
+  return <span className="text-[14px] text-[#0a0a0a]">{value}</span>
+}
+
+function SummaryStockoutsCell({ value }) {
+  return <span className="text-[14px] text-[#0a0a0a]">{value}</span>
+}
+
+function SummaryWarehouseUnitsCell({ value }) {
+  return (
+    <div className="flex flex-col items-end gap-0.5">
+      <span className="text-[14px] text-[#0a0a0a]">{value}</span>
+    </div>
+  )
+}
+
+function SummaryUnitsWithApprovalCell({ units, unitsApproved, unitsUnapproved }) {
+  return (
+    <div className="flex flex-col items-end gap-0.5">
+      <span className="text-[14px] text-[#0a0a0a]">{units}</span>
+      <span className="text-[12px] font-medium text-[#166534]">{unitsApproved} approved</span>
+      {unitsUnapproved > 0 && (
+        <span className="text-[12px] font-medium text-[#4b535c]">{unitsUnapproved} unapproved</span>
+      )}
+    </div>
+  )
+}
+
+function SummaryUnitsPlainCell({ units }) {
+  return <span className="text-[14px] text-[#0a0a0a]">{units}</span>
+}
+
+function SummaryGroupedTable({ firstColumnLabel, rows, showApprovalBreakdown }) {
+  return (
+    <div className="border border-[#e5e7eb] rounded-[8px] overflow-hidden bg-white">
+      <div className="overflow-x-auto">
+        <table className="w-full text-[14px] bg-white">
+          <thead className="bg-white">
+            <tr className="border-b border-[#E9EAEB]">
+              <th className="h-[62px] min-h-[62px] px-4 text-left align-middle font-medium text-[#00050A]">
+                {firstColumnLabel}
+              </th>
+              <th className="h-[62px] min-h-[62px] px-4 text-right align-middle font-medium text-[#00050A] min-w-[110px]">
+                Revenue increase
+              </th>
+              <th className="h-[62px] min-h-[62px] px-4 text-right align-middle font-medium text-[#00050A] min-w-[90px]">
+                Units
+              </th>
+              <th className="h-[62px] min-h-[62px] px-4 text-right align-middle font-medium text-[#00050A] min-w-[90px]">
+                Stockouts
+              </th>
+              <th className="h-[62px] min-h-[62px] px-4 text-right align-middle font-medium text-[#00050A] min-w-[140px]">
+                Warehouse units
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row) => (
+              <tr key={row.name} className="border-b border-[#E9EAEB] bg-white hover:bg-[#f9fafb]">
+                <td className="py-3 px-4 align-top text-[#0a0a0a] font-medium">{row.name}</td>
+                <td className="py-3 px-4 align-top text-right">
+                  <SummaryRevenueCell value={row.revenue} />
+                </td>
+                <td className="py-3 px-4 align-top text-right">
+                  {showApprovalBreakdown ? (
+                    <SummaryUnitsWithApprovalCell
+                      units={row.units}
+                      unitsApproved={row.unitsApproved}
+                      unitsUnapproved={row.unitsUnapproved}
+                    />
+                  ) : (
+                    <SummaryUnitsPlainCell units={row.units} />
+                  )}
+                </td>
+                <td className="py-3 px-4 align-top text-right">
+                  <SummaryStockoutsCell value={row.stockouts} />
+                </td>
+                <td className="py-3 px-4 align-top text-right">
+                  <SummaryWarehouseUnitsCell value={row.warehouseUnits} />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )
+}
+
+function SummaryProductTab() {
+  const [dimensionId, setDimensionId] = useState('department')
+  const dimension =
+    SUMMARY_PRODUCT_DIMENSIONS.find((d) => d.id === dimensionId) ?? SUMMARY_PRODUCT_DIMENSIONS[0]
+
+  return (
+    <div className="flex flex-col gap-4">
+      <SummaryDimensionSelect
+        value={dimensionId}
+        onChange={setDimensionId}
+        options={SUMMARY_PRODUCT_DIMENSIONS}
+      />
+      <SummaryGroupedTable
+        firstColumnLabel={dimension.label}
+        rows={dimension.rows}
+        showApprovalBreakdown
+      />
+    </div>
+  )
+}
+
+function SummaryLocationTab() {
+  const [dimensionId, setDimensionId] = useState('location')
+  const dimension =
+    SUMMARY_LOCATION_DIMENSIONS.find((d) => d.id === dimensionId) ?? SUMMARY_LOCATION_DIMENSIONS[0]
+
+  return (
+    <div className="flex flex-col gap-4">
+      <SummaryDimensionSelect
+        value={dimensionId}
+        onChange={setDimensionId}
+        options={SUMMARY_LOCATION_DIMENSIONS}
+      />
+      <SummaryGroupedTable
+        firstColumnLabel={dimension.label}
+        rows={dimension.rows}
+        showApprovalBreakdown
+      />
+    </div>
+  )
+}
+
+function SummaryStatusTab() {
+  return (
+    <div className="flex flex-col gap-4">
+      <p className="text-[13px] text-[#4b535c]">
+        Only approved recommendations will be submitted, and can&apos;t be edited afterwards. Needs
+        review and unapproved lines stay active and editable, and can be submitted later.
+      </p>
+      <SummaryGroupedTable
+        firstColumnLabel="Status"
+        rows={SUMMARY_STATUS_ROWS}
+        showApprovalBreakdown={false}
+      />
+    </div>
+  )
+}
+
 function SummaryPage() {
   const [activeTab, setActiveTab] = useState('product')
 
@@ -4983,15 +5226,9 @@ function SummaryPage() {
           )
         })}
       </nav>
-      {activeTab === 'product' && (
-        <div className="text-[14px] text-[#4b535c]">Product content</div>
-      )}
-      {activeTab === 'location' && (
-        <div className="text-[14px] text-[#4b535c]">Location content</div>
-      )}
-      {activeTab === 'status' && (
-        <div className="text-[14px] text-[#4b535c]">Status content</div>
-      )}
+      {activeTab === 'product' && <SummaryProductTab />}
+      {activeTab === 'location' && <SummaryLocationTab />}
+      {activeTab === 'status' && <SummaryStatusTab />}
     </div>
   )
 }
