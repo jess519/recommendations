@@ -934,6 +934,7 @@ function createDefaultScheduleBlock(id) {
     name: '',
     movementTypes: [],
     networkTag: '',
+    tripCapacityTag: '',
     confidenceLevels: ['Very High', 'High', 'Medium', 'Low', 'Very Low'],
     targetCoverageValue: '',
     targetCoverageUnit: 'Weeks',
@@ -1096,11 +1097,20 @@ function ScheduleDetailsBlock({ block, index, isExpanded, onToggleExpand, onRemo
 
         <CreateScheduleScopeSingleSelect
           label="Network tag"
-          helperText="This schedule will apply the tagged constraints set in your Network and Trip capacity parameters."
+          helperText="This schedule will apply the tagged constraints set in your Network parameters."
           placeholder="Select network tag"
           options={['Paris courier', 'Weekly replen', 'Saturday replan', 'Weekend rebal']}
           value={block.networkTag}
           onChange={(next) => onUpdate({ networkTag: next })}
+        />
+
+        <CreateScheduleScopeSingleSelect
+          label="Trip capacity tag"
+          helperText="This schedule will apply the tagged constraints set in your Trip capacity parameters."
+          placeholder="Select trip capacity tag"
+          options={['Paris courier', 'Weekly replen', 'Saturday replan', 'Weekend rebal']}
+          value={block.tripCapacityTag}
+          onChange={(next) => onUpdate({ tripCapacityTag: next })}
         />
 
         <CreateScheduleScopeMultiSelect
