@@ -1,7 +1,8 @@
-import { useState, useEffect, useRef, useCallback, useLayoutEffect } from 'react'
+import { useState, useEffect, useRef, useCallback, useLayoutEffect, useMemo } from 'react'
 import { createPortal } from 'react-dom'
+import { Filter, Plus } from 'lucide-react'
 import { ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts'
-import { IconSearch, IconChevronDown, IconChevronRight, IconShare, IconDocument, IconClose, IconInfo as DsIconInfo, IconArrowLeft, IconGears, IconTruckTu, IconPackageTu, IconRebalancing, IconReplenishment, IconCalendarNote, IconTrendUp, IconFilterFunnel, IconColumnSettings, IconSortOrder, IconSave } from '../components/icons'
+import { IconSearch, IconChevronDown, IconChevronRight, IconShare, IconDocument, IconClose, IconInfo as DsIconInfo, IconArrowLeft, IconGears, IconTruckTu, IconPackageTu, IconRebalancing, IconReplenishment, IconCalendarNote, IconTrendUp, IconFilterFunnel, IconColumnSettings, IconSortOrder } from '../components/icons'
 function IconInfo() {
   return (
     <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="shrink-0 text-[#9ca3af]" aria-hidden>
@@ -563,12 +564,12 @@ const PRODUCTS_EDITED_IDS = [1, 3]
 // Mock locations for stock analysis drilldown (keyed by product id)
 const LOCATIONS_BY_PRODUCT = {
   1: [
-    { id: 1, name: 'Opéra', code: 'A1A', movementType: ["rebalancing"], stock: '6 → 12', tu: '6 → 12', tuWarehouse: 6, tuTruck: [3, 3], salesL7: 1, salesL30: 2, forecast: 1.87, stockouts: '0 → 0', coverage: '0% → 100%', targetWeeks: 6, receivingWeeksCoverage: '3.2 → 6.4 (6 target)', recommendationReason: 'Increase revenue', revenueIncrease: '€679', availableToSend: 4, sendingStock: '10 → 7', sendingCoverage: '2.1 → 1.8 (4 target)', approvalStatus: 'approved_by_system' },
-    { id: 2, name: 'G.L. Haussmann Maro', code: 'AIA', movementType: ["rebalancing"], stock: '6 → 6', tu: '4 → 5', tuWarehouse: 3, tuTruck: [1], salesL7: 0, salesL30: 0, forecast: 0, stockouts: '0 → 0', coverage: '0% → 0%', targetWeeks: 4, receivingWeeksCoverage: 'N/A (0 forecast)', recommendationReason: 'Reduce overstock', revenueIncrease: '€120', availableToSend: 3, sendingStock: '8 → 5', sendingCoverage: 'N/A (0 forecast)' },
-    { id: 3, name: 'La Défense', code: 'A2B', movementType: ["rebalancing"], stock: '5 → 5', tu: '4 → 5', tuWarehouse: 3, tuTruck: [1], salesL7: 1, salesL30: 1, forecast: 0.76, stockouts: '0 → 0', coverage: '100% → 100%', targetWeeks: 4, receivingWeeksCoverage: '5.2 → 5.8 (4 target)', recommendationReason: 'Increase revenue', revenueIncrease: '€245', availableToSend: 4, sendingStock: '9 → 6', sendingCoverage: '1.8 → 1.2 (4 target)', approvalStatus: 'edited_by_user', editedByUser: 'Csabi Toth' },
+    { id: 1, name: 'Opéra', code: 'A1A', movementType: ["rebalancing"], stock: '6 → 12', tu: '6 → 12', tuWarehouse: 6, tuTruck: [3, 3], tuReplen: [2], salesL7: 1, salesL30: 2, forecast: 1.87, stockouts: '0 → 0', coverage: '0% → 100%', targetWeeks: 6, receivingWeeksCoverage: '3.2 → 6.4 (6 target)', recommendationReason: 'Increase revenue', revenueIncrease: '€679', availableToSend: 4, sendingStock: '10 → 7', sendingCoverage: '2.1 → 1.8 (4 target)', approvalStatus: 'approved_by_system' },
+    { id: 2, name: 'G.L. Haussmann Maro', code: 'AIA', movementType: ["rebalancing"], stock: '6 → 6', tu: '4 → 5', tuWarehouse: 3, tuTruck: [1], tuReplen: [2], salesL7: 0, salesL30: 0, forecast: 0, stockouts: '0 → 0', coverage: '0% → 0%', targetWeeks: 4, receivingWeeksCoverage: 'N/A (0 forecast)', recommendationReason: 'Reduce overstock', revenueIncrease: '€120', availableToSend: 3, sendingStock: '8 → 5', sendingCoverage: 'N/A (0 forecast)' },
+    { id: 3, name: 'La Défense', code: 'A2B', movementType: ["rebalancing"], stock: '5 → 5', tu: '4 → 5', tuWarehouse: 3, tuTruck: [1], tuReplen: [1], salesL7: 1, salesL30: 1, forecast: 0.76, stockouts: '0 → 0', coverage: '100% → 100%', targetWeeks: 4, receivingWeeksCoverage: '5.2 → 5.8 (4 target)', recommendationReason: 'Increase revenue', revenueIncrease: '€245', availableToSend: 4, sendingStock: '9 → 6', sendingCoverage: '1.8 → 1.2 (4 target)', approvalStatus: 'edited_by_user', editedByUser: 'Csabi Toth' },
     { id: 4, name: 'Cap 3000', code: 'A3E', movementType: ["replenishment","rebalancing"], stock: '4 → 4', tu: '0 → 1', tuWarehouse: null, tuTruck: [1], salesL7: 0, salesL30: 2, forecast: 0.32, stockouts: '0 → 0', coverage: '0% → 0%', targetWeeks: 4, receivingWeeksCoverage: 'N/A (0 forecast)', recommendationReason: 'Improve coverage', revenueIncrease: '€89', availableToSend: 2, sendingStock: '6 → 5', sendingCoverage: 'N/A (0 forecast)', approvalStatus: 'approved_by_user', approvedByUser: 'Jess Briggs' },
-    { id: 5, name: 'Lyon Herriot', code: 'A4C', movementType: ["rebalancing"], stock: '5 → 5', tu: '0 → 1', tuWarehouse: null, tuTruck: [1], salesL7: 1, salesL30: 1, forecast: 0.54, stockouts: '0 → 0', coverage: '0% → 0%', targetWeeks: 4, receivingWeeksCoverage: '4.1 → 4.5 (4 target)', recommendationReason: 'Increase revenue', revenueIncrease: '€156', availableToSend: 3, sendingStock: '7 → 6', sendingCoverage: '2.4 → 2.0 (4 target)' },
-    { id: 6, name: 'Printemps Lille', code: 'ASF', movementType: ["rebalancing"], stock: '8 → 8', tu: '0 → 20', tuWarehouse: 4, tuTruck: [20], salesL7: 2, salesL30: 4, forecast: 2.1, stockouts: '0 → 0', coverage: '100% → 100%', targetWeeks: 6, receivingWeeksCoverage: '3.8 → 6.2 (6 target)', recommendationReason: 'Increase revenue', revenueIncrease: '€1.2K', availableToSend: 5, sendingStock: '12 → 8', sendingCoverage: '3.2 → 2.1 (6 target)', approvalStatus: 'approved_by_system' },
+    { id: 5, name: 'Lyon Herriot', code: 'A4C', movementType: ["rebalancing"], stock: '5 → 5', tu: '0 → 1', tuWarehouse: null, tuTruck: [1], tuReplen: [], salesL7: 1, salesL30: 1, forecast: 0.54, stockouts: '0 → 0', coverage: '0% → 0%', targetWeeks: 4, receivingWeeksCoverage: '4.1 → 4.5 (4 target)', recommendationReason: 'Increase revenue', revenueIncrease: '€156', availableToSend: 3, sendingStock: '7 → 6', sendingCoverage: '2.4 → 2.0 (4 target)' },
+    { id: 6, name: 'Printemps Lille', code: 'ASF', movementType: ["rebalancing"], stock: '8 → 8', tu: '0 → 20', tuWarehouse: 4, tuTruck: [20], tuReplen: [1], salesL7: 2, salesL30: 4, forecast: 2.1, stockouts: '0 → 0', coverage: '100% → 100%', targetWeeks: 6, receivingWeeksCoverage: '3.8 → 6.2 (6 target)', recommendationReason: 'Increase revenue', revenueIncrease: '€1.2K', availableToSend: 5, sendingStock: '12 → 8', sendingCoverage: '3.2 → 2.1 (6 target)', approvalStatus: 'approved_by_system' },
   ],
   2: [
     { id: 1, name: 'Opéra', code: 'A1A', movementType: ["rebalancing"], stock: '4 → 4', tu: '4 → 4', tuWarehouse: 4, tuTruck: [], salesL7: 2, salesL30: 3, forecast: 0.54, stockouts: '0 → 0', coverage: '100% → 100%', targetWeeks: 4, receivingWeeksCoverage: '5.2 → 5.2 (4 target)', recommendationReason: 'Increase revenue', revenueIncrease: '€312', availableToSend: 4, sendingStock: '8 → 4', sendingCoverage: '2.0 → 1.0 (4 target)', approvalStatus: 'approved_by_user', approvedByUser: 'Jess Briggs' },
@@ -602,6 +603,177 @@ const CHART_DATA = Array.from({ length: 22 }, (_, i) => {
     estimatedLostSales: Math.round(lostSales * 10) / 10,
   }
 })
+
+// ============================================================
+// EXPLORER TAB MOCK DATA
+// ============================================================
+
+const EXPLORER_WAREHOUSE = 'Log01 entrepot logtex'
+
+const EXPLORER_STORES = [
+  'Opéra',
+  'G.L. Haussmann Maro',
+  'La Défense',
+  'Cap 3000',
+  'Lyon Herriot',
+  'Printemps Lille',
+]
+
+const EXPLORER_PRODUCTS = [
+  {
+    id: 'exp-p1',
+    name: 'Ang-sac pte main m',
+    baseSku: 'A1252810',
+    colour: 'Noir',
+    department: 'Handbags',
+    sizes: ['M'],
+    movementTypes: ['replenishment', 'rebalancing'],
+  },
+  {
+    id: 'exp-p6',
+    name: 'Ang-sac pte main s',
+    baseSku: 'A1252811',
+    colour: 'Noir',
+    department: 'Handbags',
+    sizes: ['S'],
+    movementTypes: ['replenishment', 'rebalancing'],
+  },
+  {
+    id: 'exp-p2',
+    name: 'Croi-sac zip l',
+    baseSku: 'A1398810',
+    colour: 'Noir',
+    department: 'Crossbody',
+    sizes: ['L'],
+    movementTypes: ['replenishment'],
+  },
+  {
+    id: 'exp-p3',
+    name: 'Pre-sac seau m',
+    baseSku: 'A101080',
+    colour: 'Bleu petrole',
+    department: 'Bucket bags',
+    sizes: ['M'],
+    movementTypes: ['replenishment'],
+  },
+  {
+    id: 'exp-p4',
+    name: 'Croi-sac zip s',
+    baseSku: 'A1398811',
+    colour: 'Noir',
+    department: 'Crossbody',
+    sizes: ['S'],
+    movementTypes: ['rebalancing'],
+  },
+  {
+    id: 'exp-p5',
+    name: 'Pre-sac seau s',
+    baseSku: 'A101081',
+    colour: 'Bleu petrole',
+    department: 'Bucket bags',
+    sizes: ['S'],
+    movementTypes: ['rebalancing'],
+  },
+]
+
+const DEPARTMENT_FILTER_OPTIONS = ['Handbags', 'Crossbody', 'Bucket bags']
+
+const MOVEMENT_TYPE_FILTER_OPTIONS = [
+  { id: 'replenishment', label: 'Replenishment' },
+  { id: 'rebalancing', label: 'Rebalancing' },
+]
+
+const CONFIDENCE_FILTER_OPTIONS = [
+  { id: 'very_high', label: 'Very high' },
+  { id: 'high', label: 'High' },
+  { id: 'medium', label: 'Medium' },
+  { id: 'low', label: 'Low' },
+  { id: 'very_low', label: 'Very low' },
+]
+
+const STATUS_CYCLE = [
+  'approved_by_system', 'approved_by_system', 'approved_by_system',
+  'unapproved', 'unapproved', 'unapproved',
+  'needs_review_from_user', 'needs_review_from_user',
+  'last_edited_by_user', 'last_edited_by_user',
+  'approved_by_user',
+]
+
+const CONFIDENCE_CYCLE = ['very_high', 'high', 'high', 'medium', 'medium', 'low', 'very_low']
+const BADGE_CYCLE = [['REV'], ['VIS'], ['REV', 'VIS'], ['REV'], ['VIS']]
+
+function buildExplorerRow(rowIndex, product, size, fromLoc, toLoc, movementType) {
+  const coverageTarget = 4
+  const coverageWeeks = 1 + (rowIndex * 2) % 8
+  const isOnTarget = coverageWeeks >= coverageTarget
+  const coverage = isOnTarget
+    ? 'All SKUs in target'
+    : `${Math.round(((coverageTarget - coverageWeeks) / coverageTarget) * 100)}% below target`
+  const salesL7 = ((rowIndex * 2) % 15) + 1
+  return {
+    id: `exp-row-${rowIndex}`,
+    productId: product.id,
+    productName: product.name,
+    sku: `${product.baseSku}-${size}`,
+    size,
+    colour: product.colour,
+    department: product.department,
+    fromLocation: fromLoc,
+    toLocation: toLoc,
+    movementType,
+    transfers: 1 + (rowIndex * 3) % 15,
+    revenue: `€${(0.5 + (rowIndex * 0.37) % 4.5).toFixed(2)}K`,
+    recommended: '1',
+    recommendedBadges: BADGE_CYCLE[rowIndex % BADGE_CYCLE.length],
+    recommendedSub: rowIndex % 3 === 0 ? '2' : undefined,
+    confidence: CONFIDENCE_CYCLE[rowIndex % CONFIDENCE_CYCLE.length],
+    coverage,
+    coverageWeeks,
+    coverageTarget,
+    coverageStatus: isOnTarget ? 'on_target' : 'below_target',
+    nextEvent: { name: rowIndex % 2 === 0 ? 'No event' : 'Rebal cycle', date: '15/03/2026' },
+    salesL7,
+    salesL30: salesL7 * 5,
+    currentUnits: 10 + (rowIndex * 5) % 50,
+    currentUnitsInTransit: rowIndex % 6,
+    warehouseAllocateLine: `${50 + (rowIndex * 3) % 20} → ${45 + (rowIndex * 3) % 20}`,
+    warehouseSellLine: `${65 + (rowIndex * 5) % 25} → ${58 + (rowIndex * 5) % 25}`,
+    forecast: Number(((rowIndex * 0.31) % 3 + 0.5).toFixed(2)),
+    stockoutsLine: `${rowIndex % 3} → ${(rowIndex + 1) % 3}`,
+    status: STATUS_CYCLE[rowIndex % STATUS_CYCLE.length],
+    approvedByUser: false,
+    editedByUser: false,
+  }
+}
+
+function buildExplorerData() {
+  const rows = []
+  let rowIndex = 0
+
+  EXPLORER_PRODUCTS.forEach((product) => {
+    product.sizes.forEach((size) => {
+      product.movementTypes.forEach((movementType) => {
+        if (movementType === 'replenishment') {
+          EXPLORER_STORES.forEach((store) => {
+            rows.push(buildExplorerRow(rowIndex++, product, size, EXPLORER_WAREHOUSE, store, 'replenishment'))
+          })
+        } else {
+          for (let i = 0; i < 6; i++) {
+            const fromIdx = i
+            const toIdx = (i + 2) % EXPLORER_STORES.length
+            if (fromIdx !== toIdx) {
+              rows.push(buildExplorerRow(rowIndex++, product, size, EXPLORER_STORES[fromIdx], EXPLORER_STORES[toIdx], 'rebalancing'))
+            }
+          }
+        }
+      })
+    })
+  })
+
+  return rows
+}
+
+const EXPLORER_DATA = buildExplorerData()
 
 function IconCheck() {
   return (
@@ -738,6 +910,10 @@ const QUICK_FILTER_CHIPS = [
   { id: 'needs_review', label: 'Needs review' },
   { id: 'broken_size_run', label: 'Broken size run' },
   { id: 'stale_stock', label: 'Stale stock' },
+  { id: 'bestsellers', label: 'Bestsellers' },
+  { id: 'selling_fast', label: 'Selling fast' },
+  { id: 'new_in', label: 'New in' },
+  { id: 'slowing_down', label: 'Slowing down' },
 ]
 
 function ScheduleQuickFilterChips({ activeId, onChange }) {
@@ -1274,12 +1450,141 @@ function TuTruckTransferHoverCard({ trip, loc, truckUnits, borderClassName }) {
   )
 }
 
-function StockAnalysisDrilldown({ product, trip, onBack }) {
+const TU_TRANSFER_BADGE_SHELL =
+  'inline-flex h-[26px] min-w-[50px] w-fit shrink-0 items-center justify-center gap-1.5 rounded-[2px] px-[6px] py-[2px] text-[12px] font-medium text-white cursor-pointer transition-[filter,box-shadow] hover:brightness-90 hover:shadow-[0px_2px_4px_rgba(0,0,0,0.1)]'
+
+function EditableTuTransferBadge({
+  value,
+  isEditing,
+  editingValue,
+  onStartEdit,
+  onEditingValueChange,
+  onCommit,
+  onCancel,
+  bgClassName,
+  icon,
+  hoverPanel,
+}) {
+  if (isEditing) {
+    return (
+      <input
+        type="number"
+        min={0}
+        autoFocus
+        value={editingValue}
+        onChange={(e) => onEditingValueChange(e.target.value)}
+        onBlur={onCommit}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault()
+            onCommit()
+          }
+          if (e.key === 'Escape') {
+            e.preventDefault()
+            onCancel()
+          }
+        }}
+        onClick={(e) => e.stopPropagation()}
+        className="h-[26px] min-w-[50px] w-[50px] rounded-[2px] border border-[#e9eaeb] px-[6px] py-[2px] text-[12px] font-medium text-[#0a0a0a] text-center focus:outline-none"
+      />
+    )
+  }
+
+  return (
+    <TuHoverPopover panel={hoverPanel}>
+      <span
+        role="button"
+        tabIndex={0}
+        onClick={(e) => {
+          e.stopPropagation()
+          onStartEdit()
+        }}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault()
+            e.stopPropagation()
+            onStartEdit()
+          }
+        }}
+        className={`${TU_TRANSFER_BADGE_SHELL} ${bgClassName}`}
+      >
+        {icon}
+        {value}
+      </span>
+    </TuHoverPopover>
+  )
+}
+
+function locationVisibleForTripTypeFilters(loc, tripTypeFilters) {
+  if (loc.tuWarehouse != null) return true
+  const showRebal = tripTypeFilters.includes('rebalancing')
+  const showReplen = tripTypeFilters.includes('replenishment')
+  const truckCount = loc.tuTruck?.length ?? 0
+  const replenCount = loc.tuReplen?.length ?? 0
+  if (showReplen && replenCount > 0) return true
+  if (showRebal && truckCount > 0) return true
+  if (showRebal && truckCount === 0 && replenCount === 0) return true
+  return false
+}
+
+function StockAnalysisDrilldown({
+  product,
+  trip,
+  onBack,
+  setExplorerProductNameFilters,
+  setActiveTab,
+  productStatusOverrides,
+  setProductStatusOverrides,
+}) {
   const [selectedTransferDetail, setSelectedTransferDetail] = useState(null)
   const [approvedLocations, setApprovedLocations] = useState({})
   const [selectedLocationIds, setSelectedLocationIds] = useState(new Set())
+  const [tuBoxOverrides, setTuBoxOverrides] = useState({})
+  const [editingTuBoxKey, setEditingTuBoxKey] = useState(null)
+  const [editingTuBoxValue, setEditingTuBoxValue] = useState('')
+  const [drilldownTripTypeFilters, setDrilldownTripTypeFilters] = useState([
+    'rebalancing',
+    'replenishment',
+  ])
+  const [drilldownFiltersOpen, setDrilldownFiltersOpen] = useState(false)
   const locations = LOCATIONS_BY_PRODUCT[product.id] || DEFAULT_LOCATIONS
   const breadcrumbFrom = `${trip.from} [${trip.fromCode}]`
+
+  useEffect(() => {
+    setDrilldownTripTypeFilters(['rebalancing', 'replenishment'])
+  }, [product.id])
+
+  const showRebalancing = drilldownTripTypeFilters.includes('rebalancing')
+  const showReplenishment = drilldownTripTypeFilters.includes('replenishment')
+
+  const filteredLocations = useMemo(
+    () => locations.filter((loc) => locationVisibleForTripTypeFilters(loc, drilldownTripTypeFilters)),
+    [locations, drilldownTripTypeFilters]
+  )
+
+  const tuBoxKey = (locId, type, index) => `${product.id}-${locId}-${type}-${index}`
+
+  const getEffectiveTuBoxValue = (key, baseValue) =>
+    tuBoxOverrides[key] !== undefined ? tuBoxOverrides[key] : baseValue
+
+  const startEditTuBox = (key, currentValue) => {
+    setEditingTuBoxKey(key)
+    setEditingTuBoxValue(String(currentValue))
+  }
+
+  const commitTuBoxEdit = () => {
+    if (!editingTuBoxKey) return
+    const parsed = parseInt(editingTuBoxValue, 10)
+    const value = Number.isFinite(parsed) ? Math.max(0, parsed) : 0
+    setTuBoxOverrides((prev) => ({ ...prev, [editingTuBoxKey]: value }))
+    setEditingTuBoxKey(null)
+    setEditingTuBoxValue('')
+  }
+
+  const cancelTuBoxEdit = () => {
+    setEditingTuBoxKey(null)
+    setEditingTuBoxValue('')
+  }
 
   const toggleLocationSelection = (id) => {
     setSelectedLocationIds((prev) => {
@@ -1291,8 +1596,8 @@ function StockAnalysisDrilldown({ product, trip, onBack }) {
   }
 
   const toggleAllLocationsSelection = () => {
-    const allIds = locations.map((loc) => loc.id)
-    const allSelected = allIds.every((id) => selectedLocationIds.has(id))
+    const allIds = filteredLocations.map((loc) => loc.id)
+    const allSelected = allIds.length > 0 && allIds.every((id) => selectedLocationIds.has(id))
     setSelectedLocationIds(allSelected ? new Set() : new Set(allIds))
   }
 
@@ -1316,20 +1621,34 @@ function StockAnalysisDrilldown({ product, trip, onBack }) {
   const breadcrumbTo = trip.to.length > 12 ? `${trip.to.slice(0, 10)}...` : trip.to
   const productLabel = product.name.length > 16 ? `${product.name.slice(0, 14)}...` : product.name
   const productSku = product.sku
+  const showExplorerProductLink = EXPLORER_PRODUCTS.some((p) => p.name === product.name)
 
-  const summaryStock = locations.reduce(
-    (acc, loc) => {
-      const [before, after] = loc.stock.split(' → ').map(Number)
-      return { before: acc.before + (before || 0), after: acc.after + (after || 0) }
-    },
-    { before: 0, after: 0 }
+  const handleEditProductOnExplorer = () => {
+    setExplorerProductNameFilters([product.name])
+    setActiveTab('explorer')
+  }
+
+  const summaryStock = useMemo(
+    () =>
+      filteredLocations.reduce(
+        (acc, loc) => {
+          const [before, after] = loc.stock.split(' → ').map(Number)
+          return { before: acc.before + (before || 0), after: acc.after + (after || 0) }
+        },
+        { before: 0, after: 0 }
+      ),
+    [filteredLocations]
   )
-  const summaryTU = locations.reduce(
-    (acc, loc) => {
-      const [before, after] = loc.tu.split(' → ').map(Number)
-      return { before: acc.before + (before || 0), after: acc.after + (after || 0) }
-    },
-    { before: 0, after: 0 }
+  const summaryTU = useMemo(
+    () =>
+      filteredLocations.reduce(
+        (acc, loc) => {
+          const [before, after] = loc.tu.split(' → ').map(Number)
+          return { before: acc.before + (before || 0), after: acc.after + (after || 0) }
+        },
+        { before: 0, after: 0 }
+      ),
+    [filteredLocations]
   )
 
   if (selectedTransferDetail) {
@@ -1345,7 +1664,8 @@ function StockAnalysisDrilldown({ product, trip, onBack }) {
 
   return (
     <div className="flex flex-col gap-4 bg-white">
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-3 min-w-0">
         <button
           type="button"
           onClick={onBack}
@@ -1363,6 +1683,26 @@ function StockAnalysisDrilldown({ product, trip, onBack }) {
           <span>→</span>
           <span className="font-medium text-[#0a0a0a]">Transfers</span>
         </nav>
+        </div>
+        <div className="flex items-center gap-3 shrink-0">
+          <StatusDropdown
+            rowId={`drilldown-product-${product.id}`}
+            value={productStatusOverrides[product.id] ?? getRowStatus(product)}
+            userName={product.approvedByUser || product.editedByUser}
+            onChange={(statusId) =>
+              setProductStatusOverrides((prev) => ({ ...prev, [product.id]: statusId }))
+            }
+          />
+          {showExplorerProductLink && (
+            <button
+              type="button"
+              onClick={handleEditProductOnExplorer}
+              className="text-[13px] font-medium text-[#0267ff] hover:underline shrink-0"
+            >
+              Edit product on the Explorer tab
+            </button>
+          )}
+        </div>
       </div>
 
       <p className="text-[13px] text-[#878D94] mb-2">
@@ -1388,13 +1728,87 @@ function StockAnalysisDrilldown({ product, trip, onBack }) {
             <IconChevronDown className="size-4" />
           </span>
         </div>
-        <button type="button" className="h-12 w-12 flex items-center justify-center rounded-[4px] border border-[#E9EAEB] bg-white hover:bg-white shrink-0" aria-label="Filter">
-          <IconFilterFunnel />
-        </button>
+        <div className="relative shrink-0">
+          <button
+            type="button"
+            onClick={() => setDrilldownFiltersOpen((o) => !o)}
+            className="h-12 w-12 flex items-center justify-center rounded-[4px] border border-[#E9EAEB] bg-white hover:bg-white shrink-0 relative"
+            aria-label="Filter"
+          >
+            <IconFilterFunnel />
+            {drilldownTripTypeFilters.length > 0 && (
+              <span className="absolute -top-1 -right-1 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-[#0267ff] text-white text-[11px] font-medium leading-none">
+                {drilldownTripTypeFilters.length}
+              </span>
+            )}
+          </button>
+          {drilldownFiltersOpen && (
+            <>
+              <div
+                className="fixed inset-0 z-[60]"
+                aria-hidden
+                onClick={() => setDrilldownFiltersOpen(false)}
+              />
+              <div className="absolute left-0 top-full mt-1 z-[70] min-w-[220px] rounded-[6px] border border-[#e5e7eb] bg-white py-2 px-3 shadow-lg">
+                <div>
+                  <div className="text-[12px] font-medium uppercase tracking-[0.04em] text-[#4b535c] mb-2">
+                    Trip type
+                  </div>
+                  {MOVEMENT_TYPE_FILTER_OPTIONS.map((opt) => (
+                    <label
+                      key={opt.id}
+                      className="flex items-center gap-2 px-0 py-1.5 hover:bg-[#f3f4f6] cursor-pointer rounded-[4px]"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={drilldownTripTypeFilters.includes(opt.id)}
+                        onChange={(e) => {
+                          setDrilldownTripTypeFilters((prev) =>
+                            e.target.checked
+                              ? [...prev, opt.id]
+                              : prev.filter((x) => x !== opt.id)
+                          )
+                        }}
+                        className="size-4 rounded border-[#d1d5db] text-[#0267ff]"
+                      />
+                      <span className="text-[14px] text-[#0a0a0a]">{opt.label}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+        </div>
         <button type="button" className="h-12 w-12 flex items-center justify-center rounded-[4px] border border-[#E9EAEB] bg-white hover:bg-white shrink-0" aria-label="Column settings">
           <IconColumnSettings />
         </button>
       </div>
+
+      {drilldownTripTypeFilters.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2 mb-3">
+          {drilldownTripTypeFilters.map((id) => {
+            const label = MOVEMENT_TYPE_FILTER_OPTIONS.find((o) => o.id === id)?.label ?? id
+            return (
+              <span
+                key={`trip-type-${id}`}
+                className="inline-flex items-center gap-1.5 pl-3 pr-1.5 py-1.5 rounded-[4px] bg-[#f3f4f6] text-[#4b535c] border border-[#e5e7eb]"
+              >
+                <span>Trip type: {label}</span>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setDrilldownTripTypeFilters((prev) => prev.filter((x) => x !== id))
+                  }
+                  className="p-0.5 rounded-[4px] text-[#6b7280] hover:bg-[#e5e7eb] hover:text-[#374151]"
+                  aria-label={`Remove filter: Trip type ${label}`}
+                >
+                  <IconClose className="size-3.5" />
+                </button>
+              </span>
+            )
+          })}
+        </div>
+      )}
 
       <div className="border border-[#e5e7eb] rounded-[4px] overflow-hidden bg-white">
         <div className="max-h-[min(65vh,800px)] overflow-x-auto overflow-y-auto">
@@ -1407,7 +1821,10 @@ function StockAnalysisDrilldown({ product, trip, onBack }) {
                   type="checkbox"
                   className="size-4 rounded border-[#E9EAEB] text-[#0267ff]"
                   aria-label="Select all"
-                  checked={locations.length > 0 && locations.every((loc) => selectedLocationIds.has(loc.id))}
+                  checked={
+                    filteredLocations.length > 0 &&
+                    filteredLocations.every((loc) => selectedLocationIds.has(loc.id))
+                  }
                   onChange={toggleAllLocationsSelection}
                 />
               </th>
@@ -1450,7 +1867,7 @@ function StockAnalysisDrilldown({ product, trip, onBack }) {
             </tr>
           </thead>
           <tbody>
-            {locations.map((loc) => (
+            {filteredLocations.map((loc) => (
               <tr key={loc.id} className="border-b border-[#E9EAEB] bg-white hover:bg-white">
                 <td className="w-10 max-w-[40px] py-3 px-2">
                   <button
@@ -1500,25 +1917,63 @@ function StockAnalysisDrilldown({ product, trip, onBack }) {
                           </span>
                         </TuHoverPopover>
                       )}
-                      {loc.tuTruck?.map((n, i) => (
-                        <TuHoverPopover
-                          key={i}
-                          panel={
-                            <TuTruckTransferHoverCard
-                              trip={trip}
-                              loc={loc}
-                              truckUnits={n}
-                              borderClassName="border-[#0267FF]"
-                            />
-                          }
-                        >
-                          <span className="inline-flex h-[26px] min-w-[50px] w-fit shrink-0 items-center justify-center gap-1.5 rounded-[2px] bg-[#0267FF] px-[6px] py-[2px] text-[12px] font-medium text-white cursor-pointer transition-[filter,box-shadow] hover:brightness-90 hover:shadow-[0px_2px_4px_rgba(0,0,0,0.1)]">
-                            <IconTruckTu />
-                            {n}
-                          </span>
-                        </TuHoverPopover>
-                      ))}
-                      {loc.tuWarehouse == null && !loc.tuTruck?.length && (
+                      {showRebalancing &&
+                        loc.tuTruck?.map((n, i) => {
+                        const key = tuBoxKey(loc.id, 'truck', i)
+                        const effectiveValue = getEffectiveTuBoxValue(key, n)
+                        return (
+                          <EditableTuTransferBadge
+                            key={key}
+                            value={effectiveValue}
+                            isEditing={editingTuBoxKey === key}
+                            editingValue={editingTuBoxValue}
+                            onStartEdit={() => startEditTuBox(key, effectiveValue)}
+                            onEditingValueChange={setEditingTuBoxValue}
+                            onCommit={commitTuBoxEdit}
+                            onCancel={cancelTuBoxEdit}
+                            bgClassName="bg-[#0267FF]"
+                            icon={<IconTruckTu />}
+                            hoverPanel={
+                              <TuTruckTransferHoverCard
+                                trip={trip}
+                                loc={loc}
+                                truckUnits={effectiveValue}
+                                borderClassName="border-[#0267FF]"
+                              />
+                            }
+                          />
+                        )
+                      })}
+                      {showReplenishment &&
+                        loc.tuReplen?.map((n, i) => {
+                        const key = tuBoxKey(loc.id, 'replen', i)
+                        const effectiveValue = getEffectiveTuBoxValue(key, n)
+                        return (
+                          <EditableTuTransferBadge
+                            key={key}
+                            value={effectiveValue}
+                            isEditing={editingTuBoxKey === key}
+                            editingValue={editingTuBoxValue}
+                            onStartEdit={() => startEditTuBox(key, effectiveValue)}
+                            onEditingValueChange={setEditingTuBoxValue}
+                            onCommit={commitTuBoxEdit}
+                            onCancel={cancelTuBoxEdit}
+                            bgClassName="bg-[#EC4899]"
+                            icon={<IconReplenishment />}
+                            hoverPanel={
+                              <TuTruckTransferHoverCard
+                                trip={trip}
+                                loc={loc}
+                                truckUnits={effectiveValue}
+                                borderClassName="border-[#EC4899]"
+                              />
+                            }
+                          />
+                        )
+                      })}
+                      {showRebalancing &&
+                        loc.tuWarehouse == null &&
+                        !loc.tuTruck?.length && (
                         <TuHoverPopover
                           panel={
                             <TuTruckTransferHoverCard
@@ -1595,7 +2050,15 @@ function StockAnalysisDrilldown({ product, trip, onBack }) {
   )
 }
 
-function ProductsDrilldown({ trip, onBack, showBackButton = true, recalculatedTimestamp, onDrawerFiltersActiveChange }) {
+function ProductsDrilldown({
+  trip,
+  onBack,
+  showBackButton = true,
+  recalculatedTimestamp,
+  onDrawerFiltersActiveChange,
+  setExplorerProductNameFilters,
+  setActiveTab,
+}) {
   const [selectedProduct, setSelectedProduct] = useState(null)
   const [productStatusOverrides, setProductStatusOverrides] = useState({})
   const [productTransfersOverrides, setProductTransfersOverrides] = useState({})
@@ -1733,6 +2196,10 @@ function ProductsDrilldown({ trip, onBack, showBackButton = true, recalculatedTi
         product={selectedProduct}
         trip={trip}
         onBack={() => setSelectedProduct(null)}
+        setExplorerProductNameFilters={setExplorerProductNameFilters}
+        setActiveTab={setActiveTab}
+        productStatusOverrides={productStatusOverrides}
+        setProductStatusOverrides={setProductStatusOverrides}
       />
     )
   }
@@ -3389,11 +3856,1398 @@ function LocationsTab({ recalculatedTimestamp, onDrawerFiltersActiveChange }) {
   )
 }
 
+function parseExplorerRevenueK(revenueStr) {
+  const match = revenueStr.match(/€([\d.]+)K/)
+  return match ? parseFloat(match[1], 10) : 0
+}
+
+function renderExplorerColumnHeaderLabel(col) {
+  const showIcon = 'tooltip' in col
+  const labelContent = showIcon ? (
+    col.tooltip === null ? (
+      <span className="inline-flex items-center gap-1">
+        {col.label} <IconInfo />
+      </span>
+    ) : (
+      <span className="inline-flex items-center gap-1 cursor-help" title={col.tooltip}>
+        {col.label} <IconInfo />
+      </span>
+    )
+  ) : (
+    col.label
+  )
+
+  if (col.subtitle) {
+    return (
+      <span
+        className={`flex flex-col justify-center gap-0.5 leading-tight ${
+          col.alignment === 'right' ? 'items-end' : 'items-start'
+        }`}
+      >
+        {labelContent}
+        <span className="text-[11px] font-normal text-[#4b535c]">{col.subtitle}</span>
+      </span>
+    )
+  }
+
+  return labelContent
+}
+
+const EXPLORER_TABLE_COLUMNS = [
+  { id: 'productDetails', label: 'Product details', alignment: 'left', minWidth: 'min-w-[260px]' },
+  { id: 'fromLocation', label: 'From location', alignment: 'left', minWidth: 'min-w-[150px]' },
+  { id: 'toLocation', label: 'To location', alignment: 'left', minWidth: 'min-w-[150px]' },
+  { id: 'movementType', label: 'Movement type', alignment: 'left', minWidth: 'min-w-[100px]' },
+  { id: 'transfers', label: 'Transfers', alignment: 'right', minWidth: 'min-w-[90px]' },
+  { id: 'revenue', label: 'Revenue increase', alignment: 'right', minWidth: 'min-w-[110px]', tooltip: null },
+  {
+    id: 'recommended',
+    label: 'Recommended transfers',
+    alignment: 'right',
+    minWidth: 'min-w-[140px]',
+    tooltip: null,
+  },
+  {
+    id: 'confidence',
+    label: 'Confidence',
+    alignment: 'right',
+    minWidth: 'min-w-[110px]',
+    tooltip:
+      'Based on historical forecast accuracy at the product level. Lower confidence means recommendations carry more uncertainty.',
+  },
+  {
+    id: 'coverage',
+    label: 'Coverage',
+    alignment: 'right',
+    minWidth: 'min-w-[120px]',
+    tooltip:
+      "How well current stock is meeting forecasted demand. 'X% below target' means stock is short of target; 'All SKUs in target' means coverage is on track.",
+  },
+  {
+    id: 'nextEvent',
+    label: 'Next event',
+    alignment: 'right',
+    minWidth: 'min-w-[130px]',
+    subtitle: 'Submission deadline',
+    tooltip: 'The next scheduled inventory event for this product across all locations in scope',
+  },
+  { id: 'stockouts', label: 'Stockouts', alignment: 'right', minWidth: 'min-w-[90px]' },
+  { id: 'sales', label: 'Sales', alignment: 'right', minWidth: 'min-w-[120px]', subtitle: 'L7D / L30D' },
+  { id: 'forecast', label: 'Forecast', alignment: 'right', minWidth: 'min-w-[100px]', subtitle: 'per wk', tooltip: null },
+  {
+    id: 'stockInCirculation',
+    label: 'Stock in circulation',
+    alignment: 'right',
+    minWidth: 'min-w-[140px]',
+    tooltip:
+      'This includes stock in transit, stock on hand and stock pending from production. This will be for both parent & child locations (if applicable).',
+  },
+  {
+    id: 'warehouseUnits',
+    label: 'Warehouse units',
+    alignment: 'right',
+    minWidth: 'min-w-[140px]',
+    tooltip: 'Units reserved to sell at this location and units available to allocate to stores',
+  },
+  { id: 'status', label: 'Status', alignment: 'right', minWidth: 'min-w-[150px]' },
+]
+
+const EXPLORER_STATUS_FILTER_OPTIONS = [
+  { id: 'approved', label: 'Approved' },
+  { id: 'unapproved', label: 'Unapproved' },
+  { id: 'needs_review', label: 'Needs review' },
+  { id: 'edited', label: 'Edited' },
+]
+
+const EXPLORER_STATUS_FILTER_LABELS = {
+  approved: 'Approved',
+  unapproved: 'Unapproved',
+  needs_review: 'Needs review',
+  edited: 'Edited',
+}
+
+function filterExplorerRows(
+  rows,
+  {
+    departmentFilters,
+    productNameFilters,
+    movementTypeFilters,
+    confidenceFilters,
+    statusFilters,
+    statusOverrides = {},
+  }
+) {
+  return rows.filter((row) => {
+    if (departmentFilters.length > 0 && !departmentFilters.includes(row.department)) {
+      return false
+    }
+    if (productNameFilters.length > 0 && !productNameFilters.includes(row.productName)) {
+      return false
+    }
+    if (movementTypeFilters.length > 0 && !movementTypeFilters.includes(row.movementType)) {
+      return false
+    }
+    if (confidenceFilters.length > 0 && !confidenceFilters.includes(row.confidence)) {
+      return false
+    }
+    if (statusFilters.length > 0) {
+      const rowStatus = statusOverrides[row.id] ?? getRowStatus(row)
+      const statusMatch = statusFilters.some((f) => {
+        if (f === 'approved') return rowStatus === 'approved_by_system' || rowStatus === 'approved_by_user'
+        if (f === 'unapproved') return rowStatus === 'unapproved'
+        if (f === 'needs_review') return rowStatus === 'needs_review_from_user'
+        if (f === 'edited') return rowStatus === 'last_edited_by_user'
+        return false
+      })
+      if (!statusMatch) return false
+    }
+    return true
+  })
+}
+
+const EXPLORER_TABLE_COLUMN_COUNT = EXPLORER_TABLE_COLUMNS.length
+const EXPLORER_TABLE_TOTAL_COLUMN_COUNT = EXPLORER_TABLE_COLUMN_COUNT + 1
+
+function ExplorerTransfersInput({ value, onChange }) {
+  return (
+    <input
+      type="number"
+      min={0}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      onClick={(e) => e.stopPropagation()}
+      className="w-16 h-7 px-2 rounded-[4px] border border-[#e9eaeb] text-[14px] text-[#0a0a0a] text-right focus:outline-none"
+    />
+  )
+}
+
+function renderExplorerBodyCell(row, col, {
+  explorerTdClass,
+  explorerStatusTdClass,
+  getEffectiveStatus,
+  handleExplorerStatusChange,
+  getEffectiveTransfers,
+  handleTransfersEdit,
+}) {
+  const alignClass = col.alignment === 'right' ? 'text-right' : ''
+
+  switch (col.id) {
+    case 'productDetails':
+      return (
+        <td key={col.id} className={`${explorerTdClass} ${col.minWidth}`}>
+          <div className="flex items-start gap-4 min-w-0">
+            <div className="w-12 h-12 rounded-[4px] bg-[#f3f4f6] shrink-0" />
+            <div className="flex flex-col gap-0.5 min-w-0">
+              <span className="text-[14px] font-medium text-[#0a0a0a]">{row.productName}</span>
+              <span className="text-[12px] text-[#4b535c]">{row.sku}</span>
+              <span className="text-[12px] text-[#4b535c]">{row.colour}</span>
+            </div>
+          </div>
+        </td>
+      )
+    case 'fromLocation':
+      return (
+        <td key={col.id} className={`${explorerTdClass} ${col.minWidth} text-[#0a0a0a]`}>
+          {row.fromLocation}
+        </td>
+      )
+    case 'toLocation':
+      return (
+        <td key={col.id} className={`${explorerTdClass} ${col.minWidth} text-[#0a0a0a]`}>
+          {row.toLocation}
+        </td>
+      )
+    case 'movementType':
+      return (
+        <td key={col.id} className={`${explorerTdClass} ${col.minWidth}`}>
+          <MovementTypePills movementType={[row.movementType]} />
+        </td>
+      )
+    case 'transfers':
+      return (
+        <td
+          key={col.id}
+          className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="flex justify-end">
+            <ExplorerTransfersInput
+              value={getEffectiveTransfers(row)}
+              onChange={(newValue) => handleTransfersEdit(row.id, newValue)}
+            />
+          </div>
+        </td>
+      )
+    case 'revenue':
+      return (
+        <td key={col.id} className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}>
+          <span className="text-[14px] text-[#0a0a0a]">{row.revenue}</span>
+        </td>
+      )
+    case 'recommended':
+      return (
+        <td key={col.id} className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}>
+          <div className="flex flex-col items-end gap-1">
+            <span className="inline-flex flex-wrap items-center justify-end gap-1 text-[14px] text-[#0a0a0a]">
+              {row.recommended}
+              {row.recommendedBadges?.map((badge) => (
+                <span
+                  key={badge}
+                  className="bg-[#f8f8f8] text-[11px] font-medium text-[#0267ff] px-1.5 py-0.5 rounded"
+                >
+                  {badge}
+                </span>
+              ))}
+            </span>
+            {row.recommendedSub != null && (
+              <span className="text-[12px] text-[#4b535c]">{row.recommendedSub}</span>
+            )}
+          </div>
+        </td>
+      )
+    case 'confidence':
+      return (
+        <td key={col.id} className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}>
+          <div className="flex justify-end">
+            <ConfidencePill value={row.confidence} />
+          </div>
+        </td>
+      )
+    case 'coverage':
+      return (
+        <td key={col.id} className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}>
+          <div className="flex justify-end">
+            <ProductCoverageText
+              coverageWeeks={row.coverageWeeks}
+              coverageTarget={row.coverageTarget}
+              coverage={row.coverage}
+            />
+          </div>
+        </td>
+      )
+    case 'nextEvent':
+      return (
+        <td key={col.id} className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}>
+          <ProductNextEventCell nextEvent={row.nextEvent} />
+        </td>
+      )
+    case 'stockouts':
+      return (
+        <td key={col.id} className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}>
+          <span className="text-[14px] text-[#0a0a0a]">{row.stockoutsLine}</span>
+        </td>
+      )
+    case 'sales':
+      return (
+        <td key={col.id} className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}>
+          <div className="flex flex-col items-end gap-0.5">
+            <span className="text-[14px] text-[#0a0a0a]">{row.salesL7}</span>
+            <span className="text-[12px] text-[#4b535c]">{row.salesL30}</span>
+          </div>
+        </td>
+      )
+    case 'forecast':
+      return (
+        <td key={col.id} className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}>
+          <span className="text-[14px] text-[#0a0a0a]">{row.forecast}</span>
+        </td>
+      )
+    case 'stockInCirculation':
+      return (
+        <td key={col.id} className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}>
+          <div className="flex flex-col items-end gap-0.5">
+            <span className="text-[14px] text-[#0a0a0a]">{row.currentUnits} units</span>
+            <span className="text-[12px] text-[#4b535c]">{row.currentUnitsInTransit} in transit</span>
+          </div>
+        </td>
+      )
+    case 'warehouseUnits':
+      return (
+        <td key={col.id} className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}>
+          <div className="flex flex-col items-end gap-0.5">
+            <span className="text-[14px] text-[#0a0a0a]">{row.warehouseAllocateLine}</span>
+            <span className="text-[12px] text-[#4b535c]">{row.warehouseSellLine}</span>
+          </div>
+        </td>
+      )
+    case 'status':
+      return (
+        <td
+          key={col.id}
+          className={`${explorerStatusTdClass} ${col.minWidth}`}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="flex justify-end">
+            <StatusDropdown
+              rowId={`explorer-${row.id}`}
+              value={getEffectiveStatus(row)}
+              userName={row.approvedByUser || row.editedByUser}
+              onChange={(statusId) => handleExplorerStatusChange(row.id, statusId)}
+            />
+          </div>
+        </td>
+      )
+    default:
+      return null
+  }
+}
+
+function renderExplorerTotalsCell(col, totals, { explorerTotalsThClass, explorerTotalsEmptyThClass, explorerStatusTotalsThClass }) {
+  const isStatus = col.id === 'status'
+  const baseClass = isStatus ? explorerStatusTotalsThClass : explorerTotalsThClass
+  const emptyClass = explorerTotalsEmptyThClass
+
+  switch (col.id) {
+    case 'productDetails':
+      return (
+        <th key={col.id} className={`${baseClass} ${col.minWidth}`}>
+          {totals.skuLocations}
+        </th>
+      )
+    case 'transfers':
+      return (
+        <th key={col.id} className={`${baseClass} ${col.minWidth} text-right`}>
+          {totals.transfers}
+        </th>
+      )
+    case 'revenue':
+      return (
+        <th key={col.id} className={`${baseClass} ${col.minWidth} text-right`}>
+          {totals.revenue}
+        </th>
+      )
+    case 'recommended':
+      return (
+        <th key={col.id} className={`${baseClass} ${col.minWidth} text-right`}>
+          {totals.recommended}
+        </th>
+      )
+    case 'sales':
+      return (
+        <th key={col.id} className={`${baseClass} ${col.minWidth} text-right`}>
+          <div className="flex flex-col items-end">
+            <span>{totals.salesL7}</span>
+            <span className="text-[12px] text-[#4b535c]">{totals.salesL30}</span>
+          </div>
+        </th>
+      )
+    case 'stockInCirculation':
+      return (
+        <th key={col.id} className={`${baseClass} ${col.minWidth} text-right`}>
+          <div className="flex flex-col items-end">
+            <span>{totals.currentUnits}</span>
+            <span className="text-[12px] text-[#4b535c]">{totals.inTransit}</span>
+          </div>
+        </th>
+      )
+    case 'status':
+      return <th key={col.id} className={`${explorerStatusTotalsThClass} ${col.minWidth}`} />
+    default:
+      return <th key={col.id} className={`${emptyClass} ${col.minWidth}`} />
+  }
+}
+
+function ExplorerEmptyState() {
+  return (
+    <tr>
+      <td colSpan={EXPLORER_TABLE_TOTAL_COLUMN_COUNT} className="py-20 px-6">
+        <div className="flex flex-col items-center text-center">
+          <Filter className="w-16 h-16 text-[#9ca3af] mb-4" aria-hidden />
+          <p className="text-[18px] font-medium text-[#0a0a0a]">Dataset is too large</p>
+          <p className="mt-2 text-[14px] text-[#4b535c] max-w-[420px]">
+            You&apos;re trying to load 318,239 SKU-locations but the maximum is 300,000. Apply filters to
+            reduce the dataset size.
+          </p>
+        </div>
+      </td>
+    </tr>
+  )
+}
+
+function ExplorerTable({
+  data,
+  onDrawerFiltersActiveChange,
+  explorerStatusOverrides,
+  setExplorerStatusOverrides,
+  explorerTransferOverrides,
+  setExplorerTransferOverrides,
+  explorerSelectedRowIds,
+  setExplorerSelectedRowIds,
+  explorerDepartmentFilters,
+  setExplorerDepartmentFilters,
+  explorerProductNameFilters,
+  setExplorerProductNameFilters,
+  explorerMovementTypeFilters,
+  setExplorerMovementTypeFilters,
+  explorerConfidenceFilters,
+  setExplorerConfidenceFilters,
+  explorerStatusFilters,
+  setExplorerStatusFilters,
+}) {
+  const [explorerSearch, setExplorerSearch] = useState('')
+  const [explorerActiveQuickFilter, setExplorerActiveQuickFilter] = useState(null)
+  const [explorerFiltersDropdownOpen, setExplorerFiltersDropdownOpen] = useState(false)
+  const [explorerBulkChangeStatusOpen, setExplorerBulkChangeStatusOpen] = useState(false)
+  const [explorerBulkChangeUnitsOpen, setExplorerBulkChangeUnitsOpen] = useState(false)
+  const explorerSelectAllRef = useRef(null)
+
+  const handleExplorerStatusChange = (rowId, newStatus) => {
+    setExplorerStatusOverrides((prev) => ({ ...prev, [rowId]: newStatus }))
+  }
+
+  const handleTransfersEdit = (rowId, newValue) => {
+    const numValue = Number.isFinite(parseInt(newValue, 10)) ? parseInt(newValue, 10) : 0
+    setExplorerTransferOverrides((prev) => ({ ...prev, [rowId]: numValue }))
+    setExplorerStatusOverrides((prev) => ({ ...prev, [rowId]: 'last_edited_by_user' }))
+  }
+
+  const getEffectiveTransfers = (row) =>
+    explorerTransferOverrides[row.id] !== undefined ? explorerTransferOverrides[row.id] : row.transfers
+
+  const toggleExplorerRowSelection = (rowId) => {
+    setExplorerSelectedRowIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(rowId)) next.delete(rowId)
+      else next.add(rowId)
+      return next
+    })
+  }
+
+  const clearExplorerSelection = () => setExplorerSelectedRowIds(new Set())
+
+  const handleBulkStatusChange = (newStatus) => {
+    if (!explorerSelectedRowIds.size) return
+    setExplorerStatusOverrides((prev) => {
+      const next = { ...prev }
+      explorerSelectedRowIds.forEach((rowId) => {
+        next[rowId] = newStatus
+      })
+      return next
+    })
+    setExplorerBulkChangeStatusOpen(false)
+    clearExplorerSelection()
+  }
+
+  const handleBulkUnitsChange = (action) => {
+    if (!explorerSelectedRowIds.size) return
+
+    const transferUpdates = {}
+    const statusUpdates = {}
+
+    explorerSelectedRowIds.forEach((rowId) => {
+      const row = data.find((r) => r.id === rowId)
+      if (!row) return
+      const effectiveCurrent = getEffectiveTransfers(row)
+      const newValue =
+        action === 'set_zero' ? 0 : Math.max(0, effectiveCurrent + action)
+      if (newValue !== effectiveCurrent) {
+        transferUpdates[rowId] = newValue
+        statusUpdates[rowId] = 'last_edited_by_user'
+      }
+    })
+
+    if (Object.keys(transferUpdates).length > 0) {
+      setExplorerTransferOverrides((prev) => ({ ...prev, ...transferUpdates }))
+      setExplorerStatusOverrides((prev) => ({ ...prev, ...statusUpdates }))
+    }
+
+    setExplorerBulkChangeUnitsOpen(false)
+  }
+
+  const getEffectiveStatus = (row) => explorerStatusOverrides[row.id] ?? getRowStatus(row)
+
+  const explorerFilterCount =
+    explorerDepartmentFilters.length +
+    explorerProductNameFilters.length +
+    explorerMovementTypeFilters.length +
+    explorerConfidenceFilters.length +
+    explorerStatusFilters.length
+
+  const hasAnyFilter =
+    explorerDepartmentFilters.length > 0 ||
+    explorerProductNameFilters.length > 0 ||
+    explorerMovementTypeFilters.length > 0 ||
+    explorerConfidenceFilters.length > 0 ||
+    explorerStatusFilters.length > 0
+
+  useEffect(() => {
+    onDrawerFiltersActiveChange?.(hasAnyFilter)
+  }, [hasAnyFilter, onDrawerFiltersActiveChange])
+
+  const clearAllExplorerFilters = () => {
+    setExplorerDepartmentFilters([])
+    setExplorerProductNameFilters([])
+    setExplorerMovementTypeFilters([])
+    setExplorerConfidenceFilters([])
+    setExplorerStatusFilters([])
+  }
+
+  const filteredData = useMemo(
+    () =>
+      filterExplorerRows(data, {
+        departmentFilters: explorerDepartmentFilters,
+        productNameFilters: explorerProductNameFilters,
+        movementTypeFilters: explorerMovementTypeFilters,
+        confidenceFilters: explorerConfidenceFilters,
+        statusFilters: explorerStatusFilters,
+        statusOverrides: explorerStatusOverrides,
+      }),
+    [
+      data,
+      explorerDepartmentFilters,
+      explorerProductNameFilters,
+      explorerMovementTypeFilters,
+      explorerConfidenceFilters,
+      explorerStatusFilters,
+      explorerStatusOverrides,
+    ]
+  )
+
+  const toggleAllExplorerRows = () => {
+    const allIds = filteredData.map((r) => r.id)
+    const allSelected = allIds.length > 0 && allIds.every((id) => explorerSelectedRowIds.has(id))
+    setExplorerSelectedRowIds(allSelected ? new Set() : new Set(allIds))
+  }
+
+  const allExplorerRowsSelected =
+    hasAnyFilter &&
+    filteredData.length > 0 &&
+    filteredData.every((row) => explorerSelectedRowIds.has(row.id))
+  const someExplorerRowsSelected =
+    hasAnyFilter &&
+    filteredData.some((row) => explorerSelectedRowIds.has(row.id)) &&
+    !allExplorerRowsSelected
+
+  useEffect(() => {
+    if (explorerSelectAllRef.current) {
+      explorerSelectAllRef.current.indeterminate = someExplorerRowsSelected
+    }
+  }, [someExplorerRowsSelected])
+
+  const totals = useMemo(() => {
+    const sumTransfers = filteredData.reduce((sum, row) => {
+      const transfers =
+        explorerTransferOverrides[row.id] !== undefined
+          ? explorerTransferOverrides[row.id]
+          : row.transfers
+      return sum + transfers
+    }, 0)
+    const sumRevenueK = filteredData.reduce((sum, row) => sum + parseExplorerRevenueK(row.revenue), 0)
+    const sumRecommended = filteredData.reduce((sum, row) => sum + parseInt(row.recommended, 10), 0)
+    const sumSalesL7 = filteredData.reduce((sum, row) => sum + row.salesL7, 0)
+    const sumSalesL30 = filteredData.reduce((sum, row) => sum + row.salesL30, 0)
+    const sumCurrentUnits = filteredData.reduce((sum, row) => sum + row.currentUnits, 0)
+    const sumInTransit = filteredData.reduce((sum, row) => sum + row.currentUnitsInTransit, 0)
+    return {
+      skuLocations: `${filteredData.length} SKU-locations`,
+      transfers: `${sumTransfers} units`,
+      revenue: `€${sumRevenueK.toFixed(1)}K`,
+      recommended: `${sumRecommended} units`,
+      salesL7: sumSalesL7,
+      salesL30: sumSalesL30,
+      currentUnits: `${sumCurrentUnits} units`,
+      inTransit: `${sumInTransit} in transit`,
+    }
+  }, [filteredData, explorerTransferOverrides])
+
+  const explorerThClass =
+    'sticky top-0 z-20 bg-white h-[62px] min-h-[62px] px-4 text-left align-middle font-medium text-[#00050A] box-border'
+  const explorerStatusThClass =
+    'sticky top-0 right-0 z-30 bg-white h-[62px] min-h-[62px] px-4 text-right align-middle font-medium text-[#00050A] box-border border-l border-[#e5e7eb] shadow-[-4px_0_12px_-6px_rgba(15,23,42,0.12)]'
+  const explorerTotalsThClass = 'sticky top-[62px] z-20 bg-white py-2 px-4 text-[12px] font-medium text-[#0a0a0a]'
+  const explorerTotalsEmptyThClass = 'sticky top-[62px] z-20 bg-white py-2 px-4'
+  const explorerStatusTotalsThClass =
+    'sticky top-[62px] right-0 z-30 bg-white py-2 px-4 border-l border-[#e5e7eb] shadow-[-4px_0_12px_-6px_rgba(15,23,42,0.12)]'
+  const explorerTdClass = 'py-3 px-4 align-top'
+  const explorerStatusTdClass =
+    'sticky right-0 z-30 bg-white py-3 px-4 align-top text-right border-l border-[#e5e7eb] shadow-[-4px_0_12px_-6px_rgba(15,23,42,0.12)] group-hover:bg-[#f9fafb]'
+  const explorerCheckboxThClass =
+    'sticky left-0 z-30 h-[62px] min-h-[62px] w-14 min-w-14 max-w-14 box-border bg-white px-4 py-[10px] text-left align-middle shadow-[4px_0_12px_-6px_rgba(15,23,42,0.12)]'
+  const explorerCheckboxTotalsThClass =
+    'sticky left-0 z-30 w-14 min-w-14 max-w-14 box-border py-2 px-4 bg-white shadow-[4px_0_12px_-6px_rgba(15,23,42,0.12)]'
+  const explorerCheckboxTdClass =
+    'sticky left-0 z-30 min-h-[86px] w-14 min-w-14 max-w-14 box-border bg-white px-4 py-3 align-middle shadow-[4px_0_12px_-6px_rgba(15,23,42,0.12)] group-hover:bg-[#f9fafb]'
+  const explorerCheckboxInputClass =
+    'h-4 w-4 rounded border-2 border-[#e9eaeb] bg-white text-sky-600 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-0'
+
+  const headerGrip = (
+    <span className="inline-flex shrink-0 select-none" aria-hidden>
+      <IconColumnDragHandle />
+    </span>
+  )
+
+  return (
+    <div className="flex flex-col gap-[15px]">
+      <div className="flex flex-wrap items-center gap-3 mb-4 min-w-0">
+        <div className="flex items-center gap-3 shrink-0">
+          <div className="flex items-center h-10 rounded-[4px] border border-[#e9eaeb] bg-white w-[200px] max-w-[280px]">
+            <input
+              type="text"
+              placeholder="Search…"
+              value={explorerSearch}
+              onChange={(e) => setExplorerSearch(e.target.value)}
+              className="flex-1 min-w-0 h-full pl-4 pr-2 border-0 bg-transparent rounded-[4px] text-[14px] text-[#0a0a0a] placeholder:text-[#9ca3af] focus:outline-none focus:ring-0"
+            />
+            <span className="pr-3 shrink-0 text-[#9ca3af]">
+              <IconSearch className="size-4" />
+            </span>
+          </div>
+          <div className="relative shrink-0">
+            <button
+              type="button"
+              onClick={() => setExplorerFiltersDropdownOpen((o) => !o)}
+              className="h-10 px-4 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#22272f] hover:bg-[#f3f4f6] shrink-0 flex items-center gap-2"
+            >
+              <IconFilterFunnel />
+              Filters
+              {explorerFilterCount > 0 && (
+                <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-[#0267ff] text-white text-[11px] font-medium leading-none">
+                  {explorerFilterCount}
+                </span>
+              )}
+            </button>
+            {explorerFiltersDropdownOpen && (
+              <>
+                <div
+                  className="fixed inset-0 z-[60]"
+                  aria-hidden
+                  onClick={() => setExplorerFiltersDropdownOpen(false)}
+                />
+                <div className="absolute left-0 top-full mt-1 z-[70] min-w-[220px] rounded-[6px] border border-[#e5e7eb] bg-white py-2 px-3 shadow-lg">
+                  <div>
+                    <div className="text-[12px] font-medium uppercase tracking-[0.04em] text-[#4b535c] mb-2">
+                      Department
+                    </div>
+                    {DEPARTMENT_FILTER_OPTIONS.map((dept) => (
+                      <label
+                        key={dept}
+                        className="flex items-center gap-2 px-0 py-1.5 hover:bg-[#f3f4f6] cursor-pointer rounded-[4px]"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={explorerDepartmentFilters.includes(dept)}
+                          onChange={(e) => {
+                            setExplorerDepartmentFilters((prev) =>
+                              e.target.checked ? [...prev, dept] : prev.filter((x) => x !== dept)
+                            )
+                          }}
+                          className="size-4 rounded border-[#d1d5db] text-[#0267ff]"
+                        />
+                        <span className="text-[14px] text-[#0a0a0a]">{dept}</span>
+                      </label>
+                    ))}
+                  </div>
+
+                  <div className="border-t border-[#e5e7eb] pt-3 mt-3">
+                    <div className="text-[12px] font-medium uppercase tracking-[0.04em] text-[#4b535c] mb-2">
+                      Product
+                    </div>
+                    {EXPLORER_PRODUCTS.map((product) => (
+                      <label
+                        key={product.id}
+                        className="flex items-center gap-2 px-0 py-1.5 hover:bg-[#f3f4f6] cursor-pointer rounded-[4px]"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={explorerProductNameFilters.includes(product.name)}
+                          onChange={(e) => {
+                            setExplorerProductNameFilters((prev) =>
+                              e.target.checked
+                                ? [...prev, product.name]
+                                : prev.filter((x) => x !== product.name)
+                            )
+                          }}
+                          className="size-4 rounded border-[#d1d5db] text-[#0267ff]"
+                        />
+                        <span className="text-[14px] text-[#0a0a0a]">{product.name}</span>
+                      </label>
+                    ))}
+                  </div>
+
+                  <div className="border-t border-[#e5e7eb] pt-3 mt-3">
+                    <div className="text-[12px] font-medium uppercase tracking-[0.04em] text-[#4b535c] mb-2">
+                      Movement type
+                    </div>
+                    {MOVEMENT_TYPE_FILTER_OPTIONS.map((opt) => (
+                      <label
+                        key={opt.id}
+                        className="flex items-center gap-2 px-0 py-1.5 hover:bg-[#f3f4f6] cursor-pointer rounded-[4px]"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={explorerMovementTypeFilters.includes(opt.id)}
+                          onChange={(e) => {
+                            setExplorerMovementTypeFilters((prev) =>
+                              e.target.checked ? [...prev, opt.id] : prev.filter((x) => x !== opt.id)
+                            )
+                          }}
+                          className="size-4 rounded border-[#d1d5db] text-[#0267ff]"
+                        />
+                        <span className="text-[14px] text-[#0a0a0a]">{opt.label}</span>
+                      </label>
+                    ))}
+                  </div>
+
+                  <div className="border-t border-[#e5e7eb] pt-3 mt-3">
+                    <div className="text-[12px] font-medium uppercase tracking-[0.04em] text-[#4b535c] mb-2">
+                      Confidence
+                    </div>
+                    {CONFIDENCE_FILTER_OPTIONS.map((opt) => (
+                      <label
+                        key={opt.id}
+                        className="flex items-center gap-2 px-0 py-1.5 hover:bg-[#f3f4f6] cursor-pointer rounded-[4px]"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={explorerConfidenceFilters.includes(opt.id)}
+                          onChange={(e) => {
+                            setExplorerConfidenceFilters((prev) =>
+                              e.target.checked ? [...prev, opt.id] : prev.filter((x) => x !== opt.id)
+                            )
+                          }}
+                          className="size-4 rounded border-[#d1d5db] text-[#0267ff]"
+                        />
+                        <span className="text-[14px] text-[#0a0a0a]">{opt.label}</span>
+                      </label>
+                    ))}
+                  </div>
+
+                  <div className="border-t border-[#e5e7eb] pt-3 mt-3">
+                    <div className="text-[12px] font-medium uppercase tracking-[0.04em] text-[#4b535c] mb-2">
+                      Status
+                    </div>
+                    {EXPLORER_STATUS_FILTER_OPTIONS.map((opt) => (
+                      <label
+                        key={opt.id}
+                        className="flex items-center gap-2 px-0 py-1.5 hover:bg-[#f3f4f6] cursor-pointer rounded-[4px]"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={explorerStatusFilters.includes(opt.id)}
+                          onChange={(e) => {
+                            setExplorerStatusFilters((prev) =>
+                              e.target.checked ? [...prev, opt.id] : prev.filter((x) => x !== opt.id)
+                            )
+                          }}
+                          className="size-4 rounded border-[#d1d5db] text-[#0267ff]"
+                        />
+                        <span className="text-[14px] text-[#0a0a0a]">{opt.label}</span>
+                      </label>
+                    ))}
+                  </div>
+
+                  {explorerFilterCount > 0 && (
+                    <div className="border-t border-[#e5e7eb] mt-3 pt-3">
+                      <button
+                        type="button"
+                        onClick={clearAllExplorerFilters}
+                        className="text-[13px] font-medium text-[#0267ff] hover:underline"
+                      >
+                        Clear all
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+        <ScheduleQuickFilterChips
+          activeId={explorerActiveQuickFilter}
+          onChange={setExplorerActiveQuickFilter}
+        />
+      </div>
+
+      {explorerFilterCount > 0 && (
+        <div className="flex flex-wrap items-center gap-2 mb-3">
+          {explorerDepartmentFilters.map((dept) => (
+            <span
+              key={`dept-${dept}`}
+              className="inline-flex items-center gap-1.5 pl-3 pr-1.5 py-1.5 rounded-[4px] bg-[#f3f4f6] text-[#4b535c] border border-[#e5e7eb]"
+            >
+              <span>Department: {dept}</span>
+              <button
+                type="button"
+                onClick={() => setExplorerDepartmentFilters((prev) => prev.filter((x) => x !== dept))}
+                className="p-0.5 rounded-[4px] text-[#6b7280] hover:bg-[#e5e7eb] hover:text-[#374151]"
+                aria-label={`Remove filter: Department ${dept}`}
+              >
+                <IconClose className="size-3.5" />
+              </button>
+            </span>
+          ))}
+          {explorerProductNameFilters.map((name) => (
+            <span
+              key={`product-${name}`}
+              className="inline-flex items-center gap-1.5 pl-3 pr-1.5 py-1.5 rounded-[4px] bg-[#f3f4f6] text-[#4b535c] border border-[#e5e7eb]"
+            >
+              <span>Product: {name}</span>
+              <button
+                type="button"
+                onClick={() => setExplorerProductNameFilters((prev) => prev.filter((x) => x !== name))}
+                className="p-0.5 rounded-[4px] text-[#6b7280] hover:bg-[#e5e7eb] hover:text-[#374151]"
+                aria-label={`Remove filter: Product ${name}`}
+              >
+                <IconClose className="size-3.5" />
+              </button>
+            </span>
+          ))}
+          {explorerMovementTypeFilters.map((id) => {
+            const label = MOVEMENT_TYPE_FILTER_OPTIONS.find((o) => o.id === id)?.label ?? id
+            return (
+              <span
+                key={`movement-${id}`}
+                className="inline-flex items-center gap-1.5 pl-3 pr-1.5 py-1.5 rounded-[4px] bg-[#f3f4f6] text-[#4b535c] border border-[#e5e7eb]"
+              >
+                <span>Movement type: {label}</span>
+                <button
+                  type="button"
+                  onClick={() => setExplorerMovementTypeFilters((prev) => prev.filter((x) => x !== id))}
+                  className="p-0.5 rounded-[4px] text-[#6b7280] hover:bg-[#e5e7eb] hover:text-[#374151]"
+                  aria-label={`Remove filter: Movement type ${label}`}
+                >
+                  <IconClose className="size-3.5" />
+                </button>
+              </span>
+            )
+          })}
+          {explorerConfidenceFilters.map((id) => {
+            const label = CONFIDENCE_FILTER_OPTIONS.find((o) => o.id === id)?.label ?? id
+            return (
+              <span
+                key={`confidence-${id}`}
+                className="inline-flex items-center gap-1.5 pl-3 pr-1.5 py-1.5 rounded-[4px] bg-[#f3f4f6] text-[#4b535c] border border-[#e5e7eb]"
+              >
+                <span>Confidence: {label}</span>
+                <button
+                  type="button"
+                  onClick={() => setExplorerConfidenceFilters((prev) => prev.filter((x) => x !== id))}
+                  className="p-0.5 rounded-[4px] text-[#6b7280] hover:bg-[#e5e7eb] hover:text-[#374151]"
+                  aria-label={`Remove filter: Confidence ${label}`}
+                >
+                  <IconClose className="size-3.5" />
+                </button>
+              </span>
+            )
+          })}
+          {explorerStatusFilters.map((f) => (
+            <span
+              key={`status-${f}`}
+              className="inline-flex items-center gap-1.5 pl-3 pr-1.5 py-1.5 rounded-[4px] bg-[#f3f4f6] text-[#4b535c] border border-[#e5e7eb]"
+            >
+              <span>Status: {EXPLORER_STATUS_FILTER_LABELS[f]}</span>
+              <button
+                type="button"
+                onClick={() => setExplorerStatusFilters((prev) => prev.filter((x) => x !== f))}
+                className="p-0.5 rounded-[4px] text-[#6b7280] hover:bg-[#e5e7eb] hover:text-[#374151]"
+                aria-label={`Remove filter: Status ${EXPLORER_STATUS_FILTER_LABELS[f]}`}
+              >
+                <IconClose className="size-3.5" />
+              </button>
+            </span>
+          ))}
+          <button
+            type="button"
+            onClick={clearAllExplorerFilters}
+            className="text-[12px] font-medium text-[#4b535c] hover:text-[#0a0a0a]"
+          >
+            Clear all
+          </button>
+        </div>
+      )}
+
+    <div className="border border-[#e5e7eb] rounded-[8px] overflow-hidden bg-white">
+      <div className="max-h-[min(65vh,800px)] overflow-x-auto overflow-y-auto">
+        <table className="w-full text-[14px] bg-white">
+          <thead className="bg-white">
+            <tr className="border-b border-[#E9EAEB]">
+              <th className={explorerCheckboxThClass}>
+                <label className="flex min-h-[52px] cursor-pointer items-center py-[2px]">
+                  <input
+                    ref={explorerSelectAllRef}
+                    type="checkbox"
+                    className={explorerCheckboxInputClass}
+                    aria-label="Select all"
+                    disabled={!hasAnyFilter || filteredData.length === 0}
+                    checked={allExplorerRowsSelected}
+                    onChange={toggleAllExplorerRows}
+                  />
+                </label>
+              </th>
+              {EXPLORER_TABLE_COLUMNS.map((col) => {
+                const isStatus = col.id === 'status'
+                const isRight = col.alignment === 'right'
+                return (
+                  <th
+                    key={col.id}
+                    className={`${col.minWidth} ${isStatus ? explorerStatusThClass : explorerThClass} ${
+                      isRight && !isStatus ? 'text-right' : ''
+                    }`}
+                  >
+                    <span
+                      className={`inline-flex min-w-0 items-center gap-2 ${
+                        isRight ? 'w-full justify-end' : ''
+                      }`}
+                    >
+                      {headerGrip}
+                      {renderExplorerColumnHeaderLabel(col)}
+                    </span>
+                  </th>
+                )
+              })}
+            </tr>
+            {hasAnyFilter && (
+            <tr className="border-b border-[#E9EAEB]">
+              <th className={explorerCheckboxTotalsThClass} />
+              {EXPLORER_TABLE_COLUMNS.map((col) =>
+                renderExplorerTotalsCell(col, totals, {
+                  explorerTotalsThClass,
+                  explorerTotalsEmptyThClass,
+                  explorerStatusTotalsThClass,
+                })
+              )}
+            </tr>
+            )}
+          </thead>
+          <tbody>
+            {!hasAnyFilter ? (
+              <ExplorerEmptyState />
+            ) : (
+              filteredData.map((row) => (
+              <tr key={row.id} className="group border-b border-[#E9EAEB] bg-white hover:bg-[#f9fafb]">
+                <td
+                  className={explorerCheckboxTdClass}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <input
+                    type="checkbox"
+                    className={explorerCheckboxInputClass}
+                    aria-label={`Select ${row.productName}`}
+                    checked={explorerSelectedRowIds.has(row.id)}
+                    onChange={() => toggleExplorerRowSelection(row.id)}
+                  />
+                </td>
+                {EXPLORER_TABLE_COLUMNS.map((col) =>
+                  renderExplorerBodyCell(row, col, {
+                    explorerTdClass,
+                    explorerStatusTdClass,
+                    getEffectiveStatus,
+                    handleExplorerStatusChange,
+                    getEffectiveTransfers,
+                    handleTransfersEdit,
+                  })
+                )}
+              </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+      {explorerSelectedRowIds.size > 0 && (
+        <div
+          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-4 rounded-[8px] px-6 py-3"
+          style={{ background: '#1A1A2E', boxShadow: '0 4px 12px rgba(0,0,0,0.25)' }}
+        >
+          <button
+            type="button"
+            onClick={clearExplorerSelection}
+            className="flex items-center justify-center size-8 rounded-[4px] text-white hover:bg-white/10"
+            aria-label="Close"
+          >
+            <IconClose className="size-4" />
+          </button>
+          <span className="text-[14px] font-medium text-white">
+            {explorerSelectedRowIds.size} selected
+          </span>
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => {
+                setExplorerBulkChangeUnitsOpen(false)
+                setExplorerBulkChangeStatusOpen((o) => !o)
+              }}
+              className="px-4 py-2 rounded-[4px] text-[14px] font-medium text-white hover:bg-white/10"
+            >
+              Change status
+            </button>
+            {explorerBulkChangeStatusOpen && (
+              <>
+                <div
+                  className="fixed inset-0 z-[60]"
+                  aria-hidden
+                  onClick={() => setExplorerBulkChangeStatusOpen(false)}
+                />
+                <div
+                  className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 z-[70] min-w-[180px] rounded-[6px] border border-[#e5e7eb] bg-white py-1 shadow-lg"
+                  style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}
+                >
+                  {STATUS_DROPDOWN_OPTIONS.map((o) => (
+                    <button
+                      key={o.id}
+                      type="button"
+                      onClick={() => handleBulkStatusChange(o.id)}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-left text-[13px] font-medium text-[#0a0a0a] hover:bg-[#f3f4f6]"
+                    >
+                      <span className={`size-2 rounded-full shrink-0 ${o.dotClass}`} aria-hidden />
+                      <span>{o.dropdownLabel}</span>
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => {
+                setExplorerBulkChangeStatusOpen(false)
+                setExplorerBulkChangeUnitsOpen((o) => !o)
+              }}
+              className="px-4 py-2 rounded-[4px] text-[14px] font-medium text-white hover:bg-white/10"
+            >
+              Change units
+            </button>
+            {explorerBulkChangeUnitsOpen && (
+              <>
+                <div
+                  className="fixed inset-0 z-[60]"
+                  aria-hidden
+                  onClick={() => setExplorerBulkChangeUnitsOpen(false)}
+                />
+                <div
+                  className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 z-[70] min-w-[180px] rounded-[6px] border border-[#e5e7eb] bg-white py-1 shadow-lg"
+                  style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}
+                >
+                  <div className="px-3 py-2 text-[12px] font-medium text-[#4b535c]">Adjust by</div>
+                  {[
+                    { action: 1, label: '+1' },
+                    { action: 2, label: '+2' },
+                    { action: -1, label: '−1' },
+                    { action: -2, label: '−2' },
+                  ].map(({ action, label }) => (
+                    <button
+                      key={label}
+                      type="button"
+                      onClick={() => handleBulkUnitsChange(action)}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-left text-[13px] font-medium text-[#0a0a0a] hover:bg-[#f3f4f6]"
+                    >
+                      {label}
+                    </button>
+                  ))}
+                  <div className="border-t border-[#e5e7eb] my-1" role="separator" />
+                  <button
+                    type="button"
+                    onClick={() => handleBulkUnitsChange('set_zero')}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-left text-[13px] font-medium text-[#0a0a0a] hover:bg-[#f3f4f6]"
+                  >
+                    Set all to 0
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+const SUMMARY_PRODUCT_BY_DEPARTMENT = [
+  { name: 'Handbags', revenue: '€4.82K', units: 28, unitsApproved: 22, unitsUnapproved: 6, stockouts: '3 → 1', warehouseUnits: '142 → 128' },
+  { name: 'Crossbody', revenue: '€3.15K', units: 19, unitsApproved: 15, unitsUnapproved: 4, stockouts: '2 → 0', warehouseUnits: '98 → 86' },
+  { name: 'Bucket bags', revenue: '€2.41K', units: 14, unitsApproved: 11, unitsUnapproved: 3, stockouts: '1 → 1', warehouseUnits: '76 → 68' },
+  { name: 'Totes', revenue: '€1.89K', units: 11, unitsApproved: 9, unitsUnapproved: 0, stockouts: '0 → 0', warehouseUnits: '54 → 49' },
+  { name: 'Clutches', revenue: '€1.26K', units: 8, unitsApproved: 6, unitsUnapproved: 2, stockouts: '1 → 0', warehouseUnits: '42 → 38' },
+]
+
+const SUMMARY_PRODUCT_BY_PRODUCT = [
+  { name: 'Croi-sac zip l', revenue: '€1.48K', units: 3, unitsApproved: 3, unitsUnapproved: 0, stockouts: '0 → 0', warehouseUnits: '52 → 48' },
+  { name: 'Ang-sac pte main m', revenue: '€1.89K', units: 3, unitsApproved: 2, unitsUnapproved: 1, stockouts: '1 → 0', warehouseUnits: '48 → 42' },
+  { name: 'Pre-sac seau m', revenue: '€1.12K', units: 2, unitsApproved: 0, unitsUnapproved: 2, stockouts: '0 → 1', warehouseUnits: '58 → 51' },
+  { name: 'Croi-sac zip s', revenue: '€0.98K', units: 1, unitsApproved: 1, unitsUnapproved: 0, stockouts: '0 → 0', warehouseUnits: '55 → 50' },
+  { name: 'Pre-sac seau s', revenue: '€0.76K', units: 2, unitsApproved: 1, unitsUnapproved: 1, stockouts: '0 → 1', warehouseUnits: '50 → 45' },
+  { name: 'Ang-sac pte main s', revenue: '€0.65K', units: 4, unitsApproved: 2, unitsUnapproved: 2, stockouts: '0 → 0', warehouseUnits: '57 → 44' },
+]
+
+const SUMMARY_PRODUCT_BY_SEASON = [
+  { name: 'SS26', revenue: '€5.94K', units: 32, unitsApproved: 26, unitsUnapproved: 6, stockouts: '4 → 2', warehouseUnits: '186 → 168' },
+  { name: 'FW25', revenue: '€4.21K', units: 24, unitsApproved: 19, unitsUnapproved: 5, stockouts: '2 → 1', warehouseUnits: '142 → 128' },
+  { name: 'SS25', revenue: '€2.87K', units: 16, unitsApproved: 14, unitsUnapproved: 2, stockouts: '1 → 0', warehouseUnits: '98 → 88' },
+  { name: 'FW24', revenue: '€1.52K', units: 8, unitsApproved: 7, unitsUnapproved: 1, stockouts: '0 → 0', warehouseUnits: '62 → 55' },
+]
+
+const SUMMARY_PRODUCT_BY_PRODUCT_GROUP = [
+  { name: 'Sac zip', revenue: '€2.46K', units: 4, unitsApproved: 4, unitsUnapproved: 0, stockouts: '0 → 0', warehouseUnits: '107 → 98' },
+  { name: 'Sac seau', revenue: '€1.88K', units: 4, unitsApproved: 1, unitsUnapproved: 3, stockouts: '0 → 2', warehouseUnits: '108 → 96' },
+  { name: 'Ang-sac pte main', revenue: '€2.54K', units: 7, unitsApproved: 4, unitsUnapproved: 3, stockouts: '1 → 0', warehouseUnits: '105 → 86' },
+  { name: 'Sac bandoulière', revenue: '€1.12K', units: 5, unitsApproved: 4, unitsUnapproved: 1, stockouts: '1 → 1', warehouseUnits: '72 → 64' },
+  { name: 'Mini sac', revenue: '€0.94K', units: 3, unitsApproved: 3, unitsUnapproved: 0, stockouts: '0 → 0', warehouseUnits: '48 → 42' },
+]
+
+const SUMMARY_LOCATION_BY_LOCATION = [
+  { name: 'Opéra', revenue: '€2.18K', units: 12, unitsApproved: 10, unitsUnapproved: 2, stockouts: '1 → 0', warehouseUnits: '52 → 48' },
+  { name: 'G.L. Haussmann Maro', revenue: '€1.64K', units: 9, unitsApproved: 8, unitsUnapproved: 1, stockouts: '0 → 0', warehouseUnits: '58 → 51' },
+  { name: 'La Défense', revenue: '€1.42K', units: 8, unitsApproved: 7, unitsUnapproved: 1, stockouts: '0 → 0', warehouseUnits: '48 → 42' },
+  { name: 'Cap 3000', revenue: '€0.89K', units: 4, unitsApproved: 3, unitsUnapproved: 1, stockouts: '0 → 0', warehouseUnits: '40 → 36' },
+  { name: 'Lyon Herriot', revenue: '€0.76K', units: 3, unitsApproved: 2, unitsUnapproved: 1, stockouts: '0 → 0', warehouseUnits: '35 → 30' },
+  { name: 'Printemps Lille', revenue: '€1.21K', units: 6, unitsApproved: 5, unitsUnapproved: 1, stockouts: '0 → 0', warehouseUnits: '57 → 44' },
+]
+
+const SUMMARY_LOCATION_BY_LOCATION_TYPE = [
+  { name: 'Store', revenue: '€5.82K', units: 34, unitsApproved: 28, unitsUnapproved: 6, stockouts: '2 → 1', warehouseUnits: '198 → 178' },
+  { name: 'Outlet', revenue: '€1.24K', units: 8, unitsApproved: 6, unitsUnapproved: 2, stockouts: '1 → 0', warehouseUnits: '62 → 54' },
+  { name: 'Warehouse', revenue: '€0.94K', units: 5, unitsApproved: 4, unitsUnapproved: 1, stockouts: '0 → 0', warehouseUnits: '120 → 108' },
+  { name: 'E-commerce', revenue: '€1.10K', units: 6, unitsApproved: 5, unitsUnapproved: 1, stockouts: '0 → 0', warehouseUnits: '48 → 42' },
+]
+
+const SUMMARY_LOCATION_BY_COUNTRY = [
+  { name: 'France', revenue: '€6.48K', units: 38, unitsApproved: 31, unitsUnapproved: 7, stockouts: '3 → 1', warehouseUnits: '224 → 202' },
+  { name: 'Belgium', revenue: '€1.12K', units: 7, unitsApproved: 5, unitsUnapproved: 2, stockouts: '1 → 0', warehouseUnits: '58 → 52' },
+  { name: 'Spain', revenue: '€0.98K', units: 5, unitsApproved: 4, unitsUnapproved: 1, stockouts: '0 → 0', warehouseUnits: '48 → 42' },
+  { name: 'United Kingdom', revenue: '€0.52K', units: 3, unitsApproved: 3, unitsUnapproved: 0, stockouts: '0 → 0', warehouseUnits: '32 → 28' },
+]
+
+const SUMMARY_STATUS_ROWS = [
+  { name: 'Approved', revenue: '€5.12K', units: 31, stockouts: '2 → 0', warehouseUnits: '186 → 168' },
+  { name: 'Needs review', revenue: '€1.84K', units: 12, stockouts: '1 → 1', warehouseUnits: '98 → 88' },
+  { name: 'Unapproved', revenue: '€1.14K', units: 10, stockouts: '1 → 2', warehouseUnits: '78 → 68' },
+]
+
+const SUMMARY_PRODUCT_DIMENSIONS = [
+  { id: 'department', label: 'Department', rows: SUMMARY_PRODUCT_BY_DEPARTMENT },
+  { id: 'product', label: 'Product', rows: SUMMARY_PRODUCT_BY_PRODUCT },
+  { id: 'season', label: 'Season', rows: SUMMARY_PRODUCT_BY_SEASON },
+  { id: 'product_group', label: 'Product group', rows: SUMMARY_PRODUCT_BY_PRODUCT_GROUP },
+]
+
+const SUMMARY_LOCATION_DIMENSIONS = [
+  { id: 'location', label: 'Location', rows: SUMMARY_LOCATION_BY_LOCATION },
+  { id: 'location_type', label: 'Location type', rows: SUMMARY_LOCATION_BY_LOCATION_TYPE },
+  { id: 'country', label: 'Country', rows: SUMMARY_LOCATION_BY_COUNTRY },
+]
+
+function SummaryDimensionSelect({ value, onChange, options }) {
+  return (
+    <div className="relative shrink-0">
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="h-10 pl-4 pr-10 rounded-[4px] border border-[#E9EAEB] bg-white text-[14px] text-[#0a0a0a] appearance-none min-w-[180px]"
+        aria-label="Group by dimension"
+      >
+        {options.map((opt) => (
+          <option key={opt.id} value={opt.id}>
+            {opt.label}
+          </option>
+        ))}
+      </select>
+      <span className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-[#4b535c]">
+        <IconChevronDown className="size-4" />
+      </span>
+    </div>
+  )
+}
+
+function SummaryRevenueCell({ value }) {
+  return <span className="text-[14px] text-[#0a0a0a]">{value}</span>
+}
+
+function SummaryStockoutsCell({ value }) {
+  return <span className="text-[14px] text-[#0a0a0a]">{value}</span>
+}
+
+function SummaryWarehouseUnitsCell({ value }) {
+  return (
+    <div className="flex flex-col items-end gap-0.5">
+      <span className="text-[14px] text-[#0a0a0a]">{value}</span>
+    </div>
+  )
+}
+
+function SummaryUnitsWithApprovalCell({ units, unitsApproved, unitsUnapproved }) {
+  return (
+    <div className="flex flex-col items-end gap-0.5">
+      <span className="text-[14px] text-[#0a0a0a]">{units}</span>
+      <span className="text-[12px] font-medium text-[#166534]">{unitsApproved} approved</span>
+      {unitsUnapproved > 0 && (
+        <span className="text-[12px] font-medium text-[#4b535c]">{unitsUnapproved} unapproved</span>
+      )}
+    </div>
+  )
+}
+
+function SummaryUnitsPlainCell({ units }) {
+  return <span className="text-[14px] text-[#0a0a0a]">{units}</span>
+}
+
+function SummaryGroupedTable({ firstColumnLabel, rows, showApprovalBreakdown }) {
+  return (
+    <div className="border border-[#e5e7eb] rounded-[8px] overflow-hidden bg-white">
+      <div className="overflow-x-auto">
+        <table className="w-full text-[14px] bg-white">
+          <thead className="bg-white">
+            <tr className="border-b border-[#E9EAEB]">
+              <th className="h-[62px] min-h-[62px] px-4 text-left align-middle font-medium text-[#00050A]">
+                {firstColumnLabel}
+              </th>
+              <th className="h-[62px] min-h-[62px] px-4 text-right align-middle font-medium text-[#00050A] min-w-[110px]">
+                Revenue increase
+              </th>
+              <th className="h-[62px] min-h-[62px] px-4 text-right align-middle font-medium text-[#00050A] min-w-[90px]">
+                Units
+              </th>
+              <th className="h-[62px] min-h-[62px] px-4 text-right align-middle font-medium text-[#00050A] min-w-[90px]">
+                Stockouts
+              </th>
+              <th className="h-[62px] min-h-[62px] px-4 text-right align-middle font-medium text-[#00050A] min-w-[140px]">
+                Warehouse units
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row) => (
+              <tr key={row.name} className="border-b border-[#E9EAEB] bg-white hover:bg-[#f9fafb]">
+                <td className="py-3 px-4 align-top text-[#0a0a0a] font-medium">{row.name}</td>
+                <td className="py-3 px-4 align-top text-right">
+                  <SummaryRevenueCell value={row.revenue} />
+                </td>
+                <td className="py-3 px-4 align-top text-right">
+                  {showApprovalBreakdown ? (
+                    <SummaryUnitsWithApprovalCell
+                      units={row.units}
+                      unitsApproved={row.unitsApproved}
+                      unitsUnapproved={row.unitsUnapproved}
+                    />
+                  ) : (
+                    <SummaryUnitsPlainCell units={row.units} />
+                  )}
+                </td>
+                <td className="py-3 px-4 align-top text-right">
+                  <SummaryStockoutsCell value={row.stockouts} />
+                </td>
+                <td className="py-3 px-4 align-top text-right">
+                  <SummaryWarehouseUnitsCell value={row.warehouseUnits} />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )
+}
+
+function SummaryProductTab() {
+  const [dimensionId, setDimensionId] = useState('department')
+  const dimension =
+    SUMMARY_PRODUCT_DIMENSIONS.find((d) => d.id === dimensionId) ?? SUMMARY_PRODUCT_DIMENSIONS[0]
+
+  return (
+    <div className="flex flex-col gap-4">
+      <SummaryDimensionSelect
+        value={dimensionId}
+        onChange={setDimensionId}
+        options={SUMMARY_PRODUCT_DIMENSIONS}
+      />
+      <SummaryGroupedTable
+        firstColumnLabel={dimension.label}
+        rows={dimension.rows}
+        showApprovalBreakdown
+      />
+    </div>
+  )
+}
+
+function SummaryLocationTab() {
+  const [dimensionId, setDimensionId] = useState('location')
+  const dimension =
+    SUMMARY_LOCATION_DIMENSIONS.find((d) => d.id === dimensionId) ?? SUMMARY_LOCATION_DIMENSIONS[0]
+
+  return (
+    <div className="flex flex-col gap-4">
+      <SummaryDimensionSelect
+        value={dimensionId}
+        onChange={setDimensionId}
+        options={SUMMARY_LOCATION_DIMENSIONS}
+      />
+      <SummaryGroupedTable
+        firstColumnLabel={dimension.label}
+        rows={dimension.rows}
+        showApprovalBreakdown
+      />
+    </div>
+  )
+}
+
+function SummaryStatusTab() {
+  return (
+    <div className="flex flex-col gap-4">
+      <p className="text-[13px] text-[#4b535c]">
+        Only approved recommendations will be submitted, and can&apos;t be edited afterwards. Needs
+        review and unapproved lines stay active and editable, and can be submitted later.
+      </p>
+      <SummaryGroupedTable
+        firstColumnLabel="Status"
+        rows={SUMMARY_STATUS_ROWS}
+        showApprovalBreakdown={false}
+      />
+    </div>
+  )
+}
+
+function SummaryPage() {
+  const [activeTab, setActiveTab] = useState('product')
+
+  return (
+    <div className="flex flex-col gap-[15px]">
+      <h1 className="text-[24px] font-medium text-[#0a0a0a]">Summary</h1>
+      <nav className="flex items-center gap-6 h-11">
+        {[
+          { id: 'product', label: 'Product' },
+          { id: 'location', label: 'Location' },
+          { id: 'status', label: 'Status' },
+        ].map((tab) => {
+          const isActive = activeTab === tab.id
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setActiveTab(tab.id)}
+              className={`pb-2 text-[14px] font-medium border-b-2 ${
+                isActive
+                  ? 'text-[#0a0a0a] border-[#2EB8C2]'
+                  : 'text-[#4b535c] border-transparent hover:text-[#0a0a0a]'
+              }`}
+            >
+              {tab.label}
+            </button>
+          )
+        })}
+      </nav>
+      {activeTab === 'product' && <SummaryProductTab />}
+      {activeTab === 'location' && <SummaryLocationTab />}
+      {activeTab === 'status' && <SummaryStatusTab />}
+    </div>
+  )
+}
+
 export default function ScheduleDetailPage() {
+  const [showSummary, setShowSummary] = useState(false)
   const [activeTab, setActiveTab] = useState('products')
   const [viewShowsFullDataset, setViewShowsFullDataset] = useState(true)
   const [selectedView, setSelectedView] = useState('Show all recommendations')
   const [viewDropdownOpen, setViewDropdownOpen] = useState(false)
+  const [includeZeroTransfers, setIncludeZeroTransfers] = useState(false)
+  const [explorerStatusOverrides, setExplorerStatusOverrides] = useState({})
+  const [explorerTransferOverrides, setExplorerTransferOverrides] = useState({})
+  const [explorerSelectedRowIds, setExplorerSelectedRowIds] = useState(new Set())
+  const [explorerDepartmentFilters, setExplorerDepartmentFilters] = useState([])
+  const [explorerProductNameFilters, setExplorerProductNameFilters] = useState([])
+  const [explorerMovementTypeFilters, setExplorerMovementTypeFilters] = useState([])
+  const [explorerConfidenceFilters, setExplorerConfidenceFilters] = useState([])
+  const [explorerStatusFilters, setExplorerStatusFilters] = useState([])
   const [tripStatusOverrides, setTripStatusOverrides] = useState({})
   const [selectedTrip, setSelectedTrip] = useState(null)
   const [selectedTripIds, setSelectedTripIds] = useState(new Set())
@@ -3402,20 +5256,23 @@ export default function ScheduleDetailPage() {
   const [tripsActiveQuickFilter, setTripsActiveQuickFilter] = useState(null)
   const [productsDrawerFiltersActive, setProductsDrawerFiltersActive] = useState(false)
   const [locationsDrawerFiltersActive, setLocationsDrawerFiltersActive] = useState(false)
+  const [explorerDrawerFiltersActive, setExplorerDrawerFiltersActive] = useState(false)
   const [staleDataBannerDismissed, setStaleDataBannerDismissed] = useState(false)
   const [recalculatedTimestamp, setRecalculatedTimestamp] = useState(null)
   const hasRecalculated = Boolean(recalculatedTimestamp)
 
-  const showSaveViewButton =
-    activeTab === 'trips'
-      ? selectedTrip
-        ? productsDrawerFiltersActive
-        : statusFilters.length > 0
-      : activeTab === 'products'
-        ? productsDrawerFiltersActive
-        : activeTab === 'locations'
-          ? locationsDrawerFiltersActive
-          : false
+  const hasActiveFilters =
+    activeTab === 'products'
+      ? productsDrawerFiltersActive
+      : activeTab === 'locations'
+        ? locationsDrawerFiltersActive
+        : activeTab === 'explorer'
+          ? explorerDrawerFiltersActive
+          : activeTab === 'trips'
+            ? selectedTrip
+              ? productsDrawerFiltersActive
+              : statusFilters.length > 0
+            : false
 
   const baseTripsRows = viewShowsFullDataset ? TRIPS_ALL : TRIPS_OPERA
   const tripsRows = (() => {
@@ -3586,39 +5443,53 @@ export default function ScheduleDetailPage() {
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            <button
-              type="button"
-              className="h-9 w-9 flex items-center justify-center rounded-[4px] border border-[#e5e7eb] bg-white text-[#4b535c] hover:bg-[#f3f4f6]"
-              aria-label="Share"
-            >
-              <IconShare />
-            </button>
-            <button
-              type="button"
-              className="h-9 w-9 flex items-center justify-center rounded-[4px] border border-[#e5e7eb] bg-white text-[#4b535c] hover:bg-[#f3f4f6]"
-              aria-label="Download"
-            >
-              <IconDocument />
-            </button>
-            <button
-              type="button"
-              onClick={handleRecalculate}
-              className="h-10 px-4 rounded-[4px] border border-[#00050a] bg-white text-[#00050a] text-[14px] font-medium flex items-center gap-2 hover:bg-[#f3f4f6]"
-              style={{ display: hasRecalculated ? 'none' : undefined }}
-            >
-              Re-calculate
-            </button>
-            <button
-              type="button"
-              className="h-10 px-4 rounded-[4px] bg-[#0267ff] text-white text-[14px] font-medium flex items-center gap-2 hover:bg-[#0252cc]"
-            >
-              Submit recommendations
-            </button>
+            {!showSummary && (
+              <>
+                <button
+                  type="button"
+                  className="h-9 w-9 flex items-center justify-center rounded-[4px] border border-[#e5e7eb] bg-white text-[#4b535c] hover:bg-[#f3f4f6]"
+                  aria-label="Share"
+                >
+                  <IconShare />
+                </button>
+                <button
+                  type="button"
+                  className="h-9 w-9 flex items-center justify-center rounded-[4px] border border-[#e5e7eb] bg-white text-[#4b535c] hover:bg-[#f3f4f6]"
+                  aria-label="Download"
+                >
+                  <IconDocument />
+                </button>
+                <button
+                  type="button"
+                  onClick={handleRecalculate}
+                  className="h-10 px-4 rounded-[4px] border border-[#00050a] bg-white text-[#00050a] text-[14px] font-medium flex items-center gap-2 hover:bg-[#f3f4f6]"
+                  style={{ display: hasRecalculated ? 'none' : undefined }}
+                >
+                  Re-calculate
+                </button>
+              </>
+            )}
+            {showSummary ? (
+              <button
+                type="button"
+                className="h-10 px-4 rounded-[4px] bg-[#0267ff] text-white text-[14px] font-medium flex items-center gap-2 hover:bg-[#0252cc]"
+              >
+                Submit recommendations
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setShowSummary(true)}
+                className="h-10 px-4 rounded-[4px] bg-[#0267ff] text-white text-[14px] font-medium flex items-center gap-2 hover:bg-[#0252cc]"
+              >
+                Continue to summary
+              </button>
+            )}
           </div>
         </div>
       </header>
 
-      {!staleDataBannerDismissed && !hasRecalculated && (
+      {!showSummary && !staleDataBannerDismissed && !hasRecalculated && (
         <div className="w-full rounded-[6px] border border-solid border-[#0267ff] bg-[#ebf3ff] p-4 flex items-start gap-3 min-w-0">
           <DsIconInfo className="size-6 shrink-0 text-[#0267ff]" aria-hidden />
           <div className="flex min-w-0 flex-1 flex-col gap-1">
@@ -3640,6 +5511,9 @@ export default function ScheduleDetailPage() {
         </div>
       )}
 
+      {showSummary ? (
+        <SummaryPage />
+      ) : (
       <div className="flex flex-col gap-[15px]">
         <div className="flex items-center justify-between gap-4">
           <nav className="flex items-center gap-6 h-11">
@@ -3647,6 +5521,7 @@ export default function ScheduleDetailPage() {
               { id: 'products', label: 'Products' },
               { id: 'locations', label: 'Locations' },
               { id: 'trips', label: 'Trips' },
+              { id: 'explorer', label: 'Explorer' },
             ].map((tab) => {
               const isActive = activeTab === tab.id
               return (
@@ -3666,15 +5541,14 @@ export default function ScheduleDetailPage() {
             })}
           </nav>
           <div className="flex items-center gap-2 shrink-0 pb-2">
-            {showSaveViewButton && (
+            {hasActiveFilters && (
               <button
                 type="button"
-                className="flex items-center gap-2 h-10 px-4 rounded-[4px] border border-[#EAEAEA] bg-white text-[14px] font-medium text-[#212B36] hover:bg-[#f8f8f8] shrink-0"
-                aria-label="Save view"
+                onClick={() => {}}
+                className="flex items-center gap-1.5 h-10 px-3 rounded-[6px] border border-[#EAEAEA] bg-white text-[14px] font-medium text-[#0a0a0a] hover:bg-[#f5f5f5] shrink-0"
+                aria-label="Save"
               >
-                <span className="size-4 shrink-0 text-[#212B36] [&_svg]:size-full">
-                  <IconSave />
-                </span>
+                <Plus className="w-4 h-4 shrink-0" aria-hidden />
                 Save
               </button>
             )}
@@ -3725,16 +5599,72 @@ export default function ScheduleDetailPage() {
                 </>
               )}
             </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <span className="text-[14px] text-[#4b535c] whitespace-nowrap">Include zero transfers</span>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={includeZeroTransfers}
+                aria-label="Include zero transfers"
+                onClick={() => setIncludeZeroTransfers((on) => !on)}
+                className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${
+                  includeZeroTransfers ? 'bg-[#1d4ed8]' : 'bg-[#d1d5db]'
+                }`}
+              >
+                <span
+                  className={`inline-block size-4 rounded-full bg-white shadow transition-transform ${
+                    includeZeroTransfers ? 'translate-x-[18px]' : 'translate-x-0.5'
+                  }`}
+                />
+              </button>
+            </div>
           </div>
         </div>
 
-        {activeTab === 'trips' ? (
-          selectedTrip ? (
+        {activeTab === 'products' ? (
+          <ProductsDrilldown
+            trip={TRIPS_OPERA[0]}
+            onBack={() => {}}
+            showBackButton={false}
+            recalculatedTimestamp={recalculatedTimestamp}
+            onDrawerFiltersActiveChange={setProductsDrawerFiltersActive}
+            setExplorerProductNameFilters={setExplorerProductNameFilters}
+            setActiveTab={setActiveTab}
+          />
+        ) : activeTab === 'locations' ? (
+          <LocationsTab
+            recalculatedTimestamp={recalculatedTimestamp}
+            onDrawerFiltersActiveChange={setLocationsDrawerFiltersActive}
+          />
+        ) : activeTab === 'explorer' ? (
+          <ExplorerTable
+            data={EXPLORER_DATA}
+            onDrawerFiltersActiveChange={setExplorerDrawerFiltersActive}
+            explorerStatusOverrides={explorerStatusOverrides}
+            setExplorerStatusOverrides={setExplorerStatusOverrides}
+            explorerTransferOverrides={explorerTransferOverrides}
+            setExplorerTransferOverrides={setExplorerTransferOverrides}
+            explorerSelectedRowIds={explorerSelectedRowIds}
+            setExplorerSelectedRowIds={setExplorerSelectedRowIds}
+            explorerDepartmentFilters={explorerDepartmentFilters}
+            setExplorerDepartmentFilters={setExplorerDepartmentFilters}
+            explorerProductNameFilters={explorerProductNameFilters}
+            setExplorerProductNameFilters={setExplorerProductNameFilters}
+            explorerMovementTypeFilters={explorerMovementTypeFilters}
+            setExplorerMovementTypeFilters={setExplorerMovementTypeFilters}
+            explorerConfidenceFilters={explorerConfidenceFilters}
+            setExplorerConfidenceFilters={setExplorerConfidenceFilters}
+            explorerStatusFilters={explorerStatusFilters}
+            setExplorerStatusFilters={setExplorerStatusFilters}
+          />
+        ) : selectedTrip ? (
             <ProductsDrilldown
               trip={selectedTrip}
               onBack={() => setSelectedTrip(null)}
               recalculatedTimestamp={recalculatedTimestamp}
               onDrawerFiltersActiveChange={setProductsDrawerFiltersActive}
+              setExplorerProductNameFilters={setExplorerProductNameFilters}
+              setActiveTab={setActiveTab}
             />
           ) : (
           <div className="flex flex-col gap-[15px]">
@@ -4302,21 +6232,7 @@ export default function ScheduleDetailPage() {
               </div>
             </div>
           </div>
-          )
-        ) : activeTab === 'products' ? (
-          <ProductsDrilldown
-            trip={TRIPS_OPERA[0]}
-            onBack={() => {}}
-            showBackButton={false}
-            recalculatedTimestamp={recalculatedTimestamp}
-            onDrawerFiltersActiveChange={setProductsDrawerFiltersActive}
-          />
-        ) : activeTab === 'locations' ? (
-          <LocationsTab
-            recalculatedTimestamp={recalculatedTimestamp}
-            onDrawerFiltersActiveChange={setLocationsDrawerFiltersActive}
-          />
-        ) : null}
+        )}
 
       {selectedTripIds.size > 0 && activeTab === 'trips' && (
         <div
@@ -4367,6 +6283,7 @@ export default function ScheduleDetailPage() {
         </div>
       )}
       </div>
+      )}
     </div>
   )
 }

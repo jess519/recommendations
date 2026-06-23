@@ -217,6 +217,102 @@ const scopeModeToggleButtonClass = (active) =>
     ? 'h-7 rounded-[4px] px-3 text-[13px] font-medium bg-[#1d4ed8] text-white'
     : 'h-7 rounded-[4px] px-3 text-[13px] font-medium bg-white text-[#0a0a0a] border border-[#E9EAEB]'
 
+function ScopeBulkAddButton({ onClick }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="h-7 shrink-0 rounded-[4px] px-2 text-[13px] font-medium text-[#1d4ed8] hover:underline"
+    >
+      + bulk
+    </button>
+  )
+}
+
+function ScopeBulkPasteModal({ open, fieldLabel, onClose }) {
+  const titleId = 'scope-bulk-paste-modal-title'
+
+  useEffect(() => {
+    if (!open) return
+    const onKey = (e) => {
+      if (e.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [open, onClose])
+
+  useEffect(() => {
+    if (open) document.body.style.overflow = 'hidden'
+    else document.body.style.overflow = ''
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [open])
+
+  if (!open) return null
+
+  return (
+    <div
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby={titleId}
+    >
+      <button
+        type="button"
+        className="absolute inset-0 bg-black/45"
+        aria-label="Close dialog"
+        onClick={onClose}
+      />
+      <div
+        className="relative z-[1] flex w-full max-w-[560px] flex-col overflow-hidden rounded-[6px] bg-white shadow-[0px_8px_25px_0px_rgba(0,0,0,0.1)]"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex shrink-0 items-center gap-4 border-b border-[#e9eaeb] p-4">
+          <h2 id={titleId} className="min-h-8 flex-1 text-lg font-medium leading-normal text-[#0a0a0a]">
+            {fieldLabel} — Add values in bulk
+          </h2>
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex size-10 shrink-0 items-center justify-center rounded-[4px] text-[#0a0a0a] hover:bg-[#f3f4f6]"
+            aria-label="Close"
+          >
+            <IconClose className="w-4 h-4" />
+          </button>
+        </div>
+        <div className="flex flex-col gap-4 px-4 py-6">
+          <textarea
+            rows={8}
+            placeholder="Type or paste values here"
+            className="w-full min-h-[160px] resize-y rounded-[4px] border border-[#e9eaeb] bg-white px-3 py-2.5 text-[14px] text-[#0a0a0a] placeholder:text-[#9ca3af] focus:border-[#1d4ed8] focus:outline-none"
+          />
+          <p className="text-[13px] leading-normal text-[#4b535c]">
+            Separate multiple values with a comma (,) or a semicolon (;) or by putting them on separate
+            lines. Use (\) to escape any of the separators.
+          </p>
+        </div>
+        <div className="flex shrink-0 items-center justify-end gap-3 border-t border-[#e9eaeb] p-4">
+          <button
+            type="button"
+            onClick={onClose}
+            className="h-10 rounded-[4px] border border-[#E9EAEB] bg-white px-4 text-[14px] font-medium text-[#0a0a0a] hover:bg-[#f8f8f8]"
+          >
+            Back
+          </button>
+          <button
+            type="button"
+            onClick={onClose}
+            className="h-10 rounded-[4px] bg-[#1d4ed8] px-4 text-[14px] font-medium text-white hover:bg-[#1e40af]"
+          >
+            Add values
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function CreateScheduleScopeMultiSelect({
   label,
   helperText,
@@ -232,6 +328,8 @@ function CreateScheduleScopeMultiSelect({
   hideModeToggle = false,
   showSelectAll = false,
   showSelectedLabels = false,
+  showBulkAdd = false,
+  onBulkAddClick,
 }) {
   const [open, setOpen] = useState(false)
 
@@ -275,7 +373,7 @@ function CreateScheduleScopeMultiSelect({
         <div className={`flex min-h-7 items-center gap-2 ${hideModeToggle ? '' : 'justify-between'}`}>
           <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">{label}</label>
           {!hideModeToggle && (
-            <div className="flex shrink-0">
+            <div className="flex shrink-0 items-center gap-2">
               <button
                 type="button"
                 onClick={() => onModeChange('include')}
@@ -290,6 +388,9 @@ function CreateScheduleScopeMultiSelect({
               >
                 Exclude
               </button>
+              {showBulkAdd && onBulkAddClick && (
+                <ScopeBulkAddButton onClick={onBulkAddClick} />
+              )}
             </div>
           )}
         </div>
@@ -511,36 +612,6 @@ function CreateScheduleScopeSingleSelect({
   )
 }
 
-function NetworkStyleDownloadIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className="shrink-0" aria-hidden>
-      <path
-        d="M8 3.5v6M8 9.5l-2.5 2.5M8 9.5l2.5 2.5"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path d="M3.5 13h9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-    </svg>
-  )
-}
-
-function NetworkStyleUploadIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className="shrink-0" aria-hidden>
-      <path
-        d="M8 11.5V4M8 4L5.5 6.5M8 4L10.5 6.5"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path d="M3.5 13h9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-    </svg>
-  )
-}
-
 /** Product + geographic scope filters for create schedule scope selection. */
 function CreateScheduleScopeFilterPanel({
   warehouseInclude,
@@ -583,6 +654,10 @@ function CreateScheduleScopeFilterPanel({
   expandedFieldState,
   updateExpandedField,
 }) {
+  const [bulkPasteFieldLabel, setBulkPasteFieldLabel] = useState(null)
+  const openBulkPaste = (label) => setBulkPasteFieldLabel(label)
+  const closeBulkPaste = () => setBulkPasteFieldLabel(null)
+
   const renderExtraField = ({ key, label }) => (
     <CreateScheduleScopeMultiSelect
       key={key}
@@ -606,6 +681,7 @@ function CreateScheduleScopeFilterPanel({
   )
 
   return (
+    <>
     <div className="rounded-[4px] border border-[#e5e7eb] bg-[#fafafa] p-4">
       <div className="grid grid-cols-2 gap-x-6 gap-y-3">
         <h4 className="text-[13px] font-medium text-[#0a0a0a] uppercase tracking-[0.04em]">Product scope</h4>
@@ -622,6 +698,8 @@ function CreateScheduleScopeFilterPanel({
             onExcludeChange={setDepartmentExclude}
             mode={departmentMode}
             onModeChange={setDepartmentMode}
+            showBulkAdd
+            onBulkAddClick={() => openBulkPaste('Departments')}
           />
         </div>
         <div className="w-full self-start">
@@ -636,6 +714,8 @@ function CreateScheduleScopeFilterPanel({
             onExcludeChange={setWarehouseExclude}
             mode={warehouseMode}
             onModeChange={setWarehouseMode}
+            showBulkAdd
+            onBulkAddClick={() => openBulkPaste('Warehouse')}
           />
         </div>
 
@@ -650,6 +730,8 @@ function CreateScheduleScopeFilterPanel({
             onExcludeChange={setSeasonsExclude}
             mode={seasonsMode}
             onModeChange={setSeasonsMode}
+            showBulkAdd
+            onBulkAddClick={() => openBulkPaste('Seasons')}
           />
         </div>
         <div className="w-full self-start">
@@ -663,13 +745,15 @@ function CreateScheduleScopeFilterPanel({
             onExcludeChange={setLocationTypesExclude}
             mode={locationTypesMode}
             onModeChange={setLocationTypesMode}
+            showBulkAdd
+            onBulkAddClick={() => openBulkPaste('Location Types')}
           />
         </div>
 
         <div className="flex w-full flex-col gap-1.5 self-start">
           <div className="flex min-h-7 items-center justify-between gap-2">
             <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Products</label>
-            <div className="flex shrink-0">
+            <div className="flex shrink-0 items-center gap-2">
               <button
                 type="button"
                 onClick={() => setProductsMode('include')}
@@ -684,47 +768,26 @@ function CreateScheduleScopeFilterPanel({
               >
                 Exclude
               </button>
+              <ScopeBulkAddButton onClick={() => openBulkPaste('Products')} />
             </div>
           </div>
-          <div className="flex items-stretch gap-2">
-            <div className="min-w-0 flex-1">
-              <CreateScheduleScopeMultiSelect
-                hideHeader
-                label="Products"
-                placeholder="Select products"
-                options={SCOPE_PRODUCTS_OPTIONS}
-                includeValues={productsInclude}
-                onIncludeChange={setProductsInclude}
-                excludeValues={productsExclude}
-                onExcludeChange={setProductsExclude}
-                mode={productsMode}
-                onModeChange={setProductsMode}
-              />
-            </div>
-            <div className="flex shrink-0 items-end gap-2">
-              <button
-                type="button"
-                onClick={() => {}}
-                aria-label="Upload products"
-                className="h-14 w-14 shrink-0 rounded-[4px] border border-[#E9EAEB] bg-white text-[#0a0a0a] hover:bg-[#f8f8f8] flex items-center justify-center"
-              >
-                <NetworkStyleUploadIcon />
-              </button>
-              <button
-                type="button"
-                onClick={() => {}}
-                aria-label="Download products"
-                className="h-14 w-14 shrink-0 rounded-[4px] border border-[#E9EAEB] bg-white text-[#0a0a0a] hover:bg-[#f8f8f8] flex items-center justify-center"
-              >
-                <NetworkStyleDownloadIcon />
-              </button>
-            </div>
-          </div>
+          <CreateScheduleScopeMultiSelect
+            hideHeader
+            label="Products"
+            placeholder="Select products"
+            options={SCOPE_PRODUCTS_OPTIONS}
+            includeValues={productsInclude}
+            onIncludeChange={setProductsInclude}
+            excludeValues={productsExclude}
+            onExcludeChange={setProductsExclude}
+            mode={productsMode}
+            onModeChange={setProductsMode}
+          />
         </div>
         <div className="flex w-full flex-col gap-1.5 self-start">
           <div className="flex min-h-7 items-center justify-between gap-2">
             <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Locations</label>
-            <div className="flex shrink-0">
+            <div className="flex shrink-0 items-center gap-2">
               <button
                 type="button"
                 onClick={() => setLocationsMode('include')}
@@ -739,42 +802,21 @@ function CreateScheduleScopeFilterPanel({
               >
                 Exclude
               </button>
+              <ScopeBulkAddButton onClick={() => openBulkPaste('Locations')} />
             </div>
           </div>
-          <div className="flex items-stretch gap-2">
-            <div className="min-w-0 flex-1">
-              <CreateScheduleScopeMultiSelect
-                hideHeader
-                label="Locations"
-                placeholder="Select locations"
-                options={SCOPE_LOCATIONS_OPTIONS}
-                includeValues={locationsInclude}
-                onIncludeChange={setLocationsInclude}
-                excludeValues={locationsExclude}
-                onExcludeChange={setLocationsExclude}
-                mode={locationsMode}
-                onModeChange={setLocationsMode}
-              />
-            </div>
-            <div className="flex shrink-0 items-end gap-2">
-              <button
-                type="button"
-                onClick={() => {}}
-                aria-label="Upload locations"
-                className="h-14 w-14 shrink-0 rounded-[4px] border border-[#E9EAEB] bg-white text-[#0a0a0a] hover:bg-[#f8f8f8] flex items-center justify-center"
-              >
-                <NetworkStyleUploadIcon />
-              </button>
-              <button
-                type="button"
-                onClick={() => {}}
-                aria-label="Download locations"
-                className="h-14 w-14 shrink-0 rounded-[4px] border border-[#E9EAEB] bg-white text-[#0a0a0a] hover:bg-[#f8f8f8] flex items-center justify-center"
-              >
-                <NetworkStyleDownloadIcon />
-              </button>
-            </div>
-          </div>
+          <CreateScheduleScopeMultiSelect
+            hideHeader
+            label="Locations"
+            placeholder="Select locations"
+            options={SCOPE_LOCATIONS_OPTIONS}
+            includeValues={locationsInclude}
+            onIncludeChange={setLocationsInclude}
+            excludeValues={locationsExclude}
+            onExcludeChange={setLocationsExclude}
+            mode={locationsMode}
+            onModeChange={setLocationsMode}
+          />
         </div>
         {visibleProductExtras.map((field) => (
           <div key={field.key} className="col-start-1 w-full self-start">
@@ -788,6 +830,12 @@ function CreateScheduleScopeFilterPanel({
         ))}
       </div>
     </div>
+    <ScopeBulkPasteModal
+      open={bulkPasteFieldLabel != null}
+      fieldLabel={bulkPasteFieldLabel ?? ''}
+      onClose={closeBulkPaste}
+    />
+    </>
   )
 }
 
@@ -886,7 +934,10 @@ function createDefaultScheduleBlock(id) {
     name: '',
     movementTypes: [],
     networkTag: '',
+    tripCapacityTag: '',
     confidenceLevels: ['Very High', 'High', 'Medium', 'Low', 'Very Low'],
+    aggressiveness: '',
+    basicMode: false,
     targetCoverageValue: '',
     targetCoverageUnit: 'Weeks',
     repeatEvery: 1,
@@ -977,6 +1028,27 @@ function buildBlockSummary(block) {
   return segments.join(' · ')
 }
 
+function ScheduleBasicModeSwitch({ checked, onChange, ariaLabel = 'Basic mode' }) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      aria-label={ariaLabel}
+      onClick={onChange}
+      className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${
+        checked ? 'bg-[#1d4ed8]' : 'bg-[#d1d5db]'
+      }`}
+    >
+      <span
+        className={`inline-block size-4 rounded-full bg-white shadow transition-transform ${
+          checked ? 'translate-x-[18px]' : 'translate-x-0.5'
+        }`}
+      />
+    </button>
+  )
+}
+
 function ScheduleDetailsBlock({ block, index, isExpanded, onToggleExpand, onRemove, canRemove, onUpdate }) {
   const headerTitle = block.name.trim() ? block.name : `Untitled schedule ${index + 1}`
 
@@ -1048,13 +1120,42 @@ function ScheduleDetailsBlock({ block, index, isExpanded, onToggleExpand, onRemo
 
         <CreateScheduleScopeSingleSelect
           label="Network tag"
-          helperText="This schedule will apply the tagged constraints set in your Network and Trip capacity parameters."
+          helperText="This schedule will apply the tagged constraints set in your Network parameters."
           placeholder="Select network tag"
           options={['Paris courier', 'Weekly replen', 'Saturday replan', 'Weekend rebal']}
           value={block.networkTag}
           onChange={(next) => onUpdate({ networkTag: next })}
         />
 
+        <CreateScheduleScopeSingleSelect
+          label="Trip capacity tag"
+          helperText="This schedule will apply the tagged constraints set in your Trip capacity parameters."
+          placeholder="Select trip capacity tag"
+          options={['Paris courier', 'Weekly replen', 'Saturday replan', 'Weekend rebal']}
+          value={block.tripCapacityTag}
+          onChange={(next) => onUpdate({ tripCapacityTag: next })}
+        />
+
+        <section className="mt-4 flex flex-col gap-4">
+          <div className="flex items-center justify-between gap-4">
+            <p className="text-[14px] font-medium text-[#0a0a0a]">Schedule reasoning</p>
+            <div className="flex shrink-0 items-center gap-2">
+              <span className="text-[14px] text-[#4b535c] whitespace-nowrap">Basic</span>
+              <ScheduleBasicModeSwitch
+                checked={block.basicMode}
+                onChange={() => onUpdate({ basicMode: !block.basicMode })}
+              />
+            </div>
+          </div>
+          <div className="flex w-full flex-col items-end gap-1">
+            <p className="w-full whitespace-nowrap text-right text-[11px] leading-[14px] text-[#4b535c]">
+              Use target coverage instead of next schedule date, confidence and aggressiveness.
+            </p>
+            <p className="text-right text-[12px] leading-[16px] text-[#9ca3af]">For simpler setups.</p>
+          </div>
+
+        {!block.basicMode && (
+          <>
         <CreateScheduleScopeMultiSelect
           label="Confidence level"
           helperText="Select which Autone confidence recommendations you see in the scheduled proposal."
@@ -1069,6 +1170,18 @@ function ScheduleDetailsBlock({ block, index, isExpanded, onToggleExpand, onRemo
           showSelectedLabels={true}
         />
 
+        <CreateScheduleScopeSingleSelect
+          label="Aggressiveness"
+          helperText="Higher aggressiveness adds more safety stock to this schedule's recommendations."
+          placeholder="Select aggressiveness"
+          options={['Conservative', 'Balanced', 'Aggressive']}
+          value={block.aggressiveness}
+          onChange={(next) => onUpdate({ aggressiveness: next })}
+        />
+          </>
+        )}
+
+        {block.basicMode && (
         <div className="flex flex-col gap-1.5">
           <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Target coverage</label>
           <div className="flex items-center gap-2">
@@ -1098,6 +1211,8 @@ function ScheduleDetailsBlock({ block, index, isExpanded, onToggleExpand, onRemo
             locations to hold.
           </p>
         </div>
+        )}
+        </section>
 
         <section className="mt-4 flex flex-col gap-4">
           <p className="mb-3 text-[14px] font-medium text-[#0a0a0a]">Scheduling dates</p>
