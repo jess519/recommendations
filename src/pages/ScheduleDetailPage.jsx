@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef, useCallback, useLayoutEffect, useMemo } from 'react'
 import { createPortal } from 'react-dom'
-import { Filter } from 'lucide-react'
+import { Filter, Plus } from 'lucide-react'
 import { ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts'
-import { IconSearch, IconChevronDown, IconChevronRight, IconShare, IconDocument, IconClose, IconInfo as DsIconInfo, IconArrowLeft, IconGears, IconTruckTu, IconPackageTu, IconRebalancing, IconReplenishment, IconCalendarNote, IconTrendUp, IconFilterFunnel, IconColumnSettings, IconSortOrder, IconSave } from '../components/icons'
+import { IconSearch, IconChevronDown, IconChevronRight, IconShare, IconDocument, IconClose, IconInfo as DsIconInfo, IconArrowLeft, IconGears, IconTruckTu, IconPackageTu, IconRebalancing, IconReplenishment, IconCalendarNote, IconTrendUp, IconFilterFunnel, IconColumnSettings, IconSortOrder } from '../components/icons'
 function IconInfo() {
   return (
     <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="shrink-0 text-[#9ca3af]" aria-hidden>
@@ -3954,7 +3954,7 @@ function ExplorerEmptyState() {
   )
 }
 
-function ExplorerTable({ data }) {
+function ExplorerTable({ data, onDrawerFiltersActiveChange }) {
   const [explorerSearch, setExplorerSearch] = useState('')
   const [explorerDepartmentFilters, setExplorerDepartmentFilters] = useState([])
   const [explorerMovementTypeFilters, setExplorerMovementTypeFilters] = useState([])
@@ -4018,6 +4018,10 @@ function ExplorerTable({ data }) {
     explorerMovementTypeFilters.length > 0 ||
     explorerConfidenceFilters.length > 0 ||
     explorerStatusFilters.length > 0
+
+  useEffect(() => {
+    onDrawerFiltersActiveChange?.(hasAnyFilter)
+  }, [hasAnyFilter, onDrawerFiltersActiveChange])
 
   const clearAllExplorerFilters = () => {
     setExplorerDepartmentFilters([])
@@ -4515,20 +4519,23 @@ export default function ScheduleDetailPage() {
   const [tripsActiveQuickFilter, setTripsActiveQuickFilter] = useState(null)
   const [productsDrawerFiltersActive, setProductsDrawerFiltersActive] = useState(false)
   const [locationsDrawerFiltersActive, setLocationsDrawerFiltersActive] = useState(false)
+  const [explorerDrawerFiltersActive, setExplorerDrawerFiltersActive] = useState(false)
   const [staleDataBannerDismissed, setStaleDataBannerDismissed] = useState(false)
   const [recalculatedTimestamp, setRecalculatedTimestamp] = useState(null)
   const hasRecalculated = Boolean(recalculatedTimestamp)
 
-  const showSaveViewButton =
-    activeTab === 'trips'
-      ? selectedTrip
-        ? productsDrawerFiltersActive
-        : statusFilters.length > 0
-      : activeTab === 'products'
-        ? productsDrawerFiltersActive
-        : activeTab === 'locations'
-          ? locationsDrawerFiltersActive
-          : false
+  const hasActiveFilters =
+    activeTab === 'products'
+      ? productsDrawerFiltersActive
+      : activeTab === 'locations'
+        ? locationsDrawerFiltersActive
+        : activeTab === 'explorer'
+          ? explorerDrawerFiltersActive
+          : activeTab === 'trips'
+            ? selectedTrip
+              ? productsDrawerFiltersActive
+              : statusFilters.length > 0
+            : false
 
   const baseTripsRows = viewShowsFullDataset ? TRIPS_ALL : TRIPS_OPERA
   const tripsRows = (() => {
@@ -4780,15 +4787,14 @@ export default function ScheduleDetailPage() {
             })}
           </nav>
           <div className="flex items-center gap-2 shrink-0 pb-2">
-            {showSaveViewButton && (
+            {hasActiveFilters && (
               <button
                 type="button"
-                className="flex items-center gap-2 h-10 px-4 rounded-[4px] border border-[#EAEAEA] bg-white text-[14px] font-medium text-[#212B36] hover:bg-[#f8f8f8] shrink-0"
-                aria-label="Save view"
+                onClick={() => {}}
+                className="flex items-center gap-1.5 h-10 px-3 rounded-[6px] border border-[#EAEAEA] bg-white text-[14px] font-medium text-[#0a0a0a] hover:bg-[#f5f5f5] shrink-0"
+                aria-label="Save"
               >
-                <span className="size-4 shrink-0 text-[#212B36] [&_svg]:size-full">
-                  <IconSave />
-                </span>
+                <Plus className="w-4 h-4 shrink-0" aria-hidden />
                 Save
               </button>
             )}
@@ -4875,7 +4881,7 @@ export default function ScheduleDetailPage() {
             onDrawerFiltersActiveChange={setLocationsDrawerFiltersActive}
           />
         ) : activeTab === 'explorer' ? (
-          <ExplorerTable data={EXPLORER_DATA} />
+          <ExplorerTable data={EXPLORER_DATA} onDrawerFiltersActiveChange={setExplorerDrawerFiltersActive} />
         ) : selectedTrip ? (
             <ProductsDrilldown
               trip={selectedTrip}
