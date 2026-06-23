@@ -937,6 +937,7 @@ function createDefaultScheduleBlock(id) {
     tripCapacityTag: '',
     confidenceLevels: ['Very High', 'High', 'Medium', 'Low', 'Very Low'],
     aggressiveness: '',
+    basicMode: false,
     targetCoverageValue: '',
     targetCoverageUnit: 'Weeks',
     repeatEvery: 1,
@@ -1027,6 +1028,27 @@ function buildBlockSummary(block) {
   return segments.join(' · ')
 }
 
+function ScheduleBasicModeSwitch({ checked, onChange, ariaLabel = 'Basic mode' }) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      aria-label={ariaLabel}
+      onClick={onChange}
+      className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${
+        checked ? 'bg-[#1d4ed8]' : 'bg-[#d1d5db]'
+      }`}
+    >
+      <span
+        className={`inline-block size-4 rounded-full bg-white shadow transition-transform ${
+          checked ? 'translate-x-[18px]' : 'translate-x-0.5'
+        }`}
+      />
+    </button>
+  )
+}
+
 function ScheduleDetailsBlock({ block, index, isExpanded, onToggleExpand, onRemove, canRemove, onUpdate }) {
   const headerTitle = block.name.trim() ? block.name : `Untitled schedule ${index + 1}`
 
@@ -1114,6 +1136,21 @@ function ScheduleDetailsBlock({ block, index, isExpanded, onToggleExpand, onRemo
           onChange={(next) => onUpdate({ tripCapacityTag: next })}
         />
 
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center justify-end gap-2">
+            <span className="text-[14px] text-[#4b535c] whitespace-nowrap">Basic</span>
+            <ScheduleBasicModeSwitch
+              checked={block.basicMode}
+              onChange={() => onUpdate({ basicMode: !block.basicMode })}
+            />
+          </div>
+          <p className="text-[12px] text-[#4b535c]">
+            Use target coverage instead of confidence and aggressiveness.
+          </p>
+        </div>
+
+        {!block.basicMode && (
+          <>
         <CreateScheduleScopeMultiSelect
           label="Confidence level"
           helperText="Select which Autone confidence recommendations you see in the scheduled proposal."
@@ -1136,7 +1173,10 @@ function ScheduleDetailsBlock({ block, index, isExpanded, onToggleExpand, onRemo
           value={block.aggressiveness}
           onChange={(next) => onUpdate({ aggressiveness: next })}
         />
+          </>
+        )}
 
+        {block.basicMode && (
         <div className="flex flex-col gap-1.5">
           <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Target coverage</label>
           <div className="flex items-center gap-2">
@@ -1166,6 +1206,7 @@ function ScheduleDetailsBlock({ block, index, isExpanded, onToggleExpand, onRemo
             locations to hold.
           </p>
         </div>
+        )}
 
         <section className="mt-4 flex flex-col gap-4">
           <p className="mb-3 text-[14px] font-medium text-[#0a0a0a]">Scheduling dates</p>
