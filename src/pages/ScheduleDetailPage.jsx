@@ -564,12 +564,12 @@ const PRODUCTS_EDITED_IDS = [1, 3]
 // Mock locations for stock analysis drilldown (keyed by product id)
 const LOCATIONS_BY_PRODUCT = {
   1: [
-    { id: 1, name: 'Opéra', code: 'A1A', movementType: ["rebalancing"], stock: '6 → 12', tu: '6 → 12', tuWarehouse: 6, tuTruck: [3, 3], salesL7: 1, salesL30: 2, forecast: 1.87, stockouts: '0 → 0', coverage: '0% → 100%', targetWeeks: 6, receivingWeeksCoverage: '3.2 → 6.4 (6 target)', recommendationReason: 'Increase revenue', revenueIncrease: '€679', availableToSend: 4, sendingStock: '10 → 7', sendingCoverage: '2.1 → 1.8 (4 target)', approvalStatus: 'approved_by_system' },
-    { id: 2, name: 'G.L. Haussmann Maro', code: 'AIA', movementType: ["rebalancing"], stock: '6 → 6', tu: '4 → 5', tuWarehouse: 3, tuTruck: [1], salesL7: 0, salesL30: 0, forecast: 0, stockouts: '0 → 0', coverage: '0% → 0%', targetWeeks: 4, receivingWeeksCoverage: 'N/A (0 forecast)', recommendationReason: 'Reduce overstock', revenueIncrease: '€120', availableToSend: 3, sendingStock: '8 → 5', sendingCoverage: 'N/A (0 forecast)' },
-    { id: 3, name: 'La Défense', code: 'A2B', movementType: ["rebalancing"], stock: '5 → 5', tu: '4 → 5', tuWarehouse: 3, tuTruck: [1], salesL7: 1, salesL30: 1, forecast: 0.76, stockouts: '0 → 0', coverage: '100% → 100%', targetWeeks: 4, receivingWeeksCoverage: '5.2 → 5.8 (4 target)', recommendationReason: 'Increase revenue', revenueIncrease: '€245', availableToSend: 4, sendingStock: '9 → 6', sendingCoverage: '1.8 → 1.2 (4 target)', approvalStatus: 'edited_by_user', editedByUser: 'Csabi Toth' },
+    { id: 1, name: 'Opéra', code: 'A1A', movementType: ["rebalancing"], stock: '6 → 12', tu: '6 → 12', tuWarehouse: 6, tuTruck: [3, 3], tuReplen: [1, 1], salesL7: 1, salesL30: 2, forecast: 1.87, stockouts: '0 → 0', coverage: '0% → 100%', targetWeeks: 6, receivingWeeksCoverage: '3.2 → 6.4 (6 target)', recommendationReason: 'Increase revenue', revenueIncrease: '€679', availableToSend: 4, sendingStock: '10 → 7', sendingCoverage: '2.1 → 1.8 (4 target)', approvalStatus: 'approved_by_system' },
+    { id: 2, name: 'G.L. Haussmann Maro', code: 'AIA', movementType: ["rebalancing"], stock: '6 → 6', tu: '4 → 5', tuWarehouse: 3, tuTruck: [1], tuReplen: [2], salesL7: 0, salesL30: 0, forecast: 0, stockouts: '0 → 0', coverage: '0% → 0%', targetWeeks: 4, receivingWeeksCoverage: 'N/A (0 forecast)', recommendationReason: 'Reduce overstock', revenueIncrease: '€120', availableToSend: 3, sendingStock: '8 → 5', sendingCoverage: 'N/A (0 forecast)' },
+    { id: 3, name: 'La Défense', code: 'A2B', movementType: ["rebalancing"], stock: '5 → 5', tu: '4 → 5', tuWarehouse: 3, tuTruck: [1], tuReplen: [1], salesL7: 1, salesL30: 1, forecast: 0.76, stockouts: '0 → 0', coverage: '100% → 100%', targetWeeks: 4, receivingWeeksCoverage: '5.2 → 5.8 (4 target)', recommendationReason: 'Increase revenue', revenueIncrease: '€245', availableToSend: 4, sendingStock: '9 → 6', sendingCoverage: '1.8 → 1.2 (4 target)', approvalStatus: 'edited_by_user', editedByUser: 'Csabi Toth' },
     { id: 4, name: 'Cap 3000', code: 'A3E', movementType: ["replenishment","rebalancing"], stock: '4 → 4', tu: '0 → 1', tuWarehouse: null, tuTruck: [1], salesL7: 0, salesL30: 2, forecast: 0.32, stockouts: '0 → 0', coverage: '0% → 0%', targetWeeks: 4, receivingWeeksCoverage: 'N/A (0 forecast)', recommendationReason: 'Improve coverage', revenueIncrease: '€89', availableToSend: 2, sendingStock: '6 → 5', sendingCoverage: 'N/A (0 forecast)', approvalStatus: 'approved_by_user', approvedByUser: 'Jess Briggs' },
-    { id: 5, name: 'Lyon Herriot', code: 'A4C', movementType: ["rebalancing"], stock: '5 → 5', tu: '0 → 1', tuWarehouse: null, tuTruck: [1], salesL7: 1, salesL30: 1, forecast: 0.54, stockouts: '0 → 0', coverage: '0% → 0%', targetWeeks: 4, receivingWeeksCoverage: '4.1 → 4.5 (4 target)', recommendationReason: 'Increase revenue', revenueIncrease: '€156', availableToSend: 3, sendingStock: '7 → 6', sendingCoverage: '2.4 → 2.0 (4 target)' },
-    { id: 6, name: 'Printemps Lille', code: 'ASF', movementType: ["rebalancing"], stock: '8 → 8', tu: '0 → 20', tuWarehouse: 4, tuTruck: [20], salesL7: 2, salesL30: 4, forecast: 2.1, stockouts: '0 → 0', coverage: '100% → 100%', targetWeeks: 6, receivingWeeksCoverage: '3.8 → 6.2 (6 target)', recommendationReason: 'Increase revenue', revenueIncrease: '€1.2K', availableToSend: 5, sendingStock: '12 → 8', sendingCoverage: '3.2 → 2.1 (6 target)', approvalStatus: 'approved_by_system' },
+    { id: 5, name: 'Lyon Herriot', code: 'A4C', movementType: ["rebalancing"], stock: '5 → 5', tu: '0 → 1', tuWarehouse: null, tuTruck: [1], tuReplen: [], salesL7: 1, salesL30: 1, forecast: 0.54, stockouts: '0 → 0', coverage: '0% → 0%', targetWeeks: 4, receivingWeeksCoverage: '4.1 → 4.5 (4 target)', recommendationReason: 'Increase revenue', revenueIncrease: '€156', availableToSend: 3, sendingStock: '7 → 6', sendingCoverage: '2.4 → 2.0 (4 target)' },
+    { id: 6, name: 'Printemps Lille', code: 'ASF', movementType: ["rebalancing"], stock: '8 → 8', tu: '0 → 20', tuWarehouse: 4, tuTruck: [20], tuReplen: [1], salesL7: 2, salesL30: 4, forecast: 2.1, stockouts: '0 → 0', coverage: '100% → 100%', targetWeeks: 6, receivingWeeksCoverage: '3.8 → 6.2 (6 target)', recommendationReason: 'Increase revenue', revenueIncrease: '€1.2K', availableToSend: 5, sendingStock: '12 → 8', sendingCoverage: '3.2 → 2.1 (6 target)', approvalStatus: 'approved_by_system' },
   ],
   2: [
     { id: 1, name: 'Opéra', code: 'A1A', movementType: ["rebalancing"], stock: '4 → 4', tu: '4 → 4', tuWarehouse: 4, tuTruck: [], salesL7: 2, salesL30: 3, forecast: 0.54, stockouts: '0 → 0', coverage: '100% → 100%', targetWeeks: 4, receivingWeeksCoverage: '5.2 → 5.2 (4 target)', recommendationReason: 'Increase revenue', revenueIncrease: '€312', availableToSend: 4, sendingStock: '8 → 4', sendingCoverage: '2.0 → 1.0 (4 target)', approvalStatus: 'approved_by_user', approvedByUser: 'Jess Briggs' },
@@ -1450,6 +1450,71 @@ function TuTruckTransferHoverCard({ trip, loc, truckUnits, borderClassName }) {
   )
 }
 
+const TU_TRANSFER_BADGE_SHELL =
+  'inline-flex h-[26px] min-w-[50px] w-fit shrink-0 items-center justify-center gap-1.5 rounded-[2px] px-[6px] py-[2px] text-[12px] font-medium text-white cursor-pointer transition-[filter,box-shadow] hover:brightness-90 hover:shadow-[0px_2px_4px_rgba(0,0,0,0.1)]'
+
+function EditableTuTransferBadge({
+  value,
+  isEditing,
+  editingValue,
+  onStartEdit,
+  onEditingValueChange,
+  onCommit,
+  onCancel,
+  bgClassName,
+  icon,
+  hoverPanel,
+}) {
+  if (isEditing) {
+    return (
+      <input
+        type="number"
+        min={0}
+        autoFocus
+        value={editingValue}
+        onChange={(e) => onEditingValueChange(e.target.value)}
+        onBlur={onCommit}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault()
+            onCommit()
+          }
+          if (e.key === 'Escape') {
+            e.preventDefault()
+            onCancel()
+          }
+        }}
+        onClick={(e) => e.stopPropagation()}
+        className="h-[26px] min-w-[50px] w-[50px] rounded-[2px] border border-[#e9eaeb] px-[6px] py-[2px] text-[12px] font-medium text-[#0a0a0a] text-center focus:outline-none"
+      />
+    )
+  }
+
+  return (
+    <TuHoverPopover panel={hoverPanel}>
+      <span
+        role="button"
+        tabIndex={0}
+        onClick={(e) => {
+          e.stopPropagation()
+          onStartEdit()
+        }}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault()
+            e.stopPropagation()
+            onStartEdit()
+          }
+        }}
+        className={`${TU_TRANSFER_BADGE_SHELL} ${bgClassName}`}
+      >
+        {icon}
+        {value}
+      </span>
+    </TuHoverPopover>
+  )
+}
+
 function StockAnalysisDrilldown({
   product,
   trip,
@@ -1462,8 +1527,35 @@ function StockAnalysisDrilldown({
   const [selectedTransferDetail, setSelectedTransferDetail] = useState(null)
   const [approvedLocations, setApprovedLocations] = useState({})
   const [selectedLocationIds, setSelectedLocationIds] = useState(new Set())
+  const [tuBoxOverrides, setTuBoxOverrides] = useState({})
+  const [editingTuBoxKey, setEditingTuBoxKey] = useState(null)
+  const [editingTuBoxValue, setEditingTuBoxValue] = useState('')
   const locations = LOCATIONS_BY_PRODUCT[product.id] || DEFAULT_LOCATIONS
   const breadcrumbFrom = `${trip.from} [${trip.fromCode}]`
+
+  const tuBoxKey = (locId, type, index) => `${product.id}-${locId}-${type}-${index}`
+
+  const getEffectiveTuBoxValue = (key, baseValue) =>
+    tuBoxOverrides[key] !== undefined ? tuBoxOverrides[key] : baseValue
+
+  const startEditTuBox = (key, currentValue) => {
+    setEditingTuBoxKey(key)
+    setEditingTuBoxValue(String(currentValue))
+  }
+
+  const commitTuBoxEdit = () => {
+    if (!editingTuBoxKey) return
+    const parsed = parseInt(editingTuBoxValue, 10)
+    const value = Number.isFinite(parsed) ? Math.max(0, parsed) : 0
+    setTuBoxOverrides((prev) => ({ ...prev, [editingTuBoxKey]: value }))
+    setEditingTuBoxKey(null)
+    setEditingTuBoxValue('')
+  }
+
+  const cancelTuBoxEdit = () => {
+    setEditingTuBoxKey(null)
+    setEditingTuBoxValue('')
+  }
 
   const toggleLocationSelection = (id) => {
     setSelectedLocationIds((prev) => {
@@ -1711,24 +1803,58 @@ function StockAnalysisDrilldown({
                           </span>
                         </TuHoverPopover>
                       )}
-                      {loc.tuTruck?.map((n, i) => (
-                        <TuHoverPopover
-                          key={i}
-                          panel={
-                            <TuTruckTransferHoverCard
-                              trip={trip}
-                              loc={loc}
-                              truckUnits={n}
-                              borderClassName="border-[#0267FF]"
-                            />
-                          }
-                        >
-                          <span className="inline-flex h-[26px] min-w-[50px] w-fit shrink-0 items-center justify-center gap-1.5 rounded-[2px] bg-[#0267FF] px-[6px] py-[2px] text-[12px] font-medium text-white cursor-pointer transition-[filter,box-shadow] hover:brightness-90 hover:shadow-[0px_2px_4px_rgba(0,0,0,0.1)]">
-                            <IconTruckTu />
-                            {n}
-                          </span>
-                        </TuHoverPopover>
-                      ))}
+                      {loc.tuTruck?.map((n, i) => {
+                        const key = tuBoxKey(loc.id, 'truck', i)
+                        const effectiveValue = getEffectiveTuBoxValue(key, n)
+                        return (
+                          <EditableTuTransferBadge
+                            key={key}
+                            value={effectiveValue}
+                            isEditing={editingTuBoxKey === key}
+                            editingValue={editingTuBoxValue}
+                            onStartEdit={() => startEditTuBox(key, effectiveValue)}
+                            onEditingValueChange={setEditingTuBoxValue}
+                            onCommit={commitTuBoxEdit}
+                            onCancel={cancelTuBoxEdit}
+                            bgClassName="bg-[#0267FF]"
+                            icon={<IconTruckTu />}
+                            hoverPanel={
+                              <TuTruckTransferHoverCard
+                                trip={trip}
+                                loc={loc}
+                                truckUnits={effectiveValue}
+                                borderClassName="border-[#0267FF]"
+                              />
+                            }
+                          />
+                        )
+                      })}
+                      {loc.tuReplen?.map((n, i) => {
+                        const key = tuBoxKey(loc.id, 'replen', i)
+                        const effectiveValue = getEffectiveTuBoxValue(key, n)
+                        return (
+                          <EditableTuTransferBadge
+                            key={key}
+                            value={effectiveValue}
+                            isEditing={editingTuBoxKey === key}
+                            editingValue={editingTuBoxValue}
+                            onStartEdit={() => startEditTuBox(key, effectiveValue)}
+                            onEditingValueChange={setEditingTuBoxValue}
+                            onCommit={commitTuBoxEdit}
+                            onCancel={cancelTuBoxEdit}
+                            bgClassName="bg-[#EC4899]"
+                            icon={<IconReplenishment />}
+                            hoverPanel={
+                              <TuTruckTransferHoverCard
+                                trip={trip}
+                                loc={loc}
+                                truckUnits={effectiveValue}
+                                borderClassName="border-[#EC4899]"
+                              />
+                            }
+                          />
+                        )
+                      })}
                       {loc.tuWarehouse == null && !loc.tuTruck?.length && (
                         <TuHoverPopover
                           panel={
