@@ -1441,7 +1441,7 @@ function TuTruckTransferHoverCard({ trip, loc, truckUnits, borderClassName }) {
   )
 }
 
-function StockAnalysisDrilldown({ product, trip, onBack }) {
+function StockAnalysisDrilldown({ product, trip, onBack, setExplorerProductNameFilters, setActiveTab }) {
   const [selectedTransferDetail, setSelectedTransferDetail] = useState(null)
   const [approvedLocations, setApprovedLocations] = useState({})
   const [selectedLocationIds, setSelectedLocationIds] = useState(new Set())
@@ -1483,6 +1483,12 @@ function StockAnalysisDrilldown({ product, trip, onBack }) {
   const breadcrumbTo = trip.to.length > 12 ? `${trip.to.slice(0, 10)}...` : trip.to
   const productLabel = product.name.length > 16 ? `${product.name.slice(0, 14)}...` : product.name
   const productSku = product.sku
+  const showExplorerProductLink = EXPLORER_PRODUCTS.some((p) => p.name === product.name)
+
+  const handleEditProductOnExplorer = () => {
+    setExplorerProductNameFilters([product.name])
+    setActiveTab('explorer')
+  }
 
   const summaryStock = locations.reduce(
     (acc, loc) => {
@@ -1512,7 +1518,8 @@ function StockAnalysisDrilldown({ product, trip, onBack }) {
 
   return (
     <div className="flex flex-col gap-4 bg-white">
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-3 min-w-0">
         <button
           type="button"
           onClick={onBack}
@@ -1530,6 +1537,16 @@ function StockAnalysisDrilldown({ product, trip, onBack }) {
           <span>→</span>
           <span className="font-medium text-[#0a0a0a]">Transfers</span>
         </nav>
+        </div>
+        {showExplorerProductLink && (
+          <button
+            type="button"
+            onClick={handleEditProductOnExplorer}
+            className="text-[13px] font-medium text-[#0267ff] hover:underline shrink-0"
+          >
+            Edit product on the Explorer tab
+          </button>
+        )}
       </div>
 
       <p className="text-[13px] text-[#878D94] mb-2">
@@ -1762,7 +1779,15 @@ function StockAnalysisDrilldown({ product, trip, onBack }) {
   )
 }
 
-function ProductsDrilldown({ trip, onBack, showBackButton = true, recalculatedTimestamp, onDrawerFiltersActiveChange }) {
+function ProductsDrilldown({
+  trip,
+  onBack,
+  showBackButton = true,
+  recalculatedTimestamp,
+  onDrawerFiltersActiveChange,
+  setExplorerProductNameFilters,
+  setActiveTab,
+}) {
   const [selectedProduct, setSelectedProduct] = useState(null)
   const [productStatusOverrides, setProductStatusOverrides] = useState({})
   const [productTransfersOverrides, setProductTransfersOverrides] = useState({})
@@ -1900,6 +1925,8 @@ function ProductsDrilldown({ trip, onBack, showBackButton = true, recalculatedTi
         product={selectedProduct}
         trip={trip}
         onBack={() => setSelectedProduct(null)}
+        setExplorerProductNameFilters={setExplorerProductNameFilters}
+        setActiveTab={setActiveTab}
       />
     )
   }
@@ -5031,6 +5058,8 @@ export default function ScheduleDetailPage() {
             showBackButton={false}
             recalculatedTimestamp={recalculatedTimestamp}
             onDrawerFiltersActiveChange={setProductsDrawerFiltersActive}
+            setExplorerProductNameFilters={setExplorerProductNameFilters}
+            setActiveTab={setActiveTab}
           />
         ) : activeTab === 'locations' ? (
           <LocationsTab
@@ -5064,6 +5093,8 @@ export default function ScheduleDetailPage() {
               onBack={() => setSelectedTrip(null)}
               recalculatedTimestamp={recalculatedTimestamp}
               onDrawerFiltersActiveChange={setProductsDrawerFiltersActive}
+              setExplorerProductNameFilters={setExplorerProductNameFilters}
+              setActiveTab={setActiveTab}
             />
           ) : (
           <div className="flex flex-col gap-[15px]">
