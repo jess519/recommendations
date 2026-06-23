@@ -622,11 +622,20 @@ const EXPLORER_STORES = [
 const EXPLORER_PRODUCTS = [
   {
     id: 'exp-p1',
-    name: 'Ang-sac pte main',
+    name: 'Ang-sac pte main m',
     baseSku: 'A1252810',
     colour: 'Noir',
     department: 'Handbags',
-    sizes: ['XS', 'S', 'M', 'L'],
+    sizes: ['M'],
+    movementTypes: ['replenishment', 'rebalancing'],
+  },
+  {
+    id: 'exp-p6',
+    name: 'Ang-sac pte main s',
+    baseSku: 'A1252811',
+    colour: 'Noir',
+    department: 'Handbags',
+    sizes: ['S'],
     movementTypes: ['replenishment', 'rebalancing'],
   },
   {
