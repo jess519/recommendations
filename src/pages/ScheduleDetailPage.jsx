@@ -3619,7 +3619,7 @@ const EXPLORER_STATUS_FILTER_LABELS = {
 
 function filterExplorerRows(
   rows,
-  { departmentFilters, movementTypeFilters, confidenceFilters, statusFilters }
+  { departmentFilters, movementTypeFilters, confidenceFilters, statusFilters, statusOverrides = {} }
 ) {
   return rows.filter((row) => {
     if (departmentFilters.length > 0 && !departmentFilters.includes(row.department)) {
@@ -3632,7 +3632,7 @@ function filterExplorerRows(
       return false
     }
     if (statusFilters.length > 0) {
-      const rowStatus = getRowStatus(row)
+      const rowStatus = statusOverrides[row.id] ?? getRowStatus(row)
       const statusMatch = statusFilters.some((f) => {
         if (f === 'approved') return rowStatus === 'approved_by_system' || rowStatus === 'approved_by_user'
         if (f === 'unapproved') return rowStatus === 'unapproved'
@@ -3671,9 +3671,16 @@ function ExplorerTable({ data }) {
   const [explorerMovementTypeFilters, setExplorerMovementTypeFilters] = useState([])
   const [explorerConfidenceFilters, setExplorerConfidenceFilters] = useState([])
   const [explorerStatusFilters, setExplorerStatusFilters] = useState([])
+  const [explorerStatusOverrides, setExplorerStatusOverrides] = useState({})
   const [explorerActiveQuickFilter, setExplorerActiveQuickFilter] = useState(null)
   const [explorerIncludeZeroTransfers, setExplorerIncludeZeroTransfers] = useState(false)
   const [explorerFiltersDropdownOpen, setExplorerFiltersDropdownOpen] = useState(false)
+
+  const handleExplorerStatusChange = (rowId, newStatus) => {
+    setExplorerStatusOverrides((prev) => ({ ...prev, [rowId]: newStatus }))
+  }
+
+  const getEffectiveStatus = (row) => explorerStatusOverrides[row.id] ?? getRowStatus(row)
 
   const explorerFilterCount =
     explorerDepartmentFilters.length +
@@ -3701,8 +3708,16 @@ function ExplorerTable({ data }) {
         movementTypeFilters: explorerMovementTypeFilters,
         confidenceFilters: explorerConfidenceFilters,
         statusFilters: explorerStatusFilters,
+        statusOverrides: explorerStatusOverrides,
       }),
-    [data, explorerDepartmentFilters, explorerMovementTypeFilters, explorerConfidenceFilters, explorerStatusFilters]
+    [
+      data,
+      explorerDepartmentFilters,
+      explorerMovementTypeFilters,
+      explorerConfidenceFilters,
+      explorerStatusFilters,
+      explorerStatusOverrides,
+    ]
   )
 
   const totals = useMemo(() => {
@@ -4092,9 +4107,17 @@ function ExplorerTable({ data }) {
                 <td className={`${explorerTdClass} min-w-[130px] text-[#0a0a0a]`}>{row.forecast}</td>
                 <td className={`${explorerTdClass} min-w-[140px] text-[#0a0a0a]`}>{row.stockInCirculation}</td>
                 <td className={`${explorerTdClass} min-w-[110px] text-[#0a0a0a]`}>{row.warehouseUnits}</td>
-                <td className={`${explorerStatusTdClass} min-w-[150px]`}>
+                <td
+                  className={`${explorerStatusTdClass} min-w-[150px]`}
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <div className="flex justify-end">
-                    <ExplorerStatusBadge value={row.status} />
+                    <StatusDropdown
+                      rowId={`explorer-${row.id}`}
+                      value={getEffectiveStatus(row)}
+                      userName={row.approvedByUser || row.editedByUser}
+                      onChange={(statusId) => handleExplorerStatusChange(row.id, statusId)}
+                    />
                   </div>
                 </td>
               </tr>
