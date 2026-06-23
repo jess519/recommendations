@@ -3694,7 +3694,27 @@ function filterExplorerRows(
 const EXPLORER_TABLE_COLUMN_COUNT = EXPLORER_TABLE_COLUMNS.length
 const EXPLORER_TABLE_TOTAL_COLUMN_COUNT = EXPLORER_TABLE_COLUMN_COUNT + 1
 
-function renderExplorerBodyCell(row, col, { explorerTdClass, explorerStatusTdClass, getEffectiveStatus, handleExplorerStatusChange }) {
+function ExplorerTransfersInput({ value, onChange }) {
+  return (
+    <input
+      type="number"
+      min={0}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      onClick={(e) => e.stopPropagation()}
+      className="w-16 h-7 px-2 rounded-[4px] border border-[#e9eaeb] text-[14px] text-[#0a0a0a] text-right focus:outline-none"
+    />
+  )
+}
+
+function renderExplorerBodyCell(row, col, {
+  explorerTdClass,
+  explorerStatusTdClass,
+  getEffectiveStatus,
+  handleExplorerStatusChange,
+  getEffectiveTransfers,
+  handleTransfersEdit,
+}) {
   const alignClass = col.alignment === 'right' ? 'text-right' : ''
 
   switch (col.id) {
@@ -3731,8 +3751,17 @@ function renderExplorerBodyCell(row, col, { explorerTdClass, explorerStatusTdCla
       )
     case 'transfers':
       return (
-        <td key={col.id} className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}>
-          <span className="text-[14px] font-medium text-[#0a0a0a]">{row.transfers}</span>
+        <td
+          key={col.id}
+          className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="flex justify-end">
+            <ExplorerTransfersInput
+              value={getEffectiveTransfers(row)}
+              onChange={(newValue) => handleTransfersEdit(row.id, newValue)}
+            />
+          </div>
         </td>
       )
     case 'revenue':
@@ -3928,6 +3957,7 @@ function ExplorerTable({ data }) {
   const [explorerConfidenceFilters, setExplorerConfidenceFilters] = useState([])
   const [explorerStatusFilters, setExplorerStatusFilters] = useState([])
   const [explorerStatusOverrides, setExplorerStatusOverrides] = useState({})
+  const [explorerTransferOverrides, setExplorerTransferOverrides] = useState({})
   const [explorerActiveQuickFilter, setExplorerActiveQuickFilter] = useState(null)
   const [explorerIncludeZeroTransfers, setExplorerIncludeZeroTransfers] = useState(false)
   const [explorerFiltersDropdownOpen, setExplorerFiltersDropdownOpen] = useState(false)
@@ -3938,6 +3968,15 @@ function ExplorerTable({ data }) {
   const handleExplorerStatusChange = (rowId, newStatus) => {
     setExplorerStatusOverrides((prev) => ({ ...prev, [rowId]: newStatus }))
   }
+
+  const handleTransfersEdit = (rowId, newValue) => {
+    const numValue = Number.isFinite(parseInt(newValue, 10)) ? parseInt(newValue, 10) : 0
+    setExplorerTransferOverrides((prev) => ({ ...prev, [rowId]: numValue }))
+    setExplorerStatusOverrides((prev) => ({ ...prev, [rowId]: 'last_edited_by_user' }))
+  }
+
+  const getEffectiveTransfers = (row) =>
+    explorerTransferOverrides[row.id] !== undefined ? explorerTransferOverrides[row.id] : row.transfers
 
   const toggleExplorerRowSelection = (rowId) => {
     setExplorerSelectedRowIds((prev) => {
@@ -4025,7 +4064,13 @@ function ExplorerTable({ data }) {
   }, [someExplorerRowsSelected])
 
   const totals = useMemo(() => {
-    const sumTransfers = filteredData.reduce((sum, row) => sum + row.transfers, 0)
+    const sumTransfers = filteredData.reduce((sum, row) => {
+      const transfers =
+        explorerTransferOverrides[row.id] !== undefined
+          ? explorerTransferOverrides[row.id]
+          : row.transfers
+      return sum + transfers
+    }, 0)
     const sumRevenueK = filteredData.reduce((sum, row) => sum + parseExplorerRevenueK(row.revenue), 0)
     const sumRecommended = filteredData.reduce((sum, row) => sum + parseInt(row.recommended, 10), 0)
     const sumSalesL7 = filteredData.reduce((sum, row) => sum + row.salesL7, 0)
@@ -4042,7 +4087,7 @@ function ExplorerTable({ data }) {
       currentUnits: `${sumCurrentUnits} units`,
       inTransit: `${sumInTransit} in transit`,
     }
-  }, [filteredData])
+  }, [filteredData, explorerTransferOverrides])
 
   const explorerThClass =
     'sticky top-0 z-20 bg-white h-[62px] min-h-[62px] px-4 text-left align-middle font-medium text-[#00050A] box-border'
@@ -4406,6 +4451,8 @@ function ExplorerTable({ data }) {
                     explorerStatusTdClass,
                     getEffectiveStatus,
                     handleExplorerStatusChange,
+                    getEffectiveTransfers,
+                    handleTransfersEdit,
                   })
                 )}
               </tr>
