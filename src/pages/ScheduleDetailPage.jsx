@@ -700,6 +700,7 @@ function buildExplorerRow(rowIndex, product, size, fromLoc, toLoc, movementType)
   const coverage = isOnTarget
     ? 'All SKUs in target'
     : `${Math.round(((coverageTarget - coverageWeeks) / coverageTarget) * 100)}% below target`
+  const salesL7 = ((rowIndex * 2) % 15) + 1
   return {
     id: `exp-row-${rowIndex}`,
     productId: product.id,
@@ -722,10 +723,14 @@ function buildExplorerRow(rowIndex, product, size, fromLoc, toLoc, movementType)
     coverageTarget,
     coverageStatus: isOnTarget ? 'on_target' : 'below_target',
     nextEvent: { name: rowIndex % 2 === 0 ? 'No event' : 'Rebal cycle', date: '15/03/2026' },
-    sales: `${(rowIndex * 2) % 15} sold L7D`,
-    forecast: `${((rowIndex * 0.31) % 3 + 0.5).toFixed(2)} units/week`,
-    stockInCirculation: `${10 + (rowIndex * 5) % 50} units`,
-    warehouseUnits: 5 + (rowIndex * 7) % 80,
+    salesL7,
+    salesL30: salesL7 * 5,
+    currentUnits: 10 + (rowIndex * 5) % 50,
+    currentUnitsInTransit: rowIndex % 6,
+    warehouseAllocateLine: `${50 + (rowIndex * 3) % 20} → ${45 + (rowIndex * 3) % 20}`,
+    warehouseSellLine: `${65 + (rowIndex * 5) % 25} → ${58 + (rowIndex * 5) % 25}`,
+    forecast: Number(((rowIndex * 0.31) % 3 + 0.5).toFixed(2)),
+    stockoutsLine: `${rowIndex % 3} → ${(rowIndex + 1) % 3}`,
     status: STATUS_CYCLE[rowIndex % STATUS_CYCLE.length],
     approvedByUser: false,
     editedByUser: false,
@@ -3547,60 +3552,100 @@ function LocationsTab({ recalculatedTimestamp, onDrawerFiltersActiveChange }) {
   )
 }
 
-function ExplorerCoverageCell({ coverageWeeks, coverage }) {
-  const isBelowTarget = coverage?.includes('below target')
-  const badgeText = isBelowTarget ? coverage.replace(' below target', ' of SKUs below target') : coverage
-  return (
-    <div className="flex flex-col items-start gap-1">
-      <span className="text-[14px] text-[#0a0a0a] font-medium">{Number(coverageWeeks).toFixed(1)} wks</span>
-      {coverage && (
-        <span
-          className={`px-1.5 py-0.5 rounded-[4px] text-[11px] font-medium ${
-            isBelowTarget ? 'bg-[#fee2e2] text-[#E30D3C]' : 'bg-[#dcfce7] text-[#166534]'
-          }`}
-        >
-          {badgeText}
-        </span>
-      )}
-    </div>
-  )
-}
-
 function parseExplorerRevenueK(revenueStr) {
   const match = revenueStr.match(/€([\d.]+)K/)
   return match ? parseFloat(match[1], 10) : 0
 }
 
-function ExplorerStatusBadge({ value }) {
-  const opt = STATUS_OPTIONS.find((o) => o.id === value) || STATUS_OPTIONS.find((o) => o.id === 'unapproved')
-  const badgeClass = STATUS_BADGE_CLASSES[value] || STATUS_BADGE_CLASSES.unapproved
-  const displayLabel = opt?.displayLabel ?? 'Unapproved'
-  return (
-    <span
-      className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-[6px] border text-[12px] font-medium border-transparent ${badgeClass}`}
-    >
-      <span className={`size-2 rounded-full shrink-0 ${opt.dotClass}`} aria-hidden />
-      <span className="truncate">{displayLabel}</span>
-    </span>
+function renderExplorerColumnHeaderLabel(col) {
+  const showIcon = 'tooltip' in col
+  const labelContent = showIcon ? (
+    col.tooltip === null ? (
+      <span className="inline-flex items-center gap-1">
+        {col.label} <IconInfo />
+      </span>
+    ) : (
+      <span className="inline-flex items-center gap-1 cursor-help" title={col.tooltip}>
+        {col.label} <IconInfo />
+      </span>
+    )
+  ) : (
+    col.label
   )
+
+  if (col.subtitle) {
+    return (
+      <span
+        className={`flex flex-col justify-center gap-0.5 leading-tight ${
+          col.alignment === 'right' ? 'items-end' : 'items-start'
+        }`}
+      >
+        {labelContent}
+        <span className="text-[11px] font-normal text-[#4b535c]">{col.subtitle}</span>
+      </span>
+    )
+  }
+
+  return labelContent
 }
 
 const EXPLORER_TABLE_COLUMNS = [
-  { key: 'productDetails', label: 'Product details', minW: 'min-w-[260px]' },
-  { key: 'fromLocation', label: 'From location', minW: 'min-w-[150px]' },
-  { key: 'toLocation', label: 'To location', minW: 'min-w-[150px]' },
-  { key: 'movementType', label: 'Movement type', minW: 'min-w-[100px]' },
-  { key: 'transfers', label: 'Transfers', minW: 'min-w-[90px]' },
-  { key: 'revenue', label: 'Revenue increase', minW: 'min-w-[110px]' },
-  { key: 'recommended', label: 'Recommended transfers', minW: 'min-w-[140px]' },
-  { key: 'confidence', label: 'Confidence', minW: 'min-w-[110px]' },
-  { key: 'coverage', label: 'Coverage', minW: 'min-w-[100px]' },
-  { key: 'nextEvent', label: 'Next event', minW: 'min-w-[130px]' },
-  { key: 'sales', label: 'Sales', minW: 'min-w-[120px]' },
-  { key: 'forecast', label: 'Forecast', minW: 'min-w-[130px]' },
-  { key: 'stockInCirculation', label: 'Stock in circulation', minW: 'min-w-[140px]' },
-  { key: 'warehouseUnits', label: 'Warehouse units', minW: 'min-w-[110px]' },
-  { key: 'status', label: 'Status', minW: 'min-w-[150px]' },
+  { id: 'productDetails', label: 'Product details', alignment: 'left', minWidth: 'min-w-[260px]' },
+  { id: 'fromLocation', label: 'From location', alignment: 'left', minWidth: 'min-w-[150px]' },
+  { id: 'toLocation', label: 'To location', alignment: 'left', minWidth: 'min-w-[150px]' },
+  { id: 'movementType', label: 'Movement type', alignment: 'left', minWidth: 'min-w-[100px]' },
+  { id: 'transfers', label: 'Transfers', alignment: 'right', minWidth: 'min-w-[90px]' },
+  { id: 'revenue', label: 'Revenue increase', alignment: 'right', minWidth: 'min-w-[110px]', tooltip: null },
+  {
+    id: 'recommended',
+    label: 'Recommended transfers',
+    alignment: 'right',
+    minWidth: 'min-w-[140px]',
+    tooltip: null,
+  },
+  {
+    id: 'confidence',
+    label: 'Confidence',
+    alignment: 'right',
+    minWidth: 'min-w-[110px]',
+    tooltip:
+      'Based on historical forecast accuracy at the product level. Lower confidence means recommendations carry more uncertainty.',
+  },
+  {
+    id: 'coverage',
+    label: 'Coverage',
+    alignment: 'right',
+    minWidth: 'min-w-[120px]',
+    tooltip:
+      "How well current stock is meeting forecasted demand. 'X% below target' means stock is short of target; 'All SKUs in target' means coverage is on track.",
+  },
+  {
+    id: 'nextEvent',
+    label: 'Next event',
+    alignment: 'right',
+    minWidth: 'min-w-[130px]',
+    subtitle: 'Submission deadline',
+    tooltip: 'The next scheduled inventory event for this product across all locations in scope',
+  },
+  { id: 'stockouts', label: 'Stockouts', alignment: 'right', minWidth: 'min-w-[90px]' },
+  { id: 'sales', label: 'Sales', alignment: 'right', minWidth: 'min-w-[120px]', subtitle: 'L7D / L30D' },
+  { id: 'forecast', label: 'Forecast', alignment: 'right', minWidth: 'min-w-[100px]', subtitle: 'per wk', tooltip: null },
+  {
+    id: 'stockInCirculation',
+    label: 'Stock in circulation',
+    alignment: 'right',
+    minWidth: 'min-w-[140px]',
+    tooltip:
+      'This includes stock in transit, stock on hand and stock pending from production. This will be for both parent & child locations (if applicable).',
+  },
+  {
+    id: 'warehouseUnits',
+    label: 'Warehouse units',
+    alignment: 'right',
+    minWidth: 'min-w-[140px]',
+    tooltip: 'Units reserved to sell at this location and units available to allocate to stores',
+  },
+  { id: 'status', label: 'Status', alignment: 'right', minWidth: 'min-w-[150px]' },
 ]
 
 const EXPLORER_STATUS_FILTER_OPTIONS = [
@@ -3647,11 +3692,222 @@ function filterExplorerRows(
 }
 
 const EXPLORER_TABLE_COLUMN_COUNT = EXPLORER_TABLE_COLUMNS.length
+const EXPLORER_TABLE_TOTAL_COLUMN_COUNT = EXPLORER_TABLE_COLUMN_COUNT + 1
+
+function renderExplorerBodyCell(row, col, { explorerTdClass, explorerStatusTdClass, getEffectiveStatus, handleExplorerStatusChange }) {
+  const alignClass = col.alignment === 'right' ? 'text-right' : ''
+
+  switch (col.id) {
+    case 'productDetails':
+      return (
+        <td key={col.id} className={`${explorerTdClass} ${col.minWidth}`}>
+          <div className="flex items-start gap-4 min-w-0">
+            <div className="w-12 h-12 rounded-[4px] bg-[#f3f4f6] shrink-0" />
+            <div className="flex flex-col gap-0.5 min-w-0">
+              <span className="text-[14px] font-medium text-[#0a0a0a]">{row.productName}</span>
+              <span className="text-[12px] text-[#4b535c]">{row.sku}</span>
+              <span className="text-[12px] text-[#4b535c]">{row.colour}</span>
+            </div>
+          </div>
+        </td>
+      )
+    case 'fromLocation':
+      return (
+        <td key={col.id} className={`${explorerTdClass} ${col.minWidth} text-[#0a0a0a]`}>
+          {row.fromLocation}
+        </td>
+      )
+    case 'toLocation':
+      return (
+        <td key={col.id} className={`${explorerTdClass} ${col.minWidth} text-[#0a0a0a]`}>
+          {row.toLocation}
+        </td>
+      )
+    case 'movementType':
+      return (
+        <td key={col.id} className={`${explorerTdClass} ${col.minWidth}`}>
+          <MovementTypePills movementType={[row.movementType]} />
+        </td>
+      )
+    case 'transfers':
+      return (
+        <td key={col.id} className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}>
+          <span className="text-[14px] font-medium text-[#0a0a0a]">{row.transfers}</span>
+        </td>
+      )
+    case 'revenue':
+      return (
+        <td key={col.id} className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}>
+          <span className="text-[14px] text-[#0a0a0a]">{row.revenue}</span>
+        </td>
+      )
+    case 'recommended':
+      return (
+        <td key={col.id} className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}>
+          <div className="flex flex-col items-end gap-1">
+            <span className="inline-flex flex-wrap items-center justify-end gap-1 text-[14px] text-[#0a0a0a]">
+              {row.recommended}
+              {row.recommendedBadges?.map((badge) => (
+                <span
+                  key={badge}
+                  className="bg-[#f8f8f8] text-[11px] font-medium text-[#0267ff] px-1.5 py-0.5 rounded"
+                >
+                  {badge}
+                </span>
+              ))}
+            </span>
+            {row.recommendedSub != null && (
+              <span className="text-[12px] text-[#4b535c]">{row.recommendedSub}</span>
+            )}
+          </div>
+        </td>
+      )
+    case 'confidence':
+      return (
+        <td key={col.id} className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}>
+          <div className="flex justify-end">
+            <ConfidencePill value={row.confidence} />
+          </div>
+        </td>
+      )
+    case 'coverage':
+      return (
+        <td key={col.id} className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}>
+          <div className="flex justify-end">
+            <ProductCoverageText
+              coverageWeeks={row.coverageWeeks}
+              coverageTarget={row.coverageTarget}
+              coverage={row.coverage}
+            />
+          </div>
+        </td>
+      )
+    case 'nextEvent':
+      return (
+        <td key={col.id} className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}>
+          <ProductNextEventCell nextEvent={row.nextEvent} />
+        </td>
+      )
+    case 'stockouts':
+      return (
+        <td key={col.id} className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}>
+          <span className="text-[14px] text-[#0a0a0a]">{row.stockoutsLine}</span>
+        </td>
+      )
+    case 'sales':
+      return (
+        <td key={col.id} className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}>
+          <div className="flex flex-col items-end gap-0.5">
+            <span className="text-[14px] text-[#0a0a0a]">{row.salesL7}</span>
+            <span className="text-[12px] text-[#4b535c]">{row.salesL30}</span>
+          </div>
+        </td>
+      )
+    case 'forecast':
+      return (
+        <td key={col.id} className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}>
+          <span className="text-[14px] text-[#0a0a0a]">{row.forecast}</span>
+        </td>
+      )
+    case 'stockInCirculation':
+      return (
+        <td key={col.id} className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}>
+          <div className="flex flex-col items-end gap-0.5">
+            <span className="text-[14px] text-[#0a0a0a]">{row.currentUnits} units</span>
+            <span className="text-[12px] text-[#4b535c]">{row.currentUnitsInTransit} in transit</span>
+          </div>
+        </td>
+      )
+    case 'warehouseUnits':
+      return (
+        <td key={col.id} className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}>
+          <div className="flex flex-col items-end gap-0.5">
+            <span className="text-[14px] text-[#0a0a0a]">{row.warehouseAllocateLine}</span>
+            <span className="text-[12px] text-[#4b535c]">{row.warehouseSellLine}</span>
+          </div>
+        </td>
+      )
+    case 'status':
+      return (
+        <td
+          key={col.id}
+          className={`${explorerStatusTdClass} ${col.minWidth}`}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="flex justify-end">
+            <StatusDropdown
+              rowId={`explorer-${row.id}`}
+              value={getEffectiveStatus(row)}
+              userName={row.approvedByUser || row.editedByUser}
+              onChange={(statusId) => handleExplorerStatusChange(row.id, statusId)}
+            />
+          </div>
+        </td>
+      )
+    default:
+      return null
+  }
+}
+
+function renderExplorerTotalsCell(col, totals, { explorerTotalsThClass, explorerTotalsEmptyThClass, explorerStatusTotalsThClass }) {
+  const isStatus = col.id === 'status'
+  const baseClass = isStatus ? explorerStatusTotalsThClass : explorerTotalsThClass
+  const emptyClass = explorerTotalsEmptyThClass
+
+  switch (col.id) {
+    case 'productDetails':
+      return (
+        <th key={col.id} className={`${baseClass} ${col.minWidth}`}>
+          {totals.skuLocations}
+        </th>
+      )
+    case 'transfers':
+      return (
+        <th key={col.id} className={`${baseClass} ${col.minWidth} text-right`}>
+          {totals.transfers}
+        </th>
+      )
+    case 'revenue':
+      return (
+        <th key={col.id} className={`${baseClass} ${col.minWidth} text-right`}>
+          {totals.revenue}
+        </th>
+      )
+    case 'recommended':
+      return (
+        <th key={col.id} className={`${baseClass} ${col.minWidth} text-right`}>
+          {totals.recommended}
+        </th>
+      )
+    case 'sales':
+      return (
+        <th key={col.id} className={`${baseClass} ${col.minWidth} text-right`}>
+          <div className="flex flex-col items-end">
+            <span>{totals.salesL7}</span>
+            <span className="text-[12px] text-[#4b535c]">{totals.salesL30}</span>
+          </div>
+        </th>
+      )
+    case 'stockInCirculation':
+      return (
+        <th key={col.id} className={`${baseClass} ${col.minWidth} text-right`}>
+          <div className="flex flex-col items-end">
+            <span>{totals.currentUnits}</span>
+            <span className="text-[12px] text-[#4b535c]">{totals.inTransit}</span>
+          </div>
+        </th>
+      )
+    case 'status':
+      return <th key={col.id} className={`${explorerStatusTotalsThClass} ${col.minWidth}`} />
+    default:
+      return <th key={col.id} className={`${emptyClass} ${col.minWidth}`} />
+  }
+}
 
 function ExplorerEmptyState() {
   return (
     <tr>
-      <td colSpan={EXPLORER_TABLE_COLUMN_COUNT} className="py-20 px-6">
+      <td colSpan={EXPLORER_TABLE_TOTAL_COLUMN_COUNT} className="py-20 px-6">
         <div className="flex flex-col items-center text-center">
           <Filter className="w-16 h-16 text-[#9ca3af] mb-4" aria-hidden />
           <p className="text-[18px] font-medium text-[#0a0a0a]">Dataset is too large</p>
@@ -3675,9 +3931,36 @@ function ExplorerTable({ data }) {
   const [explorerActiveQuickFilter, setExplorerActiveQuickFilter] = useState(null)
   const [explorerIncludeZeroTransfers, setExplorerIncludeZeroTransfers] = useState(false)
   const [explorerFiltersDropdownOpen, setExplorerFiltersDropdownOpen] = useState(false)
+  const [explorerSelectedRowIds, setExplorerSelectedRowIds] = useState(new Set())
+  const [explorerBulkChangeStatusOpen, setExplorerBulkChangeStatusOpen] = useState(false)
+  const explorerSelectAllRef = useRef(null)
 
   const handleExplorerStatusChange = (rowId, newStatus) => {
     setExplorerStatusOverrides((prev) => ({ ...prev, [rowId]: newStatus }))
+  }
+
+  const toggleExplorerRowSelection = (rowId) => {
+    setExplorerSelectedRowIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(rowId)) next.delete(rowId)
+      else next.add(rowId)
+      return next
+    })
+  }
+
+  const clearExplorerSelection = () => setExplorerSelectedRowIds(new Set())
+
+  const handleBulkStatusChange = (newStatus) => {
+    if (!explorerSelectedRowIds.size) return
+    setExplorerStatusOverrides((prev) => {
+      const next = { ...prev }
+      explorerSelectedRowIds.forEach((rowId) => {
+        next[rowId] = newStatus
+      })
+      return next
+    })
+    setExplorerBulkChangeStatusOpen(false)
+    clearExplorerSelection()
   }
 
   const getEffectiveStatus = (row) => explorerStatusOverrides[row.id] ?? getRowStatus(row)
@@ -3720,29 +4003,66 @@ function ExplorerTable({ data }) {
     ]
   )
 
+  const toggleAllExplorerRows = () => {
+    const allIds = filteredData.map((r) => r.id)
+    const allSelected = allIds.length > 0 && allIds.every((id) => explorerSelectedRowIds.has(id))
+    setExplorerSelectedRowIds(allSelected ? new Set() : new Set(allIds))
+  }
+
+  const allExplorerRowsSelected =
+    hasAnyFilter &&
+    filteredData.length > 0 &&
+    filteredData.every((row) => explorerSelectedRowIds.has(row.id))
+  const someExplorerRowsSelected =
+    hasAnyFilter &&
+    filteredData.some((row) => explorerSelectedRowIds.has(row.id)) &&
+    !allExplorerRowsSelected
+
+  useEffect(() => {
+    if (explorerSelectAllRef.current) {
+      explorerSelectAllRef.current.indeterminate = someExplorerRowsSelected
+    }
+  }, [someExplorerRowsSelected])
+
   const totals = useMemo(() => {
     const sumTransfers = filteredData.reduce((sum, row) => sum + row.transfers, 0)
     const sumRevenueK = filteredData.reduce((sum, row) => sum + parseExplorerRevenueK(row.revenue), 0)
     const sumRecommended = filteredData.reduce((sum, row) => sum + parseInt(row.recommended, 10), 0)
+    const sumSalesL7 = filteredData.reduce((sum, row) => sum + row.salesL7, 0)
+    const sumSalesL30 = filteredData.reduce((sum, row) => sum + row.salesL30, 0)
+    const sumCurrentUnits = filteredData.reduce((sum, row) => sum + row.currentUnits, 0)
+    const sumInTransit = filteredData.reduce((sum, row) => sum + row.currentUnitsInTransit, 0)
     return {
       skuLocations: `${filteredData.length} SKU-locations`,
       transfers: `${sumTransfers} units`,
       revenue: `€${sumRevenueK.toFixed(1)}K`,
       recommended: `${sumRecommended} units`,
+      salesL7: sumSalesL7,
+      salesL30: sumSalesL30,
+      currentUnits: `${sumCurrentUnits} units`,
+      inTransit: `${sumInTransit} in transit`,
     }
   }, [filteredData])
 
   const explorerThClass =
-    'sticky top-0 z-20 bg-white h-[62px] min-h-[62px] px-3 text-left align-middle font-medium text-[#0a0a0a] box-border'
+    'sticky top-0 z-20 bg-white h-[62px] min-h-[62px] px-4 text-left align-middle font-medium text-[#00050A] box-border'
   const explorerStatusThClass =
-    'sticky top-0 right-0 z-30 bg-white h-[62px] min-h-[62px] px-3 text-right align-middle font-medium text-[#0a0a0a] box-border border-l border-[#e5e7eb] shadow-[-4px_0_12px_-6px_rgba(15,23,42,0.12)]'
-  const explorerTotalsThClass = 'sticky top-[62px] z-20 bg-white py-2 px-3 text-[12px] font-medium text-[#0a0a0a]'
-  const explorerTotalsEmptyThClass = 'sticky top-[62px] z-20 bg-white py-2 px-3'
+    'sticky top-0 right-0 z-30 bg-white h-[62px] min-h-[62px] px-4 text-right align-middle font-medium text-[#00050A] box-border border-l border-[#e5e7eb] shadow-[-4px_0_12px_-6px_rgba(15,23,42,0.12)]'
+  const explorerTotalsThClass = 'sticky top-[62px] z-20 bg-white py-2 px-4 text-[12px] font-medium text-[#0a0a0a]'
+  const explorerTotalsEmptyThClass = 'sticky top-[62px] z-20 bg-white py-2 px-4'
   const explorerStatusTotalsThClass =
-    'sticky top-[62px] right-0 z-30 bg-white py-2 px-3 border-l border-[#e5e7eb] shadow-[-4px_0_12px_-6px_rgba(15,23,42,0.12)]'
-  const explorerTdClass = 'py-3 px-3 align-top'
+    'sticky top-[62px] right-0 z-30 bg-white py-2 px-4 border-l border-[#e5e7eb] shadow-[-4px_0_12px_-6px_rgba(15,23,42,0.12)]'
+  const explorerTdClass = 'py-3 px-4 align-top'
   const explorerStatusTdClass =
-    'sticky right-0 z-30 bg-white py-3 px-3 align-top text-right border-l border-[#e5e7eb] shadow-[-4px_0_12px_-6px_rgba(15,23,42,0.12)] group-hover:bg-[#f9fafb]'
+    'sticky right-0 z-30 bg-white py-3 px-4 align-top text-right border-l border-[#e5e7eb] shadow-[-4px_0_12px_-6px_rgba(15,23,42,0.12)] group-hover:bg-[#f9fafb]'
+  const explorerCheckboxThClass =
+    'sticky left-0 z-30 h-[62px] min-h-[62px] w-14 min-w-14 max-w-14 box-border bg-white px-4 py-[10px] text-left align-middle shadow-[4px_0_12px_-6px_rgba(15,23,42,0.12)]'
+  const explorerCheckboxTotalsThClass =
+    'sticky left-0 z-30 w-14 min-w-14 max-w-14 box-border py-2 px-4 bg-white shadow-[4px_0_12px_-6px_rgba(15,23,42,0.12)]'
+  const explorerCheckboxTdClass =
+    'sticky left-0 z-30 min-h-[86px] w-14 min-w-14 max-w-14 box-border bg-white px-4 py-3 align-middle shadow-[4px_0_12px_-6px_rgba(15,23,42,0.12)] group-hover:bg-[#f9fafb]'
+  const explorerCheckboxInputClass =
+    'h-4 w-4 rounded border-2 border-[#e9eaeb] bg-white text-sky-600 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-0'
 
   const headerGrip = (
     <span className="inline-flex shrink-0 select-none" aria-hidden>
@@ -4013,41 +4333,52 @@ function ExplorerTable({ data }) {
       <div className="max-h-[min(65vh,800px)] overflow-x-auto overflow-y-auto">
         <table className="w-full text-[14px] bg-white">
           <thead className="bg-white">
-            <tr className="border-b border-[#e5e7eb]">
+            <tr className="border-b border-[#E9EAEB]">
+              <th className={explorerCheckboxThClass}>
+                <label className="flex min-h-[52px] cursor-pointer items-center py-[2px]">
+                  <input
+                    ref={explorerSelectAllRef}
+                    type="checkbox"
+                    className={explorerCheckboxInputClass}
+                    aria-label="Select all"
+                    disabled={!hasAnyFilter || filteredData.length === 0}
+                    checked={allExplorerRowsSelected}
+                    onChange={toggleAllExplorerRows}
+                  />
+                </label>
+              </th>
               {EXPLORER_TABLE_COLUMNS.map((col) => {
-                const isStatus = col.key === 'status'
+                const isStatus = col.id === 'status'
+                const isRight = col.alignment === 'right'
                 return (
                   <th
-                    key={col.key}
-                    className={`${col.minW} ${isStatus ? explorerStatusThClass : explorerThClass}`}
+                    key={col.id}
+                    className={`${col.minWidth} ${isStatus ? explorerStatusThClass : explorerThClass} ${
+                      isRight && !isStatus ? 'text-right' : ''
+                    }`}
                   >
                     <span
-                      className={`inline-flex min-w-0 items-center gap-2 ${isStatus ? 'w-full justify-end' : ''}`}
+                      className={`inline-flex min-w-0 items-center gap-2 ${
+                        isRight ? 'w-full justify-end' : ''
+                      }`}
                     >
                       {headerGrip}
-                      {col.label}
+                      {renderExplorerColumnHeaderLabel(col)}
                     </span>
                   </th>
                 )
               })}
             </tr>
             {hasAnyFilter && (
-            <tr className="border-b border-[#e5e7eb]">
-              <th className={`${explorerTotalsThClass} min-w-[260px]`}>{totals.skuLocations}</th>
-              <th className={`${explorerTotalsEmptyThClass} min-w-[150px]`} />
-              <th className={`${explorerTotalsEmptyThClass} min-w-[150px]`} />
-              <th className={`${explorerTotalsEmptyThClass} min-w-[100px]`} />
-              <th className={`${explorerTotalsThClass} min-w-[90px]`}>{totals.transfers}</th>
-              <th className={`${explorerTotalsThClass} min-w-[110px]`}>{totals.revenue}</th>
-              <th className={`${explorerTotalsThClass} min-w-[140px]`}>{totals.recommended}</th>
-              <th className={`${explorerTotalsEmptyThClass} min-w-[110px]`} />
-              <th className={`${explorerTotalsEmptyThClass} min-w-[100px]`} />
-              <th className={`${explorerTotalsEmptyThClass} min-w-[130px]`} />
-              <th className={`${explorerTotalsEmptyThClass} min-w-[120px]`} />
-              <th className={`${explorerTotalsEmptyThClass} min-w-[130px]`} />
-              <th className={`${explorerTotalsEmptyThClass} min-w-[140px]`} />
-              <th className={`${explorerTotalsEmptyThClass} min-w-[110px]`} />
-              <th className={`${explorerStatusTotalsThClass} min-w-[150px]`} />
+            <tr className="border-b border-[#E9EAEB]">
+              <th className={explorerCheckboxTotalsThClass} />
+              {EXPLORER_TABLE_COLUMNS.map((col) =>
+                renderExplorerTotalsCell(col, totals, {
+                  explorerTotalsThClass,
+                  explorerTotalsEmptyThClass,
+                  explorerStatusTotalsThClass,
+                })
+              )}
             </tr>
             )}
           </thead>
@@ -4056,70 +4387,27 @@ function ExplorerTable({ data }) {
               <ExplorerEmptyState />
             ) : (
               filteredData.map((row) => (
-              <tr key={row.id} className="group border-b border-[#e5e7eb] bg-white hover:bg-[#f9fafb]">
-                <td className={`${explorerTdClass} min-w-[260px]`}>
-                  <div className="flex flex-col gap-0.5">
-                    <span className="font-medium text-[#0a0a0a]">{row.productName}</span>
-                    <span className="text-[12px] text-[#4b535c]">{row.sku}</span>
-                    <span className="text-[12px] text-[#4b535c]">{row.colour}</span>
-                  </div>
-                </td>
-                <td className={`${explorerTdClass} min-w-[150px] text-[#0a0a0a]`}>{row.fromLocation}</td>
-                <td className={`${explorerTdClass} min-w-[150px] text-[#0a0a0a]`}>{row.toLocation}</td>
-                <td className={`${explorerTdClass} min-w-[100px]`}>
-                  <MovementTypePills movementType={[row.movementType]} />
-                </td>
-                <td className={`${explorerTdClass} min-w-[90px] font-medium text-[#0a0a0a]`}>{row.transfers}</td>
-                <td className={`${explorerTdClass} min-w-[110px] text-[#0a0a0a]`}>{row.revenue}</td>
-                <td className={`${explorerTdClass} min-w-[140px]`}>
-                  <div className="flex flex-col gap-1">
-                    <span className="inline-flex flex-wrap items-center gap-0.5 text-[#0a0a0a]">
-                      {row.recommended}
-                      {row.recommendedBadges?.map((badge) => (
-                        <span
-                          key={badge}
-                          className="bg-[#eef2ff] text-[#1d4ed8] text-[10px] font-medium px-1.5 py-0.5 rounded ml-1"
-                        >
-                          {badge}
-                        </span>
-                      ))}
-                    </span>
-                    {row.recommendedSub != null && (
-                      <span className="text-[12px] text-[#4b535c]">{row.recommendedSub}</span>
-                    )}
-                  </div>
-                </td>
-                <td className={`${explorerTdClass} min-w-[110px]`}>
-                  <ConfidencePill value={row.confidence} />
-                </td>
-                <td className={`${explorerTdClass} min-w-[100px]`}>
-                  <ExplorerCoverageCell coverageWeeks={row.coverageWeeks} coverage={row.coverage} />
-                </td>
-                <td className={`${explorerTdClass} min-w-[130px]`}>
-                  {row.nextEvent && (
-                    <div className="flex flex-col gap-0.5">
-                      <span className="text-[#0a0a0a]">{row.nextEvent.name}</span>
-                      <span className="text-[12px] text-[#4b535c]">{row.nextEvent.date}</span>
-                    </div>
-                  )}
-                </td>
-                <td className={`${explorerTdClass} min-w-[120px] text-[#0a0a0a]`}>{row.sales}</td>
-                <td className={`${explorerTdClass} min-w-[130px] text-[#0a0a0a]`}>{row.forecast}</td>
-                <td className={`${explorerTdClass} min-w-[140px] text-[#0a0a0a]`}>{row.stockInCirculation}</td>
-                <td className={`${explorerTdClass} min-w-[110px] text-[#0a0a0a]`}>{row.warehouseUnits}</td>
+              <tr key={row.id} className="group border-b border-[#E9EAEB] bg-white hover:bg-[#f9fafb]">
                 <td
-                  className={`${explorerStatusTdClass} min-w-[150px]`}
+                  className={explorerCheckboxTdClass}
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <div className="flex justify-end">
-                    <StatusDropdown
-                      rowId={`explorer-${row.id}`}
-                      value={getEffectiveStatus(row)}
-                      userName={row.approvedByUser || row.editedByUser}
-                      onChange={(statusId) => handleExplorerStatusChange(row.id, statusId)}
-                    />
-                  </div>
+                  <input
+                    type="checkbox"
+                    className={explorerCheckboxInputClass}
+                    aria-label={`Select ${row.productName}`}
+                    checked={explorerSelectedRowIds.has(row.id)}
+                    onChange={() => toggleExplorerRowSelection(row.id)}
+                  />
                 </td>
+                {EXPLORER_TABLE_COLUMNS.map((col) =>
+                  renderExplorerBodyCell(row, col, {
+                    explorerTdClass,
+                    explorerStatusTdClass,
+                    getEffectiveStatus,
+                    handleExplorerStatusChange,
+                  })
+                )}
               </tr>
               ))
             )}
@@ -4127,6 +4415,59 @@ function ExplorerTable({ data }) {
         </table>
       </div>
     </div>
+
+      {explorerSelectedRowIds.size > 0 && (
+        <div
+          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-4 rounded-[8px] px-6 py-3"
+          style={{ background: '#1A1A2E', boxShadow: '0 4px 12px rgba(0,0,0,0.25)' }}
+        >
+          <button
+            type="button"
+            onClick={clearExplorerSelection}
+            className="flex items-center justify-center size-8 rounded-[4px] text-white hover:bg-white/10"
+            aria-label="Close"
+          >
+            <IconClose className="size-4" />
+          </button>
+          <span className="text-[14px] font-medium text-white">
+            {explorerSelectedRowIds.size} selected
+          </span>
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setExplorerBulkChangeStatusOpen((o) => !o)}
+              className="px-4 py-2 rounded-[4px] text-[14px] font-medium text-white hover:bg-white/10"
+            >
+              Change status
+            </button>
+            {explorerBulkChangeStatusOpen && (
+              <>
+                <div
+                  className="fixed inset-0 z-[60]"
+                  aria-hidden
+                  onClick={() => setExplorerBulkChangeStatusOpen(false)}
+                />
+                <div
+                  className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 z-[70] min-w-[180px] rounded-[6px] border border-[#e5e7eb] bg-white py-1 shadow-lg"
+                  style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}
+                >
+                  {STATUS_DROPDOWN_OPTIONS.map((o) => (
+                    <button
+                      key={o.id}
+                      type="button"
+                      onClick={() => handleBulkStatusChange(o.id)}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-left text-[13px] font-medium text-[#0a0a0a] hover:bg-[#f3f4f6]"
+                    >
+                      <span className={`size-2 rounded-full shrink-0 ${o.dotClass}`} aria-hidden />
+                      <span>{o.dropdownLabel}</span>
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
