@@ -3668,10 +3668,20 @@ const EXPLORER_STATUS_FILTER_LABELS = {
 
 function filterExplorerRows(
   rows,
-  { departmentFilters, movementTypeFilters, confidenceFilters, statusFilters, statusOverrides = {} }
+  {
+    departmentFilters,
+    productNameFilters,
+    movementTypeFilters,
+    confidenceFilters,
+    statusFilters,
+    statusOverrides = {},
+  }
 ) {
   return rows.filter((row) => {
     if (departmentFilters.length > 0 && !departmentFilters.includes(row.department)) {
+      return false
+    }
+    if (productNameFilters.length > 0 && !productNameFilters.includes(row.productName)) {
       return false
     }
     if (movementTypeFilters.length > 0 && !movementTypeFilters.includes(row.movementType)) {
@@ -3963,12 +3973,18 @@ function ExplorerTable({
   setExplorerTransferOverrides,
   explorerSelectedRowIds,
   setExplorerSelectedRowIds,
+  explorerDepartmentFilters,
+  setExplorerDepartmentFilters,
+  explorerProductNameFilters,
+  setExplorerProductNameFilters,
+  explorerMovementTypeFilters,
+  setExplorerMovementTypeFilters,
+  explorerConfidenceFilters,
+  setExplorerConfidenceFilters,
+  explorerStatusFilters,
+  setExplorerStatusFilters,
 }) {
   const [explorerSearch, setExplorerSearch] = useState('')
-  const [explorerDepartmentFilters, setExplorerDepartmentFilters] = useState([])
-  const [explorerMovementTypeFilters, setExplorerMovementTypeFilters] = useState([])
-  const [explorerConfidenceFilters, setExplorerConfidenceFilters] = useState([])
-  const [explorerStatusFilters, setExplorerStatusFilters] = useState([])
   const [explorerActiveQuickFilter, setExplorerActiveQuickFilter] = useState(null)
   const [explorerFiltersDropdownOpen, setExplorerFiltersDropdownOpen] = useState(false)
   const [explorerBulkChangeStatusOpen, setExplorerBulkChangeStatusOpen] = useState(false)
@@ -4042,12 +4058,14 @@ function ExplorerTable({
 
   const explorerFilterCount =
     explorerDepartmentFilters.length +
+    explorerProductNameFilters.length +
     explorerMovementTypeFilters.length +
     explorerConfidenceFilters.length +
     explorerStatusFilters.length
 
   const hasAnyFilter =
     explorerDepartmentFilters.length > 0 ||
+    explorerProductNameFilters.length > 0 ||
     explorerMovementTypeFilters.length > 0 ||
     explorerConfidenceFilters.length > 0 ||
     explorerStatusFilters.length > 0
@@ -4058,6 +4076,7 @@ function ExplorerTable({
 
   const clearAllExplorerFilters = () => {
     setExplorerDepartmentFilters([])
+    setExplorerProductNameFilters([])
     setExplorerMovementTypeFilters([])
     setExplorerConfidenceFilters([])
     setExplorerStatusFilters([])
@@ -4067,6 +4086,7 @@ function ExplorerTable({
     () =>
       filterExplorerRows(data, {
         departmentFilters: explorerDepartmentFilters,
+        productNameFilters: explorerProductNameFilters,
         movementTypeFilters: explorerMovementTypeFilters,
         confidenceFilters: explorerConfidenceFilters,
         statusFilters: explorerStatusFilters,
@@ -4075,6 +4095,7 @@ function ExplorerTable({
     [
       data,
       explorerDepartmentFilters,
+      explorerProductNameFilters,
       explorerMovementTypeFilters,
       explorerConfidenceFilters,
       explorerStatusFilters,
@@ -4219,6 +4240,32 @@ function ExplorerTable({
 
                   <div className="border-t border-[#e5e7eb] pt-3 mt-3">
                     <div className="text-[12px] font-medium uppercase tracking-[0.04em] text-[#4b535c] mb-2">
+                      Product
+                    </div>
+                    {EXPLORER_PRODUCTS.map((product) => (
+                      <label
+                        key={product.id}
+                        className="flex items-center gap-2 px-0 py-1.5 hover:bg-[#f3f4f6] cursor-pointer rounded-[4px]"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={explorerProductNameFilters.includes(product.name)}
+                          onChange={(e) => {
+                            setExplorerProductNameFilters((prev) =>
+                              e.target.checked
+                                ? [...prev, product.name]
+                                : prev.filter((x) => x !== product.name)
+                            )
+                          }}
+                          className="size-4 rounded border-[#d1d5db] text-[#0267ff]"
+                        />
+                        <span className="text-[14px] text-[#0a0a0a]">{product.name}</span>
+                      </label>
+                    ))}
+                  </div>
+
+                  <div className="border-t border-[#e5e7eb] pt-3 mt-3">
+                    <div className="text-[12px] font-medium uppercase tracking-[0.04em] text-[#4b535c] mb-2">
                       Movement type
                     </div>
                     {MOVEMENT_TYPE_FILTER_OPTIONS.map((opt) => (
@@ -4324,6 +4371,22 @@ function ExplorerTable({
                 onClick={() => setExplorerDepartmentFilters((prev) => prev.filter((x) => x !== dept))}
                 className="p-0.5 rounded-[4px] text-[#6b7280] hover:bg-[#e5e7eb] hover:text-[#374151]"
                 aria-label={`Remove filter: Department ${dept}`}
+              >
+                <IconClose className="size-3.5" />
+              </button>
+            </span>
+          ))}
+          {explorerProductNameFilters.map((name) => (
+            <span
+              key={`product-${name}`}
+              className="inline-flex items-center gap-1.5 pl-3 pr-1.5 py-1.5 rounded-[4px] bg-[#f3f4f6] text-[#4b535c] border border-[#e5e7eb]"
+            >
+              <span>Product: {name}</span>
+              <button
+                type="button"
+                onClick={() => setExplorerProductNameFilters((prev) => prev.filter((x) => x !== name))}
+                className="p-0.5 rounded-[4px] text-[#6b7280] hover:bg-[#e5e7eb] hover:text-[#374151]"
+                aria-label={`Remove filter: Product ${name}`}
               >
                 <IconClose className="size-3.5" />
               </button>
@@ -4600,6 +4663,11 @@ export default function ScheduleDetailPage() {
   const [explorerStatusOverrides, setExplorerStatusOverrides] = useState({})
   const [explorerTransferOverrides, setExplorerTransferOverrides] = useState({})
   const [explorerSelectedRowIds, setExplorerSelectedRowIds] = useState(new Set())
+  const [explorerDepartmentFilters, setExplorerDepartmentFilters] = useState([])
+  const [explorerProductNameFilters, setExplorerProductNameFilters] = useState([])
+  const [explorerMovementTypeFilters, setExplorerMovementTypeFilters] = useState([])
+  const [explorerConfidenceFilters, setExplorerConfidenceFilters] = useState([])
+  const [explorerStatusFilters, setExplorerStatusFilters] = useState([])
   const [tripStatusOverrides, setTripStatusOverrides] = useState({})
   const [selectedTrip, setSelectedTrip] = useState(null)
   const [selectedTripIds, setSelectedTripIds] = useState(new Set())
@@ -4979,6 +5047,16 @@ export default function ScheduleDetailPage() {
             setExplorerTransferOverrides={setExplorerTransferOverrides}
             explorerSelectedRowIds={explorerSelectedRowIds}
             setExplorerSelectedRowIds={setExplorerSelectedRowIds}
+            explorerDepartmentFilters={explorerDepartmentFilters}
+            setExplorerDepartmentFilters={setExplorerDepartmentFilters}
+            explorerProductNameFilters={explorerProductNameFilters}
+            setExplorerProductNameFilters={setExplorerProductNameFilters}
+            explorerMovementTypeFilters={explorerMovementTypeFilters}
+            setExplorerMovementTypeFilters={setExplorerMovementTypeFilters}
+            explorerConfidenceFilters={explorerConfidenceFilters}
+            setExplorerConfidenceFilters={setExplorerConfidenceFilters}
+            explorerStatusFilters={explorerStatusFilters}
+            setExplorerStatusFilters={setExplorerStatusFilters}
           />
         ) : selectedTrip ? (
             <ProductsDrilldown
