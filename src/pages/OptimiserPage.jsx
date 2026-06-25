@@ -928,6 +928,31 @@ function capitalizeDay(day) {
   return day.charAt(0).toUpperCase() + day.slice(1)
 }
 
+function resolveSubmissionDeadlineLabel(block) {
+  const { submissionDeadlineDays, submissionTime } = block
+  if (submissionDeadlineDays === '' || submissionDeadlineDays == null) {
+    return null
+  }
+
+  const n = parseInt(submissionDeadlineDays, 10)
+  const t = submissionTime
+
+  if (block.repeatEveryUnit === 'week' && block.generationDay) {
+    const idx = SUBMISSION_DAYS.findIndex((d) => d.key === block.generationDay)
+    if (idx >= 0) {
+      const target = SUBMISSION_DAYS[(idx + n) % 7]
+      return `Submit on ${capitalizeDay(target.key)} at ${t}`
+    }
+  }
+
+  if (n === 0) {
+    return `Submit the same day, at ${t}`
+  }
+
+  const dayWord = n === 1 ? 'day' : 'days'
+  return `Submit ${n} ${dayWord} after recommendations become available, at ${t}`
+}
+
 function createDefaultScheduleBlock(id) {
   return {
     id,
@@ -942,8 +967,7 @@ function createDefaultScheduleBlock(id) {
     targetCoverageUnit: 'Weeks',
     repeatEvery: 1,
     repeatEveryUnit: 'week',
-    submissionDay: 'wednesday',
-    submissionDate: '',
+    submissionDeadlineDays: '',
     submissionTime: '09:00',
     generationDay: 'wednesday',
     generationDate: '',
@@ -1013,7 +1037,10 @@ function buildBlockSummary(block) {
 
   const unit = formatRepeatUnitLabel(block.repeatEveryUnit, block.repeatEvery)
   segments.push(`every ${block.repeatEvery} ${unit}`)
-  segments.push(`${capitalizeDay(block.submissionDay)} at ${block.submissionTime}`)
+  const deadlineLabel = resolveSubmissionDeadlineLabel(block)
+  if (deadlineLabel) {
+    segments.push(deadlineLabel)
+  }
 
   if (block.approvalMode === 'manual-review') {
     segments.push('Manual review')
@@ -1295,26 +1322,62 @@ function ScheduleDetailsBlock({ block, index, isExpanded, onToggleExpand, onRemo
               The deadline by which all approved recommendations will be auto-submitted. Leave blank if you don&apos;t
               want auto-submission.
             </p>
-            <div className="flex items-center gap-3">
-              {block.repeatEveryUnit === 'week' && (
-                <ScheduleDayOfWeekSelector
-                  value={block.submissionDay}
-                  onChange={(next) => onUpdate({ submissionDay: next })}
-                />
-              )}
-              {block.repeatEveryUnit === 'month' && (
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="flex h-12 items-center overflow-hidden rounded-[4px] border border-[#EAEAEA] bg-white">
                 <input
-                  type="date"
-                  value={block.submissionDate}
-                  onChange={(e) => onUpdate({ submissionDate: e.target.value })}
-                  className="h-12 w-[160px] shrink-0 rounded-[4px] border border-[#EAEAEA] bg-white px-4 text-[14px] text-[#0a0a0a]"
+                  type="number"
+                  min={0}
+                  value={block.submissionDeadlineDays}
+                  onChange={(e) => {
+                    const v = e.target.value
+                    if (v === '') {
+                      onUpdate({ submissionDeadlineDays: '' })
+                      return
+                    }
+                    onUpdate({ submissionDeadlineDays: String(Math.max(0, parseInt(v, 10) || 0)) })
+                  }}
+                  placeholder=""
+                  className="h-12 w-[80px] border-none px-4 py-3 text-center text-[14px] text-[#0a0a0a] placeholder:text-[#9ca3af] [appearance:textfield] focus:outline-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                 />
-              )}
+                <div className="flex shrink-0 flex-col border-l border-[#EAEAEA]">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (block.submissionDeadlineDays === '') {
+                        onUpdate({ submissionDeadlineDays: '1' })
+                        return
+                      }
+                      onUpdate({
+                        submissionDeadlineDays: String((parseInt(block.submissionDeadlineDays, 10) || 0) + 1),
+                      })
+                    }}
+                    className="flex h-6 w-7 items-center justify-center border-b border-[#EAEAEA] text-[#4b535c] hover:bg-[#f8f8f8]"
+                  >
+                    +
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (block.submissionDeadlineDays === '') return
+                      const current = parseInt(block.submissionDeadlineDays, 10) || 0
+                      onUpdate({ submissionDeadlineDays: String(Math.max(0, current - 1)) })
+                    }}
+                    className="flex h-6 w-7 items-center justify-center text-[#4b535c] hover:bg-[#f8f8f8]"
+                  >
+                    −
+                  </button>
+                </div>
+              </div>
+              <span className="text-[14px] text-[#4b535c]">days after recommendations become available, at</span>
               <ScheduleTimeSelect
                 value={block.submissionTime}
                 onChange={(next) => onUpdate({ submissionTime: next })}
               />
             </div>
+            <p className="mt-2 text-[12px] text-[#4b535c]">
+              {resolveSubmissionDeadlineLabel(block) ??
+                "No auto-submission — approved recommendations won't be submitted automatically."}
+            </p>
           </div>
         </section>
 
