@@ -928,29 +928,96 @@ function capitalizeDay(day) {
   return day.charAt(0).toUpperCase() + day.slice(1)
 }
 
+function pad2(n) {
+  return String(n).padStart(2, '0')
+}
+
 function resolveSubmissionDeadlineLabel(block) {
-  const { submissionDeadlineDays, submissionTime } = block
-  if (submissionDeadlineDays === '' || submissionDeadlineDays == null) {
+  const { submissionDeadlineDays, submissionDeadlineHours } = block
+  const daysBlank = submissionDeadlineDays === '' || submissionDeadlineDays == null
+  const hoursBlank = submissionDeadlineHours === '' || submissionDeadlineHours == null
+  if (daysBlank && hoursBlank) {
     return null
   }
 
-  const n = parseInt(submissionDeadlineDays, 10)
-  const t = submissionTime
+  const d = parseInt(submissionDeadlineDays || '0', 10)
+  const h = parseInt(submissionDeadlineHours || '0', 10)
 
   if (block.repeatEveryUnit === 'week' && block.generationDay) {
-    const idx = SUBMISSION_DAYS.findIndex((d) => d.key === block.generationDay)
-    if (idx >= 0) {
-      const target = SUBMISSION_DAYS[(idx + n) % 7]
-      return `Submit on ${capitalizeDay(target.key)} at ${t}`
+    const startIdx = SUBMISSION_DAYS.findIndex((day) => day.key === block.generationDay)
+    if (startIdx >= 0) {
+      const [genH, genM] = (block.generationTime || '00:00').split(':').map((v) => parseInt(v, 10) || 0)
+      const startMinOfWeek = startIdx * 1440 + genH * 60 + genM
+      const totalOffsetMin = (d * 24 + h) * 60
+      const resultMin = ((startMinOfWeek + totalOffsetMin) % 10080 + 10080) % 10080
+      const resultDayIdx = Math.floor(resultMin / 1440)
+      const resultH = Math.floor((resultMin % 1440) / 60)
+      const resultM = resultMin % 60
+      const dayLabel = capitalizeDay(SUBMISSION_DAYS[resultDayIdx].key)
+      const timeLabel = `${pad2(resultH)}:${pad2(resultM)}`
+      return `Submit on ${dayLabel} at ${timeLabel}`
     }
   }
 
-  if (n === 0) {
-    return `Submit the same day, at ${t}`
+  if (d === 0 && h === 0) {
+    return 'Submit as soon as recommendations become available'
   }
 
-  const dayWord = n === 1 ? 'day' : 'days'
-  return `Submit ${n} ${dayWord} after recommendations become available, at ${t}`
+  const parts = []
+  if (d > 0) parts.push(`${d} ${d === 1 ? 'day' : 'days'}`)
+  if (h > 0) parts.push(`${h} ${h === 1 ? 'hour' : 'hours'}`)
+  if (parts.length === 1) {
+    return `Submit ${parts[0]} after recommendations become available`
+  }
+  return `Submit ${parts[0]} and ${parts[1]} after recommendations become available`
+}
+
+function ScheduleDeadlineOffsetStepper({ value, onChange }) {
+  return (
+    <div className="flex h-12 items-center overflow-hidden rounded-[4px] border border-[#EAEAEA] bg-white">
+      <input
+        type="number"
+        min={0}
+        value={value}
+        onChange={(e) => {
+          const v = e.target.value
+          if (v === '') {
+            onChange('')
+            return
+          }
+          onChange(String(Math.max(0, parseInt(v, 10) || 0)))
+        }}
+        placeholder=""
+        className="h-12 w-[80px] border-none px-4 py-3 text-center text-[14px] text-[#0a0a0a] placeholder:text-[#9ca3af] [appearance:textfield] focus:outline-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+      />
+      <div className="flex shrink-0 flex-col border-l border-[#EAEAEA]">
+        <button
+          type="button"
+          onClick={() => {
+            if (value === '') {
+              onChange('1')
+              return
+            }
+            onChange(String((parseInt(value, 10) || 0) + 1))
+          }}
+          className="flex h-6 w-7 items-center justify-center border-b border-[#EAEAEA] text-[#4b535c] hover:bg-[#f8f8f8]"
+        >
+          +
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            if (value === '') return
+            const current = parseInt(value, 10) || 0
+            onChange(String(Math.max(0, current - 1)))
+          }}
+          className="flex h-6 w-7 items-center justify-center text-[#4b535c] hover:bg-[#f8f8f8]"
+        >
+          −
+        </button>
+      </div>
+    </div>
+  )
 }
 
 function createDefaultScheduleBlock(id) {
@@ -968,7 +1035,7 @@ function createDefaultScheduleBlock(id) {
     repeatEvery: 1,
     repeatEveryUnit: 'week',
     submissionDeadlineDays: '',
-    submissionTime: '09:00',
+    submissionDeadlineHours: '',
     generationDay: 'wednesday',
     generationDate: '',
     generationTime: '09:00',
@@ -1323,56 +1390,16 @@ function ScheduleDetailsBlock({ block, index, isExpanded, onToggleExpand, onRemo
               want auto-submission.
             </p>
             <div className="flex flex-wrap items-center gap-3">
-              <div className="flex h-12 items-center overflow-hidden rounded-[4px] border border-[#EAEAEA] bg-white">
-                <input
-                  type="number"
-                  min={0}
-                  value={block.submissionDeadlineDays}
-                  onChange={(e) => {
-                    const v = e.target.value
-                    if (v === '') {
-                      onUpdate({ submissionDeadlineDays: '' })
-                      return
-                    }
-                    onUpdate({ submissionDeadlineDays: String(Math.max(0, parseInt(v, 10) || 0)) })
-                  }}
-                  placeholder=""
-                  className="h-12 w-[80px] border-none px-4 py-3 text-center text-[14px] text-[#0a0a0a] placeholder:text-[#9ca3af] [appearance:textfield] focus:outline-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-                />
-                <div className="flex shrink-0 flex-col border-l border-[#EAEAEA]">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (block.submissionDeadlineDays === '') {
-                        onUpdate({ submissionDeadlineDays: '1' })
-                        return
-                      }
-                      onUpdate({
-                        submissionDeadlineDays: String((parseInt(block.submissionDeadlineDays, 10) || 0) + 1),
-                      })
-                    }}
-                    className="flex h-6 w-7 items-center justify-center border-b border-[#EAEAEA] text-[#4b535c] hover:bg-[#f8f8f8]"
-                  >
-                    +
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (block.submissionDeadlineDays === '') return
-                      const current = parseInt(block.submissionDeadlineDays, 10) || 0
-                      onUpdate({ submissionDeadlineDays: String(Math.max(0, current - 1)) })
-                    }}
-                    className="flex h-6 w-7 items-center justify-center text-[#4b535c] hover:bg-[#f8f8f8]"
-                  >
-                    −
-                  </button>
-                </div>
-              </div>
-              <span className="text-[14px] text-[#4b535c]">days after recommendations become available, at</span>
-              <ScheduleTimeSelect
-                value={block.submissionTime}
-                onChange={(next) => onUpdate({ submissionTime: next })}
+              <ScheduleDeadlineOffsetStepper
+                value={block.submissionDeadlineDays}
+                onChange={(next) => onUpdate({ submissionDeadlineDays: next })}
               />
+              <span className="text-[14px] text-[#4b535c]">days</span>
+              <ScheduleDeadlineOffsetStepper
+                value={block.submissionDeadlineHours}
+                onChange={(next) => onUpdate({ submissionDeadlineHours: next })}
+              />
+              <span className="text-[14px] text-[#4b535c]">hours</span>
             </div>
             <p className="mt-2 text-[12px] text-[#4b535c]">
               {resolveSubmissionDeadlineLabel(block) ??
