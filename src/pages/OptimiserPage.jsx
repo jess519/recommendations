@@ -2031,7 +2031,7 @@ export default function OptimiserPage({ onAddJob, openAddJob, resetToUpcoming, o
   const [isCreateSchedulePage, setIsCreateSchedulePage] = useState(false)
   const [isAdhocFlow, setIsAdhocFlow] = useState(false)
   const [adhocStep, setAdhocStep] = useState(1)
-  const [adhocMovementType, setAdhocMovementType] = useState('')
+  const [adhocMovementType, setAdhocMovementType] = useState([])
   const [adhocApprovalMode, setAdhocApprovalMode] = useState('auto-approve')
   const [adhocExceptions, setAdhocExceptions] = useState(() => createDefaultScheduleExceptions())
   const [locationScopeOption, setLocationScopeOption] = useState('all')
@@ -2226,8 +2226,6 @@ export default function OptimiserPage({ onAddJob, openAddJob, resetToUpcoming, o
     },
   ]
 
-  const ADHOC_MOVEMENT_OPTIONS = ['Rebalancing', 'Replenishment', 'Both']
-
   const scopeSelectionSectionProps = {
     locationScopeOption,
     setLocationScopeOption,
@@ -2338,7 +2336,7 @@ export default function OptimiserPage({ onAddJob, openAddJob, resetToUpcoming, o
             <button
               type="button"
               onClick={() => setAdhocStep((step) => step + 1)}
-              disabled={adhocStep === 1 && adhocMovementType === ''}
+              disabled={adhocStep === 1 && adhocMovementType.length === 0}
               className="shrink-0 rounded-[4px] bg-[#1d4ed8] px-5 py-2.5 text-[14px] font-medium text-white hover:bg-[#1e40af] disabled:cursor-not-allowed disabled:opacity-50"
             >
               {ADHOC_WIZARD_STEPS[adhocStep - 1].continueLabel}
@@ -2349,27 +2347,17 @@ export default function OptimiserPage({ onAddJob, openAddJob, resetToUpcoming, o
         {adhocStep === 1 && (
           <div className="border border-[#EAEAEA] rounded-[4px] bg-white overflow-visible">
             <div className="px-5 pb-6 pt-2 flex flex-col gap-6">
-              <section className="flex flex-col gap-3">
-                <h3 className="text-[14px] font-medium text-[#0a0a0a]">Movement type</h3>
-                <div className="flex rounded-[4px] border border-[#e5e7eb] bg-white overflow-hidden w-fit">
-                  {ADHOC_MOVEMENT_OPTIONS.map((option, index) => (
-                    <button
-                      key={option}
-                      type="button"
-                      onClick={() => setAdhocMovementType(option)}
-                      className={`px-3 py-2 text-[14px] font-medium ${
-                        index < ADHOC_MOVEMENT_OPTIONS.length - 1 ? 'border-r border-[#e5e7eb]' : ''
-                      } ${
-                        adhocMovementType === option
-                          ? 'bg-[#f7f7f7] text-[#0a0a0a]'
-                          : 'text-[#4b535c] hover:bg-[#f0f0f0] bg-white'
-                      }`}
-                    >
-                      {option}
-                    </button>
-                  ))}
-                </div>
-              </section>
+              <CreateScheduleScopeMultiSelect
+                label="Movement type"
+                placeholder="Select movement type"
+                options={['Replenishment', 'Rebalancing']}
+                includeValues={adhocMovementType}
+                onIncludeChange={setAdhocMovementType}
+                excludeValues={[]}
+                onExcludeChange={() => {}}
+                hideModeToggle={true}
+                showSelectedLabels={true}
+              />
               <ScopeSelectionSection {...scopeSelectionSectionProps} />
             </div>
           </div>
@@ -2432,8 +2420,10 @@ export default function OptimiserPage({ onAddJob, openAddJob, resetToUpcoming, o
                     auto-approved.
                   </p>
                   <ScheduleBlockApprovalExceptions
-                    block={{ id: 'adhoc', exceptions: adhocExceptions }}
-                    onUpdate={({ exceptions }) => setAdhocExceptions(exceptions)}
+                    block={{ id: 'adhoc', approvalMode: adhocApprovalMode, exceptions: adhocExceptions }}
+                    onUpdate={(updates) => {
+                      if (updates.exceptions !== undefined) setAdhocExceptions(updates.exceptions)
+                    }}
                   />
                 </div>
               )}
