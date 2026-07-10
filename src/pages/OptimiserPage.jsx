@@ -801,6 +801,150 @@ function CreateScheduleMoreFiltersMenu({
   )
 }
 
+function ScopeSelectionSection({
+  heading = 'Which products and locations does this schedule cover?',
+  locationScopeOption,
+  setLocationScopeOption,
+  scopeActiveFilterEntries,
+  isMoreFiltersOpen,
+  setIsMoreFiltersOpen,
+  toggleExtraFilter,
+  extraVisibleFilters,
+  expandedFieldState,
+  updateExpandedField,
+  warehouseInclude,
+  setWarehouseInclude,
+  warehouseExclude,
+  setWarehouseExclude,
+  warehouseMode,
+  setWarehouseMode,
+  departmentInclude,
+  setDepartmentInclude,
+  departmentExclude,
+  setDepartmentExclude,
+  departmentMode,
+  setDepartmentMode,
+  seasonsInclude,
+  setSeasonsInclude,
+  seasonsExclude,
+  setSeasonsExclude,
+  seasonsMode,
+  setSeasonsMode,
+  productsInclude,
+  setProductsInclude,
+  productsExclude,
+  setProductsExclude,
+  productsMode,
+  setProductsMode,
+  locationTypesInclude,
+  setLocationTypesInclude,
+  locationTypesExclude,
+  setLocationTypesExclude,
+  locationTypesMode,
+  setLocationTypesMode,
+  locationsInclude,
+  setLocationsInclude,
+  locationsExclude,
+  setLocationsExclude,
+  locationsMode,
+  setLocationsMode,
+}) {
+  return (
+    <section className="flex flex-col gap-3">
+      <h3 className="text-[14px] font-medium text-[#0a0a0a]">{heading}</h3>
+      <div className="flex flex-col gap-3">
+        <label className="flex items-start gap-3 p-4 rounded-[10px] border border-[#e5e7eb] bg-white cursor-pointer hover:border-[#0267ff]/40 has-[:checked]:border-[#0267ff]">
+          <input
+            type="radio"
+            name="locationScopeOption"
+            value="all"
+            checked={locationScopeOption === 'all'}
+            onChange={() => setLocationScopeOption('all')}
+            className="mt-1 size-4 shrink-0 border-[#e5e7eb] text-[#0267ff] focus:ring-[#0267ff]"
+          />
+          <div className="flex flex-col gap-1 min-w-0">
+            <span className="text-[14px] font-medium text-[#0a0a0a]">All products and locations</span>
+            <span className="text-[12px] font-normal text-[#4b535c]">
+              Sol will evaluate your entire product catalogue and network.
+            </span>
+          </div>
+        </label>
+        <label className="flex items-start gap-3 p-4 rounded-[10px] border border-[#e5e7eb] bg-white cursor-pointer hover:border-[#0267ff]/40 has-[:checked]:border-[#0267ff]">
+          <input
+            type="radio"
+            name="locationScopeOption"
+            value="select"
+            checked={locationScopeOption === 'select'}
+            onChange={() => setLocationScopeOption('select')}
+            className="mt-1 size-4 shrink-0 border-[#e5e7eb] text-[#0267ff] focus:ring-[#0267ff]"
+          />
+          <div className="flex flex-col gap-1 min-w-0">
+            <span className="text-[14px] font-medium text-[#0a0a0a]">Select products and locations</span>
+            <span className="text-[12px] font-normal text-[#4b535c]">
+              Choose specific products, locations, regions, or countries to{' '}
+              <strong className="font-semibold">include</strong> in this schedule.
+            </span>
+          </div>
+        </label>
+      </div>
+
+      {locationScopeOption === 'select' && (
+        <>
+          <ActiveFilterChips entries={scopeActiveFilterEntries} />
+          <CreateScheduleScopeFilterPanel
+            warehouseInclude={warehouseInclude}
+            setWarehouseInclude={setWarehouseInclude}
+            warehouseExclude={warehouseExclude}
+            setWarehouseExclude={setWarehouseExclude}
+            warehouseMode={warehouseMode}
+            setWarehouseMode={setWarehouseMode}
+            departmentInclude={departmentInclude}
+            setDepartmentInclude={setDepartmentInclude}
+            departmentExclude={departmentExclude}
+            setDepartmentExclude={setDepartmentExclude}
+            departmentMode={departmentMode}
+            setDepartmentMode={setDepartmentMode}
+            seasonsInclude={seasonsInclude}
+            setSeasonsInclude={setSeasonsInclude}
+            seasonsExclude={seasonsExclude}
+            setSeasonsExclude={setSeasonsExclude}
+            seasonsMode={seasonsMode}
+            setSeasonsMode={setSeasonsMode}
+            productsInclude={productsInclude}
+            setProductsInclude={setProductsInclude}
+            productsExclude={productsExclude}
+            setProductsExclude={setProductsExclude}
+            productsMode={productsMode}
+            setProductsMode={setProductsMode}
+            locationTypesInclude={locationTypesInclude}
+            setLocationTypesInclude={setLocationTypesInclude}
+            locationTypesExclude={locationTypesExclude}
+            setLocationTypesExclude={setLocationTypesExclude}
+            locationTypesMode={locationTypesMode}
+            setLocationTypesMode={setLocationTypesMode}
+            locationsInclude={locationsInclude}
+            setLocationsInclude={setLocationsInclude}
+            locationsExclude={locationsExclude}
+            setLocationsExclude={setLocationsExclude}
+            locationsMode={locationsMode}
+            setLocationsMode={setLocationsMode}
+            extraVisibleFilters={extraVisibleFilters}
+            expandedFieldState={expandedFieldState}
+            updateExpandedField={updateExpandedField}
+          />
+          <CreateScheduleMoreFiltersMenu
+            isOpen={isMoreFiltersOpen}
+            onToggle={() => setIsMoreFiltersOpen((v) => !v)}
+            onClose={() => setIsMoreFiltersOpen(false)}
+            extraVisibleFilters={extraVisibleFilters}
+            onToggleExtraFilter={toggleExtraFilter}
+          />
+        </>
+      )}
+    </section>
+  )
+}
+
 const SUBMISSION_TIME_OPTIONS = Array.from({ length: 48 }, (_, i) => {
   const h = Math.floor(i / 2)
   const m = (i % 2) * 30
@@ -1475,6 +1619,7 @@ const ongoingSchedules = [
     revenueIncrease: '€501.1K',
     uniqueTrips: 113,
     transferUnits: 2308,
+    isScheduled: true,
   },
   {
     id: 'uk-weekly-replen',
@@ -1487,6 +1632,7 @@ const ongoingSchedules = [
     revenueIncrease: '€210.4K',
     uniqueTrips: 48,
     transferUnits: 1120,
+    isScheduled: true,
   },
   {
     id: 'fr-weekly-rebal',
@@ -1499,6 +1645,7 @@ const ongoingSchedules = [
     revenueIncrease: '€87.2K',
     uniqueTrips: 24,
     transferUnits: 612,
+    isScheduled: true,
   },
   {
     id: 'it-biweekly-both',
@@ -1511,6 +1658,7 @@ const ongoingSchedules = [
     revenueIncrease: '€134.8K',
     uniqueTrips: 39,
     transferUnits: 940,
+    isScheduled: false,
   },
   {
     id: 'de-monthly-replen',
@@ -1523,6 +1671,7 @@ const ongoingSchedules = [
     revenueIncrease: '€76.5K',
     uniqueTrips: 18,
     transferUnits: 445,
+    isScheduled: false,
   },
   {
     id: 'iberia-weekly-rebal',
@@ -1535,6 +1684,7 @@ const ongoingSchedules = [
     revenueIncrease: '€52.1K',
     uniqueTrips: 15,
     transferUnits: 388,
+    isScheduled: false,
   },
 ]
 
@@ -1550,6 +1700,7 @@ const upcomingSchedules = [
     revenueIncrease: '—',
     uniqueTrips: '—',
     transferUnits: '—',
+    isScheduled: true,
   },
   {
     id: 'upcoming-uk-replen',
@@ -1562,6 +1713,7 @@ const upcomingSchedules = [
     revenueIncrease: '—',
     uniqueTrips: '—',
     transferUnits: '—',
+    isScheduled: true,
   },
   {
     id: 'upcoming-fr-rebal',
@@ -1574,6 +1726,7 @@ const upcomingSchedules = [
     revenueIncrease: '—',
     uniqueTrips: '—',
     transferUnits: '—',
+    isScheduled: true,
   },
   {
     id: 'upcoming-it-both',
@@ -1586,6 +1739,7 @@ const upcomingSchedules = [
     revenueIncrease: '—',
     uniqueTrips: '—',
     transferUnits: '—',
+    isScheduled: true,
   },
 ]
 
@@ -1601,6 +1755,7 @@ const failedSchedules = [
     revenueIncrease: '—',
     uniqueTrips: '—',
     transferUnits: '—',
+    isScheduled: true,
   },
   {
     id: 'failed-iberia-rebal',
@@ -1613,6 +1768,7 @@ const failedSchedules = [
     revenueIncrease: '—',
     uniqueTrips: '—',
     transferUnits: '—',
+    isScheduled: false,
   },
 ]
 
@@ -1628,6 +1784,7 @@ const submittedSchedules = [
     revenueIncrease: '€478.9K',
     uniqueTrips: 108,
     transferUnits: 2214,
+    isScheduled: true,
   },
   {
     id: 'submitted-uk-replen-jun',
@@ -1640,6 +1797,7 @@ const submittedSchedules = [
     revenueIncrease: '€198.2K',
     uniqueTrips: 44,
     transferUnits: 1052,
+    isScheduled: true,
   },
   {
     id: 'submitted-fr-rebal-jun',
@@ -1652,6 +1810,7 @@ const submittedSchedules = [
     revenueIncrease: '€79.4K',
     uniqueTrips: 22,
     transferUnits: 578,
+    isScheduled: true,
   },
   {
     id: 'submitted-de-replen-jun',
@@ -1664,6 +1823,7 @@ const submittedSchedules = [
     revenueIncrease: '€68.7K',
     uniqueTrips: 16,
     transferUnits: 412,
+    isScheduled: true,
   },
   {
     id: 'submitted-iberia-rebal-jun',
@@ -1676,6 +1836,7 @@ const submittedSchedules = [
     revenueIncrease: '€49.3K',
     uniqueTrips: 14,
     transferUnits: 361,
+    isScheduled: false,
   },
 ]
 
@@ -1804,7 +1965,15 @@ function ScheduleTable({
                     className="h-8 w-full rounded-[4px] border border-[#EAEAEA] px-2 text-[14px] text-[#0a0a0a] focus:border-[#1d4ed8] focus:outline-none"
                   />
                 ) : (
-                  <span className="block truncate">{displayName}</span>
+                  <div className="flex items-center gap-2 min-w-0">
+                    {schedule.isScheduled && (
+                      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="shrink-0 text-[#4b535c]" aria-label="Scheduled batch">
+                        <circle cx="7" cy="7" r="5.5" stroke="currentColor" strokeWidth="1.5" />
+                        <path d="M7 4v3l2 1.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    )}
+                    <span className="block truncate">{displayName}</span>
+                  </div>
                 )}
               </div>
               <div className="min-w-0">
@@ -1860,6 +2029,11 @@ export default function OptimiserPage({ onAddJob, openAddJob, resetToUpcoming, o
     Object.fromEntries(ALL_SCHEDULE_LISTS.map((s) => [s.id, s.name]))
   )
   const [isCreateSchedulePage, setIsCreateSchedulePage] = useState(false)
+  const [isAdhocFlow, setIsAdhocFlow] = useState(false)
+  const [adhocStep, setAdhocStep] = useState(1)
+  const [adhocMovementType, setAdhocMovementType] = useState('')
+  const [adhocApprovalMode, setAdhocApprovalMode] = useState('auto-approve')
+  const [adhocExceptions, setAdhocExceptions] = useState(() => createDefaultScheduleExceptions())
   const [locationScopeOption, setLocationScopeOption] = useState('all')
   const [warehouseInclude, setWarehouseInclude] = useState([])
   const [warehouseExclude, setWarehouseExclude] = useState([])
@@ -1915,8 +2089,9 @@ export default function OptimiserPage({ onAddJob, openAddJob, resetToUpcoming, o
 
   useEffect(() => {
     if (!openAddJob) return
-    if (onAddJob) onAddJob()
-  }, [openAddJob, onAddJob])
+    setIsAdhocFlow(true)
+    setAdhocStep(1)
+  }, [openAddJob])
 
   useEffect(() => {
     if (!resetToUpcoming) return
@@ -2038,6 +2213,258 @@ export default function OptimiserPage({ onAddJob, openAddJob, resetToUpcoming, o
     },
   ]
 
+  const ADHOC_WIZARD_STEPS = [
+    {
+      title: 'Scope',
+      subtitle: 'Define the movement type, products, and locations for this ad-hoc run.',
+      continueLabel: 'Continue to Approval & submission',
+    },
+    {
+      title: 'Approval & submission',
+      subtitle: 'Define how recommendations from this run are approved.',
+      continueLabel: 'Run recommendations',
+    },
+  ]
+
+  const ADHOC_MOVEMENT_OPTIONS = ['Rebalancing', 'Replenishment', 'Both']
+
+  const scopeSelectionSectionProps = {
+    locationScopeOption,
+    setLocationScopeOption,
+    scopeActiveFilterEntries,
+    isMoreFiltersOpen,
+    setIsMoreFiltersOpen,
+    toggleExtraFilter,
+    extraVisibleFilters,
+    expandedFieldState,
+    updateExpandedField,
+    warehouseInclude,
+    setWarehouseInclude,
+    warehouseExclude,
+    setWarehouseExclude,
+    warehouseMode,
+    setWarehouseMode,
+    departmentInclude,
+    setDepartmentInclude,
+    departmentExclude,
+    setDepartmentExclude,
+    departmentMode,
+    setDepartmentMode,
+    seasonsInclude,
+    setSeasonsInclude,
+    seasonsExclude,
+    setSeasonsExclude,
+    seasonsMode,
+    setSeasonsMode,
+    productsInclude,
+    setProductsInclude,
+    productsExclude,
+    setProductsExclude,
+    productsMode,
+    setProductsMode,
+    locationTypesInclude,
+    setLocationTypesInclude,
+    locationTypesExclude,
+    setLocationTypesExclude,
+    locationTypesMode,
+    setLocationTypesMode,
+    locationsInclude,
+    setLocationsInclude,
+    locationsExclude,
+    setLocationsExclude,
+    locationsMode,
+    setLocationsMode,
+  }
+
+  if (isAdhocFlow) {
+    return (
+      <div className="mx-auto flex max-w-[1200px] flex-col gap-8 px-6">
+        {adhocStep < 3 && (
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => {
+                if (adhocStep === 1) {
+                  setIsAdhocFlow(false)
+                } else {
+                  setAdhocStep(1)
+                }
+              }}
+              className="flex items-center justify-center w-8 h-8 rounded-[4px] text-[#0a0a0a] hover:bg-[#e5e7eb]"
+              aria-label={adhocStep === 1 ? 'Back to recommendations' : 'Back to scope'}
+            >
+              <IconArrowLeft className="size-5" />
+            </button>
+            <h1 className="text-[24px] font-medium text-[#0a0a0a] leading-[100%]">
+              Use latest recommendations
+            </h1>
+          </div>
+        )}
+
+        {adhocStep < 3 && (
+          <div className="mt-2 mb-4 flex w-full gap-1">
+            {[0, 1].map((segmentIndex) => (
+              <div
+                key={segmentIndex}
+                className={`h-1 flex-1 rounded-full ${
+                  segmentIndex < adhocStep ? 'bg-[#1d4ed8]' : 'bg-[#e5e7eb]'
+                }`}
+              />
+            ))}
+          </div>
+        )}
+
+        {adhocStep < 3 && (
+          <div className="mb-6 flex items-start justify-between gap-4">
+            <div className="min-w-0">
+              {adhocStep === 1 ? (
+                <p className="text-[14px] font-medium text-[#0a0a0a]">Step 1 of 2</p>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setAdhocStep(1)}
+                  className="flex cursor-pointer items-center gap-1.5 text-[14px] font-medium text-[#1d4ed8] hover:underline"
+                >
+                  ← Step 2 of 2
+                </button>
+              )}
+              <h2 className="mt-1 text-[22px] font-semibold text-[#0a0a0a]">
+                {ADHOC_WIZARD_STEPS[adhocStep - 1].title}
+              </h2>
+              <p className="mt-1 text-[14px] text-[#4b535c]">
+                {ADHOC_WIZARD_STEPS[adhocStep - 1].subtitle}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setAdhocStep((step) => step + 1)}
+              disabled={adhocStep === 1 && adhocMovementType === ''}
+              className="shrink-0 rounded-[4px] bg-[#1d4ed8] px-5 py-2.5 text-[14px] font-medium text-white hover:bg-[#1e40af] disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {ADHOC_WIZARD_STEPS[adhocStep - 1].continueLabel}
+            </button>
+          </div>
+        )}
+
+        {adhocStep === 1 && (
+          <div className="border border-[#EAEAEA] rounded-[4px] bg-white overflow-visible">
+            <div className="px-5 pb-6 pt-2 flex flex-col gap-6">
+              <section className="flex flex-col gap-3">
+                <h3 className="text-[14px] font-medium text-[#0a0a0a]">Movement type</h3>
+                <div className="flex rounded-[4px] border border-[#e5e7eb] bg-white overflow-hidden w-fit">
+                  {ADHOC_MOVEMENT_OPTIONS.map((option, index) => (
+                    <button
+                      key={option}
+                      type="button"
+                      onClick={() => setAdhocMovementType(option)}
+                      className={`px-3 py-2 text-[14px] font-medium ${
+                        index < ADHOC_MOVEMENT_OPTIONS.length - 1 ? 'border-r border-[#e5e7eb]' : ''
+                      } ${
+                        adhocMovementType === option
+                          ? 'bg-[#f7f7f7] text-[#0a0a0a]'
+                          : 'text-[#4b535c] hover:bg-[#f0f0f0] bg-white'
+                      }`}
+                    >
+                      {option}
+                    </button>
+                  ))}
+                </div>
+              </section>
+              <ScopeSelectionSection {...scopeSelectionSectionProps} />
+            </div>
+          </div>
+        )}
+
+        {adhocStep === 2 && (
+          <div className="border border-[#EAEAEA] rounded-[4px] bg-white overflow-visible">
+            <div className="px-5 pb-6 pt-5">
+              <div className="flex flex-col gap-3">
+                <label
+                  className={`flex cursor-pointer items-start gap-3 rounded-[10px] border bg-white p-4 hover:border-[#1d4ed8]/40 has-[:checked]:border-[#1d4ed8] ${
+                    adhocApprovalMode === 'auto-approve' ? 'border-[#1d4ed8]' : 'border-[#e5e7eb]'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="adhocApprovalMode"
+                    value="auto-approve"
+                    checked={adhocApprovalMode === 'auto-approve'}
+                    onChange={() => setAdhocApprovalMode('auto-approve')}
+                    className="mt-1 size-4 shrink-0 border-[#e5e7eb] text-[#1d4ed8] focus:ring-[#1d4ed8]"
+                  />
+                  <div className="flex min-w-0 flex-col gap-1">
+                    <span className="text-[14px] font-medium text-[#0a0a0a]">Auto-approve recommendations</span>
+                    <span className="text-[12px] font-normal text-[#4b535c]">
+                      Recommendations are auto-approved by default. Define exceptions below to flag specific
+                      recommendations for manual review.
+                    </span>
+                  </div>
+                </label>
+
+                <label
+                  className={`flex cursor-pointer items-start gap-3 rounded-[10px] border bg-white p-4 hover:border-[#1d4ed8]/40 has-[:checked]:border-[#1d4ed8] ${
+                    adhocApprovalMode === 'manual-review' ? 'border-[#1d4ed8]' : 'border-[#e5e7eb]'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="adhocApprovalMode"
+                    value="manual-review"
+                    checked={adhocApprovalMode === 'manual-review'}
+                    onChange={() => setAdhocApprovalMode('manual-review')}
+                    className="mt-1 size-4 shrink-0 border-[#e5e7eb] text-[#1d4ed8] focus:ring-[#1d4ed8]"
+                  />
+                  <div className="flex min-w-0 flex-col gap-1">
+                    <span className="text-[14px] font-medium text-[#0a0a0a]">Manual review required</span>
+                    <span className="text-[12px] font-normal text-[#4b535c]">
+                      No recommendations auto-submit. Every recommendation requires user review before the
+                      submission deadline.
+                    </span>
+                  </div>
+                </label>
+              </div>
+
+              {adhocApprovalMode === 'auto-approve' && (
+                <div className="mt-4">
+                  <h4 className="mb-2 text-[13px] font-medium uppercase tracking-[0.04em] text-[#0a0a0a]">Exceptions</h4>
+                  <p className="mb-3 text-[12px] text-[#4b535c]">
+                    Recommendations matching these conditions will be flagged for manual review instead of
+                    auto-approved.
+                  </p>
+                  <ScheduleBlockApprovalExceptions
+                    block={{ id: 'adhoc', exceptions: adhocExceptions }}
+                    onUpdate={({ exceptions }) => setAdhocExceptions(exceptions)}
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {adhocStep === 3 && (
+          <div className="flex flex-col items-center justify-center gap-4 min-h-[400px]">
+            <div className="size-12 rounded-full border-4 border-[#e5e7eb] border-t-[#1d4ed8] animate-spin" aria-hidden />
+            <h2 className="text-[18px] font-medium text-[#0a0a0a]">Running solver...</h2>
+            <p className="text-[14px] text-[#4b535c] text-center max-w-md">
+              This can take up to 15 minutes. We&apos;ll notify you when your recommendations are ready.
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                setIsAdhocFlow(false)
+                setActiveStatusTab('ongoing')
+                onOpenScheduleDetail && onOpenScheduleDetail(ongoingSchedules[0])
+              }}
+              className="text-[14px] text-[#1d4ed8] hover:underline"
+            >
+              Show results
+            </button>
+          </div>
+        )}
+      </div>
+    )
+  }
+
   if (isCreateSchedulePage) {
     return (
       <div className="mx-auto flex max-w-[1200px] flex-col gap-8 px-6">
@@ -2110,100 +2537,7 @@ export default function OptimiserPage({ onAddJob, openAddJob, resetToUpcoming, o
         {currentStep === 1 && (
           <div className="border border-[#EAEAEA] rounded-[4px] bg-white overflow-visible">
             <div className="px-5 pb-6 pt-2 flex flex-col gap-6">
-                <section className="flex flex-col gap-3">
-                  <h3 className="text-[14px] font-medium text-[#0a0a0a]">
-                    Which products and locations does this schedule cover?
-                  </h3>
-                  <div className="flex flex-col gap-3">
-                    <label className="flex items-start gap-3 p-4 rounded-[10px] border border-[#e5e7eb] bg-white cursor-pointer hover:border-[#0267ff]/40 has-[:checked]:border-[#0267ff]">
-                      <input
-                        type="radio"
-                        name="locationScopeOption"
-                        value="all"
-                        checked={locationScopeOption === 'all'}
-                        onChange={() => setLocationScopeOption('all')}
-                        className="mt-1 size-4 shrink-0 border-[#e5e7eb] text-[#0267ff] focus:ring-[#0267ff]"
-                      />
-                      <div className="flex flex-col gap-1 min-w-0">
-                        <span className="text-[14px] font-medium text-[#0a0a0a]">All products and locations</span>
-                        <span className="text-[12px] font-normal text-[#4b535c]">
-                          Sol will evaluate your entire product catalogue and network.
-                        </span>
-                      </div>
-                    </label>
-                    <label className="flex items-start gap-3 p-4 rounded-[10px] border border-[#e5e7eb] bg-white cursor-pointer hover:border-[#0267ff]/40 has-[:checked]:border-[#0267ff]">
-                      <input
-                        type="radio"
-                        name="locationScopeOption"
-                        value="select"
-                        checked={locationScopeOption === 'select'}
-                        onChange={() => setLocationScopeOption('select')}
-                        className="mt-1 size-4 shrink-0 border-[#e5e7eb] text-[#0267ff] focus:ring-[#0267ff]"
-                      />
-                      <div className="flex flex-col gap-1 min-w-0">
-                        <span className="text-[14px] font-medium text-[#0a0a0a]">Select products and locations</span>
-                        <span className="text-[12px] font-normal text-[#4b535c]">
-                          Choose specific products, locations, regions, or countries to{' '}
-                          <strong className="font-semibold">include</strong> in this schedule.
-                        </span>
-                      </div>
-                    </label>
-                  </div>
-
-                  {locationScopeOption === 'select' && (
-                    <>
-                      <ActiveFilterChips entries={scopeActiveFilterEntries} />
-                      <CreateScheduleScopeFilterPanel
-                      warehouseInclude={warehouseInclude}
-                      setWarehouseInclude={setWarehouseInclude}
-                      warehouseExclude={warehouseExclude}
-                      setWarehouseExclude={setWarehouseExclude}
-                      warehouseMode={warehouseMode}
-                      setWarehouseMode={setWarehouseMode}
-                      departmentInclude={departmentInclude}
-                      setDepartmentInclude={setDepartmentInclude}
-                      departmentExclude={departmentExclude}
-                      setDepartmentExclude={setDepartmentExclude}
-                      departmentMode={departmentMode}
-                      setDepartmentMode={setDepartmentMode}
-                      seasonsInclude={seasonsInclude}
-                      setSeasonsInclude={setSeasonsInclude}
-                      seasonsExclude={seasonsExclude}
-                      setSeasonsExclude={setSeasonsExclude}
-                      seasonsMode={seasonsMode}
-                      setSeasonsMode={setSeasonsMode}
-                      productsInclude={productsInclude}
-                      setProductsInclude={setProductsInclude}
-                      productsExclude={productsExclude}
-                      setProductsExclude={setProductsExclude}
-                      productsMode={productsMode}
-                      setProductsMode={setProductsMode}
-                      locationTypesInclude={locationTypesInclude}
-                      setLocationTypesInclude={setLocationTypesInclude}
-                      locationTypesExclude={locationTypesExclude}
-                      setLocationTypesExclude={setLocationTypesExclude}
-                      locationTypesMode={locationTypesMode}
-                      setLocationTypesMode={setLocationTypesMode}
-                      locationsInclude={locationsInclude}
-                      setLocationsInclude={setLocationsInclude}
-                      locationsExclude={locationsExclude}
-                      setLocationsExclude={setLocationsExclude}
-                      locationsMode={locationsMode}
-                      setLocationsMode={setLocationsMode}
-                      extraVisibleFilters={extraVisibleFilters}
-                      expandedFieldState={expandedFieldState}
-                      updateExpandedField={updateExpandedField}
-                    />
-                      <CreateScheduleMoreFiltersMenu
-                        isOpen={isMoreFiltersOpen}
-                        onToggle={() => setIsMoreFiltersOpen((v) => !v)}
-                        onClose={() => setIsMoreFiltersOpen(false)}
-                        extraVisibleFilters={extraVisibleFilters}
-                        onToggleExtraFilter={toggleExtraFilter}
-                      />
-                    </>
-                  )}
-                </section>
+              <ScopeSelectionSection {...scopeSelectionSectionProps} />
             </div>
           </div>
         )}
