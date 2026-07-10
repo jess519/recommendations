@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, Fragment } from 'react'
-import { Truck, Network, TrendingUp, ShieldCheck, Pencil, Check, Plus } from 'lucide-react'
+import { Pencil, Check, Plus } from 'lucide-react'
 import { IconCalendarSidebar, IconPlus, IconReplenishment, IconReorder, IconRebalancing, IconChevronDown, IconList, IconCalendarNote, IconTruck, IconTrendUp, IconLightbulb, IconEdit, IconClose, IconChevronDownSelect, IconArrowLeft } from '../components/icons'
 import {
   ScheduleBlockApprovalExceptions,
@@ -1574,6 +1574,84 @@ const MODULE_OPTIONS = [
   { id: 'rebalancing', label: 'Rebalancing' },
 ]
 
+const ONGOING_TABLE_GRID =
+  'grid-cols-[minmax(200px,2fr)_minmax(140px,1.2fr)_minmax(160px,1.4fr)_minmax(180px,1.6fr)_minmax(140px,1fr)_minmax(120px,1fr)_minmax(140px,1fr)_60px]'
+
+const ongoingSchedules = [
+  {
+    id: 'eu-monthly-rebal',
+    name: 'Europe monthly',
+    createdDate: '24/02/2026',
+    createdTime: '09:14',
+    createdBy: 'Adil',
+    movementType: 'Rebalancing',
+    warehouse: 'Log01 entrepot logtex',
+    revenueIncrease: '€501.1K',
+    uniqueTrips: 113,
+    transferUnits: 2308,
+  },
+  {
+    id: 'uk-weekly-replen',
+    name: 'UK weekly replenishment',
+    createdDate: '04/05/2026',
+    createdTime: '07:30',
+    createdBy: 'Bethsabée',
+    movementType: 'Replenishment',
+    warehouse: 'UK central DC',
+    revenueIncrease: '€210.4K',
+    uniqueTrips: 48,
+    transferUnits: 1120,
+  },
+  {
+    id: 'fr-weekly-rebal',
+    name: 'France weekly rebal',
+    createdDate: '02/05/2026',
+    createdTime: '11:00',
+    createdBy: 'Adil',
+    movementType: 'Rebalancing',
+    warehouse: 'Log01 entrepot logtex',
+    revenueIncrease: '€87.2K',
+    uniqueTrips: 24,
+    transferUnits: 612,
+  },
+  {
+    id: 'it-biweekly-both',
+    name: 'Italy bi-weekly',
+    createdDate: '01/05/2026',
+    createdTime: '14:22',
+    createdBy: 'Shana',
+    movementType: 'Replenishment & Rebalancing',
+    warehouse: 'Milan DC',
+    revenueIncrease: '€134.8K',
+    uniqueTrips: 39,
+    transferUnits: 940,
+  },
+  {
+    id: 'de-monthly-replen',
+    name: 'Germany monthly replenishment',
+    createdDate: '28/04/2026',
+    createdTime: '08:45',
+    createdBy: 'Bethsabée',
+    movementType: 'Replenishment',
+    warehouse: 'Berlin DC',
+    revenueIncrease: '€76.5K',
+    uniqueTrips: 18,
+    transferUnits: 445,
+  },
+  {
+    id: 'iberia-weekly-rebal',
+    name: 'Iberia weekly rebal',
+    createdDate: '25/04/2026',
+    createdTime: '10:12',
+    createdBy: 'Adil',
+    movementType: 'Rebalancing',
+    warehouse: 'Madrid DC',
+    revenueIncrease: '€52.1K',
+    uniqueTrips: 15,
+    transferUnits: 388,
+  },
+]
+
 export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob, resetToUpcoming, openCreateSchedulePage, resetToRecommendationsLanding, onOpenScheduleDetail }) {
   const [scheduleDrawerOpen, setScheduleDrawerOpen] = useState(false)
   const [editingScheduleEntry, setEditingScheduleEntry] = useState(null)
@@ -1624,8 +1702,13 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
   const [eventDatePickerViewDate, setEventDatePickerViewDate] = useState(() => new Date(2026, 1, 1))
   const [selectedReviewStatuses, setSelectedReviewStatuses] = useState([])
   const [reviewStatusDropdownOpen, setReviewStatusDropdownOpen] = useState(false)
-  const [activeStatusTab, setActiveStatusTab] = useState('next')
-  const [expandedExceptionsScheduleId, setExpandedExceptionsScheduleId] = useState(null)
+  const [activeStatusTab, setActiveStatusTab] = useState('ongoing')
+  const [openKebabId, setOpenKebabId] = useState(null)
+  const [renamingId, setRenamingId] = useState(null)
+  const [renameDraft, setRenameDraft] = useState('')
+  const [scheduleNames, setScheduleNames] = useState(() =>
+    Object.fromEntries(ongoingSchedules.map((s) => [s.id, s.name]))
+  )
   const [isCreateSchedulePage, setIsCreateSchedulePage] = useState(false)
   const [locationScopeOption, setLocationScopeOption] = useState('all')
   const [warehouseInclude, setWarehouseInclude] = useState([])
@@ -1684,62 +1767,11 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
     )
   }
   const statusTabs = [
-    { id: 'next', label: 'Next' },
+    { id: 'ongoing', label: 'Ongoing' },
     { id: 'upcoming', label: 'Upcoming' },
     { id: 'failed', label: 'Failed' },
     { id: 'submitted', label: 'Submitted' },
   ]
-  const nextSchedules = [
-    {
-      id: 'eu-monthly-rebal',
-      name: 'Europe monthly',
-      created: '24/02/2026',
-      deadline: '28/02/2026',
-      status: 'Ready to review',
-      exceptions: '12',
-      approved: '96',
-      pending: '25',
-      reviewProgress: { percent: 79, reviewed: 96, total: 121 },
-      metricTiles: [
-        { kind: 'trips', value: '113', title: 'Unique trips', subtitle: 'Across 8 routes' },
-        { kind: 'transfers', value: '2,308', title: 'Recommended transfers', subtitle: '94% auto-approved' },
-        { kind: 'revenue', value: '€501.1K', title: 'Revenue increase', subtitle: '+4.2% vs last run', subtitleAccent: true },
-        { kind: 'stockouts', value: '1,013 → 559', title: 'Stockouts resolved', subtitle: '-44.8% reduction', subtitleAccent: true },
-      ],
-      exceptionsTotal: 2,
-      exceptionsList: [
-        { description: 'Exception 1 — Transfer units lower than 10 · Location: Opéra' },
-        { description: 'Exception 2 — Product: A1252810, A12528YY, A13314YY' },
-      ],
-    },
-    {
-      id: 'uk-weekly-replen',
-      name: 'UK weekly replenishment',
-      created: '04/05/2026',
-      deadline: '01/06/2026',
-      status: 'Ready to review',
-      exceptions: '5',
-      approved: '42',
-      pending: '18',
-      reviewProgress: { percent: 45, reviewed: 38, total: 84 },
-      metricTiles: [
-        { kind: 'trips', value: '48', title: 'Unique trips', subtitle: 'Across 5 routes' },
-        { kind: 'transfers', value: '1,120', title: 'Recommended transfers', subtitle: '88% auto-approved' },
-        { kind: 'revenue', value: '€210.4K', title: 'Revenue increase', subtitle: '+2.1% vs last run', subtitleAccent: true },
-        { kind: 'stockouts', value: '512 → 304', title: 'Stockouts resolved', subtitle: '-40.6% reduction', subtitleAccent: true },
-      ],
-    },
-  ]
-  const parseDate = (dateStr) => {
-    const [day, month, year] = dateStr.split('/').map(Number)
-    return new Date(year, month - 1, day)
-  }
-  const today = new Date(2026, 2, 5) // 05/03/2026
-  const sortedNextSchedules = [...nextSchedules].sort((a, b) => {
-    const da = parseDate(a.deadline)
-    const db = parseDate(b.deadline)
-    return Math.abs(da - today) - Math.abs(db - today)
-  })
   const viewOptions = [
     { id: 'list', label: 'List', icon: 'list' },
     { id: 'week', label: 'Week', icon: 'week' },
@@ -1885,7 +1917,7 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
 
   useEffect(() => {
     if (!resetToUpcoming) return
-    setActiveStatusTab('next')
+    setActiveStatusTab('ongoing')
   }, [resetToUpcoming])
 
   useEffect(() => {
@@ -2647,188 +2679,128 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
           )}
           </div>
         </>
-      ) : activeStatusTab === 'next' ? (
-        <div className="mt-[10px] space-y-4">
-          {sortedNextSchedules.map((schedule) => {
-            const deadlineDate = parseDate(schedule.deadline)
-            const isDeadlinePast = deadlineDate < today
-            const deadlineBadgeClass = isDeadlinePast
-              ? 'bg-[#fee2e2] text-[#E30D3C]'
-              : schedule.id === 'uk-weekly-replen'
-                ? 'bg-[#fef3c7] text-[#92400e]'
-                : 'bg-[#fce7f3] text-[#9d174d]'
-            const rp = schedule.reviewProgress ?? { percent: 0, reviewed: 0, total: 0 }
-            const tiles = schedule.metricTiles ?? []
-            const renderTileIcon = (kind) => {
-              const iconClass = 'size-[18px] shrink-0'
-              const iconBox = (bgClass, icon) => (
-                <div
-                  className={`flex size-10 shrink-0 items-center justify-center rounded-[8px] ${bgClass}`}
-                  aria-hidden
-                >
-                  {icon}
-                </div>
-              )
-              switch (kind) {
-                case 'trips':
-                  return iconBox(
-                    'bg-[#eff6ff]',
-                    <Truck className={`${iconClass} text-[#3b82f6]`} strokeWidth={1.75} aria-hidden />
-                  )
-                case 'transfers':
-                  return iconBox(
-                    'bg-[#EFEFFD]',
-                    <Network className={`${iconClass} text-[#6864E6]`} strokeWidth={1.75} aria-hidden />
-                  )
-                case 'revenue':
-                  return iconBox(
-                    'bg-[#ecfdf5]',
-                    <TrendingUp className={`${iconClass} text-[#08A16A]`} strokeWidth={1.75} aria-hidden />
-                  )
-                case 'stockouts':
-                  return iconBox(
-                    'bg-[#ecfdf5]',
-                    <ShieldCheck className={`${iconClass} text-[#08A16A]`} strokeWidth={1.75} aria-hidden />
-                  )
-                default:
-                  return null
-              }
-            }
-            return (
+      ) : activeStatusTab === 'ongoing' ? (
+        <>
+          {openKebabId && (
             <div
-              key={schedule.id}
-              className={`bg-white border border-[#EAEAEA] rounded-[3.42px] p-5 flex flex-col gap-4 w-full${onOpenScheduleDetail ? ' group cursor-pointer' : ''}`}
-              onClick={() => onOpenScheduleDetail && onOpenScheduleDetail(schedule)}
+              role="presentation"
+              className="fixed inset-0 z-20"
+              onClick={() => setOpenKebabId(null)}
+              aria-hidden
+            />
+          )}
+          <div className="mt-6 overflow-hidden rounded-[4px] border border-[#EAEAEA] bg-white">
+            <div
+              className={`grid ${ONGOING_TABLE_GRID} gap-4 border-b border-[#EAEAEA] bg-[#F8F8F8] px-5 py-3 text-[12px] font-medium uppercase tracking-[0.04em] text-[#4b535c]`}
             >
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div className="flex flex-wrap items-center gap-2 min-w-0">
-                  <h2 className="text-lg md:text-xl font-medium text-[#0a0a0a] group-hover:text-[#3b82f6]">
-                    {schedule.name}
-                  </h2>
-                  <span className="inline-flex items-center rounded-full bg-[#ecfdf5] text-[#047857] text-[12px] font-medium px-2.5 py-0.5">
-                    {schedule.status}
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                  }}
-                  className="inline-flex h-10 shrink-0 items-center justify-center rounded-[4px] border border-solid border-[#e9eaeb] bg-white px-4 py-0 text-[16px] font-medium text-[#00050a] transition-colors hover:bg-[#f9fafb]"
-                  data-name="Button"
-                  data-node-id="12027:34155"
+              <span>Batch name</span>
+              <span>Created</span>
+              <span>Movement type</span>
+              <span>Warehouse</span>
+              <span>Revenue increase</span>
+              <span>Unique trips</span>
+              <span>Transfer units</span>
+              <span />
+            </div>
+            {ongoingSchedules.map((schedule) => {
+              const displayName = scheduleNames[schedule.id] ?? schedule.name
+              return (
+                <div
+                  key={schedule.id}
+                  className={`grid ${ONGOING_TABLE_GRID} gap-4 border-b border-[#EAEAEA] px-5 py-4 text-[14px] text-[#0a0a0a] transition-colors last:border-b-0 hover:bg-[#FAFAFA]${onOpenScheduleDetail ? ' cursor-pointer' : ''}`}
+                  onClick={() => onOpenScheduleDetail && onOpenScheduleDetail(schedule)}
                 >
-                  Submit
-                </button>
-              </div>
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-[#4b535c]">
-                <span className="inline-flex items-center gap-2 flex-wrap">
-                  <span className="text-[#4b535c]">Submission deadline:</span>
-                  <span className={`px-2.5 py-0.5 rounded-full text-[13px] font-medium ${deadlineBadgeClass}`}>
-                    {schedule.deadline}
-                  </span>
-                </span>
-                <span>
-                  Created <span className="text-[#0a0a0a]">{schedule.created}</span>
-                </span>
-              </div>
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                {tiles.map((tile) => (
-                  <div
-                    key={tile.kind}
-                    className="flex min-w-0 flex-row items-start gap-3 rounded-[4px] border border-[#EAEAEA] bg-white px-3 py-3"
-                  >
-                    {renderTileIcon(tile.kind)}
-                    <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-                      <span className="text-xl font-medium leading-tight tracking-tight text-[#0a0a0a]">
-                        {tile.value}
-                      </span>
-                      <span className="text-[12px] font-medium leading-snug text-[#0a0a0a]">{tile.title}</span>
-                      <span
-                        className={`flex items-center gap-1.5 text-[11px] leading-snug ${
-                          tile.subtitleAccent ? 'font-medium text-[#08A16A]' : 'text-[#6b7280]'
-                        }`}
-                      >
-                        {tile.subtitleAccent && (
-                          <span className="size-1.5 shrink-0 rounded-full bg-[#08A16A]" aria-hidden />
-                        )}
-                        {tile.subtitle}
-                      </span>
-                    </div>
+                  <div className="min-w-0 font-medium">
+                    {renamingId === schedule.id ? (
+                      <input
+                        type="text"
+                        value={renameDraft}
+                        autoFocus
+                        onClick={(e) => e.stopPropagation()}
+                        onChange={(e) => setRenameDraft(e.target.value)}
+                        onBlur={() => {
+                          setScheduleNames((prev) => ({ ...prev, [schedule.id]: renameDraft }))
+                          setRenamingId(null)
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            setScheduleNames((prev) => ({ ...prev, [schedule.id]: renameDraft }))
+                            setRenamingId(null)
+                          } else if (e.key === 'Escape') {
+                            setRenamingId(null)
+                          }
+                        }}
+                        className="h-8 w-full rounded-[4px] border border-[#EAEAEA] px-2 text-[14px] text-[#0a0a0a] focus:border-[#1d4ed8] focus:outline-none"
+                      />
+                    ) : (
+                      <span className="block truncate">{displayName}</span>
+                    )}
                   </div>
-                ))}
-              </div>
-              <div className="flex flex-col gap-2">
-                <div className="flex flex-wrap items-baseline justify-between gap-2 text-[13px]">
-                  <span className="font-medium text-[#0a0a0a]">Review progress</span>
-                  <span className="text-[#0a0a0a] tabular-nums">
-                    {rp.percent}%{' '}
-                    <span className="text-[#6b7280] font-normal">
-                      ({rp.reviewed} of {rp.total} transfers reviewed)
-                    </span>
-                  </span>
-                </div>
-                <div className="h-2 w-full rounded-full bg-[#e5e7eb] overflow-hidden" role="progressbar" aria-valuenow={rp.percent} aria-valuemin={0} aria-valuemax={100}>
+                  <div className="min-w-0">
+                    <div className="text-[14px] text-[#0a0a0a]">
+                      {schedule.createdDate}, {schedule.createdTime}
+                    </div>
+                    <div className="text-[12px] text-[#4b535c]">{schedule.createdBy}</div>
+                  </div>
+                  <div className="min-w-0 truncate">{schedule.movementType}</div>
+                  <div className="min-w-0 truncate">{schedule.warehouse}</div>
+                  <div className="min-w-0 truncate">{schedule.revenueIncrease}</div>
+                  <div className="min-w-0">{schedule.uniqueTrips.toLocaleString()}</div>
+                  <div className="min-w-0">{schedule.transferUnits.toLocaleString()}</div>
                   <div
-                    className="h-full rounded-full bg-[#2EB8C2] transition-[width] duration-300"
-                    style={{ width: `${Math.min(100, Math.max(0, rp.percent))}%` }}
-                  />
-                </div>
-              </div>
-              <div className="flex flex-wrap items-center justify-between gap-3 pt-0.5 border-t border-[#f3f4f6]">
-                <div className="min-h-[1.25rem]">
-                  {schedule.exceptionsList ? (
-                    (() => {
-                      const totalExceptions = schedule.exceptionsTotal ?? schedule.exceptionsList.length
-                      return (
+                    className="relative flex items-center justify-end"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <button
+                      type="button"
+                      aria-label="Row actions"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setOpenKebabId(openKebabId === schedule.id ? null : schedule.id)
+                      }}
+                      className="flex size-8 items-center justify-center rounded-[4px] text-[#4b535c] hover:bg-[#F3F4F6] hover:text-[#0a0a0a]"
+                    >
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
+                        <circle cx="8" cy="3" r="1.5" fill="currentColor" />
+                        <circle cx="8" cy="8" r="1.5" fill="currentColor" />
+                        <circle cx="8" cy="13" r="1.5" fill="currentColor" />
+                      </svg>
+                    </button>
+                    {openKebabId === schedule.id && (
+                      <div className="absolute right-0 top-full z-30 mt-1 w-[160px] rounded-[4px] border border-[#EAEAEA] bg-white py-1 shadow-[0px_8px_25px_0px_rgba(0,0,0,0.12)]">
                         <button
                           type="button"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            setExpandedExceptionsScheduleId((prev) =>
-                              prev === schedule.id ? null : schedule.id
-                            )
+                          className="w-full px-3 py-2 text-left text-[14px] text-[#0a0a0a] hover:bg-[#F8F8F8]"
+                          onClick={() => {
+                            setRenamingId(schedule.id)
+                            setRenameDraft(scheduleNames[schedule.id] ?? schedule.name)
+                            setOpenKebabId(null)
                           }}
-                          className="text-[13px] font-medium text-[#3b82f6] hover:underline"
                         >
-                          {expandedExceptionsScheduleId === schedule.id
-                            ? `Hide exceptions (${totalExceptions})`
-                            : `Show exceptions (${totalExceptions})`}
+                          Rename
                         </button>
-                      )
-                    })()
-                  ) : null}
+                        <button
+                          type="button"
+                          className="w-full px-3 py-2 text-left text-[14px] text-[#0a0a0a] hover:bg-[#F8F8F8]"
+                          onClick={() => setOpenKebabId(null)}
+                        >
+                          Rerun
+                        </button>
+                        <button
+                          type="button"
+                          className="w-full px-3 py-2 text-left text-[14px] text-[#0a0a0a] hover:bg-[#F8F8F8]"
+                          onClick={() => setOpenKebabId(null)}
+                        >
+                          Archive
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px] text-[#6b7280]">
-                  <span>
-                    Transfer exceptions: <span className="font-medium text-[#0a0a0a]">{schedule.exceptions}</span>
-                  </span>
-                  <span>
-                    Total approved: <span className="font-medium text-[#0a0a0a]">{schedule.approved}</span>
-                  </span>
-                  {schedule.pending != null && (
-                    <span>
-                      Pending: <span className="font-medium text-[#0a0a0a]">{schedule.pending}</span>
-                    </span>
-                  )}
-                </div>
-              </div>
-              {schedule.exceptionsList && expandedExceptionsScheduleId === schedule.id && (
-                <div className="space-y-2 -mt-1">
-                  {schedule.exceptionsList.map((ex, idx) => (
-                    <div
-                      key={`${schedule.id}-ex-${idx}`}
-                      className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border border-[#e5e7eb] rounded-[8px] px-3 py-2 bg-[#f9fafb] text-xs text-[#0a0a0a]"
-                    >
-                      <span className="text-[#4b535c]">{ex.description}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-            )
-          })}
-        </div>
+              )
+            })}
+          </div>
+        </>
       ) : (
         <div />
       )}
