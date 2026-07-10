@@ -41,7 +41,6 @@ export default function App() {
   const [activeView, setActiveView] = useState('control-panel')
   const [optimiserSubView, setOptimiserSubView] = useState(null)
   const [insightSubView, setInsightSubView] = useState(null)
-  const [openScheduleDrawerSignal, setOpenScheduleDrawerSignal] = useState(0)
   const [openAddJobSignal, setOpenAddJobSignal] = useState(0)
   const [resetToUpcomingSignal, setResetToUpcomingSignal] = useState(0)
   const [openCreateSchedulePageSignal, setOpenCreateSchedulePageSignal] = useState(0)
@@ -442,7 +441,6 @@ export default function App() {
             <div className="pt-5">
               <OptimiserPage
                 onAddJob={() => setOptimiserSubView('scope')}
-                openScheduleDrawer={openScheduleDrawerSignal}
                 openAddJob={openAddJobSignal}
                 resetToUpcoming={resetToUpcomingSignal}
                 openCreateSchedulePage={openCreateSchedulePageSignal}
