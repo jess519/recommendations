@@ -1607,6 +1607,9 @@ function ScheduleDetailsBlock({ block, index, isExpanded, onToggleExpand, onRemo
 const ONGOING_TABLE_GRID =
   'grid-cols-[minmax(200px,2fr)_minmax(140px,1.2fr)_minmax(160px,1.4fr)_minmax(180px,1.6fr)_minmax(140px,1fr)_minmax(120px,1fr)_minmax(140px,1fr)_60px]'
 
+const FAILED_TABLE_GRID =
+  'grid-cols-[minmax(200px,2fr)_minmax(140px,1.2fr)_minmax(160px,1.4fr)_minmax(180px,1.6fr)_minmax(140px,1fr)_minmax(120px,1fr)_minmax(140px,1fr)_minmax(220px,1.8fr)_60px]'
+
 const ongoingSchedules = [
   {
     id: 'eu-monthly-rebal',
@@ -1752,6 +1755,7 @@ const failedSchedules = [
     uniqueTrips: '—',
     transferUnits: '—',
     isScheduled: true,
+    errorCode: 'No replenishment need',
   },
   {
     id: 'failed-iberia-rebal',
@@ -1765,6 +1769,7 @@ const failedSchedules = [
     uniqueTrips: '—',
     transferUnits: '—',
     isScheduled: false,
+    errorCode: 'No inventory data for distribution center',
   },
 ]
 
@@ -1859,8 +1864,10 @@ function ScheduleTable({
   renameDraft,
   setRenameDraft,
   actions = ['rename', 'rerun', 'archive'],
+  showErrorCode = false,
 }) {
   const isClickable = Boolean(onRowClick)
+  const tableGrid = showErrorCode ? FAILED_TABLE_GRID : ONGOING_TABLE_GRID
 
   const renderKebabAction = (action, schedule) => {
     const buttonClass = 'w-full px-3 py-2 text-left text-[14px] text-[#0a0a0a] hover:bg-[#F8F8F8]'
@@ -1919,7 +1926,7 @@ function ScheduleTable({
       )}
       <div className="mt-6 rounded-[4px] border border-[#EAEAEA] bg-white">
         <div
-          className={`grid ${ONGOING_TABLE_GRID} gap-4 border-b border-[#EAEAEA] bg-[#F8F8F8] px-5 py-3 text-[12px] font-medium uppercase tracking-[0.04em] text-[#4b535c]`}
+          className={`grid ${tableGrid} gap-4 border-b border-[#EAEAEA] bg-[#F8F8F8] px-5 py-3 text-[12px] font-medium uppercase tracking-[0.04em] text-[#4b535c]`}
         >
           <span>Batch name</span>
           <span>Created</span>
@@ -1928,6 +1935,7 @@ function ScheduleTable({
           <span>Revenue increase</span>
           <span>Unique trips</span>
           <span>Transfer units</span>
+          {showErrorCode && <span>Error code</span>}
           <span />
         </div>
         {schedules.map((schedule) => {
@@ -1935,7 +1943,7 @@ function ScheduleTable({
           return (
             <div
               key={schedule.id}
-              className={`grid ${ONGOING_TABLE_GRID} gap-4 border-b border-[#EAEAEA] px-5 py-4 text-[14px] text-[#0a0a0a] transition-colors last:border-b-0${isClickable ? ' cursor-pointer hover:bg-[#FAFAFA]' : ''}`}
+              className={`grid ${tableGrid} gap-4 border-b border-[#EAEAEA] px-5 py-4 text-[14px] text-[#0a0a0a] transition-colors last:border-b-0${isClickable ? ' cursor-pointer hover:bg-[#FAFAFA]' : ''}`}
               onClick={isClickable ? () => onRowClick(schedule) : undefined}
             >
               <div className="min-w-0 font-medium">
@@ -1983,6 +1991,9 @@ function ScheduleTable({
               <div className="min-w-0 truncate">{schedule.revenueIncrease}</div>
               <div className="min-w-0">{formatScheduleMetric(schedule.uniqueTrips)}</div>
               <div className="min-w-0">{formatScheduleMetric(schedule.transferUnits)}</div>
+              {showErrorCode && (
+                <div className="min-w-0 truncate text-[#4b535c]">{schedule.errorCode}</div>
+              )}
               <div
                 className="relative flex items-center justify-end"
                 onClick={(e) => e.stopPropagation()}
@@ -2641,7 +2652,7 @@ export default function OptimiserPage({ onAddJob, openAddJob, resetToUpcoming, o
           {...sharedKebabProps}
         />
       ) : activeStatusTab === 'failed' ? (
-        <ScheduleTable schedules={failedSchedules} actions={['rename', 'rerun', 'archive']} {...sharedKebabProps} />
+        <ScheduleTable schedules={failedSchedules} actions={['rename', 'rerun', 'archive']} showErrorCode={true} {...sharedKebabProps} />
       ) : activeStatusTab === 'submitted' ? (
         <ScheduleTable schedules={submittedSchedules} actions={['rerun']} {...sharedKebabProps} />
       ) : null}
