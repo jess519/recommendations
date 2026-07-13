@@ -1700,7 +1700,6 @@ const upcomingSchedules = [
     revenueIncrease: '—',
     uniqueTrips: '—',
     transferUnits: '—',
-    isScheduled: true,
   },
   {
     id: 'upcoming-uk-replen',
@@ -1713,7 +1712,6 @@ const upcomingSchedules = [
     revenueIncrease: '—',
     uniqueTrips: '—',
     transferUnits: '—',
-    isScheduled: true,
   },
   {
     id: 'upcoming-fr-rebal',
@@ -1726,7 +1724,6 @@ const upcomingSchedules = [
     revenueIncrease: '—',
     uniqueTrips: '—',
     transferUnits: '—',
-    isScheduled: true,
   },
   {
     id: 'upcoming-it-both',
@@ -1739,7 +1736,6 @@ const upcomingSchedules = [
     revenueIncrease: '—',
     uniqueTrips: '—',
     transferUnits: '—',
-    isScheduled: true,
   },
 ]
 
