@@ -1,108 +1,10 @@
 import { useState, useRef, useEffect, Fragment } from 'react'
-import { Truck, Network, TrendingUp, ShieldCheck, Pencil, Check, Plus } from 'lucide-react'
-import { IconCalendarSidebar, IconPlus, IconReplenishment, IconReorder, IconRebalancing, IconChevronDown, IconList, IconCalendarNote, IconTruck, IconTrendUp, IconLightbulb, IconEdit, IconClose, IconChevronDownSelect, IconArrowLeft } from '../components/icons'
+import { Pencil, Check, Plus } from 'lucide-react'
+import { IconPlus, IconChevronDown, IconClose, IconChevronDownSelect, IconArrowLeft } from '../components/icons'
 import {
   ScheduleBlockApprovalExceptions,
   createDefaultScheduleExceptions,
 } from '../components/ScheduleBlockApprovalExceptions'
-
-const SAMPLE_CALENDAR_ENTRY = {
-  id: 'entry-1',
-  type: 'replenishment',
-  title: 'Replenishment',
-  startDate: new Date(2026, 1, 2),
-  endDate: new Date(2026, 1, 4),
-  module: 'Replenishment Module',
-  from: 'Warehouse A',
-  to: 'Store B',
-  time: '09:00 AM PST',
-  frequency: 'Weekly · Mon, Wed, Fri',
-  transferUnits: 100,
-  availableToSend: 150,
-  tripType: 'Truck',
-  recommendedUnits: 120,
-  revenueIncrease: 500,
-  reasons: ['High demand', 'Low inventory'],
-}
-const SAMPLE_CALENDAR_ENTRY_REORDER = {
-  id: 'entry-2',
-  type: 'reorder',
-  title: 'Reorder',
-  startDate: new Date(2026, 1, 15),
-  endDate: new Date(2026, 1, 17),
-  module: 'Reorder Module',
-  from: 'Distribution Center',
-  to: 'Store C',
-  time: '10:00 AM PST',
-  frequency: 'Weekly · Tue, Thu',
-  transferUnits: 80,
-  availableToSend: 120,
-  tripType: 'Van',
-  recommendedUnits: 90,
-  revenueIncrease: 320,
-  reasons: ['Stock level below threshold', 'Seasonal demand'],
-}
-const SAMPLE_CALENDAR_ENTRY_REBALANCING_1 = {
-  id: 'entry-3',
-  type: 'rebalancing',
-  title: 'Rebalancing',
-  startDate: new Date(2026, 1, 9),
-  endDate: new Date(2026, 1, 9),
-  module: 'Rebalancing Module',
-  from: 'Store A',
-  to: 'Store B',
-  time: '08:00 AM PST',
-  frequency: 'Weekly · Mon',
-  transferUnits: 50,
-  availableToSend: 200,
-  tripType: 'Truck',
-  recommendedUnits: 55,
-  revenueIncrease: 180,
-  reasons: ['Inventory imbalance', 'Regional demand shift'],
-}
-const SAMPLE_CALENDAR_ENTRY_REBALANCING_2 = {
-  id: 'entry-4',
-  type: 'rebalancing',
-  title: 'Rebalancing',
-  startDate: new Date(2026, 1, 20),
-  endDate: new Date(2026, 1, 21),
-  module: 'Rebalancing Module',
-  from: 'Warehouse B',
-  to: 'Store D',
-  time: '02:00 PM PST',
-  frequency: 'Bi-weekly · Thu',
-  transferUnits: 120,
-  availableToSend: 300,
-  tripType: 'Truck',
-  recommendedUnits: 130,
-  revenueIncrease: 420,
-  reasons: ['Overstock at origin', 'Understock at destination'],
-}
-const SAMPLE_CALENDAR_ENTRY_REBALANCING_3 = {
-  id: 'entry-5',
-  type: 'rebalancing',
-  title: 'Rebalancing',
-  startDate: new Date(2026, 1, 26),
-  endDate: new Date(2026, 1, 27),
-  module: 'Rebalancing Module',
-  from: 'Distribution Center',
-  to: 'Store A',
-  time: '11:00 AM PST',
-  frequency: 'Monthly',
-  transferUnits: 200,
-  availableToSend: 500,
-  tripType: 'Truck',
-  recommendedUnits: 220,
-  revenueIncrease: 650,
-  reasons: ['End of month rebalance', 'Forecast adjustment'],
-}
-const CALENDAR_ENTRIES = [
-  SAMPLE_CALENDAR_ENTRY,
-  SAMPLE_CALENDAR_ENTRY_REORDER,
-  SAMPLE_CALENDAR_ENTRY_REBALANCING_1,
-  SAMPLE_CALENDAR_ENTRY_REBALANCING_2,
-  SAMPLE_CALENDAR_ENTRY_REBALANCING_3,
-]
 
 /** Create schedule — scope filter dummy options (prototype display only) */
 const SCOPE_DEPARTMENT_OPTIONS = ['Apparel', 'Footwear', 'Accessories']
@@ -899,6 +801,150 @@ function CreateScheduleMoreFiltersMenu({
   )
 }
 
+function ScopeSelectionSection({
+  heading = 'Which products and locations does this schedule cover?',
+  locationScopeOption,
+  setLocationScopeOption,
+  scopeActiveFilterEntries,
+  isMoreFiltersOpen,
+  setIsMoreFiltersOpen,
+  toggleExtraFilter,
+  extraVisibleFilters,
+  expandedFieldState,
+  updateExpandedField,
+  warehouseInclude,
+  setWarehouseInclude,
+  warehouseExclude,
+  setWarehouseExclude,
+  warehouseMode,
+  setWarehouseMode,
+  departmentInclude,
+  setDepartmentInclude,
+  departmentExclude,
+  setDepartmentExclude,
+  departmentMode,
+  setDepartmentMode,
+  seasonsInclude,
+  setSeasonsInclude,
+  seasonsExclude,
+  setSeasonsExclude,
+  seasonsMode,
+  setSeasonsMode,
+  productsInclude,
+  setProductsInclude,
+  productsExclude,
+  setProductsExclude,
+  productsMode,
+  setProductsMode,
+  locationTypesInclude,
+  setLocationTypesInclude,
+  locationTypesExclude,
+  setLocationTypesExclude,
+  locationTypesMode,
+  setLocationTypesMode,
+  locationsInclude,
+  setLocationsInclude,
+  locationsExclude,
+  setLocationsExclude,
+  locationsMode,
+  setLocationsMode,
+}) {
+  return (
+    <section className="flex flex-col gap-3">
+      <h3 className="text-[14px] font-medium text-[#0a0a0a]">{heading}</h3>
+      <div className="flex flex-col gap-3">
+        <label className="flex items-start gap-3 p-4 rounded-[10px] border border-[#e5e7eb] bg-white cursor-pointer hover:border-[#0267ff]/40 has-[:checked]:border-[#0267ff]">
+          <input
+            type="radio"
+            name="locationScopeOption"
+            value="all"
+            checked={locationScopeOption === 'all'}
+            onChange={() => setLocationScopeOption('all')}
+            className="mt-1 size-4 shrink-0 border-[#e5e7eb] text-[#0267ff] focus:ring-[#0267ff]"
+          />
+          <div className="flex flex-col gap-1 min-w-0">
+            <span className="text-[14px] font-medium text-[#0a0a0a]">All products and locations</span>
+            <span className="text-[12px] font-normal text-[#4b535c]">
+              Sol will evaluate your entire product catalogue and network.
+            </span>
+          </div>
+        </label>
+        <label className="flex items-start gap-3 p-4 rounded-[10px] border border-[#e5e7eb] bg-white cursor-pointer hover:border-[#0267ff]/40 has-[:checked]:border-[#0267ff]">
+          <input
+            type="radio"
+            name="locationScopeOption"
+            value="select"
+            checked={locationScopeOption === 'select'}
+            onChange={() => setLocationScopeOption('select')}
+            className="mt-1 size-4 shrink-0 border-[#e5e7eb] text-[#0267ff] focus:ring-[#0267ff]"
+          />
+          <div className="flex flex-col gap-1 min-w-0">
+            <span className="text-[14px] font-medium text-[#0a0a0a]">Select products and locations</span>
+            <span className="text-[12px] font-normal text-[#4b535c]">
+              Choose specific products, locations, regions, or countries to{' '}
+              <strong className="font-semibold">include</strong> in this schedule.
+            </span>
+          </div>
+        </label>
+      </div>
+
+      {locationScopeOption === 'select' && (
+        <>
+          <ActiveFilterChips entries={scopeActiveFilterEntries} />
+          <CreateScheduleScopeFilterPanel
+            warehouseInclude={warehouseInclude}
+            setWarehouseInclude={setWarehouseInclude}
+            warehouseExclude={warehouseExclude}
+            setWarehouseExclude={setWarehouseExclude}
+            warehouseMode={warehouseMode}
+            setWarehouseMode={setWarehouseMode}
+            departmentInclude={departmentInclude}
+            setDepartmentInclude={setDepartmentInclude}
+            departmentExclude={departmentExclude}
+            setDepartmentExclude={setDepartmentExclude}
+            departmentMode={departmentMode}
+            setDepartmentMode={setDepartmentMode}
+            seasonsInclude={seasonsInclude}
+            setSeasonsInclude={setSeasonsInclude}
+            seasonsExclude={seasonsExclude}
+            setSeasonsExclude={setSeasonsExclude}
+            seasonsMode={seasonsMode}
+            setSeasonsMode={setSeasonsMode}
+            productsInclude={productsInclude}
+            setProductsInclude={setProductsInclude}
+            productsExclude={productsExclude}
+            setProductsExclude={setProductsExclude}
+            productsMode={productsMode}
+            setProductsMode={setProductsMode}
+            locationTypesInclude={locationTypesInclude}
+            setLocationTypesInclude={setLocationTypesInclude}
+            locationTypesExclude={locationTypesExclude}
+            setLocationTypesExclude={setLocationTypesExclude}
+            locationTypesMode={locationTypesMode}
+            setLocationTypesMode={setLocationTypesMode}
+            locationsInclude={locationsInclude}
+            setLocationsInclude={setLocationsInclude}
+            locationsExclude={locationsExclude}
+            setLocationsExclude={setLocationsExclude}
+            locationsMode={locationsMode}
+            setLocationsMode={setLocationsMode}
+            extraVisibleFilters={extraVisibleFilters}
+            expandedFieldState={expandedFieldState}
+            updateExpandedField={updateExpandedField}
+          />
+          <CreateScheduleMoreFiltersMenu
+            isOpen={isMoreFiltersOpen}
+            onToggle={() => setIsMoreFiltersOpen((v) => !v)}
+            onClose={() => setIsMoreFiltersOpen(false)}
+            extraVisibleFilters={extraVisibleFilters}
+            onToggleExtraFilter={toggleExtraFilter}
+          />
+        </>
+      )}
+    </section>
+  )
+}
+
 const SUBMISSION_TIME_OPTIONS = Array.from({ length: 48 }, (_, i) => {
   const h = Math.floor(i / 2)
   const m = (i % 2) * 30
@@ -928,6 +974,98 @@ function capitalizeDay(day) {
   return day.charAt(0).toUpperCase() + day.slice(1)
 }
 
+function pad2(n) {
+  return String(n).padStart(2, '0')
+}
+
+function resolveSubmissionDeadlineLabel(block) {
+  const { submissionDeadlineDays, submissionDeadlineHours } = block
+  const daysBlank = submissionDeadlineDays === '' || submissionDeadlineDays == null
+  const hoursBlank = submissionDeadlineHours === '' || submissionDeadlineHours == null
+  if (daysBlank && hoursBlank) {
+    return null
+  }
+
+  const d = parseInt(submissionDeadlineDays || '0', 10)
+  const h = parseInt(submissionDeadlineHours || '0', 10)
+
+  if (block.repeatEveryUnit === 'week' && block.generationDay) {
+    const startIdx = SUBMISSION_DAYS.findIndex((day) => day.key === block.generationDay)
+    if (startIdx >= 0) {
+      const [genH, genM] = (block.generationTime || '00:00').split(':').map((v) => parseInt(v, 10) || 0)
+      const startMinOfWeek = startIdx * 1440 + genH * 60 + genM
+      const totalOffsetMin = (d * 24 + h) * 60
+      const resultMin = ((startMinOfWeek + totalOffsetMin) % 10080 + 10080) % 10080
+      const resultDayIdx = Math.floor(resultMin / 1440)
+      const resultH = Math.floor((resultMin % 1440) / 60)
+      const resultM = resultMin % 60
+      const dayLabel = capitalizeDay(SUBMISSION_DAYS[resultDayIdx].key)
+      const timeLabel = `${pad2(resultH)}:${pad2(resultM)}`
+      return `Submit on ${dayLabel} at ${timeLabel}`
+    }
+  }
+
+  if (d === 0 && h === 0) {
+    return 'Submit as soon as recommendations become available'
+  }
+
+  const parts = []
+  if (d > 0) parts.push(`${d} ${d === 1 ? 'day' : 'days'}`)
+  if (h > 0) parts.push(`${h} ${h === 1 ? 'hour' : 'hours'}`)
+  if (parts.length === 1) {
+    return `Submit ${parts[0]} after recommendations become available`
+  }
+  return `Submit ${parts[0]} and ${parts[1]} after recommendations become available`
+}
+
+function ScheduleDeadlineOffsetStepper({ value, onChange }) {
+  return (
+    <div className="flex h-12 items-center overflow-hidden rounded-[4px] border border-[#EAEAEA] bg-white">
+      <input
+        type="number"
+        min={0}
+        value={value}
+        onChange={(e) => {
+          const v = e.target.value
+          if (v === '') {
+            onChange('')
+            return
+          }
+          onChange(String(Math.max(0, parseInt(v, 10) || 0)))
+        }}
+        placeholder=""
+        className="h-12 w-[80px] border-none px-4 py-3 text-center text-[14px] text-[#0a0a0a] placeholder:text-[#9ca3af] [appearance:textfield] focus:outline-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+      />
+      <div className="flex shrink-0 flex-col border-l border-[#EAEAEA]">
+        <button
+          type="button"
+          onClick={() => {
+            if (value === '') {
+              onChange('1')
+              return
+            }
+            onChange(String((parseInt(value, 10) || 0) + 1))
+          }}
+          className="flex h-6 w-7 items-center justify-center border-b border-[#EAEAEA] text-[#4b535c] hover:bg-[#f8f8f8]"
+        >
+          +
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            if (value === '') return
+            const current = parseInt(value, 10) || 0
+            onChange(String(Math.max(0, current - 1)))
+          }}
+          className="flex h-6 w-7 items-center justify-center text-[#4b535c] hover:bg-[#f8f8f8]"
+        >
+          −
+        </button>
+      </div>
+    </div>
+  )
+}
+
 function createDefaultScheduleBlock(id) {
   return {
     id,
@@ -942,9 +1080,8 @@ function createDefaultScheduleBlock(id) {
     targetCoverageUnit: 'Weeks',
     repeatEvery: 1,
     repeatEveryUnit: 'week',
-    submissionDay: 'wednesday',
-    submissionDate: '',
-    submissionTime: '09:00',
+    submissionDeadlineDays: '',
+    submissionDeadlineHours: '',
     generationDay: 'wednesday',
     generationDate: '',
     generationTime: '09:00',
@@ -1013,7 +1150,10 @@ function buildBlockSummary(block) {
 
   const unit = formatRepeatUnitLabel(block.repeatEveryUnit, block.repeatEvery)
   segments.push(`every ${block.repeatEvery} ${unit}`)
-  segments.push(`${capitalizeDay(block.submissionDay)} at ${block.submissionTime}`)
+  const deadlineLabel = resolveSubmissionDeadlineLabel(block)
+  if (deadlineLabel) {
+    segments.push(deadlineLabel)
+  }
 
   if (block.approvalMode === 'manual-review') {
     segments.push('Manual review')
@@ -1295,26 +1435,22 @@ function ScheduleDetailsBlock({ block, index, isExpanded, onToggleExpand, onRemo
               The deadline by which all approved recommendations will be auto-submitted. Leave blank if you don&apos;t
               want auto-submission.
             </p>
-            <div className="flex items-center gap-3">
-              {block.repeatEveryUnit === 'week' && (
-                <ScheduleDayOfWeekSelector
-                  value={block.submissionDay}
-                  onChange={(next) => onUpdate({ submissionDay: next })}
-                />
-              )}
-              {block.repeatEveryUnit === 'month' && (
-                <input
-                  type="date"
-                  value={block.submissionDate}
-                  onChange={(e) => onUpdate({ submissionDate: e.target.value })}
-                  className="h-12 w-[160px] shrink-0 rounded-[4px] border border-[#EAEAEA] bg-white px-4 text-[14px] text-[#0a0a0a]"
-                />
-              )}
-              <ScheduleTimeSelect
-                value={block.submissionTime}
-                onChange={(next) => onUpdate({ submissionTime: next })}
+            <div className="flex flex-wrap items-center gap-3">
+              <ScheduleDeadlineOffsetStepper
+                value={block.submissionDeadlineDays}
+                onChange={(next) => onUpdate({ submissionDeadlineDays: next })}
               />
+              <span className="text-[14px] text-[#4b535c]">days</span>
+              <ScheduleDeadlineOffsetStepper
+                value={block.submissionDeadlineHours}
+                onChange={(next) => onUpdate({ submissionDeadlineHours: next })}
+              />
+              <span className="text-[14px] text-[#4b535c]">hours</span>
             </div>
+            <p className="mt-2 text-[12px] text-[#4b535c]">
+              {resolveSubmissionDeadlineLabel(block) ??
+                "No auto-submission — approved recommendations won't be submitted automatically."}
+            </p>
           </div>
         </section>
 
@@ -1467,76 +1603,437 @@ function ScheduleDetailsBlock({ block, index, isExpanded, onToggleExpand, onRemo
 }
 
 /* Optimiser page – Figma 174:2696 (Optimiser-Concepts) */
-const DEFAULT_DRAWER_FORM = {
-  module: '',
-  modules: [],
-  name: '',
-  sending: '',
-  receiving: '',
-  repeats: 'biweekly',
-  time: '',
-  timeZone: 'gmt+1',
-  endsOn: '',
-  notify: '',
-}
-const MODULE_OPTIONS = [
-  { id: 'replenishment', label: 'Replenishment' },
-  { id: 'rebalancing', label: 'Rebalancing' },
+
+const ONGOING_TABLE_GRID =
+  'grid-cols-[minmax(200px,2fr)_minmax(140px,1.2fr)_minmax(160px,1.4fr)_minmax(180px,1.6fr)_minmax(140px,1fr)_minmax(120px,1fr)_minmax(140px,1fr)_60px]'
+
+const ongoingSchedules = [
+  {
+    id: 'eu-monthly-rebal',
+    name: 'Europe monthly',
+    createdDate: '24/02/2026',
+    createdTime: '09:14',
+    createdBy: 'Adil',
+    movementType: 'Rebalancing',
+    warehouse: 'Log01 entrepot logtex',
+    revenueIncrease: '€501.1K',
+    uniqueTrips: 113,
+    transferUnits: 2308,
+    isScheduled: true,
+  },
+  {
+    id: 'uk-weekly-replen',
+    name: 'UK weekly replenishment',
+    createdDate: '04/05/2026',
+    createdTime: '07:30',
+    createdBy: 'Bethsabée',
+    movementType: 'Replenishment',
+    warehouse: 'UK central DC',
+    revenueIncrease: '€210.4K',
+    uniqueTrips: 48,
+    transferUnits: 1120,
+    isScheduled: true,
+  },
+  {
+    id: 'fr-weekly-rebal',
+    name: 'France weekly rebal',
+    createdDate: '02/05/2026',
+    createdTime: '11:00',
+    createdBy: 'Adil',
+    movementType: 'Rebalancing',
+    warehouse: 'Log01 entrepot logtex',
+    revenueIncrease: '€87.2K',
+    uniqueTrips: 24,
+    transferUnits: 612,
+    isScheduled: true,
+  },
+  {
+    id: 'it-biweekly-both',
+    name: 'Italy bi-weekly',
+    createdDate: '01/05/2026',
+    createdTime: '14:22',
+    createdBy: 'Shana',
+    movementType: 'Replenishment & Rebalancing',
+    warehouse: 'Milan DC',
+    revenueIncrease: '€134.8K',
+    uniqueTrips: 39,
+    transferUnits: 940,
+    isScheduled: false,
+  },
+  {
+    id: 'de-monthly-replen',
+    name: 'Germany monthly replenishment',
+    createdDate: '28/04/2026',
+    createdTime: '08:45',
+    createdBy: 'Bethsabée',
+    movementType: 'Replenishment',
+    warehouse: 'Berlin DC',
+    revenueIncrease: '€76.5K',
+    uniqueTrips: 18,
+    transferUnits: 445,
+    isScheduled: false,
+  },
+  {
+    id: 'iberia-weekly-rebal',
+    name: 'Iberia weekly rebal',
+    createdDate: '25/04/2026',
+    createdTime: '10:12',
+    createdBy: 'Adil',
+    movementType: 'Rebalancing',
+    warehouse: 'Madrid DC',
+    revenueIncrease: '€52.1K',
+    uniqueTrips: 15,
+    transferUnits: 388,
+    isScheduled: false,
+  },
 ]
 
-export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob, resetToUpcoming, openCreateSchedulePage, resetToRecommendationsLanding, onOpenScheduleDetail }) {
-  const [scheduleDrawerOpen, setScheduleDrawerOpen] = useState(false)
-  const [editingScheduleEntry, setEditingScheduleEntry] = useState(null)
-  const [drawerForm, setDrawerForm] = useState(DEFAULT_DRAWER_FORM)
-  const [scheduleDrawerDays, setScheduleDrawerDays] = useState(() => ({ Wed: true, Sat: true }))
-  const [skipDates, setSkipDates] = useState([])
-  const [skipDatePickerOpen, setSkipDatePickerOpen] = useState(false)
-  const [skipDateDraft, setSkipDateDraft] = useState('')
-  const [moduleDropdownOpen, setModuleDropdownOpen] = useState(false)
-  const [entryReviewStatus, setEntryReviewStatus] = useState(() => ({
-    'entry-1': 'upcoming',   // Replenishment
-    'entry-2': 'in review', // Reorder
-    'entry-3': 'submitted', // Rebalancing (Feb 9)
-    'entry-4': 'in review', // Rebalancing (Feb 20–21)
-    'entry-5': 'upcoming',  // Rebalancing (Feb 26–27)
-  }))
-  const setReviewStatus = (entryId, status) => setEntryReviewStatus((prev) => ({ ...prev, [entryId]: status }))
-  const [activeTypeFilter, setActiveTypeFilter] = useState('all')
-  const [pinnedHoverEntryId, setPinnedHoverEntryId] = useState(null)
-  const [pinnedHoverCellKey, setPinnedHoverCellKey] = useState(null)
-  const [hoveredEntryId, setHoveredEntryId] = useState(null)
-  const [hoveredCellKey, setHoveredCellKey] = useState(null)
-  const hoverLeaveTimeoutRef = useRef(null)
-  const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
-  const toggleScheduleDay = (day) => setScheduleDrawerDays((prev) => ({ ...prev, [day]: !prev[day] }))
-  const formatSkipDateDisplay = (isoDate) => {
-    const [y, m, d] = isoDate.split('-')
-    return `${d}/${m}/${y}`
+const upcomingSchedules = [
+  {
+    id: 'upcoming-eu-rebal',
+    name: 'Europe monthly',
+    createdDate: '10/07/2026',
+    createdTime: '09:00',
+    createdBy: 'Adil',
+    movementType: 'Rebalancing',
+    warehouse: 'Log01 entrepot logtex',
+    revenueIncrease: '—',
+    uniqueTrips: '—',
+    transferUnits: '—',
+    isScheduled: true,
+  },
+  {
+    id: 'upcoming-uk-replen',
+    name: 'UK weekly replenishment',
+    createdDate: '11/07/2026',
+    createdTime: '07:30',
+    createdBy: 'Bethsabée',
+    movementType: 'Replenishment',
+    warehouse: 'UK central DC',
+    revenueIncrease: '—',
+    uniqueTrips: '—',
+    transferUnits: '—',
+    isScheduled: true,
+  },
+  {
+    id: 'upcoming-fr-rebal',
+    name: 'France weekly rebal',
+    createdDate: '11/07/2026',
+    createdTime: '11:00',
+    createdBy: 'Adil',
+    movementType: 'Rebalancing',
+    warehouse: 'Log01 entrepot logtex',
+    revenueIncrease: '—',
+    uniqueTrips: '—',
+    transferUnits: '—',
+    isScheduled: true,
+  },
+  {
+    id: 'upcoming-it-both',
+    name: 'Italy bi-weekly',
+    createdDate: '15/07/2026',
+    createdTime: '14:22',
+    createdBy: 'Shana',
+    movementType: 'Replenishment & Rebalancing',
+    warehouse: 'Milan DC',
+    revenueIncrease: '—',
+    uniqueTrips: '—',
+    transferUnits: '—',
+    isScheduled: true,
+  },
+]
+
+const failedSchedules = [
+  {
+    id: 'failed-de-replen',
+    name: 'Germany monthly replenishment',
+    createdDate: '05/07/2026',
+    createdTime: '08:45',
+    createdBy: 'Bethsabée',
+    movementType: 'Replenishment',
+    warehouse: 'Berlin DC',
+    revenueIncrease: '—',
+    uniqueTrips: '—',
+    transferUnits: '—',
+    isScheduled: true,
+  },
+  {
+    id: 'failed-iberia-rebal',
+    name: 'Iberia weekly rebal',
+    createdDate: '04/07/2026',
+    createdTime: '10:12',
+    createdBy: 'Adil',
+    movementType: 'Rebalancing',
+    warehouse: 'Madrid DC',
+    revenueIncrease: '—',
+    uniqueTrips: '—',
+    transferUnits: '—',
+    isScheduled: false,
+  },
+]
+
+const submittedSchedules = [
+  {
+    id: 'submitted-eu-rebal-jun',
+    name: 'Europe monthly',
+    createdDate: '24/06/2026',
+    createdTime: '09:14',
+    createdBy: 'Adil',
+    movementType: 'Rebalancing',
+    warehouse: 'Log01 entrepot logtex',
+    revenueIncrease: '€478.9K',
+    uniqueTrips: 108,
+    transferUnits: 2214,
+    isScheduled: true,
+  },
+  {
+    id: 'submitted-uk-replen-jun',
+    name: 'UK weekly replenishment',
+    createdDate: '20/06/2026',
+    createdTime: '07:30',
+    createdBy: 'Bethsabée',
+    movementType: 'Replenishment',
+    warehouse: 'UK central DC',
+    revenueIncrease: '€198.2K',
+    uniqueTrips: 44,
+    transferUnits: 1052,
+    isScheduled: true,
+  },
+  {
+    id: 'submitted-fr-rebal-jun',
+    name: 'France weekly rebal',
+    createdDate: '18/06/2026',
+    createdTime: '11:00',
+    createdBy: 'Adil',
+    movementType: 'Rebalancing',
+    warehouse: 'Log01 entrepot logtex',
+    revenueIncrease: '€79.4K',
+    uniqueTrips: 22,
+    transferUnits: 578,
+    isScheduled: true,
+  },
+  {
+    id: 'submitted-de-replen-jun',
+    name: 'Germany monthly replenishment',
+    createdDate: '15/06/2026',
+    createdTime: '08:45',
+    createdBy: 'Bethsabée',
+    movementType: 'Replenishment',
+    warehouse: 'Berlin DC',
+    revenueIncrease: '€68.7K',
+    uniqueTrips: 16,
+    transferUnits: 412,
+    isScheduled: true,
+  },
+  {
+    id: 'submitted-iberia-rebal-jun',
+    name: 'Iberia weekly rebal',
+    createdDate: '12/06/2026',
+    createdTime: '10:12',
+    createdBy: 'Adil',
+    movementType: 'Rebalancing',
+    warehouse: 'Madrid DC',
+    revenueIncrease: '€49.3K',
+    uniqueTrips: 14,
+    transferUnits: 361,
+    isScheduled: false,
+  },
+]
+
+const ALL_SCHEDULE_LISTS = [
+  ...ongoingSchedules,
+  ...upcomingSchedules,
+  ...failedSchedules,
+  ...submittedSchedules,
+]
+
+function formatScheduleMetric(value) {
+  return typeof value === 'number' ? value.toLocaleString() : value
+}
+
+function ScheduleTable({
+  schedules,
+  onRowClick,
+  scheduleNames,
+  setScheduleNames,
+  openKebabId,
+  setOpenKebabId,
+  renamingId,
+  setRenamingId,
+  renameDraft,
+  setRenameDraft,
+  actions = ['rename', 'rerun', 'archive'],
+}) {
+  const isClickable = Boolean(onRowClick)
+
+  const renderKebabAction = (action, schedule) => {
+    const buttonClass = 'w-full px-3 py-2 text-left text-[14px] text-[#0a0a0a] hover:bg-[#F8F8F8]'
+    if (action === 'rename') {
+      return (
+        <button
+          key="rename"
+          type="button"
+          className={buttonClass}
+          onClick={() => {
+            setRenamingId(schedule.id)
+            setRenameDraft(scheduleNames[schedule.id] ?? schedule.name)
+            setOpenKebabId(null)
+          }}
+        >
+          Rename
+        </button>
+      )
+    }
+    if (action === 'rerun') {
+      return (
+        <button
+          key="rerun"
+          type="button"
+          className={buttonClass}
+          onClick={() => setOpenKebabId(null)}
+        >
+          Rerun
+        </button>
+      )
+    }
+    if (action === 'archive') {
+      return (
+        <button
+          key="archive"
+          type="button"
+          className={buttonClass}
+          onClick={() => setOpenKebabId(null)}
+        >
+          Archive
+        </button>
+      )
+    }
+    return null
   }
-  const confirmSkipDate = () => {
-    if (!skipDateDraft) return
-    const formatted = formatSkipDateDisplay(skipDateDraft)
-    setSkipDates((prev) => (prev.includes(formatted) ? prev : [...prev, formatted]))
-    setSkipDateDraft('')
-    setSkipDatePickerOpen(false)
-  }
-  const removeSkipDate = (date) => setSkipDates((prev) => prev.filter((d) => d !== date))
-  const typeFilters = [
-    { id: 'all', label: 'All', icon: null },
-    { id: 'replenishment', label: 'Replenishment', icon: 'replenishment' },
-    { id: 'reorder', label: 'Reorder', icon: 'reorder' },
-    { id: 'rebalancing', label: 'Rebalancing', icon: 'rebalancing' },
-  ]
-  const [activeViewOption, setActiveViewOption] = useState('month')
-  const [viewDate, setViewDate] = useState(() => new Date(2026, 1, 1)) // Feb 2026
-  const [eventDatePickerOpen, setEventDatePickerOpen] = useState(false)
-  const [eventDateSelected, setEventDateSelected] = useState(() => new Date(2026, 1, 26))
-  const [eventDatePickerViewDate, setEventDatePickerViewDate] = useState(() => new Date(2026, 1, 1))
-  const [selectedReviewStatuses, setSelectedReviewStatuses] = useState([])
-  const [reviewStatusDropdownOpen, setReviewStatusDropdownOpen] = useState(false)
-  const [activeStatusTab, setActiveStatusTab] = useState('next')
-  const [expandedExceptionsScheduleId, setExpandedExceptionsScheduleId] = useState(null)
+
+  return (
+    <>
+      {openKebabId && (
+        <div
+          role="presentation"
+          className="fixed inset-0 z-20"
+          onClick={() => setOpenKebabId(null)}
+          aria-hidden
+        />
+      )}
+      <div className="mt-6 rounded-[4px] border border-[#EAEAEA] bg-white">
+        <div
+          className={`grid ${ONGOING_TABLE_GRID} gap-4 border-b border-[#EAEAEA] bg-[#F8F8F8] px-5 py-3 text-[12px] font-medium uppercase tracking-[0.04em] text-[#4b535c]`}
+        >
+          <span>Batch name</span>
+          <span>Created</span>
+          <span>Movement type</span>
+          <span>Warehouse</span>
+          <span>Revenue increase</span>
+          <span>Unique trips</span>
+          <span>Transfer units</span>
+          <span />
+        </div>
+        {schedules.map((schedule) => {
+          const displayName = scheduleNames[schedule.id] ?? schedule.name
+          return (
+            <div
+              key={schedule.id}
+              className={`grid ${ONGOING_TABLE_GRID} gap-4 border-b border-[#EAEAEA] px-5 py-4 text-[14px] text-[#0a0a0a] transition-colors last:border-b-0${isClickable ? ' cursor-pointer hover:bg-[#FAFAFA]' : ''}`}
+              onClick={isClickable ? () => onRowClick(schedule) : undefined}
+            >
+              <div className="min-w-0 font-medium">
+                {renamingId === schedule.id ? (
+                  <input
+                    type="text"
+                    value={renameDraft}
+                    autoFocus
+                    onClick={(e) => e.stopPropagation()}
+                    onChange={(e) => setRenameDraft(e.target.value)}
+                    onBlur={() => {
+                      setScheduleNames((prev) => ({ ...prev, [schedule.id]: renameDraft }))
+                      setRenamingId(null)
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        setScheduleNames((prev) => ({ ...prev, [schedule.id]: renameDraft }))
+                        setRenamingId(null)
+                      } else if (e.key === 'Escape') {
+                        setRenamingId(null)
+                      }
+                    }}
+                    className="h-8 w-full rounded-[4px] border border-[#EAEAEA] px-2 text-[14px] text-[#0a0a0a] focus:border-[#1d4ed8] focus:outline-none"
+                  />
+                ) : (
+                  <div className="flex items-center gap-2 min-w-0">
+                    {schedule.isScheduled && (
+                      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="shrink-0 text-[#4b535c]" aria-label="Scheduled batch">
+                        <circle cx="7" cy="7" r="5.5" stroke="currentColor" strokeWidth="1.5" />
+                        <path d="M7 4v3l2 1.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    )}
+                    <span className="block truncate">{displayName}</span>
+                  </div>
+                )}
+              </div>
+              <div className="min-w-0">
+                <div className="text-[14px] text-[#0a0a0a]">
+                  {schedule.createdDate}, {schedule.createdTime}
+                </div>
+                <div className="text-[12px] text-[#4b535c]">{schedule.createdBy}</div>
+              </div>
+              <div className="min-w-0 truncate">{schedule.movementType}</div>
+              <div className="min-w-0 truncate">{schedule.warehouse}</div>
+              <div className="min-w-0 truncate">{schedule.revenueIncrease}</div>
+              <div className="min-w-0">{formatScheduleMetric(schedule.uniqueTrips)}</div>
+              <div className="min-w-0">{formatScheduleMetric(schedule.transferUnits)}</div>
+              <div
+                className="relative flex items-center justify-end"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <button
+                  type="button"
+                  aria-label="Row actions"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setOpenKebabId(openKebabId === schedule.id ? null : schedule.id)
+                  }}
+                  className="flex size-8 items-center justify-center rounded-[4px] text-[#4b535c] hover:bg-[#F3F4F6] hover:text-[#0a0a0a]"
+                >
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
+                    <circle cx="8" cy="3" r="1.5" fill="currentColor" />
+                    <circle cx="8" cy="8" r="1.5" fill="currentColor" />
+                    <circle cx="8" cy="13" r="1.5" fill="currentColor" />
+                  </svg>
+                </button>
+                {openKebabId === schedule.id && (
+                  <div className="absolute right-0 top-full z-30 mt-1 w-[160px] rounded-[4px] border border-[#EAEAEA] bg-white py-1 shadow-[0px_8px_25px_0px_rgba(0,0,0,0.12)]">
+                    {actions.map((action) => renderKebabAction(action, schedule))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    </>
+  )
+}
+
+export default function OptimiserPage({ onAddJob, openAddJob, resetToUpcoming, openCreateSchedulePage, resetToRecommendationsLanding, onOpenScheduleDetail }) {
+  const [activeStatusTab, setActiveStatusTab] = useState('ongoing')
+  const [openKebabId, setOpenKebabId] = useState(null)
+  const [renamingId, setRenamingId] = useState(null)
+  const [renameDraft, setRenameDraft] = useState('')
+  const [scheduleNames, setScheduleNames] = useState(() =>
+    Object.fromEntries(ALL_SCHEDULE_LISTS.map((s) => [s.id, s.name]))
+  )
   const [isCreateSchedulePage, setIsCreateSchedulePage] = useState(false)
+  const [isAdhocFlow, setIsAdhocFlow] = useState(false)
+  const [adhocStep, setAdhocStep] = useState(1)
+  const [adhocMovementType, setAdhocMovementType] = useState([])
+  const [adhocApprovalMode, setAdhocApprovalMode] = useState('auto-approve')
+  const [adhocExceptions, setAdhocExceptions] = useState(() => createDefaultScheduleExceptions())
   const [locationScopeOption, setLocationScopeOption] = useState('all')
   const [warehouseInclude, setWarehouseInclude] = useState([])
   const [warehouseExclude, setWarehouseExclude] = useState([])
@@ -1583,219 +2080,22 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
       return next
     })
   }
-  const reviewStatusFilterOptions = [
-    { id: 'in review', label: 'In review' },
-    { id: 'upcoming', label: 'Upcoming' },
-    { id: 'submitted', label: 'Submitted' },
-  ]
-  const toggleReviewStatusFilter = (id) => {
-    setSelectedReviewStatuses((prev) =>
-      prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id]
-    )
-  }
   const statusTabs = [
-    { id: 'next', label: 'Next' },
+    { id: 'ongoing', label: 'Ongoing' },
     { id: 'upcoming', label: 'Upcoming' },
     { id: 'failed', label: 'Failed' },
     { id: 'submitted', label: 'Submitted' },
   ]
-  const nextSchedules = [
-    {
-      id: 'eu-monthly-rebal',
-      name: 'Europe monthly',
-      created: '24/02/2026',
-      deadline: '28/02/2026',
-      status: 'Ready to review',
-      exceptions: '12',
-      approved: '96',
-      pending: '25',
-      reviewProgress: { percent: 79, reviewed: 96, total: 121 },
-      metricTiles: [
-        { kind: 'trips', value: '113', title: 'Unique trips', subtitle: 'Across 8 routes' },
-        { kind: 'transfers', value: '2,308', title: 'Recommended transfers', subtitle: '94% auto-approved' },
-        { kind: 'revenue', value: '€501.1K', title: 'Revenue increase', subtitle: '+4.2% vs last run', subtitleAccent: true },
-        { kind: 'stockouts', value: '1,013 → 559', title: 'Stockouts resolved', subtitle: '-44.8% reduction', subtitleAccent: true },
-      ],
-      exceptionsTotal: 2,
-      exceptionsList: [
-        { description: 'Exception 1 — Transfer units lower than 10 · Location: Opéra' },
-        { description: 'Exception 2 — Product: A1252810, A12528YY, A13314YY' },
-      ],
-    },
-    {
-      id: 'uk-weekly-replen',
-      name: 'UK weekly replenishment',
-      created: '04/05/2026',
-      deadline: '01/06/2026',
-      status: 'Ready to review',
-      exceptions: '5',
-      approved: '42',
-      pending: '18',
-      reviewProgress: { percent: 45, reviewed: 38, total: 84 },
-      metricTiles: [
-        { kind: 'trips', value: '48', title: 'Unique trips', subtitle: 'Across 5 routes' },
-        { kind: 'transfers', value: '1,120', title: 'Recommended transfers', subtitle: '88% auto-approved' },
-        { kind: 'revenue', value: '€210.4K', title: 'Revenue increase', subtitle: '+2.1% vs last run', subtitleAccent: true },
-        { kind: 'stockouts', value: '512 → 304', title: 'Stockouts resolved', subtitle: '-40.6% reduction', subtitleAccent: true },
-      ],
-    },
-  ]
-  const parseDate = (dateStr) => {
-    const [day, month, year] = dateStr.split('/').map(Number)
-    return new Date(year, month - 1, day)
-  }
-  const today = new Date(2026, 2, 5) // 05/03/2026
-  const sortedNextSchedules = [...nextSchedules].sort((a, b) => {
-    const da = parseDate(a.deadline)
-    const db = parseDate(b.deadline)
-    return Math.abs(da - today) - Math.abs(db - today)
-  })
-  const viewOptions = [
-    { id: 'list', label: 'List', icon: 'list' },
-    { id: 'week', label: 'Week', icon: 'week' },
-    { id: 'month', label: 'Month', icon: 'month' },
-  ]
-  const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
-  const getMonday = (d) => {
-    const x = new Date(d)
-    x.setDate(d.getDate() - ((d.getDay() + 6) % 7))
-    return x
-  }
-  const monthGrid = (() => {
-    const y = viewDate.getFullYear()
-    const m = viewDate.getMonth()
-    const first = new Date(y, m, 1)
-    const last = new Date(y, m + 1, 0)
-    const start = getMonday(first)
-    const weeks = []
-    let d = new Date(start)
-    while (weeks.length < 6) {
-      const row = []
-      for (let i = 0; i < 7; i++) {
-        row.push(d.getMonth() === m ? d.getDate() : null)
-        d.setDate(d.getDate() + 1)
-      }
-      weeks.push(row)
-      if (d > last) break
-    }
-    return weeks
-  })()
-  const weekRow = (() => {
-    const mon = getMonday(new Date(viewDate))
-    return Array.from({ length: 7 }, (_, i) => {
-      const d = new Date(mon)
-      d.setDate(mon.getDate() + i)
-      return d
-    })
-  })()
-  const listMonthDates = (() => {
-    const y = viewDate.getFullYear()
-    const m = viewDate.getMonth()
-    const last = new Date(y, m + 1, 0).getDate()
-    return Array.from({ length: last }, (_, i) => i + 1)
-  })()
-  const viewTitle = activeViewOption === 'month' || activeViewOption === 'list'
-    ? `${monthNames[viewDate.getMonth()]} ${viewDate.getFullYear()}`
-    : (() => {
-        const mon = weekRow[0]
-        const sun = weekRow[6]
-        return `Week of ${mon.getDate()} ${monthNames[mon.getMonth()]} – ${sun.getDate()} ${monthNames[sun.getMonth()]} ${sun.getFullYear()}`
-      })()
-  const goPrev = () => {
-    if (activeViewOption === 'week') {
-      setViewDate((d) => { const x = new Date(d); x.setDate(d.getDate() - 7); return x })
-    } else {
-      setViewDate((d) => new Date(d.getFullYear(), d.getMonth() - 1, 1))
-    }
-  }
-  const goNext = () => {
-    if (activeViewOption === 'week') {
-      setViewDate((d) => { const x = new Date(d); x.setDate(d.getDate() + 7); return x })
-    } else {
-      setViewDate((d) => new Date(d.getFullYear(), d.getMonth() + 1, 1))
-    }
-  }
-  const getCellDate = (ri, ci) => {
-    const y = viewDate.getFullYear()
-    const m = viewDate.getMonth()
-    const start = getMonday(new Date(y, m, 1))
-    const d = new Date(start)
-    d.setDate(start.getDate() + ri * 7 + ci)
-    return d
-  }
-  const entryMatchesCell = (ri, ci, entry) => {
-    const cellDate = getCellDate(ri, ci)
-    return cellDate >= entry.startDate && cellDate <= entry.endDate && cellDate.getMonth() === entry.startDate.getMonth()
-  }
-  const getEntriesForCell = (ri, ci) => CALENDAR_ENTRIES.filter((e) => entryMatchesCell(ri, ci, e))
-  const openDrawerForEdit = (entry) => {
-    const e = entry || SAMPLE_CALENDAR_ENTRY
-    setPinnedHoverEntryId(null)
-    setEditingScheduleEntry(e)
-    setDrawerForm({
-      module: e.type || 'replenishment',
-      modules: e.type ? [e.type] : [],
-      name: e.title,
-      sending: e.from,
-      receiving: e.to,
-      repeats: 'weekly',
-      time: e.time.replace(/\s+PST$/, ''),
-      timeZone: 'pst',
-      endsOn: `${monthNames[e.endDate.getMonth()]} ${e.endDate.getDate()}, ${e.endDate.getFullYear()}`,
-      notify: '',
-    })
-    setScheduleDrawerDays({ Mon: true, Tue: false, Wed: true, Thu: false, Fri: true, Sat: false, Sun: false })
-    setScheduleDrawerOpen(true)
-  }
-  const closeDrawer = () => {
-    setScheduleDrawerOpen(false)
-    setEditingScheduleEntry(null)
-    setModuleDropdownOpen(false)
-  }
-  const toggleModule = (id) => {
-    setDrawerForm((f) => ({
-      ...f,
-      modules: f.modules.includes(id) ? f.modules.filter((m) => m !== id) : [...f.modules, id],
-    }))
-  }
-  const eventDatePickerGrid = (() => {
-    const y = eventDatePickerViewDate.getFullYear()
-    const m = eventDatePickerViewDate.getMonth()
-    const first = new Date(y, m, 1)
-    const last = new Date(y, m + 1, 0)
-    const start = getMonday(first)
-    const rows = []
-    let d = new Date(start)
-    for (let row = 0; row < 6; row++) {
-      const cells = []
-      for (let col = 0; col < 7; col++) {
-        cells.push({ date: d.getDate(), month: d.getMonth(), fullDate: new Date(d) })
-        d.setDate(d.getDate() + 1)
-      }
-      rows.push(cells)
-    }
-    return rows
-  })()
-  const isSameDay = (a, b) => a && b && a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
-  const eventDatePickerPrevMonth = () => setEventDatePickerViewDate((d) => new Date(d.getFullYear(), d.getMonth() - 1, 1))
-  const eventDatePickerNextMonth = () => setEventDatePickerViewDate((d) => new Date(d.getFullYear(), d.getMonth() + 1, 1))
-
-  useEffect(() => {
-    if (!openScheduleDrawer) return
-    setEditingScheduleEntry(null)
-    setDrawerForm(DEFAULT_DRAWER_FORM)
-    setScheduleDrawerDays({ Wed: true, Sat: true })
-    setScheduleDrawerOpen(true)
-  }, [openScheduleDrawer])
 
   useEffect(() => {
     if (!openAddJob) return
-    if (onAddJob) onAddJob()
-  }, [openAddJob, onAddJob])
+    setIsAdhocFlow(true)
+    setAdhocStep(1)
+  }, [openAddJob])
 
   useEffect(() => {
     if (!resetToUpcoming) return
-    setActiveStatusTab('next')
+    setActiveStatusTab('ongoing')
   }, [resetToUpcoming])
 
   useEffect(() => {
@@ -1913,6 +2213,248 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
     },
   ]
 
+  const ADHOC_WIZARD_STEPS = [
+    {
+      title: 'Scope',
+      subtitle: 'Define the movement type, products, and locations for this ad-hoc run.',
+      continueLabel: 'Continue to Approval & submission',
+    },
+    {
+      title: 'Approval & submission',
+      subtitle: 'Define how recommendations from this run are approved.',
+      continueLabel: 'Run recommendations',
+    },
+  ]
+
+  const scopeSelectionSectionProps = {
+    locationScopeOption,
+    setLocationScopeOption,
+    scopeActiveFilterEntries,
+    isMoreFiltersOpen,
+    setIsMoreFiltersOpen,
+    toggleExtraFilter,
+    extraVisibleFilters,
+    expandedFieldState,
+    updateExpandedField,
+    warehouseInclude,
+    setWarehouseInclude,
+    warehouseExclude,
+    setWarehouseExclude,
+    warehouseMode,
+    setWarehouseMode,
+    departmentInclude,
+    setDepartmentInclude,
+    departmentExclude,
+    setDepartmentExclude,
+    departmentMode,
+    setDepartmentMode,
+    seasonsInclude,
+    setSeasonsInclude,
+    seasonsExclude,
+    setSeasonsExclude,
+    seasonsMode,
+    setSeasonsMode,
+    productsInclude,
+    setProductsInclude,
+    productsExclude,
+    setProductsExclude,
+    productsMode,
+    setProductsMode,
+    locationTypesInclude,
+    setLocationTypesInclude,
+    locationTypesExclude,
+    setLocationTypesExclude,
+    locationTypesMode,
+    setLocationTypesMode,
+    locationsInclude,
+    setLocationsInclude,
+    locationsExclude,
+    setLocationsExclude,
+    locationsMode,
+    setLocationsMode,
+  }
+
+  if (isAdhocFlow) {
+    return (
+      <div className="mx-auto flex max-w-[1200px] flex-col gap-8 px-6">
+        {adhocStep < 3 && (
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => {
+                if (adhocStep === 1) {
+                  setIsAdhocFlow(false)
+                } else {
+                  setAdhocStep(1)
+                }
+              }}
+              className="flex items-center justify-center w-8 h-8 rounded-[4px] text-[#0a0a0a] hover:bg-[#e5e7eb]"
+              aria-label={adhocStep === 1 ? 'Back to recommendations' : 'Back to scope'}
+            >
+              <IconArrowLeft className="size-5" />
+            </button>
+            <h1 className="text-[24px] font-medium text-[#0a0a0a] leading-[100%]">
+              Use latest recommendations
+            </h1>
+          </div>
+        )}
+
+        {adhocStep < 3 && (
+          <div className="mt-2 mb-4 flex w-full gap-1">
+            {[0, 1].map((segmentIndex) => (
+              <div
+                key={segmentIndex}
+                className={`h-1 flex-1 rounded-full ${
+                  segmentIndex < adhocStep ? 'bg-[#1d4ed8]' : 'bg-[#e5e7eb]'
+                }`}
+              />
+            ))}
+          </div>
+        )}
+
+        {adhocStep < 3 && (
+          <div className="mb-6 flex items-start justify-between gap-4">
+            <div className="min-w-0">
+              {adhocStep === 1 ? (
+                <p className="text-[14px] font-medium text-[#0a0a0a]">Step 1 of 2</p>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setAdhocStep(1)}
+                  className="flex cursor-pointer items-center gap-1.5 text-[14px] font-medium text-[#1d4ed8] hover:underline"
+                >
+                  ← Step 2 of 2
+                </button>
+              )}
+              <h2 className="mt-1 text-[22px] font-semibold text-[#0a0a0a]">
+                {ADHOC_WIZARD_STEPS[adhocStep - 1].title}
+              </h2>
+              <p className="mt-1 text-[14px] text-[#4b535c]">
+                {ADHOC_WIZARD_STEPS[adhocStep - 1].subtitle}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setAdhocStep((step) => step + 1)}
+              disabled={adhocStep === 1 && adhocMovementType.length === 0}
+              className="shrink-0 rounded-[4px] bg-[#1d4ed8] px-5 py-2.5 text-[14px] font-medium text-white hover:bg-[#1e40af] disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {ADHOC_WIZARD_STEPS[adhocStep - 1].continueLabel}
+            </button>
+          </div>
+        )}
+
+        {adhocStep === 1 && (
+          <div className="border border-[#EAEAEA] rounded-[4px] bg-white overflow-visible">
+            <div className="px-5 pb-6 pt-2 flex flex-col gap-6">
+              <CreateScheduleScopeMultiSelect
+                label="Movement type"
+                placeholder="Select movement type"
+                options={['Replenishment', 'Rebalancing']}
+                includeValues={adhocMovementType}
+                onIncludeChange={setAdhocMovementType}
+                excludeValues={[]}
+                onExcludeChange={() => {}}
+                hideModeToggle={true}
+                showSelectedLabels={true}
+              />
+              <ScopeSelectionSection {...scopeSelectionSectionProps} />
+            </div>
+          </div>
+        )}
+
+        {adhocStep === 2 && (
+          <div className="border border-[#EAEAEA] rounded-[4px] bg-white overflow-visible">
+            <div className="px-5 pb-6 pt-5">
+              <div className="flex flex-col gap-3">
+                <label
+                  className={`flex cursor-pointer items-start gap-3 rounded-[10px] border bg-white p-4 hover:border-[#1d4ed8]/40 has-[:checked]:border-[#1d4ed8] ${
+                    adhocApprovalMode === 'auto-approve' ? 'border-[#1d4ed8]' : 'border-[#e5e7eb]'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="adhocApprovalMode"
+                    value="auto-approve"
+                    checked={adhocApprovalMode === 'auto-approve'}
+                    onChange={() => setAdhocApprovalMode('auto-approve')}
+                    className="mt-1 size-4 shrink-0 border-[#e5e7eb] text-[#1d4ed8] focus:ring-[#1d4ed8]"
+                  />
+                  <div className="flex min-w-0 flex-col gap-1">
+                    <span className="text-[14px] font-medium text-[#0a0a0a]">Auto-approve recommendations</span>
+                    <span className="text-[12px] font-normal text-[#4b535c]">
+                      Recommendations are auto-approved by default. Define exceptions below to flag specific
+                      recommendations for manual review.
+                    </span>
+                  </div>
+                </label>
+
+                <label
+                  className={`flex cursor-pointer items-start gap-3 rounded-[10px] border bg-white p-4 hover:border-[#1d4ed8]/40 has-[:checked]:border-[#1d4ed8] ${
+                    adhocApprovalMode === 'manual-review' ? 'border-[#1d4ed8]' : 'border-[#e5e7eb]'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="adhocApprovalMode"
+                    value="manual-review"
+                    checked={adhocApprovalMode === 'manual-review'}
+                    onChange={() => setAdhocApprovalMode('manual-review')}
+                    className="mt-1 size-4 shrink-0 border-[#e5e7eb] text-[#1d4ed8] focus:ring-[#1d4ed8]"
+                  />
+                  <div className="flex min-w-0 flex-col gap-1">
+                    <span className="text-[14px] font-medium text-[#0a0a0a]">Manual review required</span>
+                    <span className="text-[12px] font-normal text-[#4b535c]">
+                      No recommendations auto-submit. Every recommendation requires user review before the
+                      submission deadline.
+                    </span>
+                  </div>
+                </label>
+              </div>
+
+              {adhocApprovalMode === 'auto-approve' && (
+                <div className="mt-4">
+                  <h4 className="mb-2 text-[13px] font-medium uppercase tracking-[0.04em] text-[#0a0a0a]">Exceptions</h4>
+                  <p className="mb-3 text-[12px] text-[#4b535c]">
+                    Recommendations matching these conditions will be flagged for manual review instead of
+                    auto-approved.
+                  </p>
+                  <ScheduleBlockApprovalExceptions
+                    block={{ id: 'adhoc', approvalMode: adhocApprovalMode, exceptions: adhocExceptions }}
+                    onUpdate={(updates) => {
+                      if (updates.exceptions !== undefined) setAdhocExceptions(updates.exceptions)
+                    }}
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {adhocStep === 3 && (
+          <div className="flex flex-col items-center justify-center gap-4 min-h-[400px]">
+            <div className="size-12 rounded-full border-4 border-[#e5e7eb] border-t-[#1d4ed8] animate-spin" aria-hidden />
+            <h2 className="text-[18px] font-medium text-[#0a0a0a]">Running solver...</h2>
+            <p className="text-[14px] text-[#4b535c] text-center max-w-md">
+              This can take up to 15 minutes. We&apos;ll notify you when your recommendations are ready.
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                setIsAdhocFlow(false)
+                setActiveStatusTab('ongoing')
+                onOpenScheduleDetail && onOpenScheduleDetail(ongoingSchedules[0])
+              }}
+              className="text-[14px] text-[#1d4ed8] hover:underline"
+            >
+              Show results
+            </button>
+          </div>
+        )}
+      </div>
+    )
+  }
+
   if (isCreateSchedulePage) {
     return (
       <div className="mx-auto flex max-w-[1200px] flex-col gap-8 px-6">
@@ -1985,100 +2527,7 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
         {currentStep === 1 && (
           <div className="border border-[#EAEAEA] rounded-[4px] bg-white overflow-visible">
             <div className="px-5 pb-6 pt-2 flex flex-col gap-6">
-                <section className="flex flex-col gap-3">
-                  <h3 className="text-[14px] font-medium text-[#0a0a0a]">
-                    Which products and locations does this schedule cover?
-                  </h3>
-                  <div className="flex flex-col gap-3">
-                    <label className="flex items-start gap-3 p-4 rounded-[10px] border border-[#e5e7eb] bg-white cursor-pointer hover:border-[#0267ff]/40 has-[:checked]:border-[#0267ff]">
-                      <input
-                        type="radio"
-                        name="locationScopeOption"
-                        value="all"
-                        checked={locationScopeOption === 'all'}
-                        onChange={() => setLocationScopeOption('all')}
-                        className="mt-1 size-4 shrink-0 border-[#e5e7eb] text-[#0267ff] focus:ring-[#0267ff]"
-                      />
-                      <div className="flex flex-col gap-1 min-w-0">
-                        <span className="text-[14px] font-medium text-[#0a0a0a]">All products and locations</span>
-                        <span className="text-[12px] font-normal text-[#4b535c]">
-                          Sol will evaluate your entire product catalogue and network.
-                        </span>
-                      </div>
-                    </label>
-                    <label className="flex items-start gap-3 p-4 rounded-[10px] border border-[#e5e7eb] bg-white cursor-pointer hover:border-[#0267ff]/40 has-[:checked]:border-[#0267ff]">
-                      <input
-                        type="radio"
-                        name="locationScopeOption"
-                        value="select"
-                        checked={locationScopeOption === 'select'}
-                        onChange={() => setLocationScopeOption('select')}
-                        className="mt-1 size-4 shrink-0 border-[#e5e7eb] text-[#0267ff] focus:ring-[#0267ff]"
-                      />
-                      <div className="flex flex-col gap-1 min-w-0">
-                        <span className="text-[14px] font-medium text-[#0a0a0a]">Select products and locations</span>
-                        <span className="text-[12px] font-normal text-[#4b535c]">
-                          Choose specific products, locations, regions, or countries to{' '}
-                          <strong className="font-semibold">include</strong> in this schedule.
-                        </span>
-                      </div>
-                    </label>
-                  </div>
-
-                  {locationScopeOption === 'select' && (
-                    <>
-                      <ActiveFilterChips entries={scopeActiveFilterEntries} />
-                      <CreateScheduleScopeFilterPanel
-                      warehouseInclude={warehouseInclude}
-                      setWarehouseInclude={setWarehouseInclude}
-                      warehouseExclude={warehouseExclude}
-                      setWarehouseExclude={setWarehouseExclude}
-                      warehouseMode={warehouseMode}
-                      setWarehouseMode={setWarehouseMode}
-                      departmentInclude={departmentInclude}
-                      setDepartmentInclude={setDepartmentInclude}
-                      departmentExclude={departmentExclude}
-                      setDepartmentExclude={setDepartmentExclude}
-                      departmentMode={departmentMode}
-                      setDepartmentMode={setDepartmentMode}
-                      seasonsInclude={seasonsInclude}
-                      setSeasonsInclude={setSeasonsInclude}
-                      seasonsExclude={seasonsExclude}
-                      setSeasonsExclude={setSeasonsExclude}
-                      seasonsMode={seasonsMode}
-                      setSeasonsMode={setSeasonsMode}
-                      productsInclude={productsInclude}
-                      setProductsInclude={setProductsInclude}
-                      productsExclude={productsExclude}
-                      setProductsExclude={setProductsExclude}
-                      productsMode={productsMode}
-                      setProductsMode={setProductsMode}
-                      locationTypesInclude={locationTypesInclude}
-                      setLocationTypesInclude={setLocationTypesInclude}
-                      locationTypesExclude={locationTypesExclude}
-                      setLocationTypesExclude={setLocationTypesExclude}
-                      locationTypesMode={locationTypesMode}
-                      setLocationTypesMode={setLocationTypesMode}
-                      locationsInclude={locationsInclude}
-                      setLocationsInclude={setLocationsInclude}
-                      locationsExclude={locationsExclude}
-                      setLocationsExclude={setLocationsExclude}
-                      locationsMode={locationsMode}
-                      setLocationsMode={setLocationsMode}
-                      extraVisibleFilters={extraVisibleFilters}
-                      expandedFieldState={expandedFieldState}
-                      updateExpandedField={updateExpandedField}
-                    />
-                      <CreateScheduleMoreFiltersMenu
-                        isOpen={isMoreFiltersOpen}
-                        onToggle={() => setIsMoreFiltersOpen((v) => !v)}
-                        onClose={() => setIsMoreFiltersOpen(false)}
-                        extraVisibleFilters={extraVisibleFilters}
-                        onToggleExtraFilter={toggleExtraFilter}
-                      />
-                    </>
-                  )}
-                </section>
+              <ScopeSelectionSection {...scopeSelectionSectionProps} />
             </div>
           </div>
         )}
@@ -2155,11 +2604,19 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
     )
   }
 
+  const sharedKebabProps = {
+    scheduleNames,
+    setScheduleNames,
+    openKebabId,
+    setOpenKebabId,
+    renamingId,
+    setRenamingId,
+    renameDraft,
+    setRenameDraft,
+  }
+
   return (
     <div className="flex flex-col gap-0">
-      {pinnedHoverEntryId && activeStatusTab === 'upcoming' && (
-        <div role="presentation" className="fixed inset-0 z-40" onClick={() => { setPinnedHoverEntryId(null); setPinnedHoverCellKey(null) }} aria-hidden />
-      )}
       <nav className="flex items-center gap-6 h-11">
         {statusTabs.map((tab) => {
           const isActive = activeStatusTab === tab.id
@@ -2180,790 +2637,18 @@ export default function OptimiserPage({ onAddJob, openScheduleDrawer, openAddJob
         })}
       </nav>
       {activeStatusTab === 'upcoming' ? (
-        <>
-          <div className="mt-6 flex flex-col gap-6" data-name="Optimiser" data-node-id="174:2696">
-            <div>
-              <p className="text-[16px] font-medium text-[#0a0a0a] leading-tight">Optimiser Schedule & jobs</p>
-              <p className="text-[14px] font-normal text-[#4b535c]">Perform all job and schedule actions for all your upcoming inventory</p>
-            </div>
-            <div className="flex flex-wrap items-center justify-between gap-4">
-              <div className="bg-white border border-[#e9eaeb] flex gap-[var(--spacing-s,8px)] items-center p-[var(--spacing-xxs,4px)] rounded-[var(--border-radius-s,4px)] shrink-0 h-12" data-name="segment-control" data-node-id="202:3165">
-                {typeFilters.map((f) => {
-                  const isActive = activeTypeFilter === f.id
-                  return (
-                    <button
-                      key={f.id}
-                      type="button"
-                      onClick={() => setActiveTypeFilter(f.id)}
-                      className={`flex gap-[var(--spacing-xs,6px)] items-center justify-center max-h-[32px] p-[var(--spacing-s,8px)] rounded-[2px] shrink-0 text-[14px] text-center whitespace-nowrap ${isActive ? 'bg-[#f8f8f8] font-medium text-[#0a0a0a]' : 'font-normal text-[#4b535c]'}`}
-                      data-name="Segment element"
-                    >
-                      {f.icon === 'replenishment' && <IconReplenishment className="text-[#22272f] size-4 shrink-0" aria-hidden />}
-                      {f.icon === 'reorder' && <IconReorder className="text-[#22272f] size-4 shrink-0" aria-hidden />}
-                      {f.icon === 'rebalancing' && <IconRebalancing className="text-[#22272f] size-4 shrink-0" aria-hidden />}
-                      <span>{f.label}</span>
-                    </button>
-                  )
-                })}
-              </div>
-              <div className="flex items-center gap-2 ml-auto shrink-0">
-                <div className="flex items-center gap-2 relative" data-name="Review status multiselect" data-node-id="12771:5757">
-                  <button
-                    type="button"
-                    onClick={() => { setReviewStatusDropdownOpen((o) => !o); setEventDatePickerOpen(false) }}
-                    className={`flex items-center justify-between gap-2 h-12 px-4 py-3 rounded-[4px] bg-white text-[16px] font-medium text-left shrink-0 min-w-[160px] border ${reviewStatusDropdownOpen ? 'border-[#0267ff]' : 'border-[#e9eaeb]'}`}
-                  >
-                    <span className={selectedReviewStatuses.length === 0 ? 'text-[#0a0a0a]' : 'text-[#0a0a0a]'}>
-                      Review status
-                      {selectedReviewStatuses.length > 0 && (
-                        <span className="text-[#4b535c] font-normal">
-                          {' · '}
-                          {selectedReviewStatuses.length === reviewStatusFilterOptions.length
-                            ? 'Upcoming, In review, Submitted'
-                            : reviewStatusFilterOptions.filter((o) => selectedReviewStatuses.includes(o.id)).map((o) => o.label).join(', ')}
-                        </span>
-                      )}
-                    </span>
-                    <IconChevronDown className="text-[#22272f] size-4 shrink-0" aria-hidden />
-                  </button>
-                  {reviewStatusDropdownOpen && (
-                    <>
-                      <div role="presentation" className="fixed inset-0 z-40" onClick={() => setReviewStatusDropdownOpen(false)} aria-hidden />
-                      <div
-                        className="absolute left-0 top-full mt-1 z-50 w-full min-w-[200px] bg-white border border-[#e9eaeb] rounded-[4px] p-2 shadow-[0px_8px_25px_0px_rgba(0,0,0,0.12)]"
-                        data-name="Dropdown list"
-                        data-node-id="12771:5850"
-                      >
-                        {reviewStatusFilterOptions.map((opt) => {
-                          const selected = selectedReviewStatuses.includes(opt.id)
-                          return (
-                            <button
-                              key={opt.id}
-                              type="button"
-                              onClick={() => toggleReviewStatusFilter(opt.id)}
-                              className="w-full flex gap-2 items-center p-3 rounded-[3px] text-left hover:bg-[#f8f8f8] focus:bg-[#f8f8f8]"
-                              data-name="Dropdown item"
-                            >
-                              <span className="flex items-center justify-center shrink-0 size-6">
-                                <span className={`flex items-center justify-center rounded-[4px] size-5 border-2 ${selected ? 'bg-[#0267ff] border-[#0267ff]' : 'bg-white border-[#e5e7eb]'}`}>
-                                  {selected && (
-                                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="text-white"><path d="M2 6l3 3 5-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                                  )}
-                                </span>
-                              </span>
-                              <span className="flex-1 text-[12px] font-medium text-[#0a0a0a] leading-normal">{opt.label}</span>
-                            </button>
-                          )
-                        })}
-                      </div>
-                    </>
-                  )}
-                </div>
-                <div className="flex items-center gap-2 relative">
-                  <button
-                    type="button"
-                    onClick={() => { setEventDatePickerOpen((o) => !o); setEventDatePickerViewDate(eventDateSelected || new Date(2026, 1, 1)); setReviewStatusDropdownOpen(false) }}
-                    className="flex items-center gap-[var(--spacing-s,8px)] h-12 px-[var(--spacing-l,16px)] py-[var(--spacing-m,12px)] rounded-[var(--border-radius-s,4px)] bg-white border border-[#e9eaeb] text-[16px] font-medium text-[#0a0a0a] shrink-0"
-                    data-name="Button"
-                    data-node-id="202:3228"
-                  >
-                    <IconCalendarSidebar className="text-[#22272f] size-4 shrink-0" aria-hidden data-name="icon" data-node-id="I202:3228;12027:34152" />
-                    <span data-node-id="I202:3228;12027:34153">Event Date</span>
-                  </button>
-                  {eventDatePickerOpen && (
-                    <>
-                      <div role="presentation" className="fixed inset-0 z-40" onClick={() => setEventDatePickerOpen(false)} aria-hidden />
-                      <div className="absolute left-0 top-full mt-2 z-50 w-[336px] bg-white border border-[#e9eaeb] rounded-[4px] p-4 flex flex-col gap-3 shadow-lg" data-name="Datepicker" data-node-id="2360:105506">
-                        <div className="flex items-center justify-between p-1">
-                          <button type="button" onClick={eventDatePickerPrevMonth} className="flex items-center justify-center h-10 w-10 rounded-[4px] text-[#0a0a0a] hover:bg-[#f3f4f6]" aria-label="Previous month">
-                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 4L6 8l4 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                          </button>
-                          <p className="text-[18px] font-medium text-[#0a0a0a] leading-none">
-                            {monthNames[eventDatePickerViewDate.getMonth()]}, {eventDatePickerViewDate.getFullYear()}
-                          </p>
-                          <button type="button" onClick={eventDatePickerNextMonth} className="flex items-center justify-center h-10 w-10 rounded-[4px] text-[#0a0a0a] hover:bg-[#f3f4f6]" aria-label="Next month">
-                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                          </button>
-                        </div>
-                        <div className="flex flex-col gap-0">
-                          <div className="grid grid-cols-7">
-                            {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((wd) => (
-                              <div key={wd} className="size-12 flex items-center justify-center text-[14px] font-medium text-[#4b535c]">
-                                {wd}
-                              </div>
-                            ))}
-                          </div>
-                          {eventDatePickerGrid.map((row, ri) => (
-                            <div key={ri} className="grid grid-cols-7">
-                              {row.map((cell, ci) => {
-                                const inMonth = cell.month === eventDatePickerViewDate.getMonth()
-                                const selected = isSameDay(cell.fullDate, eventDateSelected)
-                                return (
-                                  <div key={`${ri}-${ci}`} className="size-12 flex items-center justify-center p-1">
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        setEventDateSelected(cell.fullDate)
-                                        setViewDate(new Date(cell.fullDate.getFullYear(), cell.fullDate.getMonth(), 1))
-                                        setEventDatePickerOpen(false)
-                                      }}
-                                      className={`size-10 flex items-center justify-center rounded-[2px] text-[14px] ${selected ? 'bg-[#0267ff] text-white font-medium' : inMonth ? 'text-[#0a0a0a] hover:bg-[#f3f4f6]' : 'text-[#4b535c] opacity-50 hover:bg-[#f3f4f6]'}`}
-                                    >
-                                      {cell.date}
-                                    </button>
-                                  </div>
-                                )
-                              })}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </>
-                  )}
-                </div>
-                <div className="bg-white border border-[#e9eaeb] flex gap-[var(--spacing-s,8px)] items-center p-[var(--spacing-xxs,4px)] rounded-[var(--border-radius-s,4px)] shrink-0 h-12" data-name="segment-control" data-node-id="203:1343">
-                  {viewOptions.map((v) => {
-                    const isActive = activeViewOption === v.id
-                    return (
-                      <button
-                        key={v.id}
-                        type="button"
-                        onClick={() => setActiveViewOption(v.id)}
-                        className={`flex gap-[var(--spacing-xs,6px)] items-center justify-center max-h-[32px] p-[var(--spacing-s,8px)] rounded-[2px] shrink-0 text-[14px] text-center whitespace-nowrap ${isActive ? 'bg-[#f8f8f8] font-medium text-[#0a0a0a]' : 'font-normal text-[#4b535c]'}`}
-                        data-name="Segment element"
-                      >
-                        {v.icon === 'list' && <IconList className="text-[#22272f] size-4 shrink-0" aria-hidden />}
-                        {v.icon === 'week' && <IconCalendarNote className="text-[#22272f] size-4 shrink-0" aria-hidden />}
-                        {v.icon === 'month' && <IconCalendarSidebar className="text-[#22272f] size-4 shrink-0" aria-hidden />}
-                        <span>{v.label}</span>
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="flex flex-col gap-6">
-            <div className="flex items-center gap-4 h-7">
-              <button type="button" onClick={goPrev} className="rounded size-7 flex items-center justify-center text-[#0a0a0a] hover:bg-[#f3f4f6]" aria-label={activeViewOption === 'week' ? 'Previous week' : 'Previous month'}>
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M12 4l-6 6 6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
-              </button>
-              <h2 className="text-[20px] font-medium text-[#0a0a0a] tracking-tight">{viewTitle}</h2>
-              <button type="button" onClick={goNext} className="rounded size-7 flex items-center justify-center text-[#0a0a0a] hover:bg-[#f3f4f6]" aria-label={activeViewOption === 'week' ? 'Next week' : 'Next month'}>
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M8 4l6 6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
-              </button>
-            </div>
-            {activeViewOption === 'month' && (
-            <div className="border border-[#e5e7eb] rounded-[10px] overflow-visible relative">
-              <div className="grid grid-cols-7 bg-[#f3f4f6] border-b border-[#e5e7eb]">
-                {weekDays.map((day) => (
-                  <div key={day} className="py-3 text-center text-[14px] font-medium text-[#364153] border-r border-[#e5e7eb] last:border-r-0">
-                    {day}
-                  </div>
-                ))}
-              </div>
-              <div className="grid grid-cols-7">
-                {monthGrid.map((row, ri) =>
-                  row.map((date, ci) => {
-                    const rawCellEntries = date !== null ? getEntriesForCell(ri, ci) : []
-                    const byReview =
-                      selectedReviewStatuses.length === 0
-                        ? rawCellEntries
-                        : rawCellEntries.filter((e) =>
-                            selectedReviewStatuses.includes(entryReviewStatus[e.id] || 'upcoming')
-                          )
-                    const cellEntries = activeTypeFilter === 'all'
-                      ? byReview
-                      : byReview.filter((e) => e.type === activeTypeFilter)
-                    const cellDate = getCellDate(ri, ci)
-                    const isEventDate = eventDateSelected && isSameDay(cellDate, eventDateSelected)
-                    const cellKey = `${ri}-${ci}`
-                    return (
-                      <div
-                        key={`${ri}-${ci}`}
-                        className={`min-h-[80px] p-2 border-b border-[#e5e7eb] text-[14px] text-[#0a0a0a] ${ci < 6 ? 'border-r' : ''} ${date === null ? 'text-[#9ca3af]' : ''} ${cellEntries.length > 0 ? 'cursor-pointer' : ''} ${isEventDate ? 'bg-[#ebf3ff] ring-2 ring-inset ring-[#0267ff]' : 'bg-white'}`}
-                      >
-                        {date ?? ''}
-                        {cellEntries.map((entry) => {
-                          const Icon = entry.type === 'reorder' ? IconReorder : entry.type === 'rebalancing' ? IconRebalancing : IconReplenishment
-                          const reviewStatus = entryReviewStatus[entry.id] || 'upcoming'
-                          const reviewLabel = reviewStatus === 'in review' ? 'In review' : reviewStatus === 'submitted' ? 'Submitted' : 'Upcoming'
-                          const isPopoverOpen = (pinnedHoverEntryId === entry.id && pinnedHoverCellKey === cellKey) || (hoveredEntryId === entry.id && hoveredCellKey === cellKey && !pinnedHoverEntryId)
-                          const clearHoverLater = () => {
-                            if (hoverLeaveTimeoutRef.current) clearTimeout(hoverLeaveTimeoutRef.current)
-                            hoverLeaveTimeoutRef.current = setTimeout(() => { setHoveredEntryId(null); setHoveredCellKey(null) }, 150)
-                          }
-                          const setHovered = () => {
-                            if (hoverLeaveTimeoutRef.current) {
-                              clearTimeout(hoverLeaveTimeoutRef.current)
-                              hoverLeaveTimeoutRef.current = null
-                            }
-                            setHoveredEntryId(entry.id)
-                            setHoveredCellKey(cellKey)
-                          }
-                          return (
-                            <div key={entry.id} className="relative group mt-1 w-fit">
-                              <div
-                                className={`px-2 py-1 rounded-[var(--Border-radius-m,6px)] border border-[var(--tokens-stroke-or-resting,#e9eaeb)] flex flex-col gap-1 w-fit shrink-0 cursor-pointer ${reviewStatus === 'in review' ? 'bg-[var(--tokens-destructive-50,#FFEAEA)]' : reviewStatus === 'submitted' ? 'bg-[var(--tokens-success-50,#E4F4EF)]' : 'bg-[var(--tokens-warning-50,#FFF6E5)]'}`}
-                                onClick={() => {
-                                  if (pinnedHoverEntryId === entry.id && pinnedHoverCellKey === cellKey) {
-                                    setPinnedHoverEntryId(null)
-                                    setPinnedHoverCellKey(null)
-                                  } else {
-                                    setPinnedHoverEntryId(entry.id)
-                                    setPinnedHoverCellKey(cellKey)
-                                  }
-                                }}
-                                onMouseEnter={setHovered}
-                                onMouseLeave={clearHoverLater}
-                              >
-                                <div className="flex items-center gap-1.5 text-[12px] font-medium text-[var(--Tokens-Foreground,#00050A)]">
-                                  <Icon className="size-3.5 shrink-0" aria-hidden />
-                                  {entry.title}
-                                </div>
-                                <div className="flex items-center gap-[5px]">
-                                  <span className="text-[12px] text-[#4b535c] leading-normal">Review</span>
-                                  <span className="bg-white border border-[#bfd9ff] px-1 py-0.5 rounded-[5px] text-[12px] text-[#0a0a0a] leading-normal shrink-0">{reviewLabel}</span>
-                                </div>
-                              </div>
-                              <div
-                                role="dialog"
-                                aria-label="Schedule details"
-                                className={`absolute left-[100%] top-0 ml-2 w-[320px] rounded-[12px] bg-white border border-[#e9eaeb] shadow-lg overflow-hidden z-50 transition-opacity ${isPopoverOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
-                                onMouseEnter={setHovered}
-                                onMouseLeave={clearHoverLater}
-                              >
-                                <div className="p-4 flex flex-col gap-3">
-                                  <div className="flex items-start justify-between gap-2">
-                                    <div className="flex items-center gap-2">
-                                      <span className="flex items-center justify-center w-8 h-8 rounded-[8px] bg-[#ebf3ff] text-[#0267ff]">
-                                        <Icon className="size-4" />
-                                      </span>
-                                      <div>
-                                        <p className="text-[14px] font-medium text-[#0a0a0a]">{entry.title}</p>
-                                        <p className="text-[12px] text-[#4b535c]">
-                                          {monthNames[entry.startDate.getMonth()]} {entry.startDate.getDate()} – {entry.endDate.getDate()}, {entry.endDate.getFullYear()}
-                                        </p>
-                                      </div>
-                                    </div>
-                                    <button type="button" onClick={() => openDrawerForEdit(entry)} className="shrink-0 h-8 px-3 rounded-[4px] text-[13px] font-medium text-[#0267ff] hover:bg-[#ebf3ff]">
-                                      Edit schedule
-                                    </button>
-                                  </div>
-                                  <div className="flex flex-col gap-1.5">
-                                    <p className="text-[12px] font-medium text-[#4b535c]">Review status</p>
-                                    <p className="text-[14px] font-medium text-[#0a0a0a]">{reviewLabel}</p>
-                                  </div>
-                                  <div className="h-px bg-[#e9eaeb]" />
-                                  <div className="flex items-center gap-2 text-[13px] text-[#0a0a0a]">
-                                    <span className="text-[#4b535c]">{entry.from}</span>
-                                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="shrink-0 text-[#4b535c]"><path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                                    <span className="text-[#4b535c]">{entry.to}</span>
-                                  </div>
-                                  <p className="text-[13px] text-[#4b535c]">{entry.time}</p>
-                                  <div className="h-px bg-[#e9eaeb]" />
-                                  <div className="flex justify-between text-[13px]">
-                                    <span className="text-[#4b535c]">Transfer units</span>
-                                    <span className="text-[#0a0a0a] font-medium">{entry.transferUnits}</span>
-                                  </div>
-                                  <div className="flex justify-between text-[13px]">
-                                    <span className="text-[#4b535c]">Available to send</span>
-                                    <span className="text-[#0a0a0a] font-medium">{entry.availableToSend}</span>
-                                  </div>
-                                  <div className="flex justify-between items-center text-[13px]">
-                                    <span className="text-[#4b535c]">Trip type</span>
-                                    <span className="text-[#0a0a0a] font-medium flex items-center gap-1"><IconTruck className="size-3.5" /> {entry.tripType}</span>
-                                  </div>
-                                  <div className="h-px bg-[#e9eaeb]" />
-                                  <div className="rounded-[8px] bg-[#eff6ff] p-3 flex flex-col gap-2">
-                                    <div className="flex justify-between items-center text-[13px]">
-                                      <span className="text-[#4b535c]">Recommended units</span>
-                                      <span className="text-[#0a0a0a] font-medium flex items-center gap-1"><IconTrendUp className="size-3.5" /> {entry.recommendedUnits}</span>
-                                    </div>
-                                    <div className="flex justify-between text-[13px]">
-                                      <span className="text-[#4b535c]">Revenue increase</span>
-                                      <span className="font-medium text-[#08A16A]">${entry.revenueIncrease}</span>
-                                    </div>
-                                  </div>
-                                  <div className="h-px bg-[#e9eaeb]" />
-                                  <div className="flex items-start gap-2">
-                                    <IconLightbulb className="size-4 text-[#4b535c] shrink-0 mt-0.5" />
-                                    <div>
-                                      <p className="text-[13px] font-medium text-[#0a0a0a]">Recommendation reasons</p>
-                                      <ul className="mt-1 text-[13px] text-[#4b535c] list-disc list-inside">
-                                        {entry.reasons.map((r) => (
-                                          <li key={r}>{r}</li>
-                                        ))}
-                                      </ul>
-                                    </div>
-                                  </div>
-                                  <button
-                                    type="button"
-                                    onClick={() => openDrawerForEdit(entry)}
-                                    className="w-full h-10 px-4 rounded-[4px] bg-[#0267ff] text-white text-[16px] font-medium flex items-center justify-center gap-2 shrink-0"
-                                  >
-                                    <IconEdit />
-                                    Edit Job
-                                  </button>
-                                </div>
-                              </div>
-                            </div>
-                          )
-                        })}
-                      </div>
-                    )
-                  })
-                )}
-              </div>
-            </div>
-          )}
-            {activeViewOption === 'week' && (
-            <div className="border border-[#e5e7eb] rounded-[10px] overflow-hidden">
-              <div className="grid grid-cols-7 bg-[#f3f4f6] border-b border-[#e5e7eb]">
-                {weekDays.map((day) => (
-                  <div key={day} className="py-3 text-center text-[14px] font-medium text-[#364153] border-r border-[#e5e7eb] last:border-r-0">
-                    {day}
-                  </div>
-                ))}
-              </div>
-              <div className="grid grid-cols-7">
-                {weekRow.map((d, i) => (
-                  <div key={i} className="min-h-[80px] p-2 border-r border-[#e5e7eb] bg-white text-[14px] text-[#0a0a0a] last:border-r-0">
-                    {d.getDate()}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-            {activeViewOption === 'list' && (
-            <div className="border border-[#e5e7eb] rounded-[10px] overflow-hidden">
-              <div className="bg-[#f3f4f6] border-b border-[#e5e7eb] py-3 px-4 text-[14px] font-medium text-[#364153]">
-                {monthNames[viewDate.getMonth()]} {viewDate.getFullYear()} – list
-              </div>
-              <div className="divide-y divide-[#e5e7eb] bg-white">
-                {listMonthDates.length === 0 ? (
-                  <div className="py-8 px-4 text-[14px] text-[#4b535c] text-center">No schedules</div>
-                ) : (
-                  listMonthDates.map((date) => (
-                    <div key={date} className="flex items-center gap-4 min-h-[48px] px-4 py-2 text-[14px] text-[#0a0a0a]">
-                      <span className="font-medium w-8">{date}</span>
-                      <span className="text-[#4b535c]">{monthNames[viewDate.getMonth()].slice(0, 3)}</span>
-                      <span className="text-[#4b535c] flex-1">No schedule</span>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-          )}
-          </div>
-        </>
-      ) : activeStatusTab === 'next' ? (
-        <div className="mt-[10px] space-y-4">
-          {sortedNextSchedules.map((schedule) => {
-            const deadlineDate = parseDate(schedule.deadline)
-            const isDeadlinePast = deadlineDate < today
-            const deadlineBadgeClass = isDeadlinePast
-              ? 'bg-[#fee2e2] text-[#E30D3C]'
-              : schedule.id === 'uk-weekly-replen'
-                ? 'bg-[#fef3c7] text-[#92400e]'
-                : 'bg-[#fce7f3] text-[#9d174d]'
-            const rp = schedule.reviewProgress ?? { percent: 0, reviewed: 0, total: 0 }
-            const tiles = schedule.metricTiles ?? []
-            const renderTileIcon = (kind) => {
-              const iconClass = 'size-[18px] shrink-0'
-              const iconBox = (bgClass, icon) => (
-                <div
-                  className={`flex size-10 shrink-0 items-center justify-center rounded-[8px] ${bgClass}`}
-                  aria-hidden
-                >
-                  {icon}
-                </div>
-              )
-              switch (kind) {
-                case 'trips':
-                  return iconBox(
-                    'bg-[#eff6ff]',
-                    <Truck className={`${iconClass} text-[#3b82f6]`} strokeWidth={1.75} aria-hidden />
-                  )
-                case 'transfers':
-                  return iconBox(
-                    'bg-[#EFEFFD]',
-                    <Network className={`${iconClass} text-[#6864E6]`} strokeWidth={1.75} aria-hidden />
-                  )
-                case 'revenue':
-                  return iconBox(
-                    'bg-[#ecfdf5]',
-                    <TrendingUp className={`${iconClass} text-[#08A16A]`} strokeWidth={1.75} aria-hidden />
-                  )
-                case 'stockouts':
-                  return iconBox(
-                    'bg-[#ecfdf5]',
-                    <ShieldCheck className={`${iconClass} text-[#08A16A]`} strokeWidth={1.75} aria-hidden />
-                  )
-                default:
-                  return null
-              }
-            }
-            return (
-            <div
-              key={schedule.id}
-              className={`bg-white border border-[#EAEAEA] rounded-[3.42px] p-5 flex flex-col gap-4 w-full${onOpenScheduleDetail ? ' group cursor-pointer' : ''}`}
-              onClick={() => onOpenScheduleDetail && onOpenScheduleDetail(schedule)}
-            >
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div className="flex flex-wrap items-center gap-2 min-w-0">
-                  <h2 className="text-lg md:text-xl font-medium text-[#0a0a0a] group-hover:text-[#3b82f6]">
-                    {schedule.name}
-                  </h2>
-                  <span className="inline-flex items-center rounded-full bg-[#ecfdf5] text-[#047857] text-[12px] font-medium px-2.5 py-0.5">
-                    {schedule.status}
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                  }}
-                  className="inline-flex h-10 shrink-0 items-center justify-center rounded-[4px] border border-solid border-[#e9eaeb] bg-white px-4 py-0 text-[16px] font-medium text-[#00050a] transition-colors hover:bg-[#f9fafb]"
-                  data-name="Button"
-                  data-node-id="12027:34155"
-                >
-                  Submit
-                </button>
-              </div>
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-[#4b535c]">
-                <span className="inline-flex items-center gap-2 flex-wrap">
-                  <span className="text-[#4b535c]">Submission deadline:</span>
-                  <span className={`px-2.5 py-0.5 rounded-full text-[13px] font-medium ${deadlineBadgeClass}`}>
-                    {schedule.deadline}
-                  </span>
-                </span>
-                <span>
-                  Created <span className="text-[#0a0a0a]">{schedule.created}</span>
-                </span>
-              </div>
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                {tiles.map((tile) => (
-                  <div
-                    key={tile.kind}
-                    className="flex min-w-0 flex-row items-start gap-3 rounded-[4px] border border-[#EAEAEA] bg-white px-3 py-3"
-                  >
-                    {renderTileIcon(tile.kind)}
-                    <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-                      <span className="text-xl font-medium leading-tight tracking-tight text-[#0a0a0a]">
-                        {tile.value}
-                      </span>
-                      <span className="text-[12px] font-medium leading-snug text-[#0a0a0a]">{tile.title}</span>
-                      <span
-                        className={`flex items-center gap-1.5 text-[11px] leading-snug ${
-                          tile.subtitleAccent ? 'font-medium text-[#08A16A]' : 'text-[#6b7280]'
-                        }`}
-                      >
-                        {tile.subtitleAccent && (
-                          <span className="size-1.5 shrink-0 rounded-full bg-[#08A16A]" aria-hidden />
-                        )}
-                        {tile.subtitle}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div className="flex flex-col gap-2">
-                <div className="flex flex-wrap items-baseline justify-between gap-2 text-[13px]">
-                  <span className="font-medium text-[#0a0a0a]">Review progress</span>
-                  <span className="text-[#0a0a0a] tabular-nums">
-                    {rp.percent}%{' '}
-                    <span className="text-[#6b7280] font-normal">
-                      ({rp.reviewed} of {rp.total} transfers reviewed)
-                    </span>
-                  </span>
-                </div>
-                <div className="h-2 w-full rounded-full bg-[#e5e7eb] overflow-hidden" role="progressbar" aria-valuenow={rp.percent} aria-valuemin={0} aria-valuemax={100}>
-                  <div
-                    className="h-full rounded-full bg-[#2EB8C2] transition-[width] duration-300"
-                    style={{ width: `${Math.min(100, Math.max(0, rp.percent))}%` }}
-                  />
-                </div>
-              </div>
-              <div className="flex flex-wrap items-center justify-between gap-3 pt-0.5 border-t border-[#f3f4f6]">
-                <div className="min-h-[1.25rem]">
-                  {schedule.exceptionsList ? (
-                    (() => {
-                      const totalExceptions = schedule.exceptionsTotal ?? schedule.exceptionsList.length
-                      return (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            setExpandedExceptionsScheduleId((prev) =>
-                              prev === schedule.id ? null : schedule.id
-                            )
-                          }}
-                          className="text-[13px] font-medium text-[#3b82f6] hover:underline"
-                        >
-                          {expandedExceptionsScheduleId === schedule.id
-                            ? `Hide exceptions (${totalExceptions})`
-                            : `Show exceptions (${totalExceptions})`}
-                        </button>
-                      )
-                    })()
-                  ) : null}
-                </div>
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px] text-[#6b7280]">
-                  <span>
-                    Transfer exceptions: <span className="font-medium text-[#0a0a0a]">{schedule.exceptions}</span>
-                  </span>
-                  <span>
-                    Total approved: <span className="font-medium text-[#0a0a0a]">{schedule.approved}</span>
-                  </span>
-                  {schedule.pending != null && (
-                    <span>
-                      Pending: <span className="font-medium text-[#0a0a0a]">{schedule.pending}</span>
-                    </span>
-                  )}
-                </div>
-              </div>
-              {schedule.exceptionsList && expandedExceptionsScheduleId === schedule.id && (
-                <div className="space-y-2 -mt-1">
-                  {schedule.exceptionsList.map((ex, idx) => (
-                    <div
-                      key={`${schedule.id}-ex-${idx}`}
-                      className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border border-[#e5e7eb] rounded-[8px] px-3 py-2 bg-[#f9fafb] text-xs text-[#0a0a0a]"
-                    >
-                      <span className="text-[#4b535c]">{ex.description}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-            )
-          })}
-        </div>
-      ) : (
-        <div />
-      )}
-      {scheduleDrawerOpen && (
-        <>
-          <div role="presentation" className="fixed inset-0 bg-black/50 z-40" onClick={closeDrawer} aria-hidden />
-          <div className="fixed right-0 top-0 bottom-0 w-[800px] bg-white shadow-xl z-50 flex flex-col" role="dialog" aria-modal aria-labelledby="add-schedule-title" data-name={editingScheduleEntry ? 'Edit schedule' : 'Add Schedule'} data-node-id="214:2622">
-            <header className="flex items-center justify-between shrink-0 h-14 px-6 border-b border-[#e9eaeb]">
-              <h2 id="add-schedule-title" className="text-[18px] font-medium text-[#0a0a0a]">{editingScheduleEntry ? 'Edit schedule' : 'Add Schedule'}</h2>
-              <button type="button" onClick={closeDrawer} className="p-2 -mr-2 text-[#4b535c] hover:bg-[#f3f4f6] rounded-[4px]" aria-label="Close">
-                <IconClose />
-              </button>
-            </header>
-            <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-6">
-              <section className="flex flex-col gap-2">
-                <p className="text-[14px] font-medium text-[#0a0a0a]">Choose module to create schedule <span className="font-normal text-[#4b535c]">Make a selection</span></p>
-                <label className="text-[14px] font-normal text-[#4b535c]">Module</label>
-                <div className="relative">
-                  <button
-                    type="button"
-                    onClick={() => setModuleDropdownOpen((o) => !o)}
-                    className={`w-full h-10 flex items-center justify-between gap-2 px-3 rounded-[4px] border bg-white text-[14px] text-left ${moduleDropdownOpen ? 'border-[#0267ff]' : 'border-[#e9eaeb]'}`}
-                    data-name="Input multiple select"
-                    data-node-id="12770:4659"
-                  >
-                    <span className={drawerForm.modules.length === 0 ? 'text-[#4b535c]' : 'text-[#0a0a0a]'}>
-                      {drawerForm.modules.length === 0
-                        ? 'Select'
-                        : drawerForm.modules.map((id) => MODULE_OPTIONS.find((o) => o.id === id)?.label).filter(Boolean).join(', ')}
-                    </span>
-                    <IconChevronDownSelect />
-                  </button>
-                  {moduleDropdownOpen && (
-                    <>
-                      <div role="presentation" className="fixed inset-0 z-[60]" onClick={() => setModuleDropdownOpen(false)} aria-hidden />
-                      <div
-                        className="absolute left-0 top-full mt-1 z-[70] w-full min-w-[200px] bg-white border border-[#e9eaeb] rounded-[4px] p-2 shadow-[0px_8px_25px_0px_rgba(0,0,0,0.12)]"
-                        data-name="Dropdown list"
-                        data-node-id="12771:5850"
-                      >
-                        {MODULE_OPTIONS.map((opt) => {
-                          const selected = drawerForm.modules.includes(opt.id)
-                          return (
-                            <button
-                              key={opt.id}
-                              type="button"
-                              onClick={() => toggleModule(opt.id)}
-                              className="w-full flex gap-2 items-center p-3 rounded-[3px] text-left hover:bg-[#f8f8f8] focus:bg-[#f8f8f8]"
-                              data-name="Dropdown item"
-                              data-node-id="12771:5851"
-                            >
-                              <span className="flex items-center justify-center shrink-0 size-6">
-                                <span className={`flex items-center justify-center rounded-[4px] size-5 border-2 ${selected ? 'bg-[#0267ff] border-[#0267ff]' : 'bg-white border-[#e5e7eb]'}`}>
-                                  {selected && (
-                                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="text-white"><path d="M2 6l3 3 5-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                                  )}
-                                </span>
-                              </span>
-                              <span className="flex-1 text-[12px] font-medium text-[#0a0a0a] leading-normal">{opt.label}</span>
-                            </button>
-                          )
-                        })}
-                      </div>
-                    </>
-                  )}
-                </div>
-              </section>
-              <section className="flex flex-col gap-2">
-                <p className="text-[14px] font-medium text-[#0a0a0a]">Give your schedule a name:</p>
-                <label className="text-[14px] font-normal text-[#4b535c]">Name schedule</label>
-                <input type="text" placeholder="Placeholder" value={drawerForm.name} onChange={(ev) => setDrawerForm((f) => ({ ...f, name: ev.target.value }))} className="w-full h-10 px-3 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#0a0a0a] placeholder:text-[#4b535c]" />
-                <p className="text-[12px] font-normal text-[#4b535c]">If not assigned, name will be given automatically</p>
-              </section>
-              <section className="flex flex-col gap-2">
-                <p className="text-[14px] font-medium text-[#0a0a0a]">Scheduling Dates <span className="font-normal text-[#4b535c]">Make a selection</span></p>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[14px] font-normal text-[#4b535c]">Sending location</label>
-                    <div className="relative">
-                      <select value={drawerForm.sending} onChange={(ev) => setDrawerForm((f) => ({ ...f, sending: ev.target.value }))} className="w-full h-10 pl-3 pr-9 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#0a0a0a] appearance-none">
-                        <option value="">Select</option>
-                        <option value="Warehouse A">Warehouse A</option>
-                        <option value="Warehouse B">Warehouse B</option>
-                      </select>
-                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none"><IconChevronDownSelect /></span>
-                    </div>
-                  </div>
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[14px] font-normal text-[#4b535c]">Receiving location</label>
-                    <div className="relative">
-                      <select value={drawerForm.receiving} onChange={(ev) => setDrawerForm((f) => ({ ...f, receiving: ev.target.value }))} className="w-full h-10 pl-3 pr-9 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#0a0a0a] appearance-none">
-                        <option value="">Select</option>
-                        <option value="Store A">Store A</option>
-                        <option value="Store B">Store B</option>
-                      </select>
-                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none"><IconChevronDownSelect /></span>
-                    </div>
-                  </div>
-                </div>
-              </section>
-              <section className="flex flex-col gap-2">
-                <p className="text-[14px] font-medium text-[#0a0a0a]">Schedule:</p>
-                <div className="flex flex-wrap gap-3">
-                  <div className="flex flex-col gap-1 min-w-[140px]">
-                    <label className="text-[14px] font-normal text-[#4b535c]">Repeats</label>
-                    <div className="relative">
-                      <select value={drawerForm.repeats} onChange={(ev) => setDrawerForm((f) => ({ ...f, repeats: ev.target.value }))} className="w-full h-10 pl-3 pr-9 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#0a0a0a] appearance-none">
-                        <option value="weekly">Weekly</option>
-                        <option value="biweekly">Bi-weekly (Every 2 weeks)</option>
-                        <option value="monthly">Monthly</option>
-                      </select>
-                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none"><IconChevronDownSelect /></span>
-                    </div>
-                  </div>
-                  <div className="flex flex-col gap-1 min-w-[100px]">
-                    <label className="text-[14px] font-normal text-[#4b535c]">Time</label>
-                    <div className="relative">
-                      <select value={drawerForm.time} onChange={(ev) => setDrawerForm((f) => ({ ...f, time: ev.target.value }))} className="w-full h-10 pl-3 pr-9 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#0a0a0a] appearance-none">
-                        <option value="">Select time</option>
-                        <option value="09:00 AM">09:00 AM</option>
-                        <option value="10:00 AM">10:00 AM</option>
-                        <option value="12:00 PM">12:00 PM</option>
-                      </select>
-                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none"><IconChevronDownSelect /></span>
-                    </div>
-                  </div>
-                  <div className="flex flex-col gap-1 min-w-[160px]">
-                    <label className="text-[14px] font-normal text-[#4b535c]">Time zone</label>
-                    <div className="relative">
-                      <select value={drawerForm.timeZone} onChange={(ev) => setDrawerForm((f) => ({ ...f, timeZone: ev.target.value }))} className="w-full h-10 pl-3 pr-9 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#0a0a0a] appearance-none">
-                        <option value="pst">PST</option>
-                        <option value="gmt+1">(GMT +1) Central Europe</option>
-                      </select>
-                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none"><IconChevronDownSelect /></span>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex flex-col gap-1">
-                  <label className="text-[14px] font-normal text-[#4b535c]">Day selection</label>
-                  <div className="flex gap-2 flex-wrap">
-                    {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => {
-                      const selected = scheduleDrawerDays[day]
-                      return (
-                        <button key={day} type="button" onClick={() => toggleScheduleDay(day)} className={`h-9 px-3 rounded-[4px] border text-[14px] font-normal shrink-0 ${selected ? 'border-[#0267ff] bg-[#ebf3ff] text-[#0267ff]' : 'border-[#e9eaeb] bg-white text-[#4b535c] hover:bg-[#f3f4f6]'}`}>
-                          {day}
-                        </button>
-                      )
-                    })}
-                  </div>
-                </div>
-              </section>
-              <section className="flex flex-col gap-2">
-                <label className="text-[14px] font-normal text-[#4b535c]">Ends on</label>
-                <div className="relative">
-                  <input type="text" placeholder="Select date" value={drawerForm.endsOn} onChange={(ev) => setDrawerForm((f) => ({ ...f, endsOn: ev.target.value }))} className="w-full h-10 pl-3 pr-10 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#0a0a0a] placeholder:text-[#4b535c]" />
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none"><IconCalendarSidebar className="size-4" /></span>
-                </div>
-                <p className="text-[12px] font-normal text-[#4b535c]">If left empty, rebalancing will be repeating indefinitely</p>
-              </section>
-              <section className="flex flex-col gap-2">
-                <label className="text-[14px] font-normal text-[#4b535c]">Skip dates</label>
-                <p className="text-[12px] font-normal text-[#4b535c]">Pause this schedule for specific upcoming dates</p>
-                {skipDates.length > 0 && (
-                  <div className="flex flex-wrap gap-2">
-                    {skipDates.map((date) => (
-                      <span
-                        key={date}
-                        className="inline-flex items-center gap-1.5 rounded-[4px] border border-[#e9eaeb] bg-white px-2.5 py-1 text-[14px] text-[#0a0a0a]"
-                      >
-                        {date}
-                        <button
-                          type="button"
-                          onClick={() => removeSkipDate(date)}
-                          className="text-[#4b535c] hover:text-[#0a0a0a] leading-none"
-                          aria-label={`Remove skip date ${date}`}
-                        >
-                          ×
-                        </button>
-                      </span>
-                    ))}
-                  </div>
-                )}
-                {skipDatePickerOpen ? (
-                  <div className="flex flex-wrap items-center gap-2">
-                    <input
-                      type="date"
-                      value={skipDateDraft}
-                      onChange={(ev) => setSkipDateDraft(ev.target.value)}
-                      className="h-10 px-3 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#0a0a0a]"
-                    />
-                    <button
-                      type="button"
-                      onClick={confirmSkipDate}
-                      disabled={!skipDateDraft}
-                      className="h-10 px-4 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] font-medium text-[#0a0a0a] hover:bg-[#f3f4f6] disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      Add
-                    </button>
-                  </div>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => setSkipDatePickerOpen(true)}
-                    className="self-start h-10 px-4 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] font-medium text-[#0a0a0a] hover:bg-[#f3f4f6]"
-                  >
-                    Add date
-                  </button>
-                )}
-              </section>
-              <section className="flex flex-col gap-2">
-                <p className="text-[14px] font-medium text-[#0a0a0a]">Notify users:</p>
-                <input type="text" placeholder="Enter user emails" value={drawerForm.notify} onChange={(ev) => setDrawerForm((f) => ({ ...f, notify: ev.target.value }))} className="w-full h-10 px-3 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#0a0a0a] placeholder:text-[#4b535c]" />
-              </section>
-            </div>
-            <footer className="flex items-center justify-end gap-3 shrink-0 p-6 border-t border-[#e9eaeb]">
-              <button type="button" onClick={closeDrawer} className="h-10 px-4 rounded-[4px] text-[16px] font-medium text-[#0a0a0a] hover:bg-[#f3f4f6]">
-                Cancel
-              </button>
-              <button type="button" className="h-10 px-4 rounded-[4px] bg-[#0267ff] text-white text-[16px] font-medium">
-                {editingScheduleEntry ? 'Save changes' : 'Add Schedule'}
-              </button>
-            </footer>
-          </div>
-        </>
-      )}
+        <ScheduleTable schedules={upcomingSchedules} actions={['rename', 'archive']} {...sharedKebabProps} />
+      ) : activeStatusTab === 'ongoing' ? (
+        <ScheduleTable
+          schedules={ongoingSchedules}
+          onRowClick={onOpenScheduleDetail}
+          {...sharedKebabProps}
+        />
+      ) : activeStatusTab === 'failed' ? (
+        <ScheduleTable schedules={failedSchedules} actions={['rename', 'rerun', 'archive']} {...sharedKebabProps} />
+      ) : activeStatusTab === 'submitted' ? (
+        <ScheduleTable schedules={submittedSchedules} actions={['rerun']} {...sharedKebabProps} />
+      ) : null}
     </div>
   )
 }
