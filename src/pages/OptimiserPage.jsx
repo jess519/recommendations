@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect, Fragment } from 'react'
+import { useState, useRef, useEffect, useLayoutEffect, useCallback, Fragment } from 'react'
+import { createPortal } from 'react-dom'
 import { Pencil, Check, Plus } from 'lucide-react'
 import { IconPlus, IconChevronDown, IconClose, IconChevronDownSelect, IconArrowLeft } from '../components/icons'
 import {
@@ -1610,6 +1611,194 @@ const ONGOING_TABLE_GRID =
 const FAILED_TABLE_GRID =
   'grid-cols-[minmax(200px,2fr)_minmax(140px,1.2fr)_minmax(160px,1.4fr)_minmax(180px,1.6fr)_minmax(140px,1fr)_minmax(120px,1fr)_minmax(140px,1fr)_minmax(220px,1.8fr)_60px]'
 
+function getScopeGroupSummary(group, emptyLabel) {
+  const include = group?.include ?? []
+  if (include.length === 0) return emptyLabel
+  if (include.length === 1) return include[0].label
+  return `${include[0].label} +${include.length - 1}`
+}
+
+function getScopeSummary(scope) {
+  if (!scope) return 'All products · All locations'
+  return `${getScopeGroupSummary(scope.products, 'All products')} · ${getScopeGroupSummary(scope.locations, 'All locations')}`
+}
+
+function ScopeIncludePill({ label }) {
+  return (
+    <span className="inline-flex items-center rounded-full border border-blue-100 bg-blue-50 px-2.5 py-1 text-[13px] font-medium text-[#1d4ed8]">
+      {label}
+    </span>
+  )
+}
+
+function ScopeExcludePill({ label }) {
+  return (
+    <span className="inline-flex items-center rounded-full border border-red-100 bg-red-50 px-2.5 py-1 text-[13px] font-medium text-[#b91c1c]">
+      {label}
+    </span>
+  )
+}
+
+function ScopePopoverPanel({ scope }) {
+  const products = scope?.products ?? { include: [], exclude: [] }
+  const locations = scope?.locations ?? { include: [], exclude: [] }
+
+  const renderSection = (title, group, emptyText) => (
+    <div>
+      <p className="mb-2 text-[12px] font-medium uppercase tracking-[0.04em] text-[#4b535c]">{title}</p>
+      {group.include.length === 0 && group.exclude.length === 0 ? (
+        <p className="text-[13px] text-[#4b535c]">{emptyText}</p>
+      ) : (
+        <div className="flex flex-col gap-2">
+          {group.include.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {group.include.map((item) => (
+                <ScopeIncludePill key={item.label} label={item.label} />
+              ))}
+            </div>
+          )}
+          {group.exclude.length > 0 && (
+            <>
+              <p className="text-[12px] text-[#4b535c]">Excludes:</p>
+              <div className="flex flex-wrap gap-1.5">
+                {group.exclude.map((item) => (
+                  <ScopeExcludePill key={item.label} label={item.label} />
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  )
+
+  return (
+    <div className="w-[320px] rounded-[4px] border border-[#EAEAEA] bg-white p-4 shadow-[0px_8px_25px_0px_rgba(0,0,0,0.12)]">
+      <div className="flex flex-col gap-4">
+        {renderSection('Products', products, 'All products')}
+        {renderSection('Geographic scope', locations, 'All locations')}
+      </div>
+    </div>
+  )
+}
+
+function ScopeHoverPopover({ scope, children }) {
+  const wrapRef = useRef(null)
+  const popRef = useRef(null)
+  const timerRef = useRef(null)
+  const [open, setOpen] = useState(false)
+  const [coords, setCoords] = useState({ left: 0, top: 0 })
+
+  const updatePosition = useCallback(() => {
+    const el = wrapRef.current
+    const pop = popRef.current
+    if (!el) return
+    const rect = el.getBoundingClientRect()
+    const gap = 4
+    const pad = 12
+    let left = rect.left
+    let top = rect.bottom + gap
+
+    if (pop) {
+      const pr = pop.getBoundingClientRect()
+      if (pr.width > 0) {
+        if (left + pr.width > window.innerWidth - pad) {
+          left = window.innerWidth - pad - pr.width
+        }
+        left = Math.max(pad, left)
+        if (top + pr.height > window.innerHeight - pad) {
+          top = rect.top - gap - pr.height
+        }
+      }
+    }
+    setCoords({ left, top })
+  }, [])
+
+  useLayoutEffect(() => {
+    if (!open) return
+    updatePosition()
+    const id = requestAnimationFrame(() => updatePosition())
+
+    const pop = popRef.current
+    const ro = pop ? new ResizeObserver(() => updatePosition()) : null
+    if (pop && ro) ro.observe(pop)
+
+    const onScrollOrResize = () => updatePosition()
+    window.addEventListener('scroll', onScrollOrResize, true)
+    window.addEventListener('resize', onScrollOrResize)
+
+    const scrollParents = []
+    let node = wrapRef.current?.parentElement
+    while (node) {
+      const st = getComputedStyle(node)
+      if (/(auto|scroll|overlay)/.test(st.overflowY) || /(auto|scroll|overlay)/.test(st.overflowX)) {
+        node.addEventListener('scroll', onScrollOrResize, { passive: true })
+        scrollParents.push(node)
+      }
+      node = node.parentElement
+    }
+
+    return () => {
+      cancelAnimationFrame(id)
+      ro?.disconnect()
+      window.removeEventListener('scroll', onScrollOrResize, true)
+      window.removeEventListener('resize', onScrollOrResize)
+      scrollParents.forEach((n) => n.removeEventListener('scroll', onScrollOrResize))
+    }
+  }, [open, updatePosition])
+
+  useEffect(
+    () => () => {
+      if (timerRef.current) clearTimeout(timerRef.current)
+    },
+    []
+  )
+
+  const handleEnter = () => {
+    if (timerRef.current) clearTimeout(timerRef.current)
+    timerRef.current = setTimeout(() => {
+      const el = wrapRef.current
+      if (el) {
+        const rect = el.getBoundingClientRect()
+        setCoords({ left: rect.left, top: rect.bottom + 4 })
+      }
+      setOpen(true)
+    }, 200)
+  }
+
+  const handleLeave = () => {
+    if (timerRef.current) clearTimeout(timerRef.current)
+    setOpen(false)
+  }
+
+  return (
+    <>
+      <div
+        ref={wrapRef}
+        className="relative min-w-0"
+        onMouseEnter={handleEnter}
+        onMouseLeave={handleLeave}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {children}
+      </div>
+      {open &&
+        createPortal(
+          <div
+            ref={popRef}
+            className="fixed z-[10000]"
+            style={{ left: coords.left, top: coords.top }}
+            onMouseEnter={handleEnter}
+            onMouseLeave={handleLeave}
+          >
+            <ScopePopoverPanel scope={scope} />
+          </div>,
+          document.body
+        )}
+    </>
+  )
+}
+
 const ongoingSchedules = [
   {
     id: 'eu-monthly-rebal',
@@ -1618,7 +1807,13 @@ const ongoingSchedules = [
     createdTime: '09:14',
     createdBy: 'Adil',
     movementType: 'Rebalancing',
-    warehouse: 'Log01 entrepot logtex',
+    scope: {
+      products: { include: [{ label: 'Apparel' }, { label: 'Footwear' }], exclude: [] },
+      locations: {
+        include: [{ label: 'Europe' }, { label: 'France stores' }, { label: 'Log01 entrepot logtex' }],
+        exclude: [],
+      },
+    },
     revenueIncrease: '€501.1K',
     uniqueTrips: 113,
     transferUnits: 2308,
@@ -1631,7 +1826,10 @@ const ongoingSchedules = [
     createdTime: '07:30',
     createdBy: 'Bethsabée',
     movementType: 'Replenishment',
-    warehouse: 'UK central DC',
+    scope: {
+      products: { include: [{ label: 'Apparel' }], exclude: [] },
+      locations: { include: [{ label: 'UK stores' }, { label: 'UK central DC' }], exclude: [] },
+    },
     revenueIncrease: '€210.4K',
     uniqueTrips: 48,
     transferUnits: 1120,
@@ -1644,7 +1842,10 @@ const ongoingSchedules = [
     createdTime: '11:00',
     createdBy: 'Adil',
     movementType: 'Rebalancing',
-    warehouse: 'Log01 entrepot logtex',
+    scope: {
+      products: { include: [{ label: 'Apparel' }], exclude: [{ label: 'Accessories' }] },
+      locations: { include: [{ label: 'France stores' }, { label: 'Log01 entrepot logtex' }], exclude: [] },
+    },
     revenueIncrease: '€87.2K',
     uniqueTrips: 24,
     transferUnits: 612,
@@ -1657,7 +1858,10 @@ const ongoingSchedules = [
     createdTime: '14:22',
     createdBy: 'Shana',
     movementType: 'Replenishment & Rebalancing',
-    warehouse: 'Milan DC',
+    scope: {
+      products: { include: [{ label: 'Footwear' }, { label: 'Homeware' }], exclude: [] },
+      locations: { include: [{ label: 'Italy stores' }, { label: 'Milan DC' }], exclude: [] },
+    },
     revenueIncrease: '€134.8K',
     uniqueTrips: 39,
     transferUnits: 940,
@@ -1670,7 +1874,10 @@ const ongoingSchedules = [
     createdTime: '08:45',
     createdBy: 'Bethsabée',
     movementType: 'Replenishment',
-    warehouse: 'Berlin DC',
+    scope: {
+      products: { include: [{ label: 'Homeware' }], exclude: [] },
+      locations: { include: [{ label: 'Berlin DC' }], exclude: [] },
+    },
     revenueIncrease: '€76.5K',
     uniqueTrips: 18,
     transferUnits: 445,
@@ -1683,7 +1890,10 @@ const ongoingSchedules = [
     createdTime: '10:12',
     createdBy: 'Adil',
     movementType: 'Rebalancing',
-    warehouse: 'Madrid DC',
+    scope: {
+      products: { include: [], exclude: [] },
+      locations: { include: [{ label: 'Spain stores' }, { label: 'Madrid DC' }], exclude: [] },
+    },
     revenueIncrease: '€52.1K',
     uniqueTrips: 15,
     transferUnits: 388,
@@ -1699,7 +1909,10 @@ const upcomingSchedules = [
     createdTime: '09:00',
     createdBy: 'Adil',
     movementType: 'Rebalancing',
-    warehouse: 'Log01 entrepot logtex',
+    scope: {
+      products: { include: [{ label: 'Apparel' }, { label: 'Footwear' }, { label: 'Homeware' }], exclude: [] },
+      locations: { include: [{ label: 'Europe' }, { label: 'Log01 entrepot logtex' }], exclude: [] },
+    },
     revenueIncrease: '—',
     uniqueTrips: '—',
     transferUnits: '—',
@@ -1711,7 +1924,10 @@ const upcomingSchedules = [
     createdTime: '07:30',
     createdBy: 'Bethsabée',
     movementType: 'Replenishment',
-    warehouse: 'UK central DC',
+    scope: {
+      products: { include: [{ label: 'Apparel' }], exclude: [] },
+      locations: { include: [{ label: 'UK stores' }], exclude: [] },
+    },
     revenueIncrease: '—',
     uniqueTrips: '—',
     transferUnits: '—',
@@ -1723,7 +1939,10 @@ const upcomingSchedules = [
     createdTime: '11:00',
     createdBy: 'Adil',
     movementType: 'Rebalancing',
-    warehouse: 'Log01 entrepot logtex',
+    scope: {
+      products: { include: [{ label: 'Apparel' }, { label: 'Footwear' }], exclude: [] },
+      locations: { include: [{ label: 'France stores' }, { label: 'Log01 entrepot logtex' }], exclude: [] },
+    },
     revenueIncrease: '—',
     uniqueTrips: '—',
     transferUnits: '—',
@@ -1735,7 +1954,10 @@ const upcomingSchedules = [
     createdTime: '14:22',
     createdBy: 'Shana',
     movementType: 'Replenishment & Rebalancing',
-    warehouse: 'Milan DC',
+    scope: {
+      products: { include: [{ label: 'Footwear' }], exclude: [{ label: 'Accessories' }] },
+      locations: { include: [{ label: 'Italy stores' }, { label: 'Milan DC' }], exclude: [] },
+    },
     revenueIncrease: '—',
     uniqueTrips: '—',
     transferUnits: '—',
@@ -1750,7 +1972,10 @@ const failedSchedules = [
     createdTime: '08:45',
     createdBy: 'Bethsabée',
     movementType: 'Replenishment',
-    warehouse: 'Berlin DC',
+    scope: {
+      products: { include: [{ label: 'Homeware' }], exclude: [] },
+      locations: { include: [{ label: 'Berlin DC' }], exclude: [] },
+    },
     revenueIncrease: '—',
     uniqueTrips: '—',
     transferUnits: '—',
@@ -1764,7 +1989,10 @@ const failedSchedules = [
     createdTime: '10:12',
     createdBy: 'Adil',
     movementType: 'Rebalancing',
-    warehouse: 'Madrid DC',
+    scope: {
+      products: { include: [{ label: 'Footwear' }], exclude: [{ label: 'Accessories' }] },
+      locations: { include: [{ label: 'Madrid DC' }, { label: 'Spain stores' }], exclude: [] },
+    },
     revenueIncrease: '—',
     uniqueTrips: '—',
     transferUnits: '—',
@@ -1781,7 +2009,13 @@ const submittedSchedules = [
     createdTime: '09:14',
     createdBy: 'Adil',
     movementType: 'Rebalancing',
-    warehouse: 'Log01 entrepot logtex',
+    scope: {
+      products: { include: [{ label: 'Apparel' }, { label: 'Footwear' }], exclude: [] },
+      locations: {
+        include: [{ label: 'Europe' }, { label: 'France stores' }, { label: 'Log01 entrepot logtex' }],
+        exclude: [],
+      },
+    },
     revenueIncrease: '€478.9K',
     uniqueTrips: 108,
     transferUnits: 2214,
@@ -1794,7 +2028,10 @@ const submittedSchedules = [
     createdTime: '07:30',
     createdBy: 'Bethsabée',
     movementType: 'Replenishment',
-    warehouse: 'UK central DC',
+    scope: {
+      products: { include: [{ label: 'Apparel' }], exclude: [] },
+      locations: { include: [{ label: 'UK stores' }, { label: 'UK central DC' }], exclude: [] },
+    },
     revenueIncrease: '€198.2K',
     uniqueTrips: 44,
     transferUnits: 1052,
@@ -1807,7 +2044,10 @@ const submittedSchedules = [
     createdTime: '11:00',
     createdBy: 'Adil',
     movementType: 'Rebalancing',
-    warehouse: 'Log01 entrepot logtex',
+    scope: {
+      products: { include: [{ label: 'Apparel' }], exclude: [{ label: 'Accessories' }] },
+      locations: { include: [{ label: 'France stores' }, { label: 'Log01 entrepot logtex' }], exclude: [] },
+    },
     revenueIncrease: '€79.4K',
     uniqueTrips: 22,
     transferUnits: 578,
@@ -1820,7 +2060,10 @@ const submittedSchedules = [
     createdTime: '08:45',
     createdBy: 'Bethsabée',
     movementType: 'Replenishment',
-    warehouse: 'Berlin DC',
+    scope: {
+      products: { include: [{ label: 'Homeware' }], exclude: [] },
+      locations: { include: [{ label: 'Berlin DC' }], exclude: [] },
+    },
     revenueIncrease: '€68.7K',
     uniqueTrips: 16,
     transferUnits: 412,
@@ -1833,7 +2076,10 @@ const submittedSchedules = [
     createdTime: '10:12',
     createdBy: 'Adil',
     movementType: 'Rebalancing',
-    warehouse: 'Madrid DC',
+    scope: {
+      products: { include: [], exclude: [] },
+      locations: { include: [{ label: 'Spain stores' }, { label: 'Madrid DC' }], exclude: [] },
+    },
     revenueIncrease: '€49.3K',
     uniqueTrips: 14,
     transferUnits: 361,
@@ -1931,7 +2177,7 @@ function ScheduleTable({
           <span>Batch name</span>
           <span>Created</span>
           <span>Movement type</span>
-          <span>Warehouse</span>
+          <span>Scope</span>
           <span>Revenue increase</span>
           <span>Unique trips</span>
           <span>Transfer units</span>
@@ -1987,12 +2233,14 @@ function ScheduleTable({
                 <div className="text-[12px] text-[#4b535c]">{schedule.createdBy}</div>
               </div>
               <div className="min-w-0 truncate">{schedule.movementType}</div>
-              <div className="min-w-0 truncate">{schedule.warehouse}</div>
+              <ScopeHoverPopover scope={schedule.scope}>
+                <div className="min-w-0 truncate text-[#4b535c]">{getScopeSummary(schedule.scope)}</div>
+              </ScopeHoverPopover>
               <div className="min-w-0 truncate">{schedule.revenueIncrease}</div>
               <div className="min-w-0">{formatScheduleMetric(schedule.uniqueTrips)}</div>
               <div className="min-w-0">{formatScheduleMetric(schedule.transferUnits)}</div>
               {showErrorCode && (
-                <div className="min-w-0 truncate text-[#4b535c]">{schedule.errorCode}</div>
+                <div className="min-w-0 break-words text-[#4b535c]">{schedule.errorCode}</div>
               )}
               <div
                 className="relative flex items-center justify-end"
