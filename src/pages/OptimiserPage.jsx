@@ -2294,7 +2294,7 @@ export default function OptimiserPage({ onAddJob, openAddJob, resetToUpcoming, o
               <IconArrowLeft className="size-5" />
             </button>
             <h1 className="text-[24px] font-medium text-[#0a0a0a] leading-[100%]">
-              Use latest recommendations
+              New recommendations
             </h1>
           </div>
         )}

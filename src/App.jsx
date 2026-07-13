@@ -417,7 +417,7 @@ export default function App() {
                 : undefined
             }
             headerActions={undefined}
-            recommendationsButtonLabel="Use latest recommendations"
+            recommendationsButtonLabel="New recommendations"
             onCreateGoal={activeView === 'inventory-goals' ? handleInventoryCreateGoal : undefined}
             onUseLatestRecommendations={
               activeView === 'optimiser' ? () => setOpenAddJobSignal((n) => n + 1) : undefined
