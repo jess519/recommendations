@@ -1606,10 +1606,10 @@ function ScheduleDetailsBlock({ block, index, isExpanded, onToggleExpand, onRemo
 /* Optimiser page – Figma 174:2696 (Optimiser-Concepts) */
 
 const ONGOING_TABLE_GRID =
-  'grid-cols-[minmax(200px,2fr)_minmax(140px,1.2fr)_minmax(160px,1.4fr)_minmax(180px,1.6fr)_minmax(140px,1fr)_minmax(120px,1fr)_minmax(140px,1fr)_60px]'
+  'grid-cols-[minmax(200px,2fr)_minmax(140px,1.2fr)_minmax(160px,1.3fr)_minmax(160px,1.4fr)_minmax(180px,1.6fr)_minmax(140px,1fr)_minmax(120px,1fr)_minmax(140px,1fr)_60px]'
 
 const FAILED_TABLE_GRID =
-  'grid-cols-[minmax(200px,2fr)_minmax(140px,1.2fr)_minmax(160px,1.4fr)_minmax(180px,1.6fr)_minmax(140px,1fr)_minmax(120px,1fr)_minmax(140px,1fr)_minmax(220px,1.8fr)_60px]'
+  'grid-cols-[minmax(200px,2fr)_minmax(140px,1.2fr)_minmax(160px,1.3fr)_minmax(160px,1.4fr)_minmax(180px,1.6fr)_minmax(140px,1fr)_minmax(120px,1fr)_minmax(140px,1fr)_minmax(220px,1.8fr)_60px]'
 
 function getScopeGroupSummary(group, emptyLabel) {
   const include = group?.include ?? []
@@ -1806,6 +1806,8 @@ const ongoingSchedules = [
     createdDate: '24/02/2026',
     createdTime: '09:14',
     createdBy: 'Adil',
+    submissionDate: '10/07/2026',
+    submissionTime: '09:00',
     movementType: 'Rebalancing',
     scope: {
       products: { include: [{ label: 'Apparel' }, { label: 'Footwear' }], exclude: [] },
@@ -1825,6 +1827,8 @@ const ongoingSchedules = [
     createdDate: '04/05/2026',
     createdTime: '07:30',
     createdBy: 'Bethsabée',
+    submissionDate: '11/07/2026',
+    submissionTime: '12:00',
     movementType: 'Replenishment',
     scope: {
       products: { include: [{ label: 'Apparel' }], exclude: [] },
@@ -1841,6 +1845,8 @@ const ongoingSchedules = [
     createdDate: '02/05/2026',
     createdTime: '11:00',
     createdBy: 'Adil',
+    submissionDate: '12/07/2026',
+    submissionTime: '17:00',
     movementType: 'Rebalancing',
     scope: {
       products: { include: [{ label: 'Apparel' }], exclude: [{ label: 'Accessories' }] },
@@ -1857,6 +1863,8 @@ const ongoingSchedules = [
     createdDate: '01/05/2026',
     createdTime: '14:22',
     createdBy: 'Shana',
+    submissionDate: '13/07/2026',
+    submissionTime: '14:00',
     movementType: 'Replenishment & Rebalancing',
     scope: {
       products: { include: [{ label: 'Footwear' }, { label: 'Homeware' }], exclude: [] },
@@ -1873,6 +1881,8 @@ const ongoingSchedules = [
     createdDate: '28/04/2026',
     createdTime: '08:45',
     createdBy: 'Bethsabée',
+    submissionDate: '14/07/2026',
+    submissionTime: '08:30',
     movementType: 'Replenishment',
     scope: {
       products: { include: [{ label: 'Homeware' }], exclude: [] },
@@ -1889,6 +1899,8 @@ const ongoingSchedules = [
     createdDate: '25/04/2026',
     createdTime: '10:12',
     createdBy: 'Adil',
+    submissionDate: '15/07/2026',
+    submissionTime: '11:00',
     movementType: 'Rebalancing',
     scope: {
       products: { include: [], exclude: [] },
@@ -1908,6 +1920,8 @@ const upcomingSchedules = [
     createdDate: '10/07/2026',
     createdTime: '09:00',
     createdBy: 'Adil',
+    submissionDate: '17/07/2026',
+    submissionTime: '09:00',
     movementType: 'Rebalancing',
     scope: {
       products: { include: [{ label: 'Apparel' }, { label: 'Footwear' }, { label: 'Homeware' }], exclude: [] },
@@ -1923,6 +1937,8 @@ const upcomingSchedules = [
     createdDate: '11/07/2026',
     createdTime: '07:30',
     createdBy: 'Bethsabée',
+    submissionDate: '20/07/2026',
+    submissionTime: '07:30',
     movementType: 'Replenishment',
     scope: {
       products: { include: [{ label: 'Apparel' }], exclude: [] },
@@ -1938,6 +1954,8 @@ const upcomingSchedules = [
     createdDate: '11/07/2026',
     createdTime: '11:00',
     createdBy: 'Adil',
+    submissionDate: '22/07/2026',
+    submissionTime: '11:00',
     movementType: 'Rebalancing',
     scope: {
       products: { include: [{ label: 'Apparel' }, { label: 'Footwear' }], exclude: [] },
@@ -1953,6 +1971,8 @@ const upcomingSchedules = [
     createdDate: '15/07/2026',
     createdTime: '14:22',
     createdBy: 'Shana',
+    submissionDate: '30/07/2026',
+    submissionTime: '14:00',
     movementType: 'Replenishment & Rebalancing',
     scope: {
       products: { include: [{ label: 'Footwear' }], exclude: [{ label: 'Accessories' }] },
@@ -1971,6 +1991,8 @@ const failedSchedules = [
     createdDate: '05/07/2026',
     createdTime: '08:45',
     createdBy: 'Bethsabée',
+    submissionDate: '07/07/2026',
+    submissionTime: '10:00',
     movementType: 'Replenishment',
     scope: {
       products: { include: [{ label: 'Homeware' }], exclude: [] },
@@ -1988,6 +2010,8 @@ const failedSchedules = [
     createdDate: '04/07/2026',
     createdTime: '10:12',
     createdBy: 'Adil',
+    submissionDate: '06/07/2026',
+    submissionTime: '18:00',
     movementType: 'Rebalancing',
     scope: {
       products: { include: [{ label: 'Footwear' }], exclude: [{ label: 'Accessories' }] },
@@ -2008,6 +2032,8 @@ const submittedSchedules = [
     createdDate: '24/06/2026',
     createdTime: '09:14',
     createdBy: 'Adil',
+    submissionDate: '26/06/2026',
+    submissionTime: '16:00',
     movementType: 'Rebalancing',
     scope: {
       products: { include: [{ label: 'Apparel' }, { label: 'Footwear' }], exclude: [] },
@@ -2027,6 +2053,8 @@ const submittedSchedules = [
     createdDate: '20/06/2026',
     createdTime: '07:30',
     createdBy: 'Bethsabée',
+    submissionDate: '20/06/2026',
+    submissionTime: '18:00',
     movementType: 'Replenishment',
     scope: {
       products: { include: [{ label: 'Apparel' }], exclude: [] },
@@ -2043,6 +2071,8 @@ const submittedSchedules = [
     createdDate: '18/06/2026',
     createdTime: '11:00',
     createdBy: 'Adil',
+    submissionDate: '19/06/2026',
+    submissionTime: '09:30',
     movementType: 'Rebalancing',
     scope: {
       products: { include: [{ label: 'Apparel' }], exclude: [{ label: 'Accessories' }] },
@@ -2059,6 +2089,8 @@ const submittedSchedules = [
     createdDate: '15/06/2026',
     createdTime: '08:45',
     createdBy: 'Bethsabée',
+    submissionDate: '16/06/2026',
+    submissionTime: '14:00',
     movementType: 'Replenishment',
     scope: {
       products: { include: [{ label: 'Homeware' }], exclude: [] },
@@ -2075,6 +2107,8 @@ const submittedSchedules = [
     createdDate: '12/06/2026',
     createdTime: '10:12',
     createdBy: 'Adil',
+    submissionDate: '13/06/2026',
+    submissionTime: '11:00',
     movementType: 'Rebalancing',
     scope: {
       products: { include: [], exclude: [] },
@@ -2111,6 +2145,8 @@ function ScheduleTable({
   setRenameDraft,
   actions = ['rename', 'rerun', 'archive'],
   showErrorCode = false,
+  submissionColumnLabel = 'Submission deadline',
+  submissionColumnMuted = false,
 }) {
   const isClickable = Boolean(onRowClick)
   const tableGrid = showErrorCode ? FAILED_TABLE_GRID : ONGOING_TABLE_GRID
@@ -2176,6 +2212,7 @@ function ScheduleTable({
         >
           <span>Batch name</span>
           <span>Created</span>
+          <span>{submissionColumnLabel}</span>
           <span>Movement type</span>
           <span>Scope</span>
           <span>Revenue increase</span>
@@ -2231,6 +2268,13 @@ function ScheduleTable({
                   {schedule.createdDate}, {schedule.createdTime}
                 </div>
                 <div className="text-[12px] text-[#4b535c]">{schedule.createdBy}</div>
+              </div>
+              <div className="min-w-0">
+                <div
+                  className={`text-[14px] ${submissionColumnMuted ? 'text-[#4b535c]' : 'text-[#0a0a0a]'}`}
+                >
+                  {schedule.submissionDate}, {schedule.submissionTime}
+                </div>
               </div>
               <div className="min-w-0 truncate">{schedule.movementType}</div>
               <ScopeHoverPopover scope={schedule.scope}>
@@ -2900,9 +2944,9 @@ export default function OptimiserPage({ onAddJob, openAddJob, resetToUpcoming, o
           {...sharedKebabProps}
         />
       ) : activeStatusTab === 'failed' ? (
-        <ScheduleTable schedules={failedSchedules} actions={['rename', 'rerun', 'archive']} showErrorCode={true} {...sharedKebabProps} />
+        <ScheduleTable schedules={failedSchedules} actions={['rename', 'rerun', 'archive']} showErrorCode={true} submissionColumnMuted={true} {...sharedKebabProps} />
       ) : activeStatusTab === 'submitted' ? (
-        <ScheduleTable schedules={submittedSchedules} actions={['rerun']} {...sharedKebabProps} />
+        <ScheduleTable schedules={submittedSchedules} actions={['rerun']} submissionColumnLabel="Submitted on" {...sharedKebabProps} />
       ) : null}
     </div>
   )
