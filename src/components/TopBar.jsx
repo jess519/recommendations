@@ -11,7 +11,7 @@ export default function TopBar({
   headerActions,
   onCreateSchedule,
   onUseLatestRecommendations,
-  recommendationsButtonLabel = 'Use latest recommendations',
+  recommendationsButtonLabel = 'New recommendations',
   onCreateGoal,
   createGoalLabel = 'Create goal (AI-guided)',
 }) {
