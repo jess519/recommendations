@@ -596,13 +596,13 @@ const CONFIDENCE_CYCLE = ['very_high', 'high', 'high', 'medium', 'medium', 'low'
 const BADGE_CYCLE = [['REV'], ['VIS'], ['REV', 'VIS'], ['REV'], ['VIS']]
 
 function buildExplorerRow(rowIndex, product, size, fromLoc, toLoc, movementType) {
-  const coverageTarget = 4
-  const coverageWeeks = 1 + (rowIndex * 2) % 8
-  const isOnTarget = coverageWeeks >= coverageTarget
-  const coverage = isOnTarget
-    ? 'All SKUs in target'
-    : `${Math.round(((coverageTarget - coverageWeeks) / coverageTarget) * 100)}% below target`
+  const coverageWeeksBefore = Number((1 + (rowIndex * 1.3) % 5).toFixed(1))
+  const coverageWeeksAfter = Number((coverageWeeksBefore + 0.5 + (rowIndex % 4) * 0.8).toFixed(1))
   const salesL7 = ((rowIndex * 2) % 15) + 1
+  const transfers = 1 + (rowIndex * 3) % 15
+  // Usually headroom (green); every 7th row is constrained (orange by default).
+  const availableToSend =
+    rowIndex % 7 === 0 ? Math.max(0, transfers - 2 - (rowIndex % 3)) : transfers + 2 + (rowIndex % 5)
   // Service level: ~1/3 probability / service level / £ last-unit. sizeIdx shifts
   // sibling SKUs by ≥10pp (or €8). Injected lows: prob <30%, service level >70%, £ <€5.
   const framing = rowIndex % 3
@@ -632,18 +632,20 @@ function buildExplorerRow(rowIndex, product, size, fromLoc, toLoc, movementType)
     fromLocation: fromLoc,
     toLocation: toLoc,
     movementType,
-    transfers: 1 + (rowIndex * 3) % 15,
+    transfers,
+    availableToSend,
     revenue: `€${(0.5 + (rowIndex * 0.37) % 4.5).toFixed(2)}K`,
     recommended: '1',
     recommendedBadges: BADGE_CYCLE[rowIndex % BADGE_CYCLE.length],
     recommendedSub: rowIndex % 3 === 0 ? '2' : undefined,
     confidence: CONFIDENCE_CYCLE[rowIndex % CONFIDENCE_CYCLE.length],
     serviceLevel,
-    coverage,
-    coverageWeeks,
-    coverageTarget,
-    coverageStatus: isOnTarget ? 'on_target' : 'below_target',
-    nextEvent: { name: rowIndex % 2 === 0 ? 'No event' : 'Rebal cycle', date: '15/03/2026' },
+    coverageWeeksBefore,
+    coverageWeeksAfter,
+    nextEvent: {
+      name: rowIndex % 2 === 0 ? 'No event' : 'Rebal cycle',
+      date: SCHEDULE_CREATION_DATE,
+    },
     salesL7,
     salesL30: salesL7 * 5,
     currentUnits: 10 + (rowIndex * 5) % 50,
@@ -651,10 +653,10 @@ function buildExplorerRow(rowIndex, product, size, fromLoc, toLoc, movementType)
     warehouseAllocateLine: `${50 + (rowIndex * 3) % 20} → ${45 + (rowIndex * 3) % 20}`,
     warehouseSellLine: `${65 + (rowIndex * 5) % 25} → ${58 + (rowIndex * 5) % 25}`,
     forecast: Number(((rowIndex * 0.31) % 3 + 0.5).toFixed(2)),
-    stockoutsLine: `${rowIndex % 3} → ${(rowIndex + 1) % 3}`,
     status: STATUS_CYCLE[rowIndex % STATUS_CYCLE.length],
     approvedByUser: false,
-    editedByUser: false }
+    editedByUser: false,
+  }
 }
 
 function buildExplorerData() {
@@ -3712,62 +3714,67 @@ function renderExplorerColumnHeaderLabel(col) {
 }
 
 const EXPLORER_TABLE_COLUMNS = [
-  { id: 'productDetails', label: 'Product details', alignment: 'left', minWidth: 'min-w-[260px]' },
+  { id: 'productDetails', label: 'SKU details', alignment: 'left', minWidth: 'min-w-[260px]' },
   { id: 'fromLocation', label: 'From location', alignment: 'left', minWidth: 'min-w-[150px]' },
   { id: 'toLocation', label: 'To location', alignment: 'left', minWidth: 'min-w-[150px]' },
   { id: 'movementType', label: 'Movement type', alignment: 'left', minWidth: 'min-w-[100px]' },
-  { id: 'transfers', label: 'Transfers', alignment: 'right', minWidth: 'min-w-[90px]' },
-  { id: 'revenue', label: 'Revenue increase', alignment: 'right', minWidth: 'min-w-[110px]', tooltip: null },
-  {
-    id: 'recommended',
-    label: 'Recommended transfers',
-    alignment: 'right',
-    minWidth: 'min-w-[140px]',
-    tooltip: null },
   {
     id: 'confidence',
     label: 'Confidence',
     alignment: 'right',
     minWidth: 'min-w-[110px]',
     tooltip:
-      'Based on historical forecast accuracy at the product level. Lower confidence means recommendations carry more uncertainty.' },
+      'Based on historical forecast accuracy at the product level. Lower confidence means recommendations carry more uncertainty.',
+  },
+  { id: 'transfers', label: 'Transfers', alignment: 'right', minWidth: 'min-w-[110px]' },
+  { id: 'revenue', label: 'Revenue increase', alignment: 'right', minWidth: 'min-w-[110px]', tooltip: null },
+  {
+    id: 'recommended',
+    label: 'Recommended transfers',
+    alignment: 'right',
+    minWidth: 'min-w-[140px]',
+    tooltip: null,
+  },
   {
     id: 'serviceLevel',
     label: 'Service level',
     alignment: 'right',
     minWidth: 'min-w-[160px]',
     tooltip:
-      'The probability of selling / value of the last unit of stock at the receiving location, after this proposal is applied.' },
+      'The probability of selling / value of the last unit of stock at the receiving location, after this proposal is applied.',
+  },
   {
     id: 'coverage',
-    label: 'Coverage',
+    label: 'Coverage (receiving)',
     alignment: 'right',
     minWidth: 'min-w-[120px]',
-    tooltip:
-      "How well current stock is meeting forecasted demand. 'X% below target' means stock is short of target; 'All SKUs in target' means coverage is on track." },
+    tooltip: 'How well current stock at the receiving location is meeting forecasted demand, before and after this proposal.',
+  },
   {
     id: 'nextEvent',
-    label: 'Next event',
+    label: 'Next inventory event',
     alignment: 'right',
     minWidth: 'min-w-[130px]',
-    subtitle: 'Submission deadline',
-    tooltip: 'The next scheduled inventory event for this product across all locations in scope' },
-  { id: 'stockouts', label: 'Stockouts', alignment: 'right', minWidth: 'min-w-[90px]' },
+    subtitle: 'Creation date',
+    tooltip: 'The next scheduled inventory event for this product across all locations in scope',
+  },
   { id: 'sales', label: 'Sales', alignment: 'right', minWidth: 'min-w-[120px]', subtitle: 'L7D / L30D' },
   { id: 'forecast', label: 'Forecast', alignment: 'right', minWidth: 'min-w-[100px]', subtitle: 'per wk', tooltip: null },
   {
     id: 'stockInCirculation',
-    label: 'Stock in circulation',
+    label: 'Stock in circulation (receiving)',
     alignment: 'right',
-    minWidth: 'min-w-[140px]',
+    minWidth: 'min-w-[160px]',
     tooltip:
-      'This includes stock in transit, stock on hand and stock pending from production. This will be for both parent & child locations (if applicable).' },
+      'On-hand + pending from production + in transit at the receiving location (parent & child locations if applicable).',
+  },
   {
     id: 'warehouseUnits',
     label: 'Warehouse units',
     alignment: 'right',
     minWidth: 'min-w-[140px]',
-    tooltip: 'Units reserved to sell at this location and units available to allocate to stores' },
+    tooltip: 'Units reserved to sell at this location and units available to allocate to stores',
+  },
   { id: 'status', label: 'Status', alignment: 'right', minWidth: 'min-w-[150px]' },
 ]
 
@@ -3879,21 +3886,32 @@ function renderExplorerBodyCell(row, col, {
           <MovementTypePills movementType={[row.movementType]} />
         </td>
       )
-    case 'transfers':
+    case 'transfers': {
+      const effectiveTransfers = getEffectiveTransfers(row)
+      const availableToSend = row.availableToSend ?? 0
+      const availableConstrained = availableToSend < effectiveTransfers
       return (
         <td
           key={col.id}
           className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="flex justify-end">
+          <div className="flex flex-col items-end gap-0.5">
             <ExplorerTransfersInput
-              value={getEffectiveTransfers(row)}
+              value={effectiveTransfers}
               onChange={(newValue) => handleTransfersEdit(row.id, newValue)}
             />
+            <span
+              className={`text-[12px] ${
+                availableConstrained ? 'text-[#B45309]' : 'text-[#166534]'
+              }`}
+            >
+              {availableToSend} available to send
+            </span>
           </div>
         </td>
       )
+    }
     case 'revenue':
       return (
         <td key={col.id} className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}>
@@ -3938,25 +3956,15 @@ function renderExplorerBodyCell(row, col, {
     case 'coverage':
       return (
         <td key={col.id} className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}>
-          <div className="flex justify-end">
-            <ProductCoverageText
-              coverageWeeks={row.coverageWeeks}
-              coverageTarget={row.coverageTarget}
-              coverage={row.coverage}
-            />
-          </div>
+          <span className="text-[14px] text-[#0a0a0a]">
+            {row.coverageWeeksBefore} → {row.coverageWeeksAfter} wks
+          </span>
         </td>
       )
     case 'nextEvent':
       return (
         <td key={col.id} className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}>
           <ProductNextEventCell nextEvent={row.nextEvent} />
-        </td>
-      )
-    case 'stockouts':
-      return (
-        <td key={col.id} className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}>
-          <span className="text-[14px] text-[#0a0a0a]">{row.stockoutsLine}</span>
         </td>
       )
     case 'sales':
