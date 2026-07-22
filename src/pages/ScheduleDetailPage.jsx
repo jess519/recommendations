@@ -51,16 +51,16 @@ function TripColumnDragGrip({ visualIndex, onDragStart }) {
   )
 }
 
-/** Trips table data cols; 3 = Revenue increase, 5 = Recommendations updated (long headers) */
-const TRIPS_TABLE_DEFAULT_COL_WIDTHS = [200, 200, 140, 120, 220, 160, 230, 100, 200]
+/** Trips table data cols; 3 = Transfers, 4 = Revenue increase, 5 = Recommended transfers (long headers) */
+const TRIPS_TABLE_DEFAULT_COL_WIDTHS = [200, 200, 140, 120, 220, 160, 100, 200]
 const TRIPS_TABLE_NUM_DATA_COLS = TRIPS_TABLE_DEFAULT_COL_WIDTHS.length
 const TRIPS_COL_DND_MIME = 'application/x-autone-trip-col'
-/** Logical product table columns are 0–18 (Status = 18). */
-const PRODUCTS_TABLE_NUM_DATA_COLS = 19
+/** Logical product table columns are 0–17 (Status = 17). */
+const PRODUCTS_TABLE_NUM_DATA_COLS = 18
 /** Default visual order: cols 9–13 = Stockouts, Sales, Forecast, Stock in circulation, Warehouse units. */
-const PRODUCTS_TABLE_DEFAULT_COLUMN_ORDER = [0, 1, 2, 3, 4, 5, 6, 7, 8, 13, 11, 12, 9, 10, 14, 15, 16, 17, 18]
+const PRODUCTS_TABLE_DEFAULT_COLUMN_ORDER = [0, 1, 2, 3, 4, 5, 6, 7, 12, 10, 11, 8, 9, 13, 14, 15, 16, 17]
 const PRODUCTS_COL_DND_MIME = 'application/x-autone-products-col'
-const LOCATIONS_TABLE_NUM_DATA_COLS = 15
+const LOCATIONS_TABLE_NUM_DATA_COLS = 14
 const LOCATIONS_COL_DND_MIME = 'application/x-autone-locations-col'
 
 function moveTripTableColumnOrder(order, fromVisualIndex, toVisualIndex) {
@@ -86,7 +86,6 @@ const TRIP_COL_RESIZE_LABELS = [
   'Resize Transfers column',
   'Resize Revenue increase column',
   'Resize Recommended transfers column',
-  'Resize Recommendations updated column',
   'Resize Products column',
   'Resize Status column',
 ]
@@ -112,8 +111,7 @@ const PRODUCTS_TAB_SUMMARY_TOTALS = {
   locations: '11 → 10',
   overstocks: '21 → 5',
   understocks: '25 → 11',
-  depth: '4.0 → 5.2',
-}
+  depth: '4.0 → 5.2' }
 
 /** Hardcoded totals for Trips tab summary row (TRIPS_ALL, default full dataset view). */
 const TRIPS_TAB_SUMMARY_TOTALS_FULL = {
@@ -121,8 +119,7 @@ const TRIPS_TAB_SUMMARY_TOTALS_FULL = {
   transfers: '2,038 units',
   revenue: '€435.3K',
   recommended: '2,151 units',
-  products: '257 products',
-}
+  products: '257 products' }
 
 /** Hardcoded totals for Trips tab summary row (TRIPS_OPERA subset view). */
 const TRIPS_TAB_SUMMARY_TOTALS_OPERA = {
@@ -130,8 +127,7 @@ const TRIPS_TAB_SUMMARY_TOTALS_OPERA = {
   transfers: '241 units',
   revenue: '€48.1K',
   recommended: '241 units',
-  products: '147 products',
-}
+  products: '147 products' }
 
 const TRIPS_OPERA = [
   {
@@ -146,11 +142,7 @@ const TRIPS_OPERA = [
     products: 68,
     movementType: ['rebalancing'],
     badges: ['VIS', 'REV'],
-    recommendationsUpdated: '26/02/2026',
-    recommendationsUpdatedTime: '14:32',
-    recommendationsUpdatedBy: 'System',
-    status: 'approved_by_system',
-  },
+    status: 'approved_by_system' },
   {
     id: 2,
     from: 'G.I cap 3000',
@@ -163,11 +155,7 @@ const TRIPS_OPERA = [
     products: 23,
     movementType: ['rebalancing'],
     badges: ['VIS', 'REV'],
-    recommendationsUpdated: '24/02/2026',
-    recommendationsUpdatedTime: '09:15',
-    recommendationsUpdatedBy: 'User',
-    status: 'needs_review_from_user',
-  },
+    status: 'needs_review_from_user' },
   {
     id: 3,
     from: 'Printemps toulon',
@@ -181,11 +169,7 @@ const TRIPS_OPERA = [
     movementType: ['replenishment'],
     badges: ['VIS', 'REV'],
     status: 'last_edited_by_user',
-    editedByUser: 'Csabi Toth',
-    recommendationsUpdated: '26/02/2026',
-    recommendationsUpdatedTime: '16:48',
-    recommendationsUpdatedBy: 'User',
-  },
+    editedByUser: 'Csabi Toth' },
   {
     id: 4,
     from: 'Pr.com',
@@ -198,11 +182,7 @@ const TRIPS_OPERA = [
     products: 2,
     movementType: ['rebalancing'],
     badges: ['REV'],
-    status: 'approved_by_system',
-    recommendationsUpdated: '24/02/2026',
-    recommendationsUpdatedTime: '11:03',
-    recommendationsUpdatedBy: 'System',
-  },
+    status: 'approved_by_system' },
   {
     id: 5,
     from: 'Bruxelles',
@@ -215,11 +195,7 @@ const TRIPS_OPERA = [
     products: 12,
     movementType: ['replenishment', 'rebalancing'],
     badges: ['VIS', 'REV'],
-    status: 'partially_approved',
-    recommendationsUpdated: '26/02/2026',
-    recommendationsUpdatedTime: '08:22',
-    recommendationsUpdatedBy: 'System',
-  },
+    status: 'partially_approved' },
   {
     id: 6,
     from: 'G.I annecy',
@@ -233,11 +209,7 @@ const TRIPS_OPERA = [
     movementType: ['replenishment'],
     badges: ['REV'],
     status: 'approved_by_user',
-    approvedByUser: 'Jess Briggs',
-    recommendationsUpdated: '24/02/2026',
-    recommendationsUpdatedTime: '15:07',
-    recommendationsUpdatedBy: 'User',
-  },
+    approvedByUser: 'Jess Briggs' },
   {
     id: 101,
     from: 'Lyon Herriot',
@@ -251,11 +223,7 @@ const TRIPS_OPERA = [
     movementType: ['rebalancing'],
     badges: ['VIS', 'REV'],
     status: 'approved_by_user',
-    approvedByUser: 'Jess Briggs',
-    recommendationsUpdated: '26/02/2026',
-    recommendationsUpdatedTime: '10:41',
-    recommendationsUpdatedBy: 'User',
-  },
+    approvedByUser: 'Jess Briggs' },
   {
     id: 102,
     from: 'Cap 3000',
@@ -269,11 +237,7 @@ const TRIPS_OPERA = [
     movementType: ['rebalancing'],
     badges: ['REV'],
     status: 'last_edited_by_user',
-    editedByUser: 'Csabi Toth',
-    recommendationsUpdated: '24/02/2026',
-    recommendationsUpdatedTime: '13:55',
-    recommendationsUpdatedBy: 'System',
-  },
+    editedByUser: 'Csabi Toth' },
   {
     id: 103,
     from: 'Nice',
@@ -287,11 +251,7 @@ const TRIPS_OPERA = [
     movementType: ['rebalancing'],
     badges: ['VIS', 'REV'],
     status: 'unapproved',
-    editedByUser: 'Csabi Toth',
-    recommendationsUpdated: '26/02/2026',
-    recommendationsUpdatedTime: '17:19',
-    recommendationsUpdatedBy: 'User',
-  },
+    editedByUser: 'Csabi Toth' },
 ]
 
 // Helper to get status from row (supports both status and legacy approvalStatus)
@@ -316,11 +276,7 @@ const TRIPS_OTHER = [
     products: 18,
     movementType: ['replenishment', 'rebalancing'],
     badges: ['MDQ', 'VIS', 'REV'],
-    recommendationsUpdated: '26/02/2026',
-    recommendationsUpdatedTime: '12:08',
-    recommendationsUpdatedBy: 'System',
-    status: 'approved_by_system',
-  },
+    status: 'approved_by_system' },
   {
     id: 8,
     from: 'Troyes',
@@ -333,11 +289,7 @@ const TRIPS_OTHER = [
     products: 14,
     movementType: ['rebalancing'],
     badges: ['MDQ', 'VIS', 'REV'],
-    recommendationsUpdated: '24/02/2026',
-    recommendationsUpdatedTime: '09:33',
-    recommendationsUpdatedBy: 'User',
-    status: 'unapproved',
-  },
+    status: 'unapproved' },
   {
     id: 9,
     from: 'Cannes',
@@ -349,11 +301,7 @@ const TRIPS_OTHER = [
     recommended: '200',
     products: 12,
     movementType: ['rebalancing'],
-    badges: ['MDQ', 'VIS', 'REV'],
-    recommendationsUpdated: '26/02/2026',
-    recommendationsUpdatedTime: '14:18',
-    recommendationsUpdatedBy: 'System',
-  },
+    badges: ['MDQ', 'VIS', 'REV'] },
   {
     id: 10,
     from: 'Miramas',
@@ -365,11 +313,7 @@ const TRIPS_OTHER = [
     recommended: '188',
     products: 9,
     movementType: ['replenishment'],
-    badges: ['MDQ', 'VIS', 'REV'],
-    recommendationsUpdated: '24/02/2026',
-    recommendationsUpdatedTime: '11:27',
-    recommendationsUpdatedBy: 'User',
-  },
+    badges: ['MDQ', 'VIS', 'REV'] },
   {
     id: 11,
     from: 'Grenoble',
@@ -381,11 +325,7 @@ const TRIPS_OTHER = [
     recommended: '170',
     products: 11,
     movementType: ['rebalancing'],
-    badges: ['MDQ', 'VIS', 'REV'],
-    recommendationsUpdated: '26/02/2026',
-    recommendationsUpdatedTime: '16:52',
-    recommendationsUpdatedBy: 'System',
-  },
+    badges: ['MDQ', 'VIS', 'REV'] },
   {
     id: 12,
     from: 'Romans',
@@ -397,11 +337,7 @@ const TRIPS_OTHER = [
     recommended: '159',
     products: 10,
     movementType: ['replenishment'],
-    badges: ['MDQ', 'VIS', 'REV'],
-    recommendationsUpdated: '24/02/2026',
-    recommendationsUpdatedTime: '10:05',
-    recommendationsUpdatedBy: 'User',
-  },
+    badges: ['MDQ', 'VIS', 'REV'] },
   {
     id: 13,
     from: 'Troyes',
@@ -413,11 +349,7 @@ const TRIPS_OTHER = [
     recommended: '144',
     products: 8,
     movementType: ['rebalancing'],
-    badges: ['MDQ', 'VIS', 'REV'],
-    recommendationsUpdated: '26/02/2026',
-    recommendationsUpdatedTime: '13:41',
-    recommendationsUpdatedBy: 'System',
-  },
+    badges: ['MDQ', 'VIS', 'REV'] },
   {
     id: 14,
     from: 'Nice',
@@ -429,11 +361,7 @@ const TRIPS_OTHER = [
     recommended: '151',
     products: 7,
     movementType: ['replenishment'],
-    badges: ['MDQ', 'VIS', 'REV'],
-    recommendationsUpdated: '24/02/2026',
-    recommendationsUpdatedTime: '08:59',
-    recommendationsUpdatedBy: 'User',
-  },
+    badges: ['MDQ', 'VIS', 'REV'] },
   {
     id: 15,
     from: 'Cannes',
@@ -445,10 +373,7 @@ const TRIPS_OTHER = [
     recommended: '136',
     products: 6,
     movementType: ['rebalancing'],
-    badges: ['MDQ', 'VIS', 'REV'],
-    recommendationsUpdated: '26/02/2026',
-    recommendationsUpdatedTime: '15:23',
-  },
+    badges: ['MDQ', 'VIS', 'REV'] },
   {
     id: 16,
     from: 'Toulon',
@@ -460,10 +385,7 @@ const TRIPS_OTHER = [
     recommended: '129',
     products: 5,
     movementType: ['replenishment'],
-    badges: ['MDQ', 'VIS', 'REV'],
-    recommendationsUpdated: '24/02/2026',
-    recommendationsUpdatedTime: '11:46',
-  },
+    badges: ['MDQ', 'VIS', 'REV'] },
   {
     id: 17,
     from: 'Grenoble',
@@ -475,10 +397,7 @@ const TRIPS_OTHER = [
     recommended: '145',
     products: 6,
     movementType: ['replenishment', 'rebalancing'],
-    badges: ['MDQ', 'VIS', 'REV'],
-    recommendationsUpdated: '26/02/2026',
-    recommendationsUpdatedTime: '17:02',
-  },
+    badges: ['MDQ', 'VIS', 'REV'] },
   {
     id: 18,
     from: 'Nice',
@@ -490,10 +409,7 @@ const TRIPS_OTHER = [
     recommended: '120',
     products: 4,
     movementType: ['replenishment'],
-    badges: ['MDQ', 'VIS', 'REV'],
-    recommendationsUpdated: '24/02/2026',
-    recommendationsUpdatedTime: '09:18',
-  },
+    badges: ['MDQ', 'VIS', 'REV'] },
 ]
 
 const TRIPS_ALL = [...TRIPS_OPERA, ...TRIPS_OTHER]
@@ -508,38 +424,37 @@ const EDITED_EXCEPTION_IDS = [3, 5]
 
 // Mock locations for Locations tab table
 const LOCATIONS_TABLE_DATA = [
-  { id: 1, name: 'Suk003 londres maryleb...', code: 'SUK003', movementType: ["rebalancing"], status: 'unapproved', transfersIn: 40, transfersInSub: '2 (max 2)', transfersOut: 0, transfersOutSub: '0', revenueIncrease: '€5.21K', recommendedIn: 40, recommendedInBadges: ['VIS', 'REV'], recommendedOut: 0, recommendationsUpdated: '26/02/2026', recommendationsUpdatedTime: '14:32', recommendationsUpdatedBy: 'System', stockInCirculation: 145, stockInTransit: 12, salesL7: 11, salesL30: 40, forecast: 13.46, stockouts: '9 → 0', overstocks: '0 → 0', understocks: '95 → 67' },
-  { id: 2, name: 'Sfr004 fd calvaire', code: 'SFR004', movementType: ["rebalancing"], status: 'partially_approved', transfersIn: 38, transfersInSub: '2 (max 2)', transfersOut: 0, transfersOutSub: '0', revenueIncrease: '€4.4K', recommendedIn: 38, recommendedInBadges: ['VIS', 'REV'], recommendedOut: 0, recommendationsUpdated: '24/02/2026', recommendationsUpdatedTime: '09:15', recommendationsUpdatedBy: 'User', stockInCirculation: 89, stockInTransit: 0, salesL7: 8, salesL30: 32, forecast: 10.82, stockouts: '2 → 0', overstocks: '7 → 0', understocks: '154 → 139' },
-  { id: 13, name: 'Out001 la vallée village', code: 'OUT001', movementType: ["rebalancing"], locationType: 'outlet', status: 'approved_by_system', transfersIn: 28, transfersInSub: '1 (max 2)', transfersOut: 0, transfersOutSub: '0', revenueIncrease: '€2.98K', recommendedIn: 28, recommendedInBadges: ['VIS', 'REV'], recommendedOut: 0, recommendationsUpdated: '26/02/2026', recommendationsUpdatedTime: '16:48', recommendationsUpdatedBy: 'User', stockInCirculation: 56, stockInTransit: 8, salesL7: 4, salesL30: 16, forecast: 5.12, stockouts: '6 → 3', overstocks: '8 → 2', understocks: '62 → 44' },
-  { id: 3, name: 'Sfr012 legendre', code: 'SFR012', movementType: ["rebalancing"], status: 'approved_by_user', approvedByUser: 'Jess Briggs', transfersIn: 35, transfersInSub: '1 (max 2)', transfersOut: 15, transfersOutSub: '1 (max 3)', revenueIncrease: '€4.12K', recommendedIn: 35, recommendedInBadges: ['VIS', 'REV'], recommendedOut: 15, recommendationsUpdated: '24/02/2026', recommendationsUpdatedTime: '11:03', recommendationsUpdatedBy: 'System', stockInCirculation: 210, stockInTransit: 18, salesL7: 6, salesL30: 28, forecast: 9.14, stockouts: '5 → 2', overstocks: '12 → 4', understocks: '124 → 82' },
-  { id: 4, name: 'Sfr008 saints-peres', code: 'SFR008', movementType: ["replenishment","rebalancing"], status: 'last_edited_by_user', editedByUser: 'Csabi Toth', transfersIn: 42, transfersInSub: '2 (max 2)', transfersOut: 0, transfersOutSub: '0', revenueIncrease: '€5.89K', recommendedIn: 42, recommendedInBadges: ['VIS', 'REV'], recommendedOut: 0, recommendationsUpdated: '26/02/2026', recommendationsUpdatedTime: '08:22', recommendationsUpdatedBy: 'System', stockInCirculation: 320, stockInTransit: 25, salesL7: 14, salesL30: 55, forecast: 15.22, stockouts: '3 → 0', overstocks: '2 → 0', understocks: '73 → 55' },
-  { id: 5, name: 'Sfr013 sevigne', code: 'SFR013', movementType: ["rebalancing"], status: 'needs_review_from_user', transfersIn: 33, transfersInSub: '2 (max 2)', transfersOut: 0, transfersOutSub: '0', revenueIncrease: '€3.67K', recommendedIn: 33, recommendedInBadges: ['VIS', 'REV'], recommendedOut: 0, recommendationsUpdated: '24/02/2026', recommendationsUpdatedTime: '15:07', recommendationsUpdatedBy: 'User', stockInCirculation: 78, stockInTransit: 5, salesL7: 5, salesL30: 22, forecast: 8.14, stockouts: '12 → 5', overstocks: '18 → 6', understocks: '88 → 61' },
-  { id: 14, name: 'Wh001 paris entrepôt', code: 'WH001', movementType: ["replenishment","rebalancing"], locationType: 'warehouse', status: 'unapproved', transfersIn: 95, transfersInSub: '4 (max 4)', transfersOut: 92, transfersOutSub: '4 (max 4)', revenueIncrease: '€12.4K', recommendedIn: 95, recommendedInBadges: ['VIS', 'REV'], recommendedOut: 92, recommendationsUpdated: '26/02/2026', recommendationsUpdatedTime: '10:41', recommendationsUpdatedBy: 'User', stockInCirculation: 580, stockInTransit: 45, salesL7: 0, salesL30: 0, forecast: 0, stockouts: '0 → 0', overstocks: '45 → 12', understocks: '0 → 0' },
-  { id: 6, name: 'Sbe002 anvers', code: 'SBE002', movementType: ["rebalancing"], status: 'partially_approved', transfersIn: 29, transfersInSub: '1 (max 2)', transfersOut: 29, transfersOutSub: '2 (max 3)', revenueIncrease: '€3.21K', recommendedIn: 29, recommendedInBadges: ['VIS', 'REV'], recommendedOut: 29, recommendationsUpdated: '24/02/2026', recommendationsUpdatedTime: '13:55', recommendationsUpdatedBy: 'System', stockInCirculation: 112, stockInTransit: 0, salesL7: 3, salesL30: 18, forecast: 6.92, stockouts: '18 → 12', overstocks: '5 → 2', understocks: '112 → 78' },
-  { id: 7, name: 'Sfr003 courcelles', code: 'SFR003', movementType: ["rebalancing"], status: 'approved_by_system', transfersIn: 45, transfersInSub: '2 (max 2)', transfersOut: 0, transfersOutSub: '0', revenueIncrease: '€6.12K', recommendedIn: 45, recommendedInBadges: ['VIS', 'REV'], recommendedOut: 0, recommendationsUpdated: '26/02/2026', recommendationsUpdatedTime: '17:19', recommendationsUpdatedBy: 'User', stockInCirculation: 198, stockInTransit: 22, salesL7: 16, salesL30: 62, forecast: 17.08, stockouts: '1 → 0', overstocks: '0 → 0', understocks: '42 → 28' },
-  { id: 8, name: 'Sfr001 bonaparte', code: 'SFR001', movementType: ["replenishment"], status: 'approved_by_user', approvedByUser: 'Jess Briggs', transfersIn: 52, transfersInSub: '2 (max 2)', transfersOut: 0, transfersOutSub: '0', revenueIncrease: '€7.34K', recommendedIn: 52, recommendedInBadges: ['VIS', 'REV'], recommendedOut: 0, recommendationsUpdated: '24/02/2026', recommendationsUpdatedTime: '09:33', recommendationsUpdatedBy: 'System', stockInCirculation: 265, stockInTransit: 15, salesL7: 19, salesL30: 78, forecast: 21.45, stockouts: '0 → 0', overstocks: '0 → 0', understocks: '28 → 15' },
-  { id: 15, name: 'Web001 france online', code: 'WEB001', movementType: ["replenishment"], locationType: 'ecomm', status: 'last_edited_by_user', editedByUser: 'Csabi Toth', transfersIn: 0, transfersInSub: '0', transfersOut: 0, transfersOutSub: '0', revenueIncrease: '€8.56K', recommendedIn: 0, recommendedInBadges: ['VIS', 'REV'], recommendedOut: 0, recommendationsUpdated: '26/02/2026', recommendationsUpdatedTime: '12:08', recommendationsUpdatedBy: 'User', stockInCirculation: 0, stockInTransit: 0, salesL7: 22, salesL30: 95, forecast: 28.34, stockouts: '0 → 0', overstocks: '0 → 0', understocks: '0 → 0' },
-  { id: 9, name: 'Sfr005 charonne', code: 'SFR005', movementType: ["rebalancing"], status: 'needs_review_from_user', transfersIn: 31, transfersInSub: '1 (max 2)', transfersOut: 0, transfersOutSub: '0', revenueIncrease: '€3.45K', recommendedIn: 31, recommendedInBadges: ['VIS', 'REV'], recommendedOut: 0, recommendationsUpdated: '24/02/2026', recommendationsUpdatedTime: '11:27', recommendationsUpdatedBy: 'System', stockInCirculation: 67, stockInTransit: 0, salesL7: 4, salesL30: 19, forecast: 7.28, stockouts: '22 → 18', overstocks: '9 → 3', understocks: '136 → 94' },
-  { id: 10, name: 'Sfr018 lyon', code: 'SFR018', movementType: ["rebalancing"], status: 'unapproved', transfersIn: 48, transfersInSub: '2 (max 2)', transfersOut: 0, transfersOutSub: '0', revenueIncrease: '€6.78K', recommendedIn: 48, recommendedInBadges: ['VIS', 'REV'], recommendedOut: 0, recommendationsUpdated: '26/02/2026', recommendationsUpdatedTime: '16:52', recommendationsUpdatedBy: 'User', stockInCirculation: 175, stockInTransit: 12, salesL7: 17, salesL30: 68, forecast: 18.92, stockouts: '2 → 1', overstocks: '3 → 1', understocks: '56 → 38' },
-  { id: 11, name: 'Ssp001 madrid coello', code: 'SSP001', movementType: ["replenishment","rebalancing"], status: 'approved_by_system', transfersIn: 36, transfersInSub: '2 (max 2)', transfersOut: 0, transfersOutSub: '0', revenueIncrease: '€4.02K', recommendedIn: 36, recommendedInBadges: ['VIS', 'REV'], recommendedOut: 0, recommendationsUpdated: '24/02/2026', recommendationsUpdatedTime: '10:05', recommendationsUpdatedBy: 'System', stockInCirculation: 134, stockInTransit: 9, salesL7: 7, salesL30: 30, forecast: 9.56, stockouts: '8 → 4', overstocks: '14 → 5', understocks: '98 → 72' },
-  { id: 12, name: 'Sfr014 guichard', code: 'SFR014', movementType: ["rebalancing"], status: 'partially_approved', transfersIn: 34, transfersInSub: '1 (max 2)', transfersOut: 0, transfersOutSub: '0', revenueIncrease: '€3.89K', recommendedIn: 34, recommendedInBadges: ['VIS', 'REV'], recommendedOut: 0, recommendationsUpdated: '26/02/2026', recommendationsUpdatedTime: '13:41', recommendationsUpdatedBy: 'User', stockInCirculation: 91, stockInTransit: 7, salesL7: 6, salesL30: 26, forecast: 8.42, stockouts: '11 → 7', overstocks: '6 → 2', understocks: '82 → 58' },
+  { id: 1, name: 'Suk003 londres maryleb...', code: 'SUK003', movementType: ["rebalancing"], status: 'unapproved', transfersIn: 40, transfersInSub: '2 (max 2)', transfersOut: 0, transfersOutSub: '0', revenueIncrease: '€5.21K', recommendedIn: 40, recommendedInBadges: ['VIS', 'REV'], recommendedOut: 0, stockInCirculation: 145, stockInTransit: 12, salesL7: 11, salesL30: 40, forecast: 13.46, stockouts: '9 → 0', overstocks: '0 → 0', understocks: '95 → 67' },
+  { id: 2, name: 'Sfr004 fd calvaire', code: 'SFR004', movementType: ["rebalancing"], status: 'partially_approved', transfersIn: 38, transfersInSub: '2 (max 2)', transfersOut: 0, transfersOutSub: '0', revenueIncrease: '€4.4K', recommendedIn: 38, recommendedInBadges: ['VIS', 'REV'], recommendedOut: 0, stockInCirculation: 89, stockInTransit: 0, salesL7: 8, salesL30: 32, forecast: 10.82, stockouts: '2 → 0', overstocks: '7 → 0', understocks: '154 → 139' },
+  { id: 13, name: 'Out001 la vallée village', code: 'OUT001', movementType: ["rebalancing"], locationType: 'outlet', status: 'approved_by_system', transfersIn: 28, transfersInSub: '1 (max 2)', transfersOut: 0, transfersOutSub: '0', revenueIncrease: '€2.98K', recommendedIn: 28, recommendedInBadges: ['VIS', 'REV'], recommendedOut: 0, stockInCirculation: 56, stockInTransit: 8, salesL7: 4, salesL30: 16, forecast: 5.12, stockouts: '6 → 3', overstocks: '8 → 2', understocks: '62 → 44' },
+  { id: 3, name: 'Sfr012 legendre', code: 'SFR012', movementType: ["rebalancing"], status: 'approved_by_user', approvedByUser: 'Jess Briggs', transfersIn: 35, transfersInSub: '1 (max 2)', transfersOut: 15, transfersOutSub: '1 (max 3)', revenueIncrease: '€4.12K', recommendedIn: 35, recommendedInBadges: ['VIS', 'REV'], recommendedOut: 15, stockInCirculation: 210, stockInTransit: 18, salesL7: 6, salesL30: 28, forecast: 9.14, stockouts: '5 → 2', overstocks: '12 → 4', understocks: '124 → 82' },
+  { id: 4, name: 'Sfr008 saints-peres', code: 'SFR008', movementType: ["replenishment","rebalancing"], status: 'last_edited_by_user', editedByUser: 'Csabi Toth', transfersIn: 42, transfersInSub: '2 (max 2)', transfersOut: 0, transfersOutSub: '0', revenueIncrease: '€5.89K', recommendedIn: 42, recommendedInBadges: ['VIS', 'REV'], recommendedOut: 0, stockInCirculation: 320, stockInTransit: 25, salesL7: 14, salesL30: 55, forecast: 15.22, stockouts: '3 → 0', overstocks: '2 → 0', understocks: '73 → 55' },
+  { id: 5, name: 'Sfr013 sevigne', code: 'SFR013', movementType: ["rebalancing"], status: 'needs_review_from_user', transfersIn: 33, transfersInSub: '2 (max 2)', transfersOut: 0, transfersOutSub: '0', revenueIncrease: '€3.67K', recommendedIn: 33, recommendedInBadges: ['VIS', 'REV'], recommendedOut: 0, stockInCirculation: 78, stockInTransit: 5, salesL7: 5, salesL30: 22, forecast: 8.14, stockouts: '12 → 5', overstocks: '18 → 6', understocks: '88 → 61' },
+  { id: 14, name: 'Wh001 paris entrepôt', code: 'WH001', movementType: ["replenishment","rebalancing"], locationType: 'warehouse', status: 'unapproved', transfersIn: 95, transfersInSub: '4 (max 4)', transfersOut: 92, transfersOutSub: '4 (max 4)', revenueIncrease: '€12.4K', recommendedIn: 95, recommendedInBadges: ['VIS', 'REV'], recommendedOut: 92, stockInCirculation: 580, stockInTransit: 45, salesL7: 0, salesL30: 0, forecast: 0, stockouts: '0 → 0', overstocks: '45 → 12', understocks: '0 → 0' },
+  { id: 6, name: 'Sbe002 anvers', code: 'SBE002', movementType: ["rebalancing"], status: 'partially_approved', transfersIn: 29, transfersInSub: '1 (max 2)', transfersOut: 29, transfersOutSub: '2 (max 3)', revenueIncrease: '€3.21K', recommendedIn: 29, recommendedInBadges: ['VIS', 'REV'], recommendedOut: 29, stockInCirculation: 112, stockInTransit: 0, salesL7: 3, salesL30: 18, forecast: 6.92, stockouts: '18 → 12', overstocks: '5 → 2', understocks: '112 → 78' },
+  { id: 7, name: 'Sfr003 courcelles', code: 'SFR003', movementType: ["rebalancing"], status: 'approved_by_system', transfersIn: 45, transfersInSub: '2 (max 2)', transfersOut: 0, transfersOutSub: '0', revenueIncrease: '€6.12K', recommendedIn: 45, recommendedInBadges: ['VIS', 'REV'], recommendedOut: 0, stockInCirculation: 198, stockInTransit: 22, salesL7: 16, salesL30: 62, forecast: 17.08, stockouts: '1 → 0', overstocks: '0 → 0', understocks: '42 → 28' },
+  { id: 8, name: 'Sfr001 bonaparte', code: 'SFR001', movementType: ["replenishment"], status: 'approved_by_user', approvedByUser: 'Jess Briggs', transfersIn: 52, transfersInSub: '2 (max 2)', transfersOut: 0, transfersOutSub: '0', revenueIncrease: '€7.34K', recommendedIn: 52, recommendedInBadges: ['VIS', 'REV'], recommendedOut: 0, stockInCirculation: 265, stockInTransit: 15, salesL7: 19, salesL30: 78, forecast: 21.45, stockouts: '0 → 0', overstocks: '0 → 0', understocks: '28 → 15' },
+  { id: 15, name: 'Web001 france online', code: 'WEB001', movementType: ["replenishment"], locationType: 'ecomm', status: 'last_edited_by_user', editedByUser: 'Csabi Toth', transfersIn: 0, transfersInSub: '0', transfersOut: 0, transfersOutSub: '0', revenueIncrease: '€8.56K', recommendedIn: 0, recommendedInBadges: ['VIS', 'REV'], recommendedOut: 0, stockInCirculation: 0, stockInTransit: 0, salesL7: 22, salesL30: 95, forecast: 28.34, stockouts: '0 → 0', overstocks: '0 → 0', understocks: '0 → 0' },
+  { id: 9, name: 'Sfr005 charonne', code: 'SFR005', movementType: ["rebalancing"], status: 'needs_review_from_user', transfersIn: 31, transfersInSub: '1 (max 2)', transfersOut: 0, transfersOutSub: '0', revenueIncrease: '€3.45K', recommendedIn: 31, recommendedInBadges: ['VIS', 'REV'], recommendedOut: 0, stockInCirculation: 67, stockInTransit: 0, salesL7: 4, salesL30: 19, forecast: 7.28, stockouts: '22 → 18', overstocks: '9 → 3', understocks: '136 → 94' },
+  { id: 10, name: 'Sfr018 lyon', code: 'SFR018', movementType: ["rebalancing"], status: 'unapproved', transfersIn: 48, transfersInSub: '2 (max 2)', transfersOut: 0, transfersOutSub: '0', revenueIncrease: '€6.78K', recommendedIn: 48, recommendedInBadges: ['VIS', 'REV'], recommendedOut: 0, stockInCirculation: 175, stockInTransit: 12, salesL7: 17, salesL30: 68, forecast: 18.92, stockouts: '2 → 1', overstocks: '3 → 1', understocks: '56 → 38' },
+  { id: 11, name: 'Ssp001 madrid coello', code: 'SSP001', movementType: ["replenishment","rebalancing"], status: 'approved_by_system', transfersIn: 36, transfersInSub: '2 (max 2)', transfersOut: 0, transfersOutSub: '0', revenueIncrease: '€4.02K', recommendedIn: 36, recommendedInBadges: ['VIS', 'REV'], recommendedOut: 0, stockInCirculation: 134, stockInTransit: 9, salesL7: 7, salesL30: 30, forecast: 9.56, stockouts: '8 → 4', overstocks: '14 → 5', understocks: '98 → 72' },
+  { id: 12, name: 'Sfr014 guichard', code: 'SFR014', movementType: ["rebalancing"], status: 'partially_approved', transfersIn: 34, transfersInSub: '1 (max 2)', transfersOut: 0, transfersOutSub: '0', revenueIncrease: '€3.89K', recommendedIn: 34, recommendedInBadges: ['VIS', 'REV'], recommendedOut: 0, stockInCirculation: 91, stockInTransit: 7, salesL7: 6, salesL30: 26, forecast: 8.42, stockouts: '11 → 7', overstocks: '6 → 2', understocks: '82 → 58' },
 ]
 
 // Mock products for trip drilldown (keyed by trip id)
 const PRODUCTS_BY_TRIP = {
   1: [
-    { id: 1, name: 'Croi-sac zip l', sku: 'A1398810', colour: 'Noir', movementType: ["rebalancing"], transfers: 3, transfersSub: 1, approvedTransfers: 3, unapprovedTransfers: 0, revenue: '€1.48K', recommended: 1, recommendedBadges: ['REV'], recommendedSub: 2, confidence: 'very_high', coverage: 'All SKUs in target', coverageWeeks: 5.2, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 1, salesL30: 2, forecast: 1.87, stockouts: '0 → 0', locations: '2 → 2', overstocks: '4 → 1', understocks: '8 → 5', depth: '5.0 → 5.0',     status: 'approved_by_system', recommendationsUpdated: '26/02/2026', recommendationsUpdatedTime: '14:32', recommendationsUpdatedBy: 'System', currentUnits: 12, currentUnitsInTransit: 3, warehouseAllocateLine: '52 → 48', warehouseSellLine: '68 → 62' },
-    { id: 2, name: 'Pre-sac seau m', sku: 'A101080', colour: 'Bleu petrole', movementType: ["rebalancing"], transfers: 2, transfersSub: 1, approvedTransfers: 0, unapprovedTransfers: 2, revenue: '€1.12K', recommended: 2, recommendedBadges: ['VIS'], recommendedSub: 1, confidence: 'high', coverage: '2% below target', coverageWeeks: 3.8, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 2, salesL30: 3, forecast: 0.54, stockouts: '0 → 1', locations: '2 → 1', overstocks: '3 → 0', understocks: '2 → 0', depth: '3.0 → 6.0', recommendationsUpdated: '24/02/2026', recommendationsUpdatedTime: '09:15', recommendationsUpdatedBy: 'User', currentUnits: 8, currentUnitsInTransit: 0, warehouseAllocateLine: '58 → 51', warehouseSellLine: '72 → 65' },
-    { id: 3, name: 'Ang-sac pte main m', sku: 'A1252810', colour: 'Figue', movementType: ["rebalancing"], transfers: 3, transfersSub: 2, approvedTransfers: 2, unapprovedTransfers: 1, revenue: '€1.89K', recommended: 3, recommendedBadges: ['REV', 'VIS'], recommendedSub: 1, confidence: 'high', coverage: '5% below target', coverageWeeks: 3.1, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 1, salesL30: 4, forecast: 2.1, stockouts: '1 → 0', locations: '2 → 2', overstocks: '5 → 2', understocks: '6 → 3', depth: '4.2 → 4.8',     status: 'last_edited_by_user', editedByUser: 'Csabi Toth', recommendationsUpdated: '26/02/2026', recommendationsUpdatedTime: '16:48', recommendationsUpdatedBy: 'User', currentUnits: 25, currentUnitsInTransit: 5, warehouseAllocateLine: '48 → 42', warehouseSellLine: '65 → 58' },
-    { id: 4, name: 'Croi-sac zip s', sku: 'A1398811', colour: 'Noir', movementType: ["rebalancing"], transfers: 1, transfersSub: 2, approvedTransfers: 1, unapprovedTransfers: 0, revenue: '€0.98K', recommended: 1, recommendedBadges: ['REV'], recommendedSub: 2, confidence: 'medium', coverage: 'All SKUs in target', coverageWeeks: 6.1, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 0, salesL30: 1, forecast: 0.32, stockouts: '0 → 0', locations: '1 → 2', overstocks: '2 → 1', understocks: '4 → 2', depth: '5.0 → 5.0', status: 'approved_by_user', approvedByUser: 'Jess Briggs', recommendationsUpdated: '24/02/2026', recommendationsUpdatedTime: '11:03', recommendationsUpdatedBy: 'User', currentUnits: 3, currentUnitsInTransit: 1, warehouseAllocateLine: '55 → 50', warehouseSellLine: '70 → 63' },
-    { id: 5, name: 'Pre-sac seau s', sku: 'A101081', colour: 'Bleu petrole', movementType: ["replenishment"], transfers: 2, transfersSub: 1, approvedTransfers: 1, unapprovedTransfers: 1, revenue: '€0.76K', recommended: 2, recommendedBadges: ['VIS'], recommendedSub: 1, confidence: 'low', coverage: '8% below target', coverageWeeks: 2.9, coverageTarget: 6, nextEvent: { name: 'UK weekly replenishment', date: '16/06/2026' }, salesL7: 1, salesL30: 2, forecast: 0.54, stockouts: '0 → 1', locations: '2 → 1', overstocks: '3 → 0', understocks: '2 → 0', depth: '3.0 → 6.0', status: 'needs_review_from_user', recommendationsUpdated: '26/02/2026', recommendationsUpdatedTime: '08:22', recommendationsUpdatedBy: 'System', currentUnits: 15, currentUnitsInTransit: 2, warehouseAllocateLine: '50 → 45', warehouseSellLine: '68 → 61' },
-    { id: 6, name: 'Ang-sac pte main s', sku: 'A1252811', colour: 'Figue', movementType: ["replenishment","rebalancing"], transfers: 4, transfersSub: 1, replenTransfers: 2, rebalTransfers: 2, approvedTransfers: 2, unapprovedTransfers: 2, revenue: '€0.65K', recommended: 1, recommendedBadges: ['REV'], recommendedSub: 1, confidence: 'very_low', coverage: '67% below target', coverageWeeks: 1.4, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 0, salesL30: 1, forecast: 0.21, stockouts: '0 → 0', locations: '2 → 2', overstocks: '4 → 1', understocks: '3 → 1', depth: '4.0 → 4.5', status: 'partially_approved', recommendationsUpdated: '24/02/2026', recommendationsUpdatedTime: '15:07', recommendationsUpdatedBy: 'System', currentUnits: 7, currentUnitsInTransit: 0, warehouseAllocateLine: '57 → 44', warehouseSellLine: '57 → 51' },
+    { id: 1, name: 'Croi-sac zip l', sku: 'A1398810', colour: 'Noir', movementType: ["rebalancing"], transfers: 3, transfersSub: 1, approvedTransfers: 3, unapprovedTransfers: 0, revenue: '€1.48K', recommended: 1, recommendedBadges: ['REV'], recommendedSub: 2, confidence: 'very_high', coverage: 'All SKUs in target', coverageWeeks: 5.2, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 1, salesL30: 2, forecast: 1.87, stockouts: '0 → 0', locations: '2 → 2', overstocks: '4 → 1', understocks: '8 → 5', depth: '5.0 → 5.0',     status: 'approved_by_system', currentUnits: 12, currentUnitsInTransit: 3, warehouseAllocateLine: '52 → 48', warehouseSellLine: '68 → 62' },
+    { id: 2, name: 'Pre-sac seau m', sku: 'A101080', colour: 'Bleu petrole', movementType: ["rebalancing"], transfers: 2, transfersSub: 1, approvedTransfers: 0, unapprovedTransfers: 2, revenue: '€1.12K', recommended: 2, recommendedBadges: ['VIS'], recommendedSub: 1, confidence: 'high', coverage: '2% below target', coverageWeeks: 3.8, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 2, salesL30: 3, forecast: 0.54, stockouts: '0 → 1', locations: '2 → 1', overstocks: '3 → 0', understocks: '2 → 0', depth: '3.0 → 6.0', currentUnits: 8, currentUnitsInTransit: 0, warehouseAllocateLine: '58 → 51', warehouseSellLine: '72 → 65' },
+    { id: 3, name: 'Ang-sac pte main m', sku: 'A1252810', colour: 'Figue', movementType: ["rebalancing"], transfers: 3, transfersSub: 2, approvedTransfers: 2, unapprovedTransfers: 1, revenue: '€1.89K', recommended: 3, recommendedBadges: ['REV', 'VIS'], recommendedSub: 1, confidence: 'high', coverage: '5% below target', coverageWeeks: 3.1, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 1, salesL30: 4, forecast: 2.1, stockouts: '1 → 0', locations: '2 → 2', overstocks: '5 → 2', understocks: '6 → 3', depth: '4.2 → 4.8',     status: 'last_edited_by_user', editedByUser: 'Csabi Toth', currentUnits: 25, currentUnitsInTransit: 5, warehouseAllocateLine: '48 → 42', warehouseSellLine: '65 → 58' },
+    { id: 4, name: 'Croi-sac zip s', sku: 'A1398811', colour: 'Noir', movementType: ["rebalancing"], transfers: 1, transfersSub: 2, approvedTransfers: 1, unapprovedTransfers: 0, revenue: '€0.98K', recommended: 1, recommendedBadges: ['REV'], recommendedSub: 2, confidence: 'medium', coverage: 'All SKUs in target', coverageWeeks: 6.1, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 0, salesL30: 1, forecast: 0.32, stockouts: '0 → 0', locations: '1 → 2', overstocks: '2 → 1', understocks: '4 → 2', depth: '5.0 → 5.0', status: 'approved_by_user', approvedByUser: 'Jess Briggs', currentUnits: 3, currentUnitsInTransit: 1, warehouseAllocateLine: '55 → 50', warehouseSellLine: '70 → 63' },
+    { id: 5, name: 'Pre-sac seau s', sku: 'A101081', colour: 'Bleu petrole', movementType: ["replenishment"], transfers: 2, transfersSub: 1, approvedTransfers: 1, unapprovedTransfers: 1, revenue: '€0.76K', recommended: 2, recommendedBadges: ['VIS'], recommendedSub: 1, confidence: 'low', coverage: '8% below target', coverageWeeks: 2.9, coverageTarget: 6, nextEvent: { name: 'UK weekly replenishment', date: '16/06/2026' }, salesL7: 1, salesL30: 2, forecast: 0.54, stockouts: '0 → 1', locations: '2 → 1', overstocks: '3 → 0', understocks: '2 → 0', depth: '3.0 → 6.0', status: 'needs_review_from_user', currentUnits: 15, currentUnitsInTransit: 2, warehouseAllocateLine: '50 → 45', warehouseSellLine: '68 → 61' },
+    { id: 6, name: 'Ang-sac pte main s', sku: 'A1252811', colour: 'Figue', movementType: ["replenishment","rebalancing"], transfers: 4, transfersSub: 1, replenTransfers: 2, rebalTransfers: 2, approvedTransfers: 2, unapprovedTransfers: 2, revenue: '€0.65K', recommended: 1, recommendedBadges: ['REV'], recommendedSub: 1, confidence: 'very_low', coverage: '67% below target', coverageWeeks: 1.4, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 0, salesL30: 1, forecast: 0.21, stockouts: '0 → 0', locations: '2 → 2', overstocks: '4 → 1', understocks: '3 → 1', depth: '4.0 → 4.5', status: 'partially_approved', currentUnits: 7, currentUnitsInTransit: 0, warehouseAllocateLine: '57 → 44', warehouseSellLine: '57 → 51' },
   ],
   2: [
-    { id: 7, name: 'Sac zip l', sku: 'B200001', colour: 'Noir', movementType: ["rebalancing"], transfers: 2, transfersSub: 1, approvedTransfers: 2, unapprovedTransfers: 0, revenue: '€0.89K', recommended: 2, recommendedBadges: ['REV'], recommendedSub: 1, confidence: 'medium', coverage: '3% below target', coverageWeeks: 4.8, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 1, salesL30: 2, forecast: 0.45, stockouts: '0 → 0', locations: '2 → 2', overstocks: '2 → 1', understocks: '5 → 3', depth: '4.5 → 5.0', status: 'approved_by_user', approvedByUser: 'Jess Briggs', recommendationsUpdated: '26/02/2026', recommendationsUpdatedTime: '13:55', recommendationsUpdatedBy: 'User', currentUnits: 18, currentUnitsInTransit: 4, warehouseAllocateLine: '40 → 36', warehouseSellLine: '50 → 45' },
-    { id: 8, name: 'Sac seau m', sku: 'B200002', colour: 'Noir', movementType: ["rebalancing"], transfers: 1, transfersSub: 2, approvedTransfers: 0, unapprovedTransfers: 1, revenue: '€0.52K', recommended: 1, recommendedBadges: ['VIS'], recommendedSub: 2, confidence: 'high', coverage: 'All SKUs in target', coverageWeeks: 6.3, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 0, salesL30: 1, forecast: 0.28, stockouts: '0 → 1', locations: '1 → 2', overstocks: '1 → 0', understocks: '3 → 1', depth: '3.6 → 4.3', status: 'last_edited_by_user', editedByUser: 'Csabi Toth', recommendationsUpdated: '24/02/2026', recommendationsUpdatedTime: '17:19', recommendationsUpdatedBy: 'User', currentUnits: 11, currentUnitsInTransit: 2, warehouseAllocateLine: '35 → 30', warehouseSellLine: '42 → 38' },
-  ],
-}
+    { id: 7, name: 'Sac zip l', sku: 'B200001', colour: 'Noir', movementType: ["rebalancing"], transfers: 2, transfersSub: 1, approvedTransfers: 2, unapprovedTransfers: 0, revenue: '€0.89K', recommended: 2, recommendedBadges: ['REV'], recommendedSub: 1, confidence: 'medium', coverage: '3% below target', coverageWeeks: 4.8, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 1, salesL30: 2, forecast: 0.45, stockouts: '0 → 0', locations: '2 → 2', overstocks: '2 → 1', understocks: '5 → 3', depth: '4.5 → 5.0', status: 'approved_by_user', approvedByUser: 'Jess Briggs', currentUnits: 18, currentUnitsInTransit: 4, warehouseAllocateLine: '40 → 36', warehouseSellLine: '50 → 45' },
+    { id: 8, name: 'Sac seau m', sku: 'B200002', colour: 'Noir', movementType: ["rebalancing"], transfers: 1, transfersSub: 2, approvedTransfers: 0, unapprovedTransfers: 1, revenue: '€0.52K', recommended: 1, recommendedBadges: ['VIS'], recommendedSub: 2, confidence: 'high', coverage: 'All SKUs in target', coverageWeeks: 6.3, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 0, salesL30: 1, forecast: 0.28, stockouts: '0 → 1', locations: '1 → 2', overstocks: '1 → 0', understocks: '3 → 1', depth: '3.6 → 4.3', status: 'last_edited_by_user', editedByUser: 'Csabi Toth', currentUnits: 11, currentUnitsInTransit: 2, warehouseAllocateLine: '35 → 30', warehouseSellLine: '42 → 38' },
+  ] }
 
 // Default products when trip not in PRODUCTS_BY_TRIP
 const DEFAULT_PRODUCTS = PRODUCTS_BY_TRIP[1]
@@ -564,8 +479,7 @@ const LOCATIONS_BY_PRODUCT = {
   3: [
     { id: 1, name: 'Opéra', code: 'A1A', movementType: ["rebalancing"], stock: '6 → 6', tu: '6 → 6', tuWarehouse: 6, tuTruck: [], salesL7: 1, salesL30: 4, forecast: 2.1, stockouts: '0 → 0', coverage: '100% → 100%', targetWeeks: 6, receivingWeeksCoverage: '2.9 → 2.9 (6 target)', recommendationReason: 'Increase revenue', revenueIncrease: '€445', availableToSend: 6, sendingStock: '12 → 6', sendingCoverage: '2.8 → 1.4 (6 target)' },
     { id: 2, name: 'G.L. Haussmann Maro', code: 'AIA', movementType: ["rebalancing"], stock: '5 → 5', tu: '5 → 5', tuWarehouse: 5, tuTruck: [], salesL7: 0, salesL30: 0, forecast: 0, stockouts: '0 → 0', coverage: '0% → 0%', targetWeeks: 5, receivingWeeksCoverage: 'N/A (0 forecast)', recommendationReason: 'Improve coverage', revenueIncrease: '€0', availableToSend: 5, sendingStock: '10 → 5', sendingCoverage: 'N/A (0 forecast)', approvalStatus: 'approved_by_system' },
-  ],
-}
+  ] }
 
 const DEFAULT_LOCATIONS = LOCATIONS_BY_PRODUCT[1]
 
@@ -586,8 +500,7 @@ const CHART_DATA = Array.from({ length: 22 }, (_, i) => {
     actualSales: Math.round(sales * 10) / 10,
     demandForecast: Math.min(8, 2.5 + Math.sin(i * 0.25) * 1.5),
     salesForecast: Math.min(8, 2 + Math.sin(i * 0.25) * 1.2),
-    estimatedLostSales: Math.round(lostSales * 10) / 10,
-  }
+    estimatedLostSales: Math.round(lostSales * 10) / 10 }
 })
 
 // ============================================================
@@ -613,8 +526,7 @@ const EXPLORER_PRODUCTS = [
     colour: 'Noir',
     department: 'Handbags',
     sizes: ['M'],
-    movementTypes: ['replenishment', 'rebalancing'],
-  },
+    movementTypes: ['replenishment', 'rebalancing'] },
   {
     id: 'exp-p6',
     name: 'Ang-sac pte main s',
@@ -622,8 +534,7 @@ const EXPLORER_PRODUCTS = [
     colour: 'Noir',
     department: 'Handbags',
     sizes: ['S'],
-    movementTypes: ['replenishment', 'rebalancing'],
-  },
+    movementTypes: ['replenishment', 'rebalancing'] },
   {
     id: 'exp-p2',
     name: 'Croi-sac zip l',
@@ -631,8 +542,7 @@ const EXPLORER_PRODUCTS = [
     colour: 'Noir',
     department: 'Crossbody',
     sizes: ['L'],
-    movementTypes: ['replenishment'],
-  },
+    movementTypes: ['replenishment'] },
   {
     id: 'exp-p3',
     name: 'Pre-sac seau m',
@@ -640,8 +550,7 @@ const EXPLORER_PRODUCTS = [
     colour: 'Bleu petrole',
     department: 'Bucket bags',
     sizes: ['M'],
-    movementTypes: ['replenishment'],
-  },
+    movementTypes: ['replenishment'] },
   {
     id: 'exp-p4',
     name: 'Croi-sac zip s',
@@ -649,8 +558,7 @@ const EXPLORER_PRODUCTS = [
     colour: 'Noir',
     department: 'Crossbody',
     sizes: ['S'],
-    movementTypes: ['rebalancing'],
-  },
+    movementTypes: ['rebalancing'] },
   {
     id: 'exp-p5',
     name: 'Pre-sac seau s',
@@ -658,8 +566,7 @@ const EXPLORER_PRODUCTS = [
     colour: 'Bleu petrole',
     department: 'Bucket bags',
     sizes: ['S'],
-    movementTypes: ['rebalancing'],
-  },
+    movementTypes: ['rebalancing'] },
 ]
 
 const DEPARTMENT_FILTER_OPTIONS = ['Handbags', 'Crossbody', 'Bucket bags']
@@ -696,8 +603,8 @@ function buildExplorerRow(rowIndex, product, size, fromLoc, toLoc, movementType)
     ? 'All SKUs in target'
     : `${Math.round(((coverageTarget - coverageWeeks) / coverageTarget) * 100)}% below target`
   const salesL7 = ((rowIndex * 2) % 15) + 1
-  // Service level: ~1/3 probability / sales threshold / £ last-unit. sizeIdx shifts
-  // sibling SKUs by ≥10pp (or €8). Injected lows: prob <30%, threshold >70%, £ <€5.
+  // Service level: ~1/3 probability / service level / £ last-unit. sizeIdx shifts
+  // sibling SKUs by ≥10pp (or €8). Injected lows: prob <30%, service level >70%, £ <€5.
   const framing = rowIndex % 3
   const sizeIdx = Math.max(0, product.sizes.indexOf(size))
   let serviceLevel
@@ -708,7 +615,7 @@ function buildExplorerRow(rowIndex, product, size, fromLoc, toLoc, movementType)
   } else if (framing === 1) {
     let pct = 20 + ((rowIndex * 5) % 40) + sizeIdx * 12
     if (rowIndex % 18 === 1) pct = 75 + sizeIdx * 12
-    serviceLevel = `${Math.min(95, pct)}% sales threshold`
+    serviceLevel = `${Math.min(95, pct)}% service level`
   } else {
     let euros = 8 + ((rowIndex * 3) % 30) + sizeIdx * 8
     if (rowIndex % 18 === 2) euros = 2 + sizeIdx * 8
@@ -747,8 +654,7 @@ function buildExplorerRow(rowIndex, product, size, fromLoc, toLoc, movementType)
     stockoutsLine: `${rowIndex % 3} → ${(rowIndex + 1) % 3}`,
     status: STATUS_CYCLE[rowIndex % STATUS_CYCLE.length],
     approvedByUser: false,
-    editedByUser: false,
-  }
+    editedByUser: false }
 }
 
 function buildExplorerData() {
@@ -813,36 +719,29 @@ const STATUS_BADGE_CLASSES = {
   unapproved: 'bg-[#f4f4f5] text-[#0a0a0a] border-[#878d94]',
   needs_review_from_user: 'bg-[#ffe4cc] text-[#0a0a0a] border-[#bd5800]',
   remove_edits: 'bg-[#f3e8ff] text-[#7c3aed]',
-  partially_approved: 'bg-[#fef3c7] text-[#92400e]',
-}
+  partially_approved: 'bg-[#fef3c7] text-[#92400e]' }
 
 const CONFIDENCE_PILL_CONFIG = {
   very_high: {
     label: 'Very high',
     badgeClass: 'bg-[#cce8dc] text-[#0a0a0a] border-[#067a4e]',
-    dotClass: 'bg-[#067a4e]',
-  },
+    dotClass: 'bg-[#067a4e]' },
   high: {
     label: 'High',
     badgeClass: 'bg-[#e4f4ef] text-[#0a0a0a] border-[#08a16a]',
-    dotClass: 'bg-[#08a16a]',
-  },
+    dotClass: 'bg-[#08a16a]' },
   medium: {
     label: 'Medium',
     badgeClass: 'bg-[#fef9c3] text-[#0a0a0a] border-[#ca8a04]',
-    dotClass: 'bg-[#eab308]',
-  },
+    dotClass: 'bg-[#eab308]' },
   low: {
     label: 'Low',
     badgeClass: 'bg-[#ffe4cc] text-[#0a0a0a] border-[#bd5800]',
-    dotClass: 'bg-[#bd5800]',
-  },
+    dotClass: 'bg-[#bd5800]' },
   very_low: {
     label: 'Very low',
     badgeClass: 'bg-[#fee2e2] text-[#0a0a0a] border-[#dc2626]',
-    dotClass: 'bg-[#dc2626]',
-  },
-}
+    dotClass: 'bg-[#dc2626]' } }
 
 function ConfidencePill({ value }) {
   const cfg = CONFIDENCE_PILL_CONFIG[value] || CONFIDENCE_PILL_CONFIG.medium
@@ -893,8 +792,7 @@ const MOVEMENT_TYPE_PILL_CLASS =
 
 const MOVEMENT_TYPE_LABELS = {
   replenishment: 'Replen',
-  rebalancing: 'Rebal',
-}
+  rebalancing: 'Rebal' }
 
 function MovementTypePills({ movementType }) {
   const types = Array.isArray(movementType) ? movementType : []
@@ -1468,8 +1366,7 @@ function EditableTuTransferBadge({
   onCancel,
   bgClassName,
   icon,
-  hoverPanel,
-}) {
+  hoverPanel }) {
   if (isEditing) {
     return (
       <input
@@ -1539,8 +1436,7 @@ function StockAnalysisDrilldown({
   setExplorerProductNameFilters,
   setActiveTab,
   productStatusOverrides,
-  setProductStatusOverrides,
-}) {
+  setProductStatusOverrides }) {
   const [selectedTransferDetail, setSelectedTransferDetail] = useState(null)
   const [approvedLocations, setApprovedLocations] = useState({})
   const [selectedLocationIds, setSelectedLocationIds] = useState(new Set())
@@ -2061,8 +1957,7 @@ function ProductsDrilldown({
   showBackButton = true,
   onDrawerFiltersActiveChange,
   setExplorerProductNameFilters,
-  setActiveTab,
-}) {
+  setActiveTab }) {
   const [selectedProduct, setSelectedProduct] = useState(null)
   const [productStatusOverrides, setProductStatusOverrides] = useState({})
   const [productTransfersOverrides, setProductTransfersOverrides] = useState({})
@@ -2088,8 +1983,7 @@ function ProductsDrilldown({
     (acc, p) => ({
       transfers: acc.transfers + (p.transfers ?? 0),
       approved: acc.approved + (p.approvedTransfers ?? 0),
-      unapproved: acc.unapproved + (p.unapprovedTransfers ?? 0),
-    }),
+      unapproved: acc.unapproved + (p.unapprovedTransfers ?? 0) }),
     { transfers: 0, approved: 0, unapproved: 0 }
   )
   const products = (() => {
@@ -2109,10 +2003,6 @@ function ProductsDrilldown({
     return list
   })()
 
-  const getProductRecommendationsUpdatedDisplay = (product) => ({
-    date: product.recommendationsUpdated || '26/02/2026',
-    time: product.recommendationsUpdatedTime || '',
-  })
 
   const toggleProductSelection = (id) => {
     setSelectedProductIds((prev) => {
@@ -2229,8 +2119,7 @@ function ProductsDrilldown({
   const productDropProps = (visualIdx) => ({
     onDragEnter: onProductColDragEnter,
     onDragOver: onProductColDragOver,
-    onDrop: (e) => onProductColDrop(visualIdx, e),
-  })
+    onDrop: (e) => onProductColDrop(visualIdx, e) })
 
   function renderProductsHeaderCell(logicalIdx, visualIdx) {
     const isFirst = visualIdx === 0
@@ -2325,20 +2214,8 @@ function ProductsDrilldown({
             </span>
           </th>
         )
+
       case 6:
-        return (
-          <th
-            key={logicalIdx}
-            className={`${productThPin(isFirst, isLast)}h-[62px] min-h-[62px] text-right px-4 align-middle font-medium text-[#00050A] min-w-[90px] box-border`}
-            {...d}
-          >
-            <span className="inline-flex w-full min-w-0 items-center justify-end gap-2">
-              {grip}
-              Recommendations updated
-            </span>
-          </th>
-        )
-      case 7:
         return (
           <th
             key={logicalIdx}
@@ -2357,7 +2234,7 @@ function ProductsDrilldown({
           </th>
         )
 
-      case 8:
+      case 7:
         return (
           <th
             key={logicalIdx}
@@ -2378,7 +2255,7 @@ function ProductsDrilldown({
             </span>
           </th>
         )
-      case 9:
+      case 8:
         return (
           <th
             key={logicalIdx}
@@ -2396,7 +2273,7 @@ function ProductsDrilldown({
             </span>
           </th>
         )
-      case 10:
+      case 9:
         return (
           <th
             key={logicalIdx}
@@ -2414,7 +2291,7 @@ function ProductsDrilldown({
             </span>
           </th>
         )
-      case 11:
+      case 10:
         return (
           <th
             key={logicalIdx}
@@ -2430,7 +2307,7 @@ function ProductsDrilldown({
             </span>
           </th>
         )
-      case 12:
+      case 11:
         return (
           <th
             key={logicalIdx}
@@ -2448,7 +2325,7 @@ function ProductsDrilldown({
             </span>
           </th>
         )
-      case 13:
+      case 12:
         return (
           <th
             key={logicalIdx}
@@ -2461,7 +2338,7 @@ function ProductsDrilldown({
             </span>
           </th>
         )
-      case 14:
+      case 13:
         return (
           <th
             key={logicalIdx}
@@ -2474,7 +2351,7 @@ function ProductsDrilldown({
             </span>
           </th>
         )
-      case 15:
+      case 14:
         return (
           <th
             key={logicalIdx}
@@ -2489,7 +2366,7 @@ function ProductsDrilldown({
             </span>
           </th>
         )
-      case 16:
+      case 15:
         return (
           <th
             key={logicalIdx}
@@ -2504,7 +2381,7 @@ function ProductsDrilldown({
             </span>
           </th>
         )
-      case 17:
+      case 16:
         return (
           <th
             key={logicalIdx}
@@ -2519,7 +2396,7 @@ function ProductsDrilldown({
             </span>
           </th>
         )
-      case 18:
+      case 17:
         return (
           <th
             key={logicalIdx}
@@ -2583,21 +2460,16 @@ function ProductsDrilldown({
         )
       case 5:
         return <th key={logicalIdx} className={`${pin}py-2 px-4 text-right`} />
+
       case 6:
-        return (
-          <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-normal text-[#4b535c] text-right`}>
-            —
-          </th>
-        )
-      case 7:
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] text-[#4b535c] text-right`}>
             —
           </th>
         )
-      case 8:
+      case 7:
         return <th key={logicalIdx} className={`${pin}py-2 px-4 text-right`} />
-      case 9:
+      case 8:
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
             <div className="flex flex-col items-end">
@@ -2606,7 +2478,7 @@ function ProductsDrilldown({
             </div>
           </th>
         )
-      case 10:
+      case 9:
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
             <div className="flex flex-col items-end">
@@ -2615,7 +2487,7 @@ function ProductsDrilldown({
             </div>
           </th>
         )
-      case 11:
+      case 10:
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
             <div className="flex flex-col items-end">
@@ -2624,43 +2496,43 @@ function ProductsDrilldown({
             </div>
           </th>
         )
-      case 12:
+      case 11:
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
             {productSummary.forecast}
           </th>
         )
-      case 13:
+      case 12:
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
             {productSummary.stockouts}
           </th>
         )
-      case 14:
+      case 13:
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
             {productSummary.locations}
           </th>
         )
-      case 15:
+      case 14:
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
             {productSummary.overstocks}
           </th>
         )
-      case 16:
+      case 15:
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
             {productSummary.understocks}
           </th>
         )
-      case 17:
+      case 16:
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
             {productSummary.depth}
           </th>
         )
-      case 18:
+      case 17:
         return <th key={logicalIdx} className={`${pin}py-2 px-4 text-right`} />
       default:
         return null
@@ -2783,18 +2655,8 @@ function ProductsDrilldown({
             </div>
           </td>
         )
+
       case 6:
-        return (
-          <td key={logicalIdx} className={`${pin}py-3 px-4 text-right align-top`}>
-            <div className="flex flex-col items-end gap-0.5 line-clamp-2 min-w-0">
-              <span className="text-[14px] text-[#4B535C]">{getProductRecommendationsUpdatedDisplay(p).date}</span>
-              {getProductRecommendationsUpdatedDisplay(p).time && (
-                <span className="text-[12px] text-[#4b535c]">{getProductRecommendationsUpdatedDisplay(p).time}</span>
-              )}
-            </div>
-          </td>
-        )
-      case 7:
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right align-top`}>
             <div className="flex justify-end line-clamp-2 min-w-0">
@@ -2806,7 +2668,7 @@ function ProductsDrilldown({
             </div>
           </td>
         )
-      case 8:
+      case 7:
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right align-top`}>
             <div className="flex justify-end line-clamp-2 min-w-0">
@@ -2814,7 +2676,7 @@ function ProductsDrilldown({
             </div>
           </td>
         )
-      case 9:
+      case 8:
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right align-top`}>
             <div className="flex flex-col items-end line-clamp-2 min-w-0">
@@ -2823,7 +2685,7 @@ function ProductsDrilldown({
             </div>
           </td>
         )
-      case 10:
+      case 9:
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right align-top`}>
             <div className="flex flex-col items-end line-clamp-2 min-w-0">
@@ -2832,7 +2694,7 @@ function ProductsDrilldown({
             </div>
           </td>
         )
-      case 11:
+      case 10:
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right align-top`}>
             <div className="flex flex-col items-end line-clamp-2 min-w-0">
@@ -2841,43 +2703,43 @@ function ProductsDrilldown({
             </div>
           </td>
         )
-      case 12:
+      case 11:
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right text-[#0a0a0a] align-top`}>
             <div className="line-clamp-2 min-w-0 w-full text-right">{p.forecast}</div>
           </td>
         )
-      case 13:
+      case 12:
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right text-[#0a0a0a] align-top`}>
             <div className="line-clamp-2 min-w-0 w-full text-right">{p.stockouts}</div>
           </td>
         )
-      case 14:
+      case 13:
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right text-[#0a0a0a] align-top`}>
             <div className="line-clamp-2 min-w-0 w-full text-right">{p.locations}</div>
           </td>
         )
-      case 15:
+      case 14:
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right text-[#0a0a0a] align-top`}>
             <div className="line-clamp-2 min-w-0 w-full text-right">{p.overstocks}</div>
           </td>
         )
-      case 16:
+      case 15:
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right text-[#0a0a0a] align-top`}>
             <div className="line-clamp-2 min-w-0 w-full text-right">{p.understocks}</div>
           </td>
         )
-      case 17:
+      case 16:
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right text-[#0a0a0a] align-top`}>
             <div className="line-clamp-2 min-w-0 w-full text-right">{p.depth}</div>
           </td>
         )
-      case 18:
+      case 17:
         return (
           <td
             key={logicalIdx}
@@ -3181,10 +3043,6 @@ function LocationsTab({ onDrawerFiltersActiveChange }) {
     return list
   })()
 
-  const getLocationRecommendationsUpdatedDisplay = (loc) => ({
-    date: loc.recommendationsUpdated || '26/02/2026',
-    time: loc.recommendationsUpdatedTime || '',
-  })
 
   const toggleLocationSelection = (id) => {
     setSelectedLocationIds((prev) => {
@@ -3204,8 +3062,8 @@ function LocationsTab({ onDrawerFiltersActiveChange }) {
   const [locationColumnOrder, setLocationColumnOrder] = useState(() =>
     Array.from({ length: LOCATIONS_TABLE_NUM_DATA_COLS }, (_, i) => i)
   )
-  /** Status (logical col 14) only pins to the right when it is the trailing column after reorder. */
-  const locationStatusColumnIsTrailing = locationColumnOrder[locationColumnOrder.length - 1] === 14
+  /** Status (logical col 13) only pins to the right when it is the trailing column after reorder. */
+  const locationStatusColumnIsTrailing = locationColumnOrder[locationColumnOrder.length - 1] === 13
 
   const onLocationColDragStart = useCallback((visualIndex, e) => {
     e.stopPropagation()
@@ -3244,7 +3102,7 @@ function LocationsTab({ onDrawerFiltersActiveChange }) {
       ? 'sticky left-14 z-20 border-r border-[#e5e7eb] shadow-[4px_0_8px_rgba(0,0,0,0.04)] bg-white '
       : 'relative '
   const locStatusThPin = (logicalIdx) =>
-    logicalIdx === 14 && locationStatusColumnIsTrailing
+    logicalIdx === 13 && locationStatusColumnIsTrailing
       ? 'sticky right-0 z-30 border-l border-[#e5e7eb] shadow-[-4px_0_12px_-6px_rgba(15,23,42,0.12)] bg-white '
       : ''
   const locTdPin = (isFirst) =>
@@ -3252,15 +3110,14 @@ function LocationsTab({ onDrawerFiltersActiveChange }) {
       ? 'sticky left-14 z-10 border-r border-[#e5e7eb] shadow-[4px_0_8px_rgba(0,0,0,0.04)] bg-white group-hover:bg-[#f9fafb] '
       : ''
   const locStatusTdPin = (logicalIdx) =>
-    logicalIdx === 14 && locationStatusColumnIsTrailing
+    logicalIdx === 13 && locationStatusColumnIsTrailing
       ? 'sticky right-0 z-20 border-l border-[#e5e7eb] shadow-[-4px_0_12px_-6px_rgba(15,23,42,0.12)] bg-white group-hover:bg-[#f9fafb] '
       : ''
 
   const locationDropProps = (visualIdx) => ({
     onDragEnter: onLocationColDragEnter,
     onDragOver: onLocationColDragOver,
-    onDrop: (e) => onLocationColDrop(visualIdx, e),
-  })
+    onDrop: (e) => onLocationColDrop(visualIdx, e) })
 
   function renderLocationsHeaderCell(logicalIdx, visualIdx) {
     const isFirst = visualIdx === 0
@@ -3358,17 +3215,8 @@ function LocationsTab({ onDrawerFiltersActiveChange }) {
             )}
           </th>
         )
+
       case 7:
-        return (
-          <th
-            key={logicalIdx}
-            className={`${thPin}h-[62px] min-h-[62px] text-right px-4 align-middle font-medium text-[#00050A] min-w-[90px] box-border`}
-            {...d}
-          >
-            {rowEnd('Recommendations updated')}
-          </th>
-        )
-      case 8:
         return (
           <th
             key={logicalIdx}
@@ -3385,7 +3233,7 @@ function LocationsTab({ onDrawerFiltersActiveChange }) {
             )}
           </th>
         )
-      case 9:
+      case 8:
         return (
           <th
             key={logicalIdx}
@@ -3395,7 +3243,7 @@ function LocationsTab({ onDrawerFiltersActiveChange }) {
             {rowEnd('Sales')}
           </th>
         )
-      case 10:
+      case 9:
         return (
           <th
             key={logicalIdx}
@@ -3407,7 +3255,7 @@ function LocationsTab({ onDrawerFiltersActiveChange }) {
             )}
           </th>
         )
-      case 11:
+      case 10:
         return (
           <th
             key={logicalIdx}
@@ -3417,7 +3265,7 @@ function LocationsTab({ onDrawerFiltersActiveChange }) {
             {rowEnd('Stockouts')}
           </th>
         )
-      case 12:
+      case 11:
         return (
           <th
             key={logicalIdx}
@@ -3429,7 +3277,7 @@ function LocationsTab({ onDrawerFiltersActiveChange }) {
             )}
           </th>
         )
-      case 13:
+      case 12:
         return (
           <th
             key={logicalIdx}
@@ -3441,7 +3289,7 @@ function LocationsTab({ onDrawerFiltersActiveChange }) {
             )}
           </th>
         )
-      case 14:
+      case 13:
         return (
           <th
             key={logicalIdx}
@@ -3500,13 +3348,8 @@ function LocationsTab({ onDrawerFiltersActiveChange }) {
             477 units
           </th>
         )
+
       case 7:
-        return (
-          <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-normal text-[#4b535c] text-right`}>
-            —
-          </th>
-        )
-      case 8:
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
             <div className="flex flex-col items-end">
@@ -3515,7 +3358,7 @@ function LocationsTab({ onDrawerFiltersActiveChange }) {
             </div>
           </th>
         )
-      case 9:
+      case 8:
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
             <div className="flex flex-col items-end">
@@ -3524,31 +3367,31 @@ function LocationsTab({ onDrawerFiltersActiveChange }) {
             </div>
           </th>
         )
-      case 10:
+      case 9:
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
             154.61 per wk
           </th>
         )
-      case 11:
+      case 10:
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
             189 → 383
           </th>
         )
-      case 12:
+      case 11:
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
             301 → 28
           </th>
         )
-      case 13:
+      case 12:
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
             1,270 → …
           </th>
         )
-      case 14:
+      case 13:
         return <th key={logicalIdx} className={`${pin}py-2 px-4 text-right`} />
       default:
         return null
@@ -3624,23 +3467,8 @@ function LocationsTab({ onDrawerFiltersActiveChange }) {
             <div className="line-clamp-2 min-w-0">{loc.recommendedOut}</div>
           </td>
         )
+
       case 7:
-        return (
-          <td key={logicalIdx} className={`${pin}py-3 px-4 text-right align-top`}>
-            {(() => {
-              const display = getLocationRecommendationsUpdatedDisplay(loc)
-              return (
-            <div className="flex flex-col items-end gap-0.5 line-clamp-2 min-w-0">
-              <span className="text-[14px] text-[#4B535C]">{display.date}</span>
-              {display.time && (
-                <span className="text-[12px] text-[#4b535c]">{display.time}</span>
-              )}
-            </div>
-              )
-            })()}
-          </td>
-        )
-      case 8:
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right align-top`}>
             <div className="flex flex-col items-end line-clamp-2 min-w-0">
@@ -3649,7 +3477,7 @@ function LocationsTab({ onDrawerFiltersActiveChange }) {
             </div>
           </td>
         )
-      case 9:
+      case 8:
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right align-top`}>
             <div className="flex flex-col items-end line-clamp-2 min-w-0">
@@ -3658,31 +3486,31 @@ function LocationsTab({ onDrawerFiltersActiveChange }) {
             </div>
           </td>
         )
-      case 10:
+      case 9:
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right text-[#0a0a0a] align-top`}>
             <div className="line-clamp-2 min-w-0">{loc.forecast}</div>
           </td>
         )
-      case 11:
+      case 10:
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right text-[#0a0a0a] align-top`}>
             <div className="line-clamp-2 min-w-0">{loc.stockouts}</div>
           </td>
         )
-      case 12:
+      case 11:
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right text-[#0a0a0a] align-top`}>
             <div className="line-clamp-2 min-w-0">{loc.overstocks}</div>
           </td>
         )
-      case 13:
+      case 12:
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right text-[#0a0a0a] align-top`}>
             <div className="line-clamp-2 min-w-0">{loc.understocks}</div>
           </td>
         )
-      case 14:
+      case 13:
         return (
           <td
             key={logicalIdx}
@@ -3895,40 +3723,35 @@ const EXPLORER_TABLE_COLUMNS = [
     label: 'Recommended transfers',
     alignment: 'right',
     minWidth: 'min-w-[140px]',
-    tooltip: null,
-  },
+    tooltip: null },
   {
     id: 'confidence',
     label: 'Confidence',
     alignment: 'right',
     minWidth: 'min-w-[110px]',
     tooltip:
-      'Based on historical forecast accuracy at the product level. Lower confidence means recommendations carry more uncertainty.',
-  },
+      'Based on historical forecast accuracy at the product level. Lower confidence means recommendations carry more uncertainty.' },
   {
     id: 'serviceLevel',
     label: 'Service level',
     alignment: 'right',
     minWidth: 'min-w-[160px]',
     tooltip:
-      'The probability of selling / value of the last unit of stock at the receiving location, after this proposal is applied.',
-  },
+      'The probability of selling / value of the last unit of stock at the receiving location, after this proposal is applied.' },
   {
     id: 'coverage',
     label: 'Coverage',
     alignment: 'right',
     minWidth: 'min-w-[120px]',
     tooltip:
-      "How well current stock is meeting forecasted demand. 'X% below target' means stock is short of target; 'All SKUs in target' means coverage is on track.",
-  },
+      "How well current stock is meeting forecasted demand. 'X% below target' means stock is short of target; 'All SKUs in target' means coverage is on track." },
   {
     id: 'nextEvent',
     label: 'Next event',
     alignment: 'right',
     minWidth: 'min-w-[130px]',
     subtitle: 'Submission deadline',
-    tooltip: 'The next scheduled inventory event for this product across all locations in scope',
-  },
+    tooltip: 'The next scheduled inventory event for this product across all locations in scope' },
   { id: 'stockouts', label: 'Stockouts', alignment: 'right', minWidth: 'min-w-[90px]' },
   { id: 'sales', label: 'Sales', alignment: 'right', minWidth: 'min-w-[120px]', subtitle: 'L7D / L30D' },
   { id: 'forecast', label: 'Forecast', alignment: 'right', minWidth: 'min-w-[100px]', subtitle: 'per wk', tooltip: null },
@@ -3938,15 +3761,13 @@ const EXPLORER_TABLE_COLUMNS = [
     alignment: 'right',
     minWidth: 'min-w-[140px]',
     tooltip:
-      'This includes stock in transit, stock on hand and stock pending from production. This will be for both parent & child locations (if applicable).',
-  },
+      'This includes stock in transit, stock on hand and stock pending from production. This will be for both parent & child locations (if applicable).' },
   {
     id: 'warehouseUnits',
     label: 'Warehouse units',
     alignment: 'right',
     minWidth: 'min-w-[140px]',
-    tooltip: 'Units reserved to sell at this location and units available to allocate to stores',
-  },
+    tooltip: 'Units reserved to sell at this location and units available to allocate to stores' },
   { id: 'status', label: 'Status', alignment: 'right', minWidth: 'min-w-[150px]' },
 ]
 
@@ -3961,8 +3782,7 @@ const EXPLORER_STATUS_FILTER_LABELS = {
   approved: 'Approved',
   unapproved: 'Unapproved',
   needs_review: 'Needs review',
-  edited: 'Edited',
-}
+  edited: 'Edited' }
 
 function filterExplorerRows(
   rows,
@@ -3972,8 +3792,7 @@ function filterExplorerRows(
     movementTypeFilters,
     confidenceFilters,
     statusFilters,
-    statusOverrides = {},
-  }
+    statusOverrides = {} }
 ) {
   return rows.filter((row) => {
     if (departmentFilters.length > 0 && !departmentFilters.includes(row.department)) {
@@ -4025,8 +3844,7 @@ function renderExplorerBodyCell(row, col, {
   getEffectiveStatus,
   handleExplorerStatusChange,
   getEffectiveTransfers,
-  handleTransfersEdit,
-}) {
+  handleTransfersEdit }) {
   const alignClass = col.alignment === 'right' ? 'text-right' : ''
 
   switch (col.id) {
@@ -4286,8 +4104,7 @@ function ExplorerTable({
   explorerConfidenceFilters,
   setExplorerConfidenceFilters,
   explorerStatusFilters,
-  setExplorerStatusFilters,
-}) {
+  setExplorerStatusFilters }) {
   const [explorerSearch, setExplorerSearch] = useState('')
   const [explorerActiveQuickFilter, setExplorerActiveQuickFilter] = useState(null)
   const [explorerFiltersDropdownOpen, setExplorerFiltersDropdownOpen] = useState(false)
@@ -4394,8 +4211,7 @@ function ExplorerTable({
         movementTypeFilters: explorerMovementTypeFilters,
         confidenceFilters: explorerConfidenceFilters,
         statusFilters: explorerStatusFilters,
-        statusOverrides: explorerStatusOverrides,
-      }),
+        statusOverrides: explorerStatusOverrides }),
     [
       data,
       explorerDepartmentFilters,
@@ -4450,8 +4266,7 @@ function ExplorerTable({
       salesL7: sumSalesL7,
       salesL30: sumSalesL30,
       currentUnits: `${sumCurrentUnits} units`,
-      inTransit: `${sumInTransit} in transit`,
-    }
+      inTransit: `${sumInTransit} in transit` }
   }, [filteredData, explorerTransferOverrides])
 
   const explorerThClass =
@@ -4807,8 +4622,7 @@ function ExplorerTable({
                 renderExplorerTotalsCell(col, totals, {
                   explorerTotalsThClass,
                   explorerTotalsEmptyThClass,
-                  explorerStatusTotalsThClass,
-                })
+                  explorerStatusTotalsThClass })
               )}
             </tr>
             )}
@@ -4838,8 +4652,7 @@ function ExplorerTable({
                     getEffectiveStatus,
                     handleExplorerStatusChange,
                     getEffectiveTransfers,
-                    handleTransfersEdit,
-                  })
+                    handleTransfersEdit })
                 )}
               </tr>
               ))
@@ -5297,8 +5110,8 @@ export default function ScheduleDetailPage() {
   const [tripColumnOrder, setTripColumnOrder] = useState(() =>
     Array.from({ length: TRIPS_TABLE_NUM_DATA_COLS }, (_, i) => i)
   )
-  /** Status (logical col 8) only pins to the right when it is the trailing column after reorder. */
-  const tripStatusColumnIsTrailing = tripColumnOrder[tripColumnOrder.length - 1] === 8
+  /** Status (logical col 7) only pins to the right when it is the trailing column after reorder. */
+  const tripStatusColumnIsTrailing = tripColumnOrder[tripColumnOrder.length - 1] === 7
 
   const onTripColDragStart = useCallback((visualIndex, e) => {
     e.stopPropagation()
@@ -5388,10 +5201,6 @@ export default function ScheduleDetailPage() {
 
   const [bulkChangeStatusOpen, setBulkChangeStatusOpen] = useState(false)
 
-  const getRecommendationsUpdatedDisplay = (row) => ({
-    date: row.recommendationsUpdated || '26/02/2026',
-    time: row.recommendationsUpdatedTime || '',
-  })
 
   const handleBulkStatusChange = (statusId) => {
     if (!selectedTripIds.size) return
@@ -5801,8 +5610,7 @@ export default function ScheduleDetailPage() {
                       const dropProps = {
                         onDragEnter: onTripColDragEnter,
                         onDragOver: onTripColDragOver,
-                        onDrop: (e) => onTripColDrop(visualIdx, e),
-                      }
+                        onDrop: (e) => onTripColDrop(visualIdx, e) }
                       switch (logicalIdx) {
                         case 0:
                           return (
@@ -5895,21 +5703,8 @@ export default function ScheduleDetailPage() {
                               {resizer}
                             </th>
                           )
+
                         case 6:
-                          return (
-                            <th
-                              key={logicalIdx}
-                              className="sticky top-0 z-20 bg-white relative h-[62px] min-h-[62px] whitespace-nowrap px-3 text-right align-middle font-medium text-[#0a0a0a] box-border"
-                              {...dropProps}
-                            >
-                              <span className="inline-flex w-full items-center justify-end gap-2 whitespace-nowrap">
-                                {grip}
-                                Recommendations updated
-                              </span>
-                              {resizer}
-                            </th>
-                          )
-                        case 7:
                           return (
                             <th
                               key={logicalIdx}
@@ -5923,7 +5718,7 @@ export default function ScheduleDetailPage() {
                               {resizer}
                             </th>
                           )
-                        case 8:
+                        case 7:
                           return (
                             <th
                               key={logicalIdx}
@@ -6000,14 +5795,8 @@ export default function ScheduleDetailPage() {
                               {tripSummary.recommended}
                             </th>
                           )
+
                         case 6:
-                          return (
-                            <th
-                              key={logicalIdx}
-                              className="sticky top-[62px] z-20 bg-white py-2 px-3 text-right text-[12px] font-normal text-[#4b535c]"
-                            />
-                          )
-                        case 7:
                           return (
                             <th
                               key={logicalIdx}
@@ -6016,7 +5805,7 @@ export default function ScheduleDetailPage() {
                               {tripSummary.products}
                             </th>
                           )
-                        case 8:
+                        case 7:
                           return (
                             <th
                               key={logicalIdx}
@@ -6129,31 +5918,14 @@ export default function ScheduleDetailPage() {
                                   </div>
                                 </td>
                               )
+
                             case 6:
-                              return (
-                                <td key={logicalIdx} className="py-3 px-3 align-top text-right">
-                                  {(() => {
-                                    const display = getRecommendationsUpdatedDisplay(row)
-                                    return (
-                                  <div className="flex flex-col gap-0.5 items-end">
-                                    <span className="text-[14px] text-[#4B535C]">
-                                      {display.date}
-                                    </span>
-                                    {display.time && (
-                                      <span className="text-[12px] text-[#4b535c]">{display.time}</span>
-                                    )}
-                                  </div>
-                                    )
-                                  })()}
-                                </td>
-                              )
-                            case 7:
                               return (
                                 <td key={logicalIdx} className="py-3 px-3 align-top text-right">
                                   <span className="text-[#0a0a0a]">{row.products}</span>
                                 </td>
                               )
-                            case 8:
+                            case 7:
                               return (
                                 <td
                                   key={logicalIdx}
