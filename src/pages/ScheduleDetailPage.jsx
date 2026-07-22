@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback, useLayoutEffect, useMemo } fr
 import { createPortal } from 'react-dom'
 import { Filter, Plus } from 'lucide-react'
 import { ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts'
-import { IconSearch, IconChevronDown, IconChevronRight, IconShare, IconDocument, IconClose, IconInfo as DsIconInfo, IconArrowLeft, IconGears, IconTruckTu, IconPackageTu, IconRebalancing, IconReplenishment, IconCalendarNote, IconTrendUp, IconFilterFunnel, IconColumnSettings, IconSortOrder } from '../components/icons'
+import { IconSearch, IconChevronDown, IconChevronRight, IconShare, IconDocument, IconClose, IconArrowLeft, IconGears, IconTruckTu, IconPackageTu, IconRebalancing, IconReplenishment, IconCalendarNote, IconTrendUp, IconFilterFunnel, IconColumnSettings, IconSortOrder } from '../components/icons'
 function IconInfo() {
   return (
     <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="shrink-0 text-[#9ca3af]" aria-hidden>
@@ -301,20 +301,6 @@ function getRowStatus(row) {
   if (row.approvalStatus === 'approved_by_user') return 'approved_by_user'
   if (row.approvalStatus === 'edited_by_user') return 'last_edited_by_user'
   return 'unapproved'
-}
-
-function shouldUpdateRecommendationsTimestampForStatus(status) {
-  return status === 'unapproved' || status === 'partially_approved'
-}
-
-function getNowRecommendationsTimestamp() {
-  const now = new Date()
-  const dd = String(now.getDate()).padStart(2, '0')
-  const mm = String(now.getMonth() + 1).padStart(2, '0')
-  const yyyy = now.getFullYear()
-  const hh = String(now.getHours()).padStart(2, '0')
-  const min = String(now.getMinutes()).padStart(2, '0')
-  return { date: `${dd}/${mm}/${yyyy}`, time: `${hh}:${min}` }
 }
 
 const TRIPS_OTHER = [
@@ -2073,7 +2059,6 @@ function ProductsDrilldown({
   trip,
   onBack,
   showBackButton = true,
-  recalculatedTimestamp,
   onDrawerFiltersActiveChange,
   setExplorerProductNameFilters,
   setActiveTab,
@@ -2123,18 +2108,11 @@ function ProductsDrilldown({
     }
     return list
   })()
-  const hasRecalculated = Boolean(recalculatedTimestamp)
 
-  const getProductRecommendationsUpdatedDisplay = (product) => {
-    const rowStatus = productStatusOverrides[product.id] ?? getRowStatus(product)
-    if (hasRecalculated && shouldUpdateRecommendationsTimestampForStatus(rowStatus)) {
-      return recalculatedTimestamp
-    }
-    return {
-      date: product.recommendationsUpdated || '26/02/2026',
-      time: product.recommendationsUpdatedTime || '',
-    }
-  }
+  const getProductRecommendationsUpdatedDisplay = (product) => ({
+    date: product.recommendationsUpdated || '26/02/2026',
+    time: product.recommendationsUpdatedTime || '',
+  })
 
   const toggleProductSelection = (id) => {
     setSelectedProductIds((prev) => {
@@ -3174,7 +3152,7 @@ function ProductsDrilldown({
   )
 }
 
-function LocationsTab({ recalculatedTimestamp, onDrawerFiltersActiveChange }) {
+function LocationsTab({ onDrawerFiltersActiveChange }) {
   const [selectedLocationIds, setSelectedLocationIds] = useState(new Set())
   const [locationStatusOverrides, setLocationStatusOverrides] = useState({})
   const [statusFilters, setStatusFilters] = useState([])
@@ -3202,18 +3180,11 @@ function LocationsTab({ recalculatedTimestamp, onDrawerFiltersActiveChange }) {
     }
     return list
   })()
-  const hasRecalculated = Boolean(recalculatedTimestamp)
 
-  const getLocationRecommendationsUpdatedDisplay = (loc) => {
-    const rowStatus = locationStatusOverrides[loc.id] ?? getRowStatus(loc)
-    if (hasRecalculated && shouldUpdateRecommendationsTimestampForStatus(rowStatus)) {
-      return recalculatedTimestamp
-    }
-    return {
-      date: loc.recommendationsUpdated || '26/02/2026',
-      time: loc.recommendationsUpdatedTime || '',
-    }
-  }
+  const getLocationRecommendationsUpdatedDisplay = (loc) => ({
+    date: loc.recommendationsUpdated || '26/02/2026',
+    time: loc.recommendationsUpdatedTime || '',
+  })
 
   const toggleLocationSelection = (id) => {
     setSelectedLocationIds((prev) => {
@@ -5290,10 +5261,6 @@ export default function ScheduleDetailPage() {
   const [productsDrawerFiltersActive, setProductsDrawerFiltersActive] = useState(false)
   const [locationsDrawerFiltersActive, setLocationsDrawerFiltersActive] = useState(false)
   const [explorerDrawerFiltersActive, setExplorerDrawerFiltersActive] = useState(false)
-  const [staleDataBannerDismissed, setStaleDataBannerDismissed] = useState(false)
-  const [recalculatedTimestamp, setRecalculatedTimestamp] = useState(null)
-  const hasRecalculated = Boolean(recalculatedTimestamp)
-
   const hasActiveFilters =
     activeTab === 'products'
       ? productsDrawerFiltersActive
@@ -5421,20 +5388,10 @@ export default function ScheduleDetailPage() {
 
   const [bulkChangeStatusOpen, setBulkChangeStatusOpen] = useState(false)
 
-  const handleRecalculate = () => {
-    setRecalculatedTimestamp(getNowRecommendationsTimestamp())
-    setStaleDataBannerDismissed(true)
-  }
-
-  const getRecommendationsUpdatedDisplay = (row, status) => {
-    if (hasRecalculated && shouldUpdateRecommendationsTimestampForStatus(status)) {
-      return recalculatedTimestamp
-    }
-    return {
-      date: row.recommendationsUpdated || '26/02/2026',
-      time: row.recommendationsUpdatedTime || '',
-    }
-  }
+  const getRecommendationsUpdatedDisplay = (row) => ({
+    date: row.recommendationsUpdated || '26/02/2026',
+    time: row.recommendationsUpdatedTime || '',
+  })
 
   const handleBulkStatusChange = (statusId) => {
     if (!selectedTripIds.size) return
@@ -5492,14 +5449,6 @@ export default function ScheduleDetailPage() {
                 >
                   <IconDocument />
                 </button>
-                <button
-                  type="button"
-                  onClick={handleRecalculate}
-                  className="h-10 px-4 rounded-[4px] border border-[#00050a] bg-white text-[#00050a] text-[14px] font-medium flex items-center gap-2 hover:bg-[#f3f4f6]"
-                  style={{ display: hasRecalculated ? 'none' : undefined }}
-                >
-                  Re-calculate
-                </button>
               </>
             )}
             {showSummary ? (
@@ -5521,28 +5470,6 @@ export default function ScheduleDetailPage() {
           </div>
         </div>
       </header>
-
-      {!showSummary && !staleDataBannerDismissed && !hasRecalculated && (
-        <div className="w-full rounded-[6px] border border-solid border-[#0267ff] bg-[#ebf3ff] p-4 flex items-start gap-3 min-w-0">
-          <DsIconInfo className="size-6 shrink-0 text-[#0267ff]" aria-hidden />
-          <div className="flex min-w-0 flex-1 flex-col gap-1">
-            <span className="text-[16px] font-medium leading-normal text-[#00050a]">
-              The data in this batch is old
-            </span>
-            <span className="text-[14px] font-normal leading-normal text-[#4b535c]">
-              You've sent us new data and/or your parameters have changed. Re-calculate to refresh recommendations - approved and edited rows will be preserved.
-            </span>
-          </div>
-          <button
-            type="button"
-            onClick={() => setStaleDataBannerDismissed(true)}
-            className="shrink-0 inline-flex items-center justify-center rounded-[4px] p-1.5 text-[#4b535c] hover:bg-black/[0.04]"
-            aria-label="Dismiss stale data notification"
-          >
-            <IconClose className="size-4" />
-          </button>
-        </div>
-      )}
 
       {showSummary ? (
         <SummaryPage />
@@ -5659,14 +5586,12 @@ export default function ScheduleDetailPage() {
             trip={TRIPS_OPERA[0]}
             onBack={() => {}}
             showBackButton={false}
-            recalculatedTimestamp={recalculatedTimestamp}
             onDrawerFiltersActiveChange={setProductsDrawerFiltersActive}
             setExplorerProductNameFilters={setExplorerProductNameFilters}
             setActiveTab={setActiveTab}
           />
         ) : activeTab === 'locations' ? (
           <LocationsTab
-            recalculatedTimestamp={recalculatedTimestamp}
             onDrawerFiltersActiveChange={setLocationsDrawerFiltersActive}
           />
         ) : activeTab === 'explorer' ? (
@@ -5694,7 +5619,6 @@ export default function ScheduleDetailPage() {
             <ProductsDrilldown
               trip={selectedTrip}
               onBack={() => setSelectedTrip(null)}
-              recalculatedTimestamp={recalculatedTimestamp}
               onDrawerFiltersActiveChange={setProductsDrawerFiltersActive}
               setExplorerProductNameFilters={setExplorerProductNameFilters}
               setActiveTab={setActiveTab}
@@ -6209,7 +6133,7 @@ export default function ScheduleDetailPage() {
                               return (
                                 <td key={logicalIdx} className="py-3 px-3 align-top text-right">
                                   {(() => {
-                                    const display = getRecommendationsUpdatedDisplay(row, rowStatus)
+                                    const display = getRecommendationsUpdatedDisplay(row)
                                     return (
                                   <div className="flex flex-col gap-0.5 items-end">
                                     <span className="text-[14px] text-[#4B535C]">
