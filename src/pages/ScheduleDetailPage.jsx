@@ -813,8 +813,6 @@ const QUICK_FILTER_CHIPS = [
   { id: 'low_confidence', label: 'Low confidence' },
   { id: 'unapproved', label: 'Unapproved' },
   { id: 'needs_review', label: 'Needs review' },
-  { id: 'broken_size_run', label: 'Broken size run' },
-  { id: 'stale_stock', label: 'Stale stock' },
   { id: 'bestsellers', label: 'Bestsellers' },
   { id: 'selling_fast', label: 'Selling fast' },
   { id: 'new_in', label: 'New in' },
