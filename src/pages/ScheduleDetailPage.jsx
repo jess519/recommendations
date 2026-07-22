@@ -710,6 +710,24 @@ function buildExplorerRow(rowIndex, product, size, fromLoc, toLoc, movementType)
     ? 'All SKUs in target'
     : `${Math.round(((coverageTarget - coverageWeeks) / coverageTarget) * 100)}% below target`
   const salesL7 = ((rowIndex * 2) % 15) + 1
+  // Service level: ~1/3 probability / sales threshold / £ last-unit. sizeIdx shifts
+  // sibling SKUs by ≥10pp (or €8). Injected lows: prob <30%, threshold >70%, £ <€5.
+  const framing = rowIndex % 3
+  const sizeIdx = Math.max(0, product.sizes.indexOf(size))
+  let serviceLevel
+  if (framing === 0) {
+    let pct = 40 + ((rowIndex * 5) % 40) + sizeIdx * 12
+    if (rowIndex % 18 === 0) pct = 15 + sizeIdx * 12
+    serviceLevel = `${Math.min(95, pct)}% p(sell) last unit`
+  } else if (framing === 1) {
+    let pct = 20 + ((rowIndex * 5) % 40) + sizeIdx * 12
+    if (rowIndex % 18 === 1) pct = 75 + sizeIdx * 12
+    serviceLevel = `${Math.min(95, pct)}% sales threshold`
+  } else {
+    let euros = 8 + ((rowIndex * 3) % 30) + sizeIdx * 8
+    if (rowIndex % 18 === 2) euros = 2 + sizeIdx * 8
+    serviceLevel = `€${euros} last unit`
+  }
   return {
     id: `exp-row-${rowIndex}`,
     productId: product.id,
@@ -727,6 +745,7 @@ function buildExplorerRow(rowIndex, product, size, fromLoc, toLoc, movementType)
     recommendedBadges: BADGE_CYCLE[rowIndex % BADGE_CYCLE.length],
     recommendedSub: rowIndex % 3 === 0 ? '2' : undefined,
     confidence: CONFIDENCE_CYCLE[rowIndex % CONFIDENCE_CYCLE.length],
+    serviceLevel,
     coverage,
     coverageWeeks,
     coverageTarget,
@@ -3916,6 +3935,14 @@ const EXPLORER_TABLE_COLUMNS = [
       'Based on historical forecast accuracy at the product level. Lower confidence means recommendations carry more uncertainty.',
   },
   {
+    id: 'serviceLevel',
+    label: 'Service level',
+    alignment: 'right',
+    minWidth: 'min-w-[160px]',
+    tooltip:
+      'The probability of selling / value of the last unit of stock at the receiving location, after this proposal is applied.',
+  },
+  {
     id: 'coverage',
     label: 'Coverage',
     alignment: 'right',
@@ -4111,6 +4138,12 @@ function renderExplorerBodyCell(row, col, {
           <div className="flex justify-end">
             <ConfidencePill value={row.confidence} />
           </div>
+        </td>
+      )
+    case 'serviceLevel':
+      return (
+        <td key={col.id} className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}>
+          <span className="text-[14px] text-[#0a0a0a]">{row.serviceLevel}</span>
         </td>
       )
     case 'coverage':
