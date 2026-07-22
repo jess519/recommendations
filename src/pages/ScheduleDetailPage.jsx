@@ -3765,8 +3765,7 @@ const EXPLORER_TABLE_COLUMNS = [
     label: 'Stock in circulation (receiving)',
     alignment: 'right',
     minWidth: 'min-w-[160px]',
-    tooltip:
-      'On-hand + pending from production + in transit at the receiving location (parent & child locations if applicable).',
+    tooltip: 'on-hand + pending from production + in transit',
   },
   {
     id: 'warehouseUnits',
