@@ -607,6 +607,29 @@ function buildExplorerRow(rowIndex, product, size, fromLoc, toLoc, movementType)
   // sibling SKUs by ≥10pp (or €8). Injected lows: prob <30%, service level >70%, £ <€5.
   const framing = rowIndex % 3
   const sizeIdx = Math.max(0, product.sizes.indexOf(size))
+  const initialAllocation = 1 + ((rowIndex * 7 + sizeIdx * 3) % 20)
+  const [createDd, createMm, createYyyy] = SCHEDULE_CREATION_DATE.split('/').map(Number)
+  const creationBase = new Date(createYyyy, createMm - 1, createDd)
+  const stockDaysAgo = 30 + ((rowIndex * 11 + sizeIdx * 5) % 91) // 30–120 days before creation
+  const salesDaysAgo = Math.max(1, stockDaysAgo - (5 + (rowIndex % 25))) // later than first stock
+  const formatExplorerDate = (date) => {
+    const dd = String(date.getDate()).padStart(2, '0')
+    const mm = String(date.getMonth() + 1).padStart(2, '0')
+    return `${dd}/${mm}/${date.getFullYear()}`
+  }
+  const firstStockDateValue = (() => {
+    const d = new Date(creationBase)
+    d.setDate(d.getDate() - stockDaysAgo)
+    return formatExplorerDate(d)
+  })()
+  const firstSalesDateValue =
+    rowIndex % 5 === 0
+      ? null
+      : (() => {
+          const d = new Date(creationBase)
+          d.setDate(d.getDate() - salesDaysAgo)
+          return formatExplorerDate(d)
+        })()
   let serviceLevel
   if (framing === 0) {
     let pct = 40 + ((rowIndex * 5) % 40) + sizeIdx * 12
@@ -653,6 +676,9 @@ function buildExplorerRow(rowIndex, product, size, fromLoc, toLoc, movementType)
     warehouseAllocateLine: `${50 + (rowIndex * 3) % 20} → ${45 + (rowIndex * 3) % 20}`,
     warehouseSellLine: `${65 + (rowIndex * 5) % 25} → ${58 + (rowIndex * 5) % 25}`,
     forecast: Number(((rowIndex * 0.31) % 3 + 0.5).toFixed(2)),
+    initialAllocation,
+    firstStockDate: firstStockDateValue,
+    firstSalesDate: firstSalesDateValue,
     status: STATUS_CYCLE[rowIndex % STATUS_CYCLE.length],
     approvedByUser: false,
     editedByUser: false,
@@ -3772,6 +3798,26 @@ const EXPLORER_TABLE_COLUMNS = [
     minWidth: 'min-w-[140px]',
     tooltip: 'Units reserved to sell at this location and units available to allocate to stores',
   },
+  {
+    id: 'initialAllocation',
+    label: 'Initial allocation',
+    alignment: 'right',
+    minWidth: 'min-w-[100px]',
+  },
+  {
+    id: 'firstStockDate',
+    label: 'First stock date',
+    alignment: 'right',
+    minWidth: 'min-w-[120px]',
+    tooltip: 'Date stock was first received at the receiving location',
+  },
+  {
+    id: 'firstSalesDate',
+    label: 'First sales date',
+    alignment: 'right',
+    minWidth: 'min-w-[120px]',
+    tooltip: 'Date stock was first sold at the receiving location',
+  },
   { id: 'status', label: 'Status', alignment: 'right', minWidth: 'min-w-[150px]' },
 ]
 
@@ -3995,6 +4041,24 @@ function renderExplorerBodyCell(row, col, {
             <span className="text-[14px] text-[#0a0a0a]">{row.warehouseAllocateLine}</span>
             <span className="text-[12px] text-[#4b535c]">{row.warehouseSellLine}</span>
           </div>
+        </td>
+      )
+    case 'initialAllocation':
+      return (
+        <td key={col.id} className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}>
+          <span className="text-[14px] text-[#0a0a0a]">{row.initialAllocation} units</span>
+        </td>
+      )
+    case 'firstStockDate':
+      return (
+        <td key={col.id} className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}>
+          <span className="text-[14px] text-[#0a0a0a]">{row.firstStockDate}</span>
+        </td>
+      )
+    case 'firstSalesDate':
+      return (
+        <td key={col.id} className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}>
+          <span className="text-[14px] text-[#0a0a0a]">{row.firstSalesDate ?? '—'}</span>
         </td>
       )
     case 'status':
