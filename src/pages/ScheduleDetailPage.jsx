@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback, useLayoutEffect, useMemo } fr
 import { createPortal } from 'react-dom'
 import { Filter, Plus, Copy } from 'lucide-react'
 import { ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts'
-import { IconSearch, IconChevronDown, IconChevronRight, IconShare, IconDocument, IconClose, IconArrowLeft, IconGears, IconTruckTu, IconPackageTu, IconRebalancing, IconReplenishment, IconCalendarNote, IconTrendUp, IconFilterFunnel, IconColumnSettings, IconSortOrder } from '../components/icons'
+import { IconSearch, IconChevronDown, IconChevronRight, IconShare, IconDocument, IconClose, IconArrowLeft, IconGears, IconTruckTu, IconPackageTu, IconRebalancing, IconReplenishment, IconCalendarNote, IconTrendUp, IconFilterFunnel, IconColumnSettings, IconSortOrder, IconEdit, IconWarning } from '../components/icons'
 function IconInfo() {
   return (
     <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="shrink-0 text-[#9ca3af]" aria-hidden>
@@ -458,6 +458,14 @@ const PRODUCTS_BY_TRIP = {
 
 // Default products when trip not in PRODUCTS_BY_TRIP
 const DEFAULT_PRODUCTS = PRODUCTS_BY_TRIP[1]
+
+function findProductByName(productName) {
+  for (const products of Object.values(PRODUCTS_BY_TRIP)) {
+    const match = products.find((p) => p.name === productName)
+    if (match) return match
+  }
+  return DEFAULT_PRODUCTS.find((p) => p.name === productName) ?? null
+}
 
 // Product IDs that show 'Edited' badge in Products drilldown
 const PRODUCTS_EDITED_IDS = [1, 3]
@@ -2156,8 +2164,17 @@ function ProductsDrilldown({
   showBackButton = true,
   onDrawerFiltersActiveChange,
   setExplorerProductNameFilters,
-  setActiveTab }) {
-  const [selectedProduct, setSelectedProduct] = useState(null)
+  setActiveTab,
+  selectedProduct: controlledSelectedProduct,
+  onSelectedProductChange }) {
+  const [localSelectedProduct, setLocalSelectedProduct] = useState(null)
+  const isSelectedProductControlled = typeof onSelectedProductChange === 'function'
+  const selectedProduct = isSelectedProductControlled
+    ? controlledSelectedProduct
+    : localSelectedProduct
+  const setSelectedProduct = isSelectedProductControlled
+    ? onSelectedProductChange
+    : setLocalSelectedProduct
   const [productStatusOverrides, setProductStatusOverrides] = useState({})
   const [productTransfersOverrides, setProductTransfersOverrides] = useState({})
   const [editingTransfersProductId, setEditingTransfersProductId] = useState(null)
@@ -4132,7 +4149,8 @@ function renderExplorerBodyCell(row, col, {
   getEffectiveStatus,
   handleExplorerStatusChange,
   getEffectiveTransfers,
-  handleTransfersEdit }) {
+  handleTransfersEdit,
+  onOpenProductTransfers }) {
   const alignClass = col.alignment === 'right' ? 'text-right' : ''
 
   switch (col.id) {
@@ -4171,6 +4189,34 @@ function renderExplorerBodyCell(row, col, {
       )
     case 'transfers': {
       const effectiveTransfers = getEffectiveTransfers(row)
+      if (row.movementType === 'rebalancing') {
+        const openTransfers = () => onOpenProductTransfers?.(row.productName)
+        return (
+          <td
+            key={col.id}
+            className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-end gap-1.5">
+              <button
+                type="button"
+                onClick={openTransfers}
+                className="text-[14px] text-[#0a0a0a] hover:text-[#0267ff] cursor-pointer"
+              >
+                {effectiveTransfers}
+              </button>
+              <button
+                type="button"
+                onClick={openTransfers}
+                className="inline-flex items-center justify-center rounded-[4px] p-0.5 text-[#6b7280] hover:bg-[#f3f4f6] hover:text-[#0a0a0a] cursor-pointer"
+                aria-label={`Edit transfers for ${row.productName} in Transfers drilldown`}
+              >
+                <IconEdit />
+              </button>
+            </div>
+          </td>
+        )
+      }
       const availableToSend = row.availableToSend ?? 0
       const availableConstrained = availableToSend < effectiveTransfers
       return (
@@ -4421,7 +4467,8 @@ function ExplorerTable({
   explorerConfidenceFilters,
   setExplorerConfidenceFilters,
   explorerStatusFilters,
-  setExplorerStatusFilters }) {
+  setExplorerStatusFilters,
+  onOpenProductTransfers }) {
   const [explorerSearch, setExplorerSearch] = useState('')
   const [explorerActiveQuickFilter, setExplorerActiveQuickFilter] = useState(null)
   const [explorerFiltersDropdownOpen, setExplorerFiltersDropdownOpen] = useState(false)
@@ -4474,7 +4521,7 @@ function ExplorerTable({
 
     explorerSelectedRowIds.forEach((rowId) => {
       const row = data.find((r) => r.id === rowId)
-      if (!row) return
+      if (!row || row.movementType === 'rebalancing') return
       const effectiveCurrent = getEffectiveTransfers(row)
       const newValue =
         action === 'set_zero' ? 0 : Math.max(0, effectiveCurrent + action)
@@ -4498,6 +4545,8 @@ function ExplorerTable({
     setExplorerTransferOverrides((prev) => {
       const next = { ...prev }
       explorerSelectedRowIds.forEach((rowId) => {
+        const row = data.find((r) => r.id === rowId)
+        if (!row || row.movementType === 'rebalancing') return
         delete next[rowId]
       })
       return next
@@ -4506,6 +4555,8 @@ function ExplorerTable({
     setExplorerStatusOverrides((prev) => {
       const next = { ...prev }
       explorerSelectedRowIds.forEach((rowId) => {
+        const row = data.find((r) => r.id === rowId)
+        if (!row || row.movementType === 'rebalancing') return
         delete next[rowId]
       })
       return next
@@ -4996,7 +5047,8 @@ function ExplorerTable({
                     getEffectiveStatus,
                     handleExplorerStatusChange,
                     getEffectiveTransfers,
-                    handleTransfersEdit })
+                    handleTransfersEdit,
+                    onOpenProductTransfers })
                 )}
               </tr>
               ))
@@ -5078,9 +5130,23 @@ function ExplorerTable({
                   onClick={() => setExplorerBulkChangeUnitsOpen(false)}
                 />
                 <div
-                  className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 z-[70] min-w-[180px] rounded-[6px] border border-[#e5e7eb] bg-white py-1 shadow-lg"
+                  className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 z-[70] min-w-[280px] rounded-[6px] border border-[#e5e7eb] bg-white py-1 shadow-lg"
                   style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}
                 >
+                  {Array.from(explorerSelectedRowIds).some((id) => {
+                    const row = data.find((r) => r.id === id)
+                    return row?.movementType === 'rebalancing'
+                  }) && (
+                    <div className="mx-1 mb-1 flex items-start gap-1.5 rounded-[4px] bg-[#FEF3C7] px-2.5 py-2 text-[12px] leading-snug text-[#B45309]">
+                      <span className="mt-0.5 shrink-0 text-[#B45309]">
+                        <IconWarning />
+                      </span>
+                      <span>
+                        Unit edits apply to replenishment rows only. Rebalancing edits happen in the
+                        Transfers drilldown.
+                      </span>
+                    </div>
+                  )}
                   <div className="px-3 py-2 text-[12px] font-medium text-[#4b535c]">Adjust by</div>
                   {[
                     { action: 1, label: '+1' },
@@ -5417,6 +5483,7 @@ export default function ScheduleDetailPage() {
   const [explorerMovementTypeFilters, setExplorerMovementTypeFilters] = useState(['replenishment'])
   const [explorerConfidenceFilters, setExplorerConfidenceFilters] = useState([])
   const [explorerStatusFilters, setExplorerStatusFilters] = useState([])
+  const [productsTabSelectedProduct, setProductsTabSelectedProduct] = useState(null)
   const [tripStatusOverrides, setTripStatusOverrides] = useState({})
   const [selectedTrip, setSelectedTrip] = useState(null)
   const [selectedTripIds, setSelectedTripIds] = useState(new Set())
@@ -5425,6 +5492,14 @@ export default function ScheduleDetailPage() {
   const [productsDrawerFiltersActive, setProductsDrawerFiltersActive] = useState(false)
   const [locationsDrawerFiltersActive, setLocationsDrawerFiltersActive] = useState(false)
   const [explorerDrawerFiltersActive, setExplorerDrawerFiltersActive] = useState(false)
+
+  const handleOpenProductTransfersFromExplorer = (productName) => {
+    const product = findProductByName(productName)
+    if (!product) return
+    setProductsTabSelectedProduct(product)
+    setActiveTab('products')
+  }
+
   const hasActiveFilters =
     activeTab === 'products'
       ? productsDrawerFiltersActive
@@ -5749,6 +5824,8 @@ export default function ScheduleDetailPage() {
             onDrawerFiltersActiveChange={setProductsDrawerFiltersActive}
             setExplorerProductNameFilters={setExplorerProductNameFilters}
             setActiveTab={setActiveTab}
+            selectedProduct={productsTabSelectedProduct}
+            onSelectedProductChange={setProductsTabSelectedProduct}
           />
         ) : activeTab === 'locations' ? (
           <LocationsTab
@@ -5774,6 +5851,7 @@ export default function ScheduleDetailPage() {
             setExplorerConfidenceFilters={setExplorerConfidenceFilters}
             explorerStatusFilters={explorerStatusFilters}
             setExplorerStatusFilters={setExplorerStatusFilters}
+            onOpenProductTransfers={handleOpenProductTransfersFromExplorer}
           />
         ) : selectedTrip ? (
             <ProductsDrilldown
