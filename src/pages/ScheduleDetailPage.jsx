@@ -883,7 +883,7 @@ function MovementTypePills({ movementType }) {
   )
 }
 
-const QUICK_FILTER_CHIPS = [
+const PRODUCTS_QUICK_FILTER_CHIPS = [
   { id: 'low_confidence', label: 'Low confidence' },
   { id: 'unapproved', label: 'Unapproved' },
   { id: 'needs_review', label: 'Needs review' },
@@ -893,10 +893,16 @@ const QUICK_FILTER_CHIPS = [
   { id: 'slowing_down', label: 'Slowing down' },
 ]
 
-function ScheduleQuickFilterChips({ activeId, onChange }) {
+const EXPLORER_QUICK_FILTER_CHIPS = [
+  { id: 'low_confidence', label: 'Low confidence' },
+  { id: 'unapproved', label: 'Unapproved' },
+  { id: 'needs_review', label: 'Needs review' },
+]
+
+function ScheduleQuickFilterChips({ chips, activeId, onChange }) {
   return (
     <div className="flex items-center gap-2 shrink-0">
-      {QUICK_FILTER_CHIPS.map((chip) => {
+      {chips.map((chip) => {
         const active = activeId === chip.id
         return (
           <button
@@ -3058,6 +3064,7 @@ function ProductsDrilldown({
           </div>
           <div className="flex min-w-0 flex-1 items-center overflow-x-auto">
             <ScheduleQuickFilterChips
+              chips={PRODUCTS_QUICK_FILTER_CHIPS}
               activeId={productsActiveQuickFilter}
               onChange={setProductsActiveQuickFilter}
             />
@@ -3258,7 +3265,6 @@ function LocationsTab({ onDrawerFiltersActiveChange }) {
   const [locationStatusOverrides, setLocationStatusOverrides] = useState({})
   const [statusFilters, setStatusFilters] = useState([])
   const [filtersDropdownOpen, setFiltersDropdownOpen] = useState(false)
-  const [locationsActiveQuickFilter, setLocationsActiveQuickFilter] = useState(null)
 
   useEffect(() => {
     onDrawerFiltersActiveChange?.(statusFilters.length > 0)
@@ -3838,12 +3844,6 @@ function LocationsTab({ onDrawerFiltersActiveChange }) {
               </div>
             </>
           )}
-        </div>
-        <div className="flex min-w-0 flex-1 items-center overflow-x-auto">
-          <ScheduleQuickFilterChips
-            activeId={locationsActiveQuickFilter}
-            onChange={setLocationsActiveQuickFilter}
-          />
         </div>
       </div>
 
@@ -4778,6 +4778,7 @@ function ExplorerTable({
           </div>
         </div>
         <ScheduleQuickFilterChips
+          chips={EXPLORER_QUICK_FILTER_CHIPS}
           activeId={explorerActiveQuickFilter}
           onChange={setExplorerActiveQuickFilter}
         />
@@ -5384,7 +5385,6 @@ export default function ScheduleDetailPage() {
   const [selectedTripIds, setSelectedTripIds] = useState(new Set())
   const [statusFilters, setStatusFilters] = useState([])
   const [filtersDropdownOpen, setFiltersDropdownOpen] = useState(false)
-  const [tripsActiveQuickFilter, setTripsActiveQuickFilter] = useState(null)
   const [productsDrawerFiltersActive, setProductsDrawerFiltersActive] = useState(false)
   const [locationsDrawerFiltersActive, setLocationsDrawerFiltersActive] = useState(false)
   const [explorerDrawerFiltersActive, setExplorerDrawerFiltersActive] = useState(false)
@@ -5811,12 +5811,6 @@ export default function ScheduleDetailPage() {
                     </div>
                   </>
                 )}
-              </div>
-              <div className="flex min-w-0 flex-1 items-center overflow-x-auto">
-                <ScheduleQuickFilterChips
-                  activeId={tripsActiveQuickFilter}
-                  onChange={setTripsActiveQuickFilter}
-                />
               </div>
             </div>
 
