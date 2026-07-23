@@ -4537,7 +4537,6 @@ function ExplorerTable({
   const clearAllExplorerFilters = () => {
     setExplorerDepartmentFilters([])
     setExplorerProductNameFilters([])
-    setExplorerMovementTypeFilters([])
     setExplorerConfidenceFilters([])
     setExplorerStatusFilters([])
   }
@@ -4735,9 +4734,13 @@ function ExplorerTable({
                           type="checkbox"
                           checked={explorerMovementTypeFilters.includes(opt.id)}
                           onChange={(e) => {
-                            setExplorerMovementTypeFilters((prev) =>
-                              e.target.checked ? [...prev, opt.id] : prev.filter((x) => x !== opt.id)
-                            )
+                            setExplorerMovementTypeFilters((prev) => {
+                              if (e.target.checked) {
+                                return prev.includes(opt.id) ? prev : [...prev, opt.id]
+                              }
+                              if (prev.length <= 1) return prev
+                              return prev.filter((x) => x !== opt.id)
+                            })
                           }}
                           className="size-4 rounded border-[#d1d5db] text-[#0267ff]"
                         />
@@ -4851,25 +4854,18 @@ function ExplorerTable({
               </button>
             </span>
           ))}
-          {explorerMovementTypeFilters.map((id) => {
-            const label = MOVEMENT_TYPE_FILTER_OPTIONS.find((o) => o.id === id)?.label ?? id
+          {(() => {
+            const movementTypeChipLabel = MOVEMENT_TYPE_FILTER_OPTIONS.filter((o) =>
+              explorerMovementTypeFilters.includes(o.id)
+            )
+              .map((o) => o.label)
+              .join(' + ')
             return (
-              <span
-                key={`movement-${id}`}
-                className="inline-flex items-center gap-1.5 pl-3 pr-1.5 py-1.5 rounded-[4px] bg-[#f3f4f6] text-[#4b535c] border border-[#e5e7eb]"
-              >
-                <span>Movement type: {label}</span>
-                <button
-                  type="button"
-                  onClick={() => setExplorerMovementTypeFilters((prev) => prev.filter((x) => x !== id))}
-                  className="p-0.5 rounded-[4px] text-[#6b7280] hover:bg-[#e5e7eb] hover:text-[#374151]"
-                  aria-label={`Remove filter: Movement type ${label}`}
-                >
-                  <IconClose className="size-3.5" />
-                </button>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[4px] bg-[#f3f4f6] text-[#4b535c] border border-[#e5e7eb]">
+                <span>Movement type: {movementTypeChipLabel || 'Replenishment'}</span>
               </span>
             )
-          })}
+          })()}
           {explorerConfidenceFilters.map((id) => {
             const label = CONFIDENCE_FILTER_OPTIONS.find((o) => o.id === id)?.label ?? id
             return (
@@ -5410,7 +5406,7 @@ export default function ScheduleDetailPage() {
   const [explorerSelectedRowIds, setExplorerSelectedRowIds] = useState(new Set())
   const [explorerDepartmentFilters, setExplorerDepartmentFilters] = useState([])
   const [explorerProductNameFilters, setExplorerProductNameFilters] = useState([])
-  const [explorerMovementTypeFilters, setExplorerMovementTypeFilters] = useState([])
+  const [explorerMovementTypeFilters, setExplorerMovementTypeFilters] = useState(['replenishment'])
   const [explorerConfidenceFilters, setExplorerConfidenceFilters] = useState([])
   const [explorerStatusFilters, setExplorerStatusFilters] = useState([])
   const [tripStatusOverrides, setTripStatusOverrides] = useState({})
