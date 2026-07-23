@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef, useCallback, useLayoutEffect, useMemo } from 'react'
 import { createPortal } from 'react-dom'
-import { Filter, Plus } from 'lucide-react'
+import { Filter, Plus, Copy } from 'lucide-react'
 import { ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts'
-import { IconSearch, IconChevronDown, IconChevronRight, IconShare, IconDocument, IconClose, IconInfo as DsIconInfo, IconArrowLeft, IconGears, IconTruckTu, IconPackageTu, IconRebalancing, IconReplenishment, IconCalendarNote, IconTrendUp, IconFilterFunnel, IconColumnSettings, IconSortOrder } from '../components/icons'
+import { IconSearch, IconChevronDown, IconChevronRight, IconShare, IconDocument, IconClose, IconArrowLeft, IconGears, IconTruckTu, IconPackageTu, IconRebalancing, IconReplenishment, IconCalendarNote, IconTrendUp, IconFilterFunnel, IconColumnSettings, IconSortOrder, IconEdit, IconWarning, IconLightbulb } from '../components/icons'
 function IconInfo() {
   return (
     <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="shrink-0 text-[#9ca3af]" aria-hidden>
@@ -51,16 +51,16 @@ function TripColumnDragGrip({ visualIndex, onDragStart }) {
   )
 }
 
-/** Trips table data cols; 3 = Revenue increase, 5 = Recommendations updated (long headers) */
-const TRIPS_TABLE_DEFAULT_COL_WIDTHS = [200, 200, 140, 120, 220, 160, 230, 100, 200]
+/** Trips table data cols; 3 = Transfers, 4 = Revenue increase, 5 = Recommended transfers (long headers) */
+const TRIPS_TABLE_DEFAULT_COL_WIDTHS = [200, 200, 140, 120, 220, 160, 100, 200]
 const TRIPS_TABLE_NUM_DATA_COLS = TRIPS_TABLE_DEFAULT_COL_WIDTHS.length
 const TRIPS_COL_DND_MIME = 'application/x-autone-trip-col'
-/** Logical product table columns are 0–18 (Status = 18). */
-const PRODUCTS_TABLE_NUM_DATA_COLS = 19
+/** Logical product table columns are 0–17 (Status = 17). */
+const PRODUCTS_TABLE_NUM_DATA_COLS = 18
 /** Default visual order: cols 9–13 = Stockouts, Sales, Forecast, Stock in circulation, Warehouse units. */
-const PRODUCTS_TABLE_DEFAULT_COLUMN_ORDER = [0, 1, 2, 3, 4, 5, 6, 7, 8, 13, 11, 12, 9, 10, 14, 15, 16, 17, 18]
+const PRODUCTS_TABLE_DEFAULT_COLUMN_ORDER = [0, 1, 2, 3, 4, 5, 6, 7, 12, 10, 11, 8, 9, 13, 14, 15, 16, 17]
 const PRODUCTS_COL_DND_MIME = 'application/x-autone-products-col'
-const LOCATIONS_TABLE_NUM_DATA_COLS = 15
+const LOCATIONS_TABLE_NUM_DATA_COLS = 14
 const LOCATIONS_COL_DND_MIME = 'application/x-autone-locations-col'
 
 function moveTripTableColumnOrder(order, fromVisualIndex, toVisualIndex) {
@@ -86,7 +86,6 @@ const TRIP_COL_RESIZE_LABELS = [
   'Resize Transfers column',
   'Resize Revenue increase column',
   'Resize Recommended transfers column',
-  'Resize Recommendations updated column',
   'Resize Products column',
   'Resize Status column',
 ]
@@ -112,8 +111,7 @@ const PRODUCTS_TAB_SUMMARY_TOTALS = {
   locations: '11 → 10',
   overstocks: '21 → 5',
   understocks: '25 → 11',
-  depth: '4.0 → 5.2',
-}
+  depth: '4.0 → 5.2' }
 
 /** Hardcoded totals for Trips tab summary row (TRIPS_ALL, default full dataset view). */
 const TRIPS_TAB_SUMMARY_TOTALS_FULL = {
@@ -121,8 +119,7 @@ const TRIPS_TAB_SUMMARY_TOTALS_FULL = {
   transfers: '2,038 units',
   revenue: '€435.3K',
   recommended: '2,151 units',
-  products: '257 products',
-}
+  products: '257 products' }
 
 /** Hardcoded totals for Trips tab summary row (TRIPS_OPERA subset view). */
 const TRIPS_TAB_SUMMARY_TOTALS_OPERA = {
@@ -130,8 +127,7 @@ const TRIPS_TAB_SUMMARY_TOTALS_OPERA = {
   transfers: '241 units',
   revenue: '€48.1K',
   recommended: '241 units',
-  products: '147 products',
-}
+  products: '147 products' }
 
 const TRIPS_OPERA = [
   {
@@ -146,11 +142,7 @@ const TRIPS_OPERA = [
     products: 68,
     movementType: ['rebalancing'],
     badges: ['VIS', 'REV'],
-    recommendationsUpdated: '26/02/2026',
-    recommendationsUpdatedTime: '14:32',
-    recommendationsUpdatedBy: 'System',
-    status: 'approved_by_system',
-  },
+    status: 'approved_by_system' },
   {
     id: 2,
     from: 'G.I cap 3000',
@@ -163,11 +155,7 @@ const TRIPS_OPERA = [
     products: 23,
     movementType: ['rebalancing'],
     badges: ['VIS', 'REV'],
-    recommendationsUpdated: '24/02/2026',
-    recommendationsUpdatedTime: '09:15',
-    recommendationsUpdatedBy: 'User',
-    status: 'needs_review_from_user',
-  },
+    status: 'needs_review_from_user' },
   {
     id: 3,
     from: 'Printemps toulon',
@@ -181,11 +169,7 @@ const TRIPS_OPERA = [
     movementType: ['replenishment'],
     badges: ['VIS', 'REV'],
     status: 'last_edited_by_user',
-    editedByUser: 'Csabi Toth',
-    recommendationsUpdated: '26/02/2026',
-    recommendationsUpdatedTime: '16:48',
-    recommendationsUpdatedBy: 'User',
-  },
+    editedByUser: 'Csabi Toth' },
   {
     id: 4,
     from: 'Pr.com',
@@ -198,11 +182,7 @@ const TRIPS_OPERA = [
     products: 2,
     movementType: ['rebalancing'],
     badges: ['REV'],
-    status: 'approved_by_system',
-    recommendationsUpdated: '24/02/2026',
-    recommendationsUpdatedTime: '11:03',
-    recommendationsUpdatedBy: 'System',
-  },
+    status: 'approved_by_system' },
   {
     id: 5,
     from: 'Bruxelles',
@@ -215,11 +195,7 @@ const TRIPS_OPERA = [
     products: 12,
     movementType: ['replenishment', 'rebalancing'],
     badges: ['VIS', 'REV'],
-    status: 'partially_approved',
-    recommendationsUpdated: '26/02/2026',
-    recommendationsUpdatedTime: '08:22',
-    recommendationsUpdatedBy: 'System',
-  },
+    status: 'partially_approved' },
   {
     id: 6,
     from: 'G.I annecy',
@@ -233,11 +209,7 @@ const TRIPS_OPERA = [
     movementType: ['replenishment'],
     badges: ['REV'],
     status: 'approved_by_user',
-    approvedByUser: 'Jess Briggs',
-    recommendationsUpdated: '24/02/2026',
-    recommendationsUpdatedTime: '15:07',
-    recommendationsUpdatedBy: 'User',
-  },
+    approvedByUser: 'Jess Briggs' },
   {
     id: 101,
     from: 'Lyon Herriot',
@@ -251,11 +223,7 @@ const TRIPS_OPERA = [
     movementType: ['rebalancing'],
     badges: ['VIS', 'REV'],
     status: 'approved_by_user',
-    approvedByUser: 'Jess Briggs',
-    recommendationsUpdated: '26/02/2026',
-    recommendationsUpdatedTime: '10:41',
-    recommendationsUpdatedBy: 'User',
-  },
+    approvedByUser: 'Jess Briggs' },
   {
     id: 102,
     from: 'Cap 3000',
@@ -269,11 +237,7 @@ const TRIPS_OPERA = [
     movementType: ['rebalancing'],
     badges: ['REV'],
     status: 'last_edited_by_user',
-    editedByUser: 'Csabi Toth',
-    recommendationsUpdated: '24/02/2026',
-    recommendationsUpdatedTime: '13:55',
-    recommendationsUpdatedBy: 'System',
-  },
+    editedByUser: 'Csabi Toth' },
   {
     id: 103,
     from: 'Nice',
@@ -287,11 +251,7 @@ const TRIPS_OPERA = [
     movementType: ['rebalancing'],
     badges: ['VIS', 'REV'],
     status: 'unapproved',
-    editedByUser: 'Csabi Toth',
-    recommendationsUpdated: '26/02/2026',
-    recommendationsUpdatedTime: '17:19',
-    recommendationsUpdatedBy: 'User',
-  },
+    editedByUser: 'Csabi Toth' },
 ]
 
 // Helper to get status from row (supports both status and legacy approvalStatus)
@@ -301,20 +261,6 @@ function getRowStatus(row) {
   if (row.approvalStatus === 'approved_by_user') return 'approved_by_user'
   if (row.approvalStatus === 'edited_by_user') return 'last_edited_by_user'
   return 'unapproved'
-}
-
-function shouldUpdateRecommendationsTimestampForStatus(status) {
-  return status === 'unapproved' || status === 'partially_approved'
-}
-
-function getNowRecommendationsTimestamp() {
-  const now = new Date()
-  const dd = String(now.getDate()).padStart(2, '0')
-  const mm = String(now.getMonth() + 1).padStart(2, '0')
-  const yyyy = now.getFullYear()
-  const hh = String(now.getHours()).padStart(2, '0')
-  const min = String(now.getMinutes()).padStart(2, '0')
-  return { date: `${dd}/${mm}/${yyyy}`, time: `${hh}:${min}` }
 }
 
 const TRIPS_OTHER = [
@@ -330,11 +276,7 @@ const TRIPS_OTHER = [
     products: 18,
     movementType: ['replenishment', 'rebalancing'],
     badges: ['MDQ', 'VIS', 'REV'],
-    recommendationsUpdated: '26/02/2026',
-    recommendationsUpdatedTime: '12:08',
-    recommendationsUpdatedBy: 'System',
-    status: 'approved_by_system',
-  },
+    status: 'approved_by_system' },
   {
     id: 8,
     from: 'Troyes',
@@ -347,11 +289,7 @@ const TRIPS_OTHER = [
     products: 14,
     movementType: ['rebalancing'],
     badges: ['MDQ', 'VIS', 'REV'],
-    recommendationsUpdated: '24/02/2026',
-    recommendationsUpdatedTime: '09:33',
-    recommendationsUpdatedBy: 'User',
-    status: 'unapproved',
-  },
+    status: 'unapproved' },
   {
     id: 9,
     from: 'Cannes',
@@ -363,11 +301,7 @@ const TRIPS_OTHER = [
     recommended: '200',
     products: 12,
     movementType: ['rebalancing'],
-    badges: ['MDQ', 'VIS', 'REV'],
-    recommendationsUpdated: '26/02/2026',
-    recommendationsUpdatedTime: '14:18',
-    recommendationsUpdatedBy: 'System',
-  },
+    badges: ['MDQ', 'VIS', 'REV'] },
   {
     id: 10,
     from: 'Miramas',
@@ -379,11 +313,7 @@ const TRIPS_OTHER = [
     recommended: '188',
     products: 9,
     movementType: ['replenishment'],
-    badges: ['MDQ', 'VIS', 'REV'],
-    recommendationsUpdated: '24/02/2026',
-    recommendationsUpdatedTime: '11:27',
-    recommendationsUpdatedBy: 'User',
-  },
+    badges: ['MDQ', 'VIS', 'REV'] },
   {
     id: 11,
     from: 'Grenoble',
@@ -395,11 +325,7 @@ const TRIPS_OTHER = [
     recommended: '170',
     products: 11,
     movementType: ['rebalancing'],
-    badges: ['MDQ', 'VIS', 'REV'],
-    recommendationsUpdated: '26/02/2026',
-    recommendationsUpdatedTime: '16:52',
-    recommendationsUpdatedBy: 'System',
-  },
+    badges: ['MDQ', 'VIS', 'REV'] },
   {
     id: 12,
     from: 'Romans',
@@ -411,11 +337,7 @@ const TRIPS_OTHER = [
     recommended: '159',
     products: 10,
     movementType: ['replenishment'],
-    badges: ['MDQ', 'VIS', 'REV'],
-    recommendationsUpdated: '24/02/2026',
-    recommendationsUpdatedTime: '10:05',
-    recommendationsUpdatedBy: 'User',
-  },
+    badges: ['MDQ', 'VIS', 'REV'] },
   {
     id: 13,
     from: 'Troyes',
@@ -427,11 +349,7 @@ const TRIPS_OTHER = [
     recommended: '144',
     products: 8,
     movementType: ['rebalancing'],
-    badges: ['MDQ', 'VIS', 'REV'],
-    recommendationsUpdated: '26/02/2026',
-    recommendationsUpdatedTime: '13:41',
-    recommendationsUpdatedBy: 'System',
-  },
+    badges: ['MDQ', 'VIS', 'REV'] },
   {
     id: 14,
     from: 'Nice',
@@ -443,11 +361,7 @@ const TRIPS_OTHER = [
     recommended: '151',
     products: 7,
     movementType: ['replenishment'],
-    badges: ['MDQ', 'VIS', 'REV'],
-    recommendationsUpdated: '24/02/2026',
-    recommendationsUpdatedTime: '08:59',
-    recommendationsUpdatedBy: 'User',
-  },
+    badges: ['MDQ', 'VIS', 'REV'] },
   {
     id: 15,
     from: 'Cannes',
@@ -459,10 +373,7 @@ const TRIPS_OTHER = [
     recommended: '136',
     products: 6,
     movementType: ['rebalancing'],
-    badges: ['MDQ', 'VIS', 'REV'],
-    recommendationsUpdated: '26/02/2026',
-    recommendationsUpdatedTime: '15:23',
-  },
+    badges: ['MDQ', 'VIS', 'REV'] },
   {
     id: 16,
     from: 'Toulon',
@@ -474,10 +385,7 @@ const TRIPS_OTHER = [
     recommended: '129',
     products: 5,
     movementType: ['replenishment'],
-    badges: ['MDQ', 'VIS', 'REV'],
-    recommendationsUpdated: '24/02/2026',
-    recommendationsUpdatedTime: '11:46',
-  },
+    badges: ['MDQ', 'VIS', 'REV'] },
   {
     id: 17,
     from: 'Grenoble',
@@ -489,10 +397,7 @@ const TRIPS_OTHER = [
     recommended: '145',
     products: 6,
     movementType: ['replenishment', 'rebalancing'],
-    badges: ['MDQ', 'VIS', 'REV'],
-    recommendationsUpdated: '26/02/2026',
-    recommendationsUpdatedTime: '17:02',
-  },
+    badges: ['MDQ', 'VIS', 'REV'] },
   {
     id: 18,
     from: 'Nice',
@@ -504,10 +409,7 @@ const TRIPS_OTHER = [
     recommended: '120',
     products: 4,
     movementType: ['replenishment'],
-    badges: ['MDQ', 'VIS', 'REV'],
-    recommendationsUpdated: '24/02/2026',
-    recommendationsUpdatedTime: '09:18',
-  },
+    badges: ['MDQ', 'VIS', 'REV'] },
 ]
 
 const TRIPS_ALL = [...TRIPS_OPERA, ...TRIPS_OTHER]
@@ -522,41 +424,48 @@ const EDITED_EXCEPTION_IDS = [3, 5]
 
 // Mock locations for Locations tab table
 const LOCATIONS_TABLE_DATA = [
-  { id: 1, name: 'Suk003 londres maryleb...', code: 'SUK003', movementType: ["rebalancing"], status: 'unapproved', transfersIn: 40, transfersInSub: '2 (max 2)', transfersOut: 0, transfersOutSub: '0', revenueIncrease: '€5.21K', recommendedIn: 40, recommendedInBadges: ['VIS', 'REV'], recommendedOut: 0, recommendationsUpdated: '26/02/2026', recommendationsUpdatedTime: '14:32', recommendationsUpdatedBy: 'System', stockInCirculation: 145, stockInTransit: 12, salesL7: 11, salesL30: 40, forecast: 13.46, stockouts: '9 → 0', overstocks: '0 → 0', understocks: '95 → 67' },
-  { id: 2, name: 'Sfr004 fd calvaire', code: 'SFR004', movementType: ["rebalancing"], status: 'partially_approved', transfersIn: 38, transfersInSub: '2 (max 2)', transfersOut: 0, transfersOutSub: '0', revenueIncrease: '€4.4K', recommendedIn: 38, recommendedInBadges: ['VIS', 'REV'], recommendedOut: 0, recommendationsUpdated: '24/02/2026', recommendationsUpdatedTime: '09:15', recommendationsUpdatedBy: 'User', stockInCirculation: 89, stockInTransit: 0, salesL7: 8, salesL30: 32, forecast: 10.82, stockouts: '2 → 0', overstocks: '7 → 0', understocks: '154 → 139' },
-  { id: 13, name: 'Out001 la vallée village', code: 'OUT001', movementType: ["rebalancing"], locationType: 'outlet', status: 'approved_by_system', transfersIn: 28, transfersInSub: '1 (max 2)', transfersOut: 0, transfersOutSub: '0', revenueIncrease: '€2.98K', recommendedIn: 28, recommendedInBadges: ['VIS', 'REV'], recommendedOut: 0, recommendationsUpdated: '26/02/2026', recommendationsUpdatedTime: '16:48', recommendationsUpdatedBy: 'User', stockInCirculation: 56, stockInTransit: 8, salesL7: 4, salesL30: 16, forecast: 5.12, stockouts: '6 → 3', overstocks: '8 → 2', understocks: '62 → 44' },
-  { id: 3, name: 'Sfr012 legendre', code: 'SFR012', movementType: ["rebalancing"], status: 'approved_by_user', approvedByUser: 'Jess Briggs', transfersIn: 35, transfersInSub: '1 (max 2)', transfersOut: 15, transfersOutSub: '1 (max 3)', revenueIncrease: '€4.12K', recommendedIn: 35, recommendedInBadges: ['VIS', 'REV'], recommendedOut: 15, recommendationsUpdated: '24/02/2026', recommendationsUpdatedTime: '11:03', recommendationsUpdatedBy: 'System', stockInCirculation: 210, stockInTransit: 18, salesL7: 6, salesL30: 28, forecast: 9.14, stockouts: '5 → 2', overstocks: '12 → 4', understocks: '124 → 82' },
-  { id: 4, name: 'Sfr008 saints-peres', code: 'SFR008', movementType: ["replenishment","rebalancing"], status: 'last_edited_by_user', editedByUser: 'Csabi Toth', transfersIn: 42, transfersInSub: '2 (max 2)', transfersOut: 0, transfersOutSub: '0', revenueIncrease: '€5.89K', recommendedIn: 42, recommendedInBadges: ['VIS', 'REV'], recommendedOut: 0, recommendationsUpdated: '26/02/2026', recommendationsUpdatedTime: '08:22', recommendationsUpdatedBy: 'System', stockInCirculation: 320, stockInTransit: 25, salesL7: 14, salesL30: 55, forecast: 15.22, stockouts: '3 → 0', overstocks: '2 → 0', understocks: '73 → 55' },
-  { id: 5, name: 'Sfr013 sevigne', code: 'SFR013', movementType: ["rebalancing"], status: 'needs_review_from_user', transfersIn: 33, transfersInSub: '2 (max 2)', transfersOut: 0, transfersOutSub: '0', revenueIncrease: '€3.67K', recommendedIn: 33, recommendedInBadges: ['VIS', 'REV'], recommendedOut: 0, recommendationsUpdated: '24/02/2026', recommendationsUpdatedTime: '15:07', recommendationsUpdatedBy: 'User', stockInCirculation: 78, stockInTransit: 5, salesL7: 5, salesL30: 22, forecast: 8.14, stockouts: '12 → 5', overstocks: '18 → 6', understocks: '88 → 61' },
-  { id: 14, name: 'Wh001 paris entrepôt', code: 'WH001', movementType: ["replenishment","rebalancing"], locationType: 'warehouse', status: 'unapproved', transfersIn: 95, transfersInSub: '4 (max 4)', transfersOut: 92, transfersOutSub: '4 (max 4)', revenueIncrease: '€12.4K', recommendedIn: 95, recommendedInBadges: ['VIS', 'REV'], recommendedOut: 92, recommendationsUpdated: '26/02/2026', recommendationsUpdatedTime: '10:41', recommendationsUpdatedBy: 'User', stockInCirculation: 580, stockInTransit: 45, salesL7: 0, salesL30: 0, forecast: 0, stockouts: '0 → 0', overstocks: '45 → 12', understocks: '0 → 0' },
-  { id: 6, name: 'Sbe002 anvers', code: 'SBE002', movementType: ["rebalancing"], status: 'partially_approved', transfersIn: 29, transfersInSub: '1 (max 2)', transfersOut: 29, transfersOutSub: '2 (max 3)', revenueIncrease: '€3.21K', recommendedIn: 29, recommendedInBadges: ['VIS', 'REV'], recommendedOut: 29, recommendationsUpdated: '24/02/2026', recommendationsUpdatedTime: '13:55', recommendationsUpdatedBy: 'System', stockInCirculation: 112, stockInTransit: 0, salesL7: 3, salesL30: 18, forecast: 6.92, stockouts: '18 → 12', overstocks: '5 → 2', understocks: '112 → 78' },
-  { id: 7, name: 'Sfr003 courcelles', code: 'SFR003', movementType: ["rebalancing"], status: 'approved_by_system', transfersIn: 45, transfersInSub: '2 (max 2)', transfersOut: 0, transfersOutSub: '0', revenueIncrease: '€6.12K', recommendedIn: 45, recommendedInBadges: ['VIS', 'REV'], recommendedOut: 0, recommendationsUpdated: '26/02/2026', recommendationsUpdatedTime: '17:19', recommendationsUpdatedBy: 'User', stockInCirculation: 198, stockInTransit: 22, salesL7: 16, salesL30: 62, forecast: 17.08, stockouts: '1 → 0', overstocks: '0 → 0', understocks: '42 → 28' },
-  { id: 8, name: 'Sfr001 bonaparte', code: 'SFR001', movementType: ["replenishment"], status: 'approved_by_user', approvedByUser: 'Jess Briggs', transfersIn: 52, transfersInSub: '2 (max 2)', transfersOut: 0, transfersOutSub: '0', revenueIncrease: '€7.34K', recommendedIn: 52, recommendedInBadges: ['VIS', 'REV'], recommendedOut: 0, recommendationsUpdated: '24/02/2026', recommendationsUpdatedTime: '09:33', recommendationsUpdatedBy: 'System', stockInCirculation: 265, stockInTransit: 15, salesL7: 19, salesL30: 78, forecast: 21.45, stockouts: '0 → 0', overstocks: '0 → 0', understocks: '28 → 15' },
-  { id: 15, name: 'Web001 france online', code: 'WEB001', movementType: ["replenishment"], locationType: 'ecomm', status: 'last_edited_by_user', editedByUser: 'Csabi Toth', transfersIn: 0, transfersInSub: '0', transfersOut: 0, transfersOutSub: '0', revenueIncrease: '€8.56K', recommendedIn: 0, recommendedInBadges: ['VIS', 'REV'], recommendedOut: 0, recommendationsUpdated: '26/02/2026', recommendationsUpdatedTime: '12:08', recommendationsUpdatedBy: 'User', stockInCirculation: 0, stockInTransit: 0, salesL7: 22, salesL30: 95, forecast: 28.34, stockouts: '0 → 0', overstocks: '0 → 0', understocks: '0 → 0' },
-  { id: 9, name: 'Sfr005 charonne', code: 'SFR005', movementType: ["rebalancing"], status: 'needs_review_from_user', transfersIn: 31, transfersInSub: '1 (max 2)', transfersOut: 0, transfersOutSub: '0', revenueIncrease: '€3.45K', recommendedIn: 31, recommendedInBadges: ['VIS', 'REV'], recommendedOut: 0, recommendationsUpdated: '24/02/2026', recommendationsUpdatedTime: '11:27', recommendationsUpdatedBy: 'System', stockInCirculation: 67, stockInTransit: 0, salesL7: 4, salesL30: 19, forecast: 7.28, stockouts: '22 → 18', overstocks: '9 → 3', understocks: '136 → 94' },
-  { id: 10, name: 'Sfr018 lyon', code: 'SFR018', movementType: ["rebalancing"], status: 'unapproved', transfersIn: 48, transfersInSub: '2 (max 2)', transfersOut: 0, transfersOutSub: '0', revenueIncrease: '€6.78K', recommendedIn: 48, recommendedInBadges: ['VIS', 'REV'], recommendedOut: 0, recommendationsUpdated: '26/02/2026', recommendationsUpdatedTime: '16:52', recommendationsUpdatedBy: 'User', stockInCirculation: 175, stockInTransit: 12, salesL7: 17, salesL30: 68, forecast: 18.92, stockouts: '2 → 1', overstocks: '3 → 1', understocks: '56 → 38' },
-  { id: 11, name: 'Ssp001 madrid coello', code: 'SSP001', movementType: ["replenishment","rebalancing"], status: 'approved_by_system', transfersIn: 36, transfersInSub: '2 (max 2)', transfersOut: 0, transfersOutSub: '0', revenueIncrease: '€4.02K', recommendedIn: 36, recommendedInBadges: ['VIS', 'REV'], recommendedOut: 0, recommendationsUpdated: '24/02/2026', recommendationsUpdatedTime: '10:05', recommendationsUpdatedBy: 'System', stockInCirculation: 134, stockInTransit: 9, salesL7: 7, salesL30: 30, forecast: 9.56, stockouts: '8 → 4', overstocks: '14 → 5', understocks: '98 → 72' },
-  { id: 12, name: 'Sfr014 guichard', code: 'SFR014', movementType: ["rebalancing"], status: 'partially_approved', transfersIn: 34, transfersInSub: '1 (max 2)', transfersOut: 0, transfersOutSub: '0', revenueIncrease: '€3.89K', recommendedIn: 34, recommendedInBadges: ['VIS', 'REV'], recommendedOut: 0, recommendationsUpdated: '26/02/2026', recommendationsUpdatedTime: '13:41', recommendationsUpdatedBy: 'User', stockInCirculation: 91, stockInTransit: 7, salesL7: 6, salesL30: 26, forecast: 8.42, stockouts: '11 → 7', overstocks: '6 → 2', understocks: '82 → 58' },
+  { id: 1, name: 'Suk003 londres maryleb...', code: 'SUK003', movementType: ["rebalancing"], status: 'unapproved', transfersIn: 40, transfersInSub: '2 (max 2)', transfersOut: 0, transfersOutSub: '0', revenueIncrease: '€5.21K', recommendedIn: 40, recommendedInBadges: ['VIS', 'REV'], recommendedOut: 0, stockInCirculation: 145, stockInTransit: 12, salesL7: 11, salesL30: 40, forecast: 13.46, stockouts: '9 → 0', overstocks: '0 → 0', understocks: '95 → 67' },
+  { id: 2, name: 'Sfr004 fd calvaire', code: 'SFR004', movementType: ["rebalancing"], status: 'partially_approved', transfersIn: 38, transfersInSub: '2 (max 2)', transfersOut: 0, transfersOutSub: '0', revenueIncrease: '€4.4K', recommendedIn: 38, recommendedInBadges: ['VIS', 'REV'], recommendedOut: 0, stockInCirculation: 89, stockInTransit: 0, salesL7: 8, salesL30: 32, forecast: 10.82, stockouts: '2 → 0', overstocks: '7 → 0', understocks: '154 → 139' },
+  { id: 13, name: 'Out001 la vallée village', code: 'OUT001', movementType: ["rebalancing"], locationType: 'outlet', status: 'approved_by_system', transfersIn: 28, transfersInSub: '1 (max 2)', transfersOut: 0, transfersOutSub: '0', revenueIncrease: '€2.98K', recommendedIn: 28, recommendedInBadges: ['VIS', 'REV'], recommendedOut: 0, stockInCirculation: 56, stockInTransit: 8, salesL7: 4, salesL30: 16, forecast: 5.12, stockouts: '6 → 3', overstocks: '8 → 2', understocks: '62 → 44' },
+  { id: 3, name: 'Sfr012 legendre', code: 'SFR012', movementType: ["rebalancing"], status: 'approved_by_user', approvedByUser: 'Jess Briggs', transfersIn: 35, transfersInSub: '1 (max 2)', transfersOut: 15, transfersOutSub: '1 (max 3)', revenueIncrease: '€4.12K', recommendedIn: 35, recommendedInBadges: ['VIS', 'REV'], recommendedOut: 15, stockInCirculation: 210, stockInTransit: 18, salesL7: 6, salesL30: 28, forecast: 9.14, stockouts: '5 → 2', overstocks: '12 → 4', understocks: '124 → 82' },
+  { id: 4, name: 'Sfr008 saints-peres', code: 'SFR008', movementType: ["replenishment","rebalancing"], status: 'last_edited_by_user', editedByUser: 'Csabi Toth', transfersIn: 42, transfersInSub: '2 (max 2)', transfersOut: 0, transfersOutSub: '0', revenueIncrease: '€5.89K', recommendedIn: 42, recommendedInBadges: ['VIS', 'REV'], recommendedOut: 0, stockInCirculation: 320, stockInTransit: 25, salesL7: 14, salesL30: 55, forecast: 15.22, stockouts: '3 → 0', overstocks: '2 → 0', understocks: '73 → 55' },
+  { id: 5, name: 'Sfr013 sevigne', code: 'SFR013', movementType: ["rebalancing"], status: 'needs_review_from_user', transfersIn: 33, transfersInSub: '2 (max 2)', transfersOut: 0, transfersOutSub: '0', revenueIncrease: '€3.67K', recommendedIn: 33, recommendedInBadges: ['VIS', 'REV'], recommendedOut: 0, stockInCirculation: 78, stockInTransit: 5, salesL7: 5, salesL30: 22, forecast: 8.14, stockouts: '12 → 5', overstocks: '18 → 6', understocks: '88 → 61' },
+  { id: 14, name: 'Wh001 paris entrepôt', code: 'WH001', movementType: ["replenishment","rebalancing"], locationType: 'warehouse', status: 'unapproved', transfersIn: 95, transfersInSub: '4 (max 4)', transfersOut: 92, transfersOutSub: '4 (max 4)', revenueIncrease: '€12.4K', recommendedIn: 95, recommendedInBadges: ['VIS', 'REV'], recommendedOut: 92, stockInCirculation: 580, stockInTransit: 45, salesL7: 0, salesL30: 0, forecast: 0, stockouts: '0 → 0', overstocks: '45 → 12', understocks: '0 → 0' },
+  { id: 6, name: 'Sbe002 anvers', code: 'SBE002', movementType: ["rebalancing"], status: 'partially_approved', transfersIn: 29, transfersInSub: '1 (max 2)', transfersOut: 29, transfersOutSub: '2 (max 3)', revenueIncrease: '€3.21K', recommendedIn: 29, recommendedInBadges: ['VIS', 'REV'], recommendedOut: 29, stockInCirculation: 112, stockInTransit: 0, salesL7: 3, salesL30: 18, forecast: 6.92, stockouts: '18 → 12', overstocks: '5 → 2', understocks: '112 → 78' },
+  { id: 7, name: 'Sfr003 courcelles', code: 'SFR003', movementType: ["rebalancing"], status: 'approved_by_system', transfersIn: 45, transfersInSub: '2 (max 2)', transfersOut: 0, transfersOutSub: '0', revenueIncrease: '€6.12K', recommendedIn: 45, recommendedInBadges: ['VIS', 'REV'], recommendedOut: 0, stockInCirculation: 198, stockInTransit: 22, salesL7: 16, salesL30: 62, forecast: 17.08, stockouts: '1 → 0', overstocks: '0 → 0', understocks: '42 → 28' },
+  { id: 8, name: 'Sfr001 bonaparte', code: 'SFR001', movementType: ["replenishment"], status: 'approved_by_user', approvedByUser: 'Jess Briggs', transfersIn: 52, transfersInSub: '2 (max 2)', transfersOut: 0, transfersOutSub: '0', revenueIncrease: '€7.34K', recommendedIn: 52, recommendedInBadges: ['VIS', 'REV'], recommendedOut: 0, stockInCirculation: 265, stockInTransit: 15, salesL7: 19, salesL30: 78, forecast: 21.45, stockouts: '0 → 0', overstocks: '0 → 0', understocks: '28 → 15' },
+  { id: 15, name: 'Web001 france online', code: 'WEB001', movementType: ["replenishment"], locationType: 'ecomm', status: 'last_edited_by_user', editedByUser: 'Csabi Toth', transfersIn: 0, transfersInSub: '0', transfersOut: 0, transfersOutSub: '0', revenueIncrease: '€8.56K', recommendedIn: 0, recommendedInBadges: ['VIS', 'REV'], recommendedOut: 0, stockInCirculation: 0, stockInTransit: 0, salesL7: 22, salesL30: 95, forecast: 28.34, stockouts: '0 → 0', overstocks: '0 → 0', understocks: '0 → 0' },
+  { id: 9, name: 'Sfr005 charonne', code: 'SFR005', movementType: ["rebalancing"], status: 'needs_review_from_user', transfersIn: 31, transfersInSub: '1 (max 2)', transfersOut: 0, transfersOutSub: '0', revenueIncrease: '€3.45K', recommendedIn: 31, recommendedInBadges: ['VIS', 'REV'], recommendedOut: 0, stockInCirculation: 67, stockInTransit: 0, salesL7: 4, salesL30: 19, forecast: 7.28, stockouts: '22 → 18', overstocks: '9 → 3', understocks: '136 → 94' },
+  { id: 10, name: 'Sfr018 lyon', code: 'SFR018', movementType: ["rebalancing"], status: 'unapproved', transfersIn: 48, transfersInSub: '2 (max 2)', transfersOut: 0, transfersOutSub: '0', revenueIncrease: '€6.78K', recommendedIn: 48, recommendedInBadges: ['VIS', 'REV'], recommendedOut: 0, stockInCirculation: 175, stockInTransit: 12, salesL7: 17, salesL30: 68, forecast: 18.92, stockouts: '2 → 1', overstocks: '3 → 1', understocks: '56 → 38' },
+  { id: 11, name: 'Ssp001 madrid coello', code: 'SSP001', movementType: ["replenishment","rebalancing"], status: 'approved_by_system', transfersIn: 36, transfersInSub: '2 (max 2)', transfersOut: 0, transfersOutSub: '0', revenueIncrease: '€4.02K', recommendedIn: 36, recommendedInBadges: ['VIS', 'REV'], recommendedOut: 0, stockInCirculation: 134, stockInTransit: 9, salesL7: 7, salesL30: 30, forecast: 9.56, stockouts: '8 → 4', overstocks: '14 → 5', understocks: '98 → 72' },
+  { id: 12, name: 'Sfr014 guichard', code: 'SFR014', movementType: ["rebalancing"], status: 'partially_approved', transfersIn: 34, transfersInSub: '1 (max 2)', transfersOut: 0, transfersOutSub: '0', revenueIncrease: '€3.89K', recommendedIn: 34, recommendedInBadges: ['VIS', 'REV'], recommendedOut: 0, stockInCirculation: 91, stockInTransit: 7, salesL7: 6, salesL30: 26, forecast: 8.42, stockouts: '11 → 7', overstocks: '6 → 2', understocks: '82 → 58' },
 ]
 
 // Mock products for trip drilldown (keyed by trip id)
 const PRODUCTS_BY_TRIP = {
   1: [
-    { id: 1, name: 'Croi-sac zip l', sku: 'A1398810', colour: 'Noir', movementType: ["rebalancing"], transfers: 3, transfersSub: 1, approvedTransfers: 3, unapprovedTransfers: 0, revenue: '€1.48K', recommended: 1, recommendedBadges: ['REV'], recommendedSub: 2, confidence: 'very_high', coverage: 'All SKUs in target', coverageWeeks: 5.2, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 1, salesL30: 2, forecast: 1.87, stockouts: '0 → 0', locations: '2 → 2', overstocks: '4 → 1', understocks: '8 → 5', depth: '5.0 → 5.0',     status: 'approved_by_system', recommendationsUpdated: '26/02/2026', recommendationsUpdatedTime: '14:32', recommendationsUpdatedBy: 'System', currentUnits: 12, currentUnitsInTransit: 3, warehouseAllocateLine: '52 → 48', warehouseSellLine: '68 → 62' },
-    { id: 2, name: 'Pre-sac seau m', sku: 'A101080', colour: 'Bleu petrole', movementType: ["rebalancing"], transfers: 2, transfersSub: 1, approvedTransfers: 0, unapprovedTransfers: 2, revenue: '€1.12K', recommended: 2, recommendedBadges: ['VIS'], recommendedSub: 1, confidence: 'high', coverage: '2% below target', coverageWeeks: 3.8, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 2, salesL30: 3, forecast: 0.54, stockouts: '0 → 1', locations: '2 → 1', overstocks: '3 → 0', understocks: '2 → 0', depth: '3.0 → 6.0', recommendationsUpdated: '24/02/2026', recommendationsUpdatedTime: '09:15', recommendationsUpdatedBy: 'User', currentUnits: 8, currentUnitsInTransit: 0, warehouseAllocateLine: '58 → 51', warehouseSellLine: '72 → 65' },
-    { id: 3, name: 'Ang-sac pte main m', sku: 'A1252810', colour: 'Figue', movementType: ["rebalancing"], transfers: 3, transfersSub: 2, approvedTransfers: 2, unapprovedTransfers: 1, revenue: '€1.89K', recommended: 3, recommendedBadges: ['REV', 'VIS'], recommendedSub: 1, confidence: 'high', coverage: '5% below target', coverageWeeks: 3.1, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 1, salesL30: 4, forecast: 2.1, stockouts: '1 → 0', locations: '2 → 2', overstocks: '5 → 2', understocks: '6 → 3', depth: '4.2 → 4.8',     status: 'last_edited_by_user', editedByUser: 'Csabi Toth', recommendationsUpdated: '26/02/2026', recommendationsUpdatedTime: '16:48', recommendationsUpdatedBy: 'User', currentUnits: 25, currentUnitsInTransit: 5, warehouseAllocateLine: '48 → 42', warehouseSellLine: '65 → 58' },
-    { id: 4, name: 'Croi-sac zip s', sku: 'A1398811', colour: 'Noir', movementType: ["rebalancing"], transfers: 1, transfersSub: 2, approvedTransfers: 1, unapprovedTransfers: 0, revenue: '€0.98K', recommended: 1, recommendedBadges: ['REV'], recommendedSub: 2, confidence: 'medium', coverage: 'All SKUs in target', coverageWeeks: 6.1, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 0, salesL30: 1, forecast: 0.32, stockouts: '0 → 0', locations: '1 → 2', overstocks: '2 → 1', understocks: '4 → 2', depth: '5.0 → 5.0', status: 'approved_by_user', approvedByUser: 'Jess Briggs', recommendationsUpdated: '24/02/2026', recommendationsUpdatedTime: '11:03', recommendationsUpdatedBy: 'User', currentUnits: 3, currentUnitsInTransit: 1, warehouseAllocateLine: '55 → 50', warehouseSellLine: '70 → 63' },
-    { id: 5, name: 'Pre-sac seau s', sku: 'A101081', colour: 'Bleu petrole', movementType: ["replenishment"], transfers: 2, transfersSub: 1, approvedTransfers: 1, unapprovedTransfers: 1, revenue: '€0.76K', recommended: 2, recommendedBadges: ['VIS'], recommendedSub: 1, confidence: 'low', coverage: '8% below target', coverageWeeks: 2.9, coverageTarget: 6, nextEvent: { name: 'UK weekly replenishment', date: '16/06/2026' }, salesL7: 1, salesL30: 2, forecast: 0.54, stockouts: '0 → 1', locations: '2 → 1', overstocks: '3 → 0', understocks: '2 → 0', depth: '3.0 → 6.0', status: 'needs_review_from_user', recommendationsUpdated: '26/02/2026', recommendationsUpdatedTime: '08:22', recommendationsUpdatedBy: 'System', currentUnits: 15, currentUnitsInTransit: 2, warehouseAllocateLine: '50 → 45', warehouseSellLine: '68 → 61' },
-    { id: 6, name: 'Ang-sac pte main s', sku: 'A1252811', colour: 'Figue', movementType: ["replenishment","rebalancing"], transfers: 4, transfersSub: 1, replenTransfers: 2, rebalTransfers: 2, approvedTransfers: 2, unapprovedTransfers: 2, revenue: '€0.65K', recommended: 1, recommendedBadges: ['REV'], recommendedSub: 1, confidence: 'very_low', coverage: '67% below target', coverageWeeks: 1.4, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 0, salesL30: 1, forecast: 0.21, stockouts: '0 → 0', locations: '2 → 2', overstocks: '4 → 1', understocks: '3 → 1', depth: '4.0 → 4.5', status: 'partially_approved', recommendationsUpdated: '24/02/2026', recommendationsUpdatedTime: '15:07', recommendationsUpdatedBy: 'System', currentUnits: 7, currentUnitsInTransit: 0, warehouseAllocateLine: '57 → 44', warehouseSellLine: '57 → 51' },
+    { id: 1, name: 'Croi-sac zip l', sku: 'A1398810', colour: 'Noir', movementType: ["rebalancing"], transfers: 3, transfersSub: 1, approvedTransfers: 3, unapprovedTransfers: 0, revenue: '€1.48K', recommended: 1, recommendedBadges: ['REV'], recommendedSub: 2, confidence: 'high', coverage: 'All SKUs in target', coverageWeeks: 5.2, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 1, salesL30: 2, forecast: 1.87, stockouts: '0 → 0', locations: '2 → 2', overstocks: '4 → 1', understocks: '8 → 5', depth: '5.0 → 5.0',     status: 'approved_by_system', currentUnits: 12, currentUnitsInTransit: 3, warehouseAllocateLine: '52 → 48', warehouseSellLine: '68 → 62' },
+    { id: 2, name: 'Pre-sac seau m', sku: 'A101080', colour: 'Bleu petrole', movementType: ["rebalancing"], transfers: 2, transfersSub: 1, approvedTransfers: 0, unapprovedTransfers: 2, revenue: '€1.12K', recommended: 2, recommendedBadges: ['VIS'], recommendedSub: 1, confidence: 'high', coverage: '2% below target', coverageWeeks: 3.8, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 2, salesL30: 3, forecast: 0.54, stockouts: '0 → 1', locations: '2 → 1', overstocks: '3 → 0', understocks: '2 → 0', depth: '3.0 → 6.0', currentUnits: 8, currentUnitsInTransit: 0, warehouseAllocateLine: '58 → 51', warehouseSellLine: '72 → 65' },
+    { id: 3, name: 'Ang-sac pte main m', sku: 'A1252810', colour: 'Figue', movementType: ["rebalancing"], transfers: 3, transfersSub: 2, approvedTransfers: 2, unapprovedTransfers: 1, revenue: '€1.89K', recommended: 3, recommendedBadges: ['REV', 'VIS'], recommendedSub: 1, confidence: 'high', coverage: '5% below target', coverageWeeks: 3.1, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 1, salesL30: 4, forecast: 2.1, stockouts: '1 → 0', locations: '2 → 2', overstocks: '5 → 2', understocks: '6 → 3', depth: '4.2 → 4.8',     status: 'last_edited_by_user', editedByUser: 'Csabi Toth', currentUnits: 25, currentUnitsInTransit: 5, warehouseAllocateLine: '48 → 42', warehouseSellLine: '65 → 58' },
+    { id: 4, name: 'Croi-sac zip s', sku: 'A1398811', colour: 'Noir', movementType: ["rebalancing"], transfers: 1, transfersSub: 2, approvedTransfers: 1, unapprovedTransfers: 0, revenue: '€0.98K', recommended: 1, recommendedBadges: ['REV'], recommendedSub: 2, confidence: 'high', coverage: 'All SKUs in target', coverageWeeks: 6.1, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 0, salesL30: 1, forecast: 0.32, stockouts: '0 → 0', locations: '1 → 2', overstocks: '2 → 1', understocks: '4 → 2', depth: '5.0 → 5.0', status: 'approved_by_user', approvedByUser: 'Jess Briggs', currentUnits: 3, currentUnitsInTransit: 1, warehouseAllocateLine: '55 → 50', warehouseSellLine: '70 → 63' },
+    { id: 5, name: 'Pre-sac seau s', sku: 'A101081', colour: 'Bleu petrole', movementType: ["replenishment"], transfers: 2, transfersSub: 1, approvedTransfers: 1, unapprovedTransfers: 1, revenue: '€0.76K', recommended: 2, recommendedBadges: ['VIS'], recommendedSub: 1, confidence: 'low', coverage: '8% below target', coverageWeeks: 2.9, coverageTarget: 6, nextEvent: { name: 'UK weekly replenishment', date: '16/06/2026' }, salesL7: 1, salesL30: 2, forecast: 0.54, stockouts: '0 → 1', locations: '2 → 1', overstocks: '3 → 0', understocks: '2 → 0', depth: '3.0 → 6.0', status: 'needs_review_from_user', currentUnits: 15, currentUnitsInTransit: 2, warehouseAllocateLine: '50 → 45', warehouseSellLine: '68 → 61' },
+    { id: 6, name: 'Ang-sac pte main s', sku: 'A1252811', colour: 'Figue', movementType: ["replenishment","rebalancing"], transfers: 4, transfersSub: 1, replenTransfers: 2, rebalTransfers: 2, approvedTransfers: 2, unapprovedTransfers: 2, revenue: '€0.65K', recommended: 1, recommendedBadges: ['REV'], recommendedSub: 1, confidence: 'low', coverage: '67% below target', coverageWeeks: 1.4, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 0, salesL30: 1, forecast: 0.21, stockouts: '0 → 0', locations: '2 → 2', overstocks: '4 → 1', understocks: '3 → 1', depth: '4.0 → 4.5', status: 'partially_approved', currentUnits: 7, currentUnitsInTransit: 0, warehouseAllocateLine: '57 → 44', warehouseSellLine: '57 → 51' },
   ],
   2: [
-    { id: 7, name: 'Sac zip l', sku: 'B200001', colour: 'Noir', movementType: ["rebalancing"], transfers: 2, transfersSub: 1, approvedTransfers: 2, unapprovedTransfers: 0, revenue: '€0.89K', recommended: 2, recommendedBadges: ['REV'], recommendedSub: 1, confidence: 'medium', coverage: '3% below target', coverageWeeks: 4.8, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 1, salesL30: 2, forecast: 0.45, stockouts: '0 → 0', locations: '2 → 2', overstocks: '2 → 1', understocks: '5 → 3', depth: '4.5 → 5.0', status: 'approved_by_user', approvedByUser: 'Jess Briggs', recommendationsUpdated: '26/02/2026', recommendationsUpdatedTime: '13:55', recommendationsUpdatedBy: 'User', currentUnits: 18, currentUnitsInTransit: 4, warehouseAllocateLine: '40 → 36', warehouseSellLine: '50 → 45' },
-    { id: 8, name: 'Sac seau m', sku: 'B200002', colour: 'Noir', movementType: ["rebalancing"], transfers: 1, transfersSub: 2, approvedTransfers: 0, unapprovedTransfers: 1, revenue: '€0.52K', recommended: 1, recommendedBadges: ['VIS'], recommendedSub: 2, confidence: 'high', coverage: 'All SKUs in target', coverageWeeks: 6.3, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 0, salesL30: 1, forecast: 0.28, stockouts: '0 → 1', locations: '1 → 2', overstocks: '1 → 0', understocks: '3 → 1', depth: '3.6 → 4.3', status: 'last_edited_by_user', editedByUser: 'Csabi Toth', recommendationsUpdated: '24/02/2026', recommendationsUpdatedTime: '17:19', recommendationsUpdatedBy: 'User', currentUnits: 11, currentUnitsInTransit: 2, warehouseAllocateLine: '35 → 30', warehouseSellLine: '42 → 38' },
-  ],
-}
+    { id: 7, name: 'Sac zip l', sku: 'B200001', colour: 'Noir', movementType: ["rebalancing"], transfers: 2, transfersSub: 1, approvedTransfers: 2, unapprovedTransfers: 0, revenue: '€0.89K', recommended: 2, recommendedBadges: ['REV'], recommendedSub: 1, confidence: 'high', coverage: '3% below target', coverageWeeks: 4.8, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 1, salesL30: 2, forecast: 0.45, stockouts: '0 → 0', locations: '2 → 2', overstocks: '2 → 1', understocks: '5 → 3', depth: '4.5 → 5.0', status: 'approved_by_user', approvedByUser: 'Jess Briggs', currentUnits: 18, currentUnitsInTransit: 4, warehouseAllocateLine: '40 → 36', warehouseSellLine: '50 → 45' },
+    { id: 8, name: 'Sac seau m', sku: 'B200002', colour: 'Noir', movementType: ["rebalancing"], transfers: 1, transfersSub: 2, approvedTransfers: 0, unapprovedTransfers: 1, revenue: '€0.52K', recommended: 1, recommendedBadges: ['VIS'], recommendedSub: 2, confidence: 'high', coverage: 'All SKUs in target', coverageWeeks: 6.3, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 0, salesL30: 1, forecast: 0.28, stockouts: '0 → 1', locations: '1 → 2', overstocks: '1 → 0', understocks: '3 → 1', depth: '3.6 → 4.3', status: 'last_edited_by_user', editedByUser: 'Csabi Toth', currentUnits: 11, currentUnitsInTransit: 2, warehouseAllocateLine: '35 → 30', warehouseSellLine: '42 → 38' },
+  ] }
 
 // Default products when trip not in PRODUCTS_BY_TRIP
 const DEFAULT_PRODUCTS = PRODUCTS_BY_TRIP[1]
+
+function findProductByName(productName) {
+  for (const products of Object.values(PRODUCTS_BY_TRIP)) {
+    const match = products.find((p) => p.name === productName)
+    if (match) return match
+  }
+  return DEFAULT_PRODUCTS.find((p) => p.name === productName) ?? null
+}
 
 // Product IDs that show 'Edited' badge in Products drilldown
 const PRODUCTS_EDITED_IDS = [1, 3]
@@ -564,22 +473,21 @@ const PRODUCTS_EDITED_IDS = [1, 3]
 // Mock locations for stock analysis drilldown (keyed by product id)
 const LOCATIONS_BY_PRODUCT = {
   1: [
-    { id: 1, name: 'Opéra', code: 'A1A', movementType: ["rebalancing"], stock: '6 → 12', tu: '6 → 12', tuWarehouse: 6, tuTruck: [3, 3], tuReplen: [2], salesL7: 1, salesL30: 2, forecast: 1.87, stockouts: '0 → 0', coverage: '0% → 100%', targetWeeks: 6, receivingWeeksCoverage: '3.2 → 6.4 (6 target)', recommendationReason: 'Increase revenue', revenueIncrease: '€679', availableToSend: 4, sendingStock: '10 → 7', sendingCoverage: '2.1 → 1.8 (4 target)', approvalStatus: 'approved_by_system' },
-    { id: 2, name: 'G.L. Haussmann Maro', code: 'AIA', movementType: ["rebalancing"], stock: '6 → 6', tu: '4 → 5', tuWarehouse: 3, tuTruck: [1], tuReplen: [2], salesL7: 0, salesL30: 0, forecast: 0, stockouts: '0 → 0', coverage: '0% → 0%', targetWeeks: 4, receivingWeeksCoverage: 'N/A (0 forecast)', recommendationReason: 'Reduce overstock', revenueIncrease: '€120', availableToSend: 3, sendingStock: '8 → 5', sendingCoverage: 'N/A (0 forecast)' },
-    { id: 3, name: 'La Défense', code: 'A2B', movementType: ["rebalancing"], stock: '5 → 5', tu: '4 → 5', tuWarehouse: 3, tuTruck: [1], tuReplen: [1], salesL7: 1, salesL30: 1, forecast: 0.76, stockouts: '0 → 0', coverage: '100% → 100%', targetWeeks: 4, receivingWeeksCoverage: '5.2 → 5.8 (4 target)', recommendationReason: 'Increase revenue', revenueIncrease: '€245', availableToSend: 4, sendingStock: '9 → 6', sendingCoverage: '1.8 → 1.2 (4 target)', approvalStatus: 'edited_by_user', editedByUser: 'Csabi Toth' },
-    { id: 4, name: 'Cap 3000', code: 'A3E', movementType: ["replenishment","rebalancing"], stock: '4 → 4', tu: '0 → 1', tuWarehouse: null, tuTruck: [1], salesL7: 0, salesL30: 2, forecast: 0.32, stockouts: '0 → 0', coverage: '0% → 0%', targetWeeks: 4, receivingWeeksCoverage: 'N/A (0 forecast)', recommendationReason: 'Improve coverage', revenueIncrease: '€89', availableToSend: 2, sendingStock: '6 → 5', sendingCoverage: 'N/A (0 forecast)', approvalStatus: 'approved_by_user', approvedByUser: 'Jess Briggs' },
-    { id: 5, name: 'Lyon Herriot', code: 'A4C', movementType: ["rebalancing"], stock: '5 → 5', tu: '0 → 1', tuWarehouse: null, tuTruck: [1], tuReplen: [], salesL7: 1, salesL30: 1, forecast: 0.54, stockouts: '0 → 0', coverage: '0% → 0%', targetWeeks: 4, receivingWeeksCoverage: '4.1 → 4.5 (4 target)', recommendationReason: 'Increase revenue', revenueIncrease: '€156', availableToSend: 3, sendingStock: '7 → 6', sendingCoverage: '2.4 → 2.0 (4 target)' },
-    { id: 6, name: 'Printemps Lille', code: 'ASF', movementType: ["rebalancing"], stock: '8 → 8', tu: '0 → 20', tuWarehouse: 4, tuTruck: [20], tuReplen: [1], salesL7: 2, salesL30: 4, forecast: 2.1, stockouts: '0 → 0', coverage: '100% → 100%', targetWeeks: 6, receivingWeeksCoverage: '3.8 → 6.2 (6 target)', recommendationReason: 'Increase revenue', revenueIncrease: '€1.2K', availableToSend: 5, sendingStock: '12 → 8', sendingCoverage: '3.2 → 2.1 (6 target)', approvalStatus: 'approved_by_system' },
+    { id: 1, name: 'Opéra', code: 'A1A', movementType: ["rebalancing"], stock: '6 → 12', tu: '6 → 12', tuWarehouse: 6, tuTruck: [3, 3], tuReplen: [2], salesL7: 1, salesL30: 2, forecast: 1.87, stockouts: '0 → 0', coverage: '0% → 100%', targetWeeks: 6, receivingWeeksCoverage: '3.2 → 6.4 (6 target)', recommendationReason: 'Increase revenue', revenueIncrease: '€679', availableToSend: 4, sendingStock: '10 → 7', sendingCoverage: '2.1 → 1.8 (4 target)', approvalStatus: 'approved_by_system', storageCapacity: 'available' },
+    { id: 2, name: 'G.L. Haussmann Maro', code: 'AIA', movementType: ["rebalancing"], stock: '6 → 6', tu: '4 → 5', tuWarehouse: 3, tuTruck: [1], tuReplen: [2], salesL7: 0, salesL30: 0, forecast: 0, stockouts: '0 → 0', coverage: '0% → 0%', targetWeeks: 4, receivingWeeksCoverage: 'N/A (0 forecast)', recommendationReason: 'Reduce overstock', revenueIncrease: '€120', availableToSend: 3, sendingStock: '8 → 5', sendingCoverage: 'N/A (0 forecast)', storageCapacity: 'full' },
+    { id: 3, name: 'La Défense', code: 'A2B', movementType: ["rebalancing"], stock: '5 → 5', tu: '4 → 5', tuWarehouse: 3, tuTruck: [1], tuReplen: [1], salesL7: 1, salesL30: 1, forecast: 0.76, stockouts: '0 → 0', coverage: '100% → 100%', targetWeeks: 4, receivingWeeksCoverage: '5.2 → 5.8 (4 target)', recommendationReason: 'Increase revenue', revenueIncrease: '€245', availableToSend: 4, sendingStock: '9 → 6', sendingCoverage: '1.8 → 1.2 (4 target)', approvalStatus: 'edited_by_user', editedByUser: 'Csabi Toth', storageCapacity: 'available' },
+    { id: 4, name: 'Cap 3000', code: 'A3E', movementType: ["replenishment","rebalancing"], stock: '4 → 4', tu: '0 → 1', tuWarehouse: null, tuTruck: [1], salesL7: 0, salesL30: 2, forecast: 0.32, stockouts: '0 → 0', coverage: '0% → 0%', targetWeeks: 4, receivingWeeksCoverage: 'N/A (0 forecast)', recommendationReason: 'Improve coverage', revenueIncrease: '€89', availableToSend: 2, sendingStock: '6 → 5', sendingCoverage: 'N/A (0 forecast)', approvalStatus: 'approved_by_user', approvedByUser: 'Jess Briggs', storageCapacity: 'full' },
+    { id: 5, name: 'Lyon Herriot', code: 'A4C', movementType: ["rebalancing"], stock: '5 → 5', tu: '0 → 1', tuWarehouse: null, tuTruck: [1], tuReplen: [], salesL7: 1, salesL30: 1, forecast: 0.54, stockouts: '0 → 0', coverage: '0% → 0%', targetWeeks: 4, receivingWeeksCoverage: '4.1 → 4.5 (4 target)', recommendationReason: 'Increase revenue', revenueIncrease: '€156', availableToSend: 3, sendingStock: '7 → 6', sendingCoverage: '2.4 → 2.0 (4 target)', storageCapacity: 'available' },
+    { id: 6, name: 'Printemps Lille', code: 'ASF', movementType: ["rebalancing"], stock: '8 → 8', tu: '0 → 20', tuWarehouse: 4, tuTruck: [20], tuReplen: [1], salesL7: 2, salesL30: 4, forecast: 2.1, stockouts: '0 → 0', coverage: '100% → 100%', targetWeeks: 6, receivingWeeksCoverage: '3.8 → 6.2 (6 target)', recommendationReason: 'Increase revenue', revenueIncrease: '€1.2K', availableToSend: 5, sendingStock: '12 → 8', sendingCoverage: '3.2 → 2.1 (6 target)', approvalStatus: 'approved_by_system', storageCapacity: 'available' },
   ],
   2: [
-    { id: 1, name: 'Opéra', code: 'A1A', movementType: ["rebalancing"], stock: '4 → 4', tu: '4 → 4', tuWarehouse: 4, tuTruck: [], salesL7: 2, salesL30: 3, forecast: 0.54, stockouts: '0 → 0', coverage: '100% → 100%', targetWeeks: 4, receivingWeeksCoverage: '5.2 → 5.2 (4 target)', recommendationReason: 'Increase revenue', revenueIncrease: '€312', availableToSend: 4, sendingStock: '8 → 4', sendingCoverage: '2.0 → 1.0 (4 target)', approvalStatus: 'approved_by_user', approvedByUser: 'Jess Briggs' },
-    { id: 2, name: 'La Défense', code: 'A2B', movementType: ["rebalancing"], stock: '3 → 3', tu: '3 → 3', tuWarehouse: 3, tuTruck: [], salesL7: 1, salesL30: 2, forecast: 0.45, stockouts: '0 → 0', coverage: '100% → 100%', targetWeeks: 4, receivingWeeksCoverage: '4.1 → 4.1 (4 target)', recommendationReason: 'Reduce understock', revenueIncrease: '€98', availableToSend: 3, sendingStock: '6 → 3', sendingCoverage: '1.5 → 0.8 (4 target)', approvalStatus: 'edited_by_user', editedByUser: 'Csabi Toth' },
+    { id: 1, name: 'Opéra', code: 'A1A', movementType: ["rebalancing"], stock: '4 → 4', tu: '4 → 4', tuWarehouse: 4, tuTruck: [], salesL7: 2, salesL30: 3, forecast: 0.54, stockouts: '0 → 0', coverage: '100% → 100%', targetWeeks: 4, receivingWeeksCoverage: '5.2 → 5.2 (4 target)', recommendationReason: 'Increase revenue', revenueIncrease: '€312', availableToSend: 4, sendingStock: '8 → 4', sendingCoverage: '2.0 → 1.0 (4 target)', approvalStatus: 'approved_by_user', approvedByUser: 'Jess Briggs', storageCapacity: 'full' },
+    { id: 2, name: 'La Défense', code: 'A2B', movementType: ["rebalancing"], stock: '3 → 3', tu: '3 → 3', tuWarehouse: 3, tuTruck: [], salesL7: 1, salesL30: 2, forecast: 0.45, stockouts: '0 → 0', coverage: '100% → 100%', targetWeeks: 4, receivingWeeksCoverage: '4.1 → 4.1 (4 target)', recommendationReason: 'Reduce understock', revenueIncrease: '€98', availableToSend: 3, sendingStock: '6 → 3', sendingCoverage: '1.5 → 0.8 (4 target)', approvalStatus: 'edited_by_user', editedByUser: 'Csabi Toth', storageCapacity: 'available' },
   ],
   3: [
-    { id: 1, name: 'Opéra', code: 'A1A', movementType: ["rebalancing"], stock: '6 → 6', tu: '6 → 6', tuWarehouse: 6, tuTruck: [], salesL7: 1, salesL30: 4, forecast: 2.1, stockouts: '0 → 0', coverage: '100% → 100%', targetWeeks: 6, receivingWeeksCoverage: '2.9 → 2.9 (6 target)', recommendationReason: 'Increase revenue', revenueIncrease: '€445', availableToSend: 6, sendingStock: '12 → 6', sendingCoverage: '2.8 → 1.4 (6 target)' },
-    { id: 2, name: 'G.L. Haussmann Maro', code: 'AIA', movementType: ["rebalancing"], stock: '5 → 5', tu: '5 → 5', tuWarehouse: 5, tuTruck: [], salesL7: 0, salesL30: 0, forecast: 0, stockouts: '0 → 0', coverage: '0% → 0%', targetWeeks: 5, receivingWeeksCoverage: 'N/A (0 forecast)', recommendationReason: 'Improve coverage', revenueIncrease: '€0', availableToSend: 5, sendingStock: '10 → 5', sendingCoverage: 'N/A (0 forecast)', approvalStatus: 'approved_by_system' },
-  ],
-}
+    { id: 1, name: 'Opéra', code: 'A1A', movementType: ["rebalancing"], stock: '6 → 6', tu: '6 → 6', tuWarehouse: 6, tuTruck: [], salesL7: 1, salesL30: 4, forecast: 2.1, stockouts: '0 → 0', coverage: '100% → 100%', targetWeeks: 6, receivingWeeksCoverage: '2.9 → 2.9 (6 target)', recommendationReason: 'Increase revenue', revenueIncrease: '€445', availableToSend: 6, sendingStock: '12 → 6', sendingCoverage: '2.8 → 1.4 (6 target)', storageCapacity: 'available' },
+    { id: 2, name: 'G.L. Haussmann Maro', code: 'AIA', movementType: ["rebalancing"], stock: '5 → 5', tu: '5 → 5', tuWarehouse: 5, tuTruck: [], salesL7: 0, salesL30: 0, forecast: 0, stockouts: '0 → 0', coverage: '0% → 0%', targetWeeks: 5, receivingWeeksCoverage: 'N/A (0 forecast)', recommendationReason: 'Improve coverage', revenueIncrease: '€0', availableToSend: 5, sendingStock: '10 → 5', sendingCoverage: 'N/A (0 forecast)', approvalStatus: 'approved_by_system', storageCapacity: 'full' },
+  ] }
 
 const DEFAULT_LOCATIONS = LOCATIONS_BY_PRODUCT[1]
 
@@ -600,8 +508,7 @@ const CHART_DATA = Array.from({ length: 22 }, (_, i) => {
     actualSales: Math.round(sales * 10) / 10,
     demandForecast: Math.min(8, 2.5 + Math.sin(i * 0.25) * 1.5),
     salesForecast: Math.min(8, 2 + Math.sin(i * 0.25) * 1.2),
-    estimatedLostSales: Math.round(lostSales * 10) / 10,
-  }
+    estimatedLostSales: Math.round(lostSales * 10) / 10 }
 })
 
 // ============================================================
@@ -609,6 +516,17 @@ const CHART_DATA = Array.from({ length: 22 }, (_, i) => {
 // ============================================================
 
 const EXPLORER_WAREHOUSE = 'Log01 entrepot logtex'
+
+/** Hardcoded sending-location capacity for Explorer overcommit detection (prototype) */
+const SENDING_LOCATION_CAPACITY = {
+  'Log01 entrepot logtex': 250,
+  Opéra: 50,
+  'G.L. Haussmann Maro': 50,
+  'La Défense': 50,
+  'Cap 3000': 50,
+  'Lyon Herriot': 50,
+  'Printemps Lille': 50,
+}
 
 const EXPLORER_STORES = [
   'Opéra',
@@ -626,54 +544,91 @@ const EXPLORER_PRODUCTS = [
     baseSku: 'A1252810',
     colour: 'Noir',
     department: 'Handbags',
-    sizes: ['M'],
-    movementTypes: ['replenishment', 'rebalancing'],
-  },
+    subDepartment: 'Sac à main',
+    material: 'Cuir',
+    gender: 'Femme',
+    rrp: '€890',
+    ws: '€0',
+    ic: '€45',
+    seasonAndEvent: 'Winter 26 · Vague 1',
+    // Two sizes → sibling SKUs share product attrs, differ on life-to-date sales
+    sizes: ['S', 'M'],
+    movementTypes: ['replenishment', 'rebalancing'] },
   {
     id: 'exp-p6',
     name: 'Ang-sac pte main s',
     baseSku: 'A1252811',
     colour: 'Noir',
     department: 'Handbags',
+    subDepartment: 'Sac à main',
+    material: 'Cuir verni',
+    gender: 'Femme',
+    rrp: '€750',
+    ws: '€12',
+    ic: '€38',
+    seasonAndEvent: 'Winter 26 · Vague 2',
     sizes: ['S'],
-    movementTypes: ['replenishment', 'rebalancing'],
-  },
+    movementTypes: ['replenishment', 'rebalancing'] },
   {
     id: 'exp-p2',
     name: 'Croi-sac zip l',
     baseSku: 'A1398810',
     colour: 'Noir',
     department: 'Crossbody',
+    subDepartment: 'Bandoulière',
+    material: 'Nylon',
+    gender: 'Unisexe',
+    rrp: '€420',
+    ws: '€0',
+    ic: '€22',
+    seasonAndEvent: 'SS26 · Drop 3',
     sizes: ['L'],
-    movementTypes: ['replenishment'],
-  },
+    movementTypes: ['replenishment'] },
   {
     id: 'exp-p3',
     name: 'Pre-sac seau m',
     baseSku: 'A101080',
     colour: 'Bleu petrole',
     department: 'Bucket bags',
+    subDepartment: 'Seau',
+    material: 'Laine',
+    gender: 'Femme',
+    rrp: '€85',
+    ws: '€0',
+    ic: '€10',
+    seasonAndEvent: 'Winter 26 · Vague 2',
     sizes: ['M'],
-    movementTypes: ['replenishment'],
-  },
+    movementTypes: ['replenishment'] },
   {
     id: 'exp-p4',
     name: 'Croi-sac zip s',
     baseSku: 'A1398811',
     colour: 'Noir',
     department: 'Crossbody',
+    subDepartment: 'Bandoulière',
+    material: 'Cuir',
+    gender: 'Homme',
+    rrp: '€380',
+    ws: '€25',
+    ic: '€18',
+    seasonAndEvent: 'SS26 · Drop 1',
     sizes: ['S'],
-    movementTypes: ['rebalancing'],
-  },
+    movementTypes: ['rebalancing'] },
   {
     id: 'exp-p5',
     name: 'Pre-sac seau s',
     baseSku: 'A101081',
     colour: 'Bleu petrole',
     department: 'Bucket bags',
+    subDepartment: 'Foulard',
+    material: 'Cachemire',
+    gender: 'Femme',
+    rrp: '€120',
+    ws: '€8',
+    ic: '€15',
+    seasonAndEvent: 'AW25 · Continuity',
     sizes: ['S'],
-    movementTypes: ['rebalancing'],
-  },
+    movementTypes: ['rebalancing'] },
 ]
 
 const DEPARTMENT_FILTER_OPTIONS = ['Handbags', 'Crossbody', 'Bucket bags']
@@ -684,11 +639,8 @@ const MOVEMENT_TYPE_FILTER_OPTIONS = [
 ]
 
 const CONFIDENCE_FILTER_OPTIONS = [
-  { id: 'very_high', label: 'Very high' },
   { id: 'high', label: 'High' },
-  { id: 'medium', label: 'Medium' },
   { id: 'low', label: 'Low' },
-  { id: 'very_low', label: 'Very low' },
 ]
 
 const STATUS_CYCLE = [
@@ -699,17 +651,58 @@ const STATUS_CYCLE = [
   'approved_by_user',
 ]
 
-const CONFIDENCE_CYCLE = ['very_high', 'high', 'high', 'medium', 'medium', 'low', 'very_low']
+const CONFIDENCE_CYCLE = ['high', 'high', 'high', 'low']
 const BADGE_CYCLE = [['REV'], ['VIS'], ['REV', 'VIS'], ['REV'], ['VIS']]
 
 function buildExplorerRow(rowIndex, product, size, fromLoc, toLoc, movementType) {
-  const coverageTarget = 4
-  const coverageWeeks = 1 + (rowIndex * 2) % 8
-  const isOnTarget = coverageWeeks >= coverageTarget
-  const coverage = isOnTarget
-    ? 'All SKUs in target'
-    : `${Math.round(((coverageTarget - coverageWeeks) / coverageTarget) * 100)}% below target`
+  const coverageWeeksBefore = Number((1 + (rowIndex * 1.3) % 5).toFixed(1))
+  const coverageWeeksAfter = Number((coverageWeeksBefore + 0.5 + (rowIndex % 4) * 0.8).toFixed(1))
   const salesL7 = ((rowIndex * 2) % 15) + 1
+  const transfers = 1 + (rowIndex * 3) % 15
+  // Usually headroom (green); every 7th row is constrained (orange by default).
+  const availableToSend =
+    rowIndex % 7 === 0 ? Math.max(0, transfers - 2 - (rowIndex % 3)) : transfers + 2 + (rowIndex % 5)
+  // Service level: ~1/3 probability / service level / £ last-unit. sizeIdx shifts
+  // sibling SKUs by ≥10pp (or €8). Injected lows: prob <30%, service level >70%, £ <€5.
+  const framing = rowIndex % 3
+  const sizeIdx = Math.max(0, product.sizes.indexOf(size))
+  const initialAllocation = 1 + ((rowIndex * 7 + sizeIdx * 3) % 20)
+  const [createDd, createMm, createYyyy] = SCHEDULE_CREATION_DATE.split('/').map(Number)
+  const creationBase = new Date(createYyyy, createMm - 1, createDd)
+  const stockDaysAgo = 30 + ((rowIndex * 11 + sizeIdx * 5) % 91) // 30–120 days before creation
+  const salesDaysAgo = Math.max(1, stockDaysAgo - (5 + (rowIndex % 25))) // later than first stock
+  const formatExplorerDate = (date) => {
+    const dd = String(date.getDate()).padStart(2, '0')
+    const mm = String(date.getMonth() + 1).padStart(2, '0')
+    return `${dd}/${mm}/${date.getFullYear()}`
+  }
+  const firstStockDateValue = (() => {
+    const d = new Date(creationBase)
+    d.setDate(d.getDate() - stockDaysAgo)
+    return formatExplorerDate(d)
+  })()
+  const firstSalesDateValue =
+    rowIndex % 5 === 0
+      ? null
+      : (() => {
+          const d = new Date(creationBase)
+          d.setDate(d.getDate() - salesDaysAgo)
+          return formatExplorerDate(d)
+        })()
+  let serviceLevel
+  if (framing === 0) {
+    let pct = 40 + ((rowIndex * 5) % 40) + sizeIdx * 12
+    if (rowIndex % 18 === 0) pct = 15 + sizeIdx * 12
+    serviceLevel = `${Math.min(95, pct)}% p(sell) last unit`
+  } else if (framing === 1) {
+    let pct = 20 + ((rowIndex * 5) % 40) + sizeIdx * 12
+    if (rowIndex % 18 === 1) pct = 75 + sizeIdx * 12
+    serviceLevel = `${Math.min(95, pct)}% service level`
+  } else {
+    let euros = 8 + ((rowIndex * 3) % 30) + sizeIdx * 8
+    if (rowIndex % 18 === 2) euros = 2 + sizeIdx * 8
+    serviceLevel = `€${euros} last unit`
+  }
   return {
     id: `exp-row-${rowIndex}`,
     productId: product.id,
@@ -718,28 +711,55 @@ function buildExplorerRow(rowIndex, product, size, fromLoc, toLoc, movementType)
     size,
     colour: product.colour,
     department: product.department,
+    subDepartment: product.subDepartment,
+    material: product.material,
+    gender: product.gender,
+    rrp: product.rrp,
+    ws: product.ws,
+    ic: product.ic,
+    seasonAndEvent: product.seasonAndEvent,
+    lifeToDateSales: (rowIndex * 7) % 51, // ~0–50 units, varies per SKU-location row
     fromLocation: fromLoc,
     toLocation: toLoc,
     movementType,
-    transfers: 1 + (rowIndex * 3) % 15,
+    transfers,
+    availableToSend,
+    visibilityBefore: rowIndex % 11 === 0 ? 2 : rowIndex % 5 === 0 ? 1 : 0,
+    visibilityAfter: rowIndex % 11 === 0 ? 3 : rowIndex % 5 === 0 ? 2 : 1,
+    otherMovements:
+      movementType === 'rebalancing'
+        ? null
+        : rowIndex % 10 < 3
+          ? (() => {
+              const variant = rowIndex % 3
+              if (variant === 0) return { rebalCount: 1 + (rowIndex % 3), replenCount: 0 }
+              if (variant === 1) return { rebalCount: 0, replenCount: 1 + (rowIndex % 2) }
+              return { rebalCount: 1 + (rowIndex % 2), replenCount: 1 + (rowIndex % 3) }
+            })()
+          : null,
     revenue: `€${(0.5 + (rowIndex * 0.37) % 4.5).toFixed(2)}K`,
     recommended: '1',
     recommendedBadges: BADGE_CYCLE[rowIndex % BADGE_CYCLE.length],
     recommendedSub: rowIndex % 3 === 0 ? '2' : undefined,
     confidence: CONFIDENCE_CYCLE[rowIndex % CONFIDENCE_CYCLE.length],
-    coverage,
-    coverageWeeks,
-    coverageTarget,
-    coverageStatus: isOnTarget ? 'on_target' : 'below_target',
-    nextEvent: { name: rowIndex % 2 === 0 ? 'No event' : 'Rebal cycle', date: '15/03/2026' },
+    serviceLevel,
+    coverageWeeksBefore,
+    coverageWeeksAfter,
+    nextEvent: {
+      name: rowIndex % 2 === 0 ? 'No event' : 'Rebal cycle',
+      date: SCHEDULE_CREATION_DATE,
+    },
     salesL7,
     salesL30: salesL7 * 5,
     currentUnits: 10 + (rowIndex * 5) % 50,
     currentUnitsInTransit: rowIndex % 6,
+    storageCapacity: rowIndex % 4 === 0 ? 'full' : 'available',
     warehouseAllocateLine: `${50 + (rowIndex * 3) % 20} → ${45 + (rowIndex * 3) % 20}`,
     warehouseSellLine: `${65 + (rowIndex * 5) % 25} → ${58 + (rowIndex * 5) % 25}`,
     forecast: Number(((rowIndex * 0.31) % 3 + 0.5).toFixed(2)),
-    stockoutsLine: `${rowIndex % 3} → ${(rowIndex + 1) % 3}`,
+    initialAllocation,
+    firstStockDate: firstStockDateValue,
+    firstSalesDate: firstSalesDateValue,
     status: STATUS_CYCLE[rowIndex % STATUS_CYCLE.length],
     approvedByUser: false,
     editedByUser: false,
@@ -790,7 +810,6 @@ const STATUS_OPTIONS = [
   { id: 'unapproved', displayLabel: 'Unapproved', dotClass: 'bg-[#878d94]' },
   { id: 'needs_review_from_user', displayLabel: 'Needs review', dotClass: 'bg-[#bd5800]' },
   { id: 'partially_approved', displayLabel: 'Partially approved', dotClass: 'bg-[#f29a35]' },
-  { id: 'remove_edits', displayLabel: 'Remove edits', dotClass: 'bg-[#A855F7]' },
 ]
 
 // Selectable options only (short action labels in dropdown; badge shows full displayLabel)
@@ -798,7 +817,6 @@ const STATUS_DROPDOWN_OPTIONS = [
   { id: 'approved_by_user', dropdownLabel: 'Approve', dotClass: 'bg-[#08a16a]' },
   { id: 'unapproved', dropdownLabel: 'Unapprove', dotClass: 'bg-[#878d94]' },
   { id: 'needs_review_from_user', dropdownLabel: 'Needs review', dotClass: 'bg-[#bd5800]' },
-  { id: 'remove_edits', dropdownLabel: 'Remove edits', dotClass: 'bg-[#A855F7]' },
 ]
 
 const STATUS_BADGE_CLASSES = {
@@ -807,46 +825,41 @@ const STATUS_BADGE_CLASSES = {
   last_edited_by_user: 'bg-[#ebf3ff] text-[#0a0a0a] border-[#0267ff]',
   unapproved: 'bg-[#f4f4f5] text-[#0a0a0a] border-[#878d94]',
   needs_review_from_user: 'bg-[#ffe4cc] text-[#0a0a0a] border-[#bd5800]',
-  remove_edits: 'bg-[#f3e8ff] text-[#7c3aed]',
-  partially_approved: 'bg-[#fef3c7] text-[#92400e]',
-}
+  partially_approved: 'bg-[#fef3c7] text-[#92400e]' }
 
 const CONFIDENCE_PILL_CONFIG = {
-  very_high: {
-    label: 'Very high',
-    badgeClass: 'bg-[#cce8dc] text-[#0a0a0a] border-[#067a4e]',
-    dotClass: 'bg-[#067a4e]',
-  },
   high: {
     label: 'High',
     badgeClass: 'bg-[#e4f4ef] text-[#0a0a0a] border-[#08a16a]',
-    dotClass: 'bg-[#08a16a]',
-  },
-  medium: {
-    label: 'Medium',
-    badgeClass: 'bg-[#fef9c3] text-[#0a0a0a] border-[#ca8a04]',
-    dotClass: 'bg-[#eab308]',
-  },
+    dotClass: 'bg-[#08a16a]' },
   low: {
     label: 'Low',
     badgeClass: 'bg-[#ffe4cc] text-[#0a0a0a] border-[#bd5800]',
-    dotClass: 'bg-[#bd5800]',
-  },
-  very_low: {
-    label: 'Very low',
-    badgeClass: 'bg-[#fee2e2] text-[#0a0a0a] border-[#dc2626]',
-    dotClass: 'bg-[#dc2626]',
-  },
-}
+    dotClass: 'bg-[#bd5800]' } }
 
 function ConfidencePill({ value }) {
-  const cfg = CONFIDENCE_PILL_CONFIG[value] || CONFIDENCE_PILL_CONFIG.medium
+  const cfg = CONFIDENCE_PILL_CONFIG[value] || CONFIDENCE_PILL_CONFIG.high
   return (
     <span
       className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-[6px] border text-[12px] font-medium border-transparent ${cfg.badgeClass}`}
     >
       <span className={`size-2 rounded-full shrink-0 ${cfg.dotClass}`} aria-hidden />
       <span className="truncate">{cfg.label}</span>
+    </span>
+  )
+}
+
+function StorageCapacityPill({ value }) {
+  if (value === 'full') {
+    return (
+      <span className="inline-flex max-w-full items-center justify-center rounded-full bg-[#FEE4E2] px-2.5 py-1 text-[12px] font-medium text-[#B42318]">
+        Full
+      </span>
+    )
+  }
+  return (
+    <span className="inline-flex max-w-full items-center justify-center rounded-full bg-[#F2F4F7] px-2.5 py-1 text-[12px] font-medium text-[#101828]">
+      Available
     </span>
   )
 }
@@ -888,8 +901,7 @@ const MOVEMENT_TYPE_PILL_CLASS =
 
 const MOVEMENT_TYPE_LABELS = {
   replenishment: 'Replen',
-  rebalancing: 'Rebal',
-}
+  rebalancing: 'Rebal' }
 
 function MovementTypePills({ movementType }) {
   const types = Array.isArray(movementType) ? movementType : []
@@ -904,22 +916,26 @@ function MovementTypePills({ movementType }) {
   )
 }
 
-const QUICK_FILTER_CHIPS = [
+const PRODUCTS_QUICK_FILTER_CHIPS = [
   { id: 'low_confidence', label: 'Low confidence' },
   { id: 'unapproved', label: 'Unapproved' },
   { id: 'needs_review', label: 'Needs review' },
-  { id: 'broken_size_run', label: 'Broken size run' },
-  { id: 'stale_stock', label: 'Stale stock' },
   { id: 'bestsellers', label: 'Bestsellers' },
   { id: 'selling_fast', label: 'Selling fast' },
   { id: 'new_in', label: 'New in' },
   { id: 'slowing_down', label: 'Slowing down' },
 ]
 
-function ScheduleQuickFilterChips({ activeId, onChange }) {
+const EXPLORER_QUICK_FILTER_CHIPS = [
+  { id: 'low_confidence', label: 'Low confidence' },
+  { id: 'unapproved', label: 'Unapproved' },
+  { id: 'needs_review', label: 'Needs review' },
+]
+
+function ScheduleQuickFilterChips({ chips, activeId, onChange }) {
   return (
     <div className="flex items-center gap-2 shrink-0">
-      {QUICK_FILTER_CHIPS.map((chip) => {
+      {chips.map((chip) => {
         const active = activeId === chip.id
         return (
           <button
@@ -1248,12 +1264,28 @@ function TransferDetailView({ transfer, product, trip, onBack }) {
 /**
  * Portals hover content to document.body with fixed positioning so it is not clipped
  * by scroll containers (e.g. stock analysis table wrapper).
+ *
+ * Leave is delayed briefly so panels that opt into pointer-events-auto (e.g. Explorer
+ * SKU copy controls) remain reachable. Default panel content stays pointer-events-none.
  */
 function TuHoverPopover({ children, panel }) {
   const wrapRef = useRef(null)
   const popRef = useRef(null)
+  const closeTimerRef = useRef(null)
   const [open, setOpen] = useState(false)
   const [coords, setCoords] = useState({ left: 0, top: 0 })
+
+  const clearCloseTimer = useCallback(() => {
+    if (closeTimerRef.current != null) {
+      clearTimeout(closeTimerRef.current)
+      closeTimerRef.current = null
+    }
+  }, [])
+
+  const scheduleClose = useCallback(() => {
+    clearCloseTimer()
+    closeTimerRef.current = setTimeout(() => setOpen(false), 200)
+  }, [clearCloseTimer])
 
   const updatePosition = useCallback(() => {
     const el = wrapRef.current
@@ -1316,7 +1348,10 @@ function TuHoverPopover({ children, panel }) {
     }
   }, [open, updatePosition])
 
+  useEffect(() => () => clearCloseTimer(), [clearCloseTimer])
+
   const handleEnter = () => {
+    clearCloseTimer()
     const el = wrapRef.current
     if (el) {
       const rect = el.getBoundingClientRect()
@@ -1327,7 +1362,7 @@ function TuHoverPopover({ children, panel }) {
 
   return (
     <>
-      <div ref={wrapRef} className="relative inline-block" onMouseEnter={handleEnter} onMouseLeave={() => setOpen(false)}>
+      <div ref={wrapRef} className="relative inline-block" onMouseEnter={handleEnter} onMouseLeave={scheduleClose}>
         {children}
       </div>
       {open &&
@@ -1336,12 +1371,94 @@ function TuHoverPopover({ children, panel }) {
             ref={popRef}
             className="pointer-events-none fixed z-[10000]"
             style={{ left: coords.left, top: coords.top, transform: 'translateY(-50%)' }}
+            onMouseEnter={clearCloseTimer}
+            onMouseLeave={scheduleClose}
           >
             {panel}
           </div>,
           document.body
         )}
     </>
+  )
+}
+
+function SkuDetailsCopyId({ label, value }) {
+  const [copied, setCopied] = useState(false)
+  const copiedTimerRef = useRef(null)
+
+  useEffect(() => () => {
+    if (copiedTimerRef.current != null) clearTimeout(copiedTimerRef.current)
+  }, [])
+
+  const handleCopy = async (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    try {
+      await navigator.clipboard.writeText(value)
+    } catch {
+      // Prototype: ignore clipboard failures (insecure context, permissions, etc.)
+    }
+    setCopied(true)
+    if (copiedTimerRef.current != null) clearTimeout(copiedTimerRef.current)
+    copiedTimerRef.current = setTimeout(() => setCopied(false), 1500)
+  }
+
+  return (
+    <div className="pointer-events-auto flex min-w-0 flex-1 flex-col gap-0.5">
+      <span className="text-[10px] font-bold uppercase tracking-[0.04em] text-[#9ca3af]">{label}</span>
+      <div className="flex min-w-0 items-center gap-1.5">
+        <span className="min-w-0 truncate text-[13px] font-medium tabular-nums text-[#0a0a0a]">{value}</span>
+        <button
+          type="button"
+          onClick={handleCopy}
+          onMouseDown={(e) => e.stopPropagation()}
+          className="pointer-events-auto inline-flex shrink-0 items-center justify-center rounded-[4px] p-0.5 text-[#4b535c] hover:bg-[#f3f4f6] hover:text-[#0a0a0a] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-sky-500"
+          aria-label={copied ? 'Copied' : `Copy ${label}`}
+          title={copied ? 'Copied!' : `Copy ${label}`}
+        >
+          {copied ? (
+            <span className="px-0.5 text-[11px] font-semibold text-[#15803d]">Copied!</span>
+          ) : (
+            <Copy className="h-3.5 w-3.5 shrink-0" aria-hidden />
+          )}
+        </button>
+      </div>
+    </div>
+  )
+}
+
+function SkuDetailsAttrRow({ label, value }) {
+  const display = value === null || value === undefined || value === '' ? '—' : value
+  return (
+    <div className="flex items-start justify-between gap-3 text-[13px]">
+      <span className="min-w-0 text-[#4b535c]">{label}</span>
+      <span className="max-w-[58%] shrink-0 text-right font-medium tabular-nums text-[#0a0a0a]">{String(display)}</span>
+    </div>
+  )
+}
+
+/** Product / SKU attribute panel for Explorer SKU details hover */
+function SkuDetailsHoverCard({ row }) {
+  const lifeToDate =
+    row.lifeToDateSales == null ? '—' : `${row.lifeToDateSales} unit${row.lifeToDateSales === 1 ? '' : 's'}`
+  return (
+    <div className="pointer-events-auto w-[min(300px,calc(100vw-1.5rem))] rounded-[8px] border border-[#E9EAEB] bg-white p-4 shadow-[0_4px_16px_rgba(0,0,0,0.1)]">
+      <div className="pointer-events-auto flex gap-3 border-b border-[#E9EAEB] pb-3">
+        <SkuDetailsCopyId label="Product ID" value={row.productId} />
+        <SkuDetailsCopyId label="SKU ID" value={row.sku} />
+      </div>
+      <div className="mt-3 flex flex-col gap-2">
+        <SkuDetailsAttrRow label="RRP" value={row.rrp} />
+        <SkuDetailsAttrRow label="WS" value={row.ws} />
+        <SkuDetailsAttrRow label="IC" value={row.ic} />
+        <SkuDetailsAttrRow label="Season and event" value={row.seasonAndEvent} />
+        <SkuDetailsAttrRow label="Life to date sales" value={lifeToDate} />
+        <SkuDetailsAttrRow label="Department" value={row.department} />
+        <SkuDetailsAttrRow label="Sub-department" value={row.subDepartment} />
+        <SkuDetailsAttrRow label="Material" value={row.material} />
+        <SkuDetailsAttrRow label="Gender" value={row.gender} />
+      </div>
+    </div>
   )
 }
 
@@ -1397,6 +1514,131 @@ function TuHoverSection({ title, children }) {
     <div className="border-b border-[#E9EAEB] py-2.5 last:border-b-0 last:pb-0">
       <div className="mb-2 text-[10px] font-bold uppercase tracking-[0.04em] text-[#9ca3af]">{title}</div>
       <div className="flex flex-col gap-1.5">{children}</div>
+    </div>
+  )
+}
+
+/** Explorer replen Transfers cell hover — route, this transfer, recommendation, other movements */
+function ExplorerTransfersHoverCard({
+  row,
+  transferUnits,
+  availableToSend,
+  isOvercommitted,
+  onOpenProductTransfers }) {
+  const other = row.otherMovements
+  const showOtherMovements =
+    other != null && (other.rebalCount > 0 || other.replenCount > 0)
+
+  return (
+    <div className="pointer-events-auto w-[min(320px,calc(100vw-1.5rem))] max-h-[min(520px,72vh)] overflow-y-auto rounded-[6px] border border-[#E9EAEB] bg-white p-4 shadow-[0_4px_20px_rgba(0,0,0,0.12)]">
+      <div className="border-b border-[#E9EAEB] pb-3 text-[14px] font-semibold leading-snug text-[#0a0a0a]">
+        {row.fromLocation} → {row.toLocation}
+      </div>
+
+      <TuHoverSection title="This transfer">
+        <div className="flex items-start justify-between gap-2 text-[13px]">
+          <div className="flex min-w-0 flex-1 items-center gap-2">
+            <TuHoverIconWrap>
+              {row.movementType === 'replenishment' ? <IconReplenishment /> : <IconRebalancing />}
+            </TuHoverIconWrap>
+            <span className="font-medium leading-snug text-[#0a0a0a]">Movement type</span>
+          </div>
+          <MovementTypePills movementType={[row.movementType]} />
+        </div>
+        <TuHoverRow
+          icon={<IconPackageTu className="!size-3.5" />}
+          label="Transfer units"
+          value={transferUnits}
+        />
+        <div className="flex items-start justify-between gap-2 text-[13px]">
+          <div className="flex min-w-0 flex-1 items-center gap-2">
+            <TuHoverIconWrap>
+              <IconPackageTu className="!size-3.5" />
+            </TuHoverIconWrap>
+            <span className="font-medium leading-snug text-[#0a0a0a]">Available to send</span>
+          </div>
+          <span
+            className={`max-w-[52%] shrink-0 rounded-[4px] px-2 py-0.5 text-right text-[11px] font-semibold leading-snug tabular-nums ${
+              isOvercommitted
+                ? 'bg-[#FEE4E2] text-[#B45309]'
+                : 'bg-[#f3f4f6] text-[#0a0a0a]'
+            }`}
+          >
+            {isOvercommitted ? 'Availability exceeded' : availableToSend}
+          </span>
+        </div>
+      </TuHoverSection>
+
+      <TuHoverSection title="Recommendation">
+        <div className="flex flex-col gap-1.5">
+          <div className="flex items-start justify-between gap-2 text-[13px]">
+            <div className="flex min-w-0 flex-1 items-center gap-2">
+              <TuHoverIconWrap>
+                <IconTrendUp />
+              </TuHoverIconWrap>
+              <span className="font-medium leading-snug text-[#0a0a0a]">Recommended units</span>
+            </div>
+            <span className="shrink-0 rounded-[4px] bg-[#f3f4f6] px-2 py-0.5 text-right text-[11px] font-semibold leading-snug text-[#0a0a0a] tabular-nums">
+              {row.recommended}
+            </span>
+          </div>
+          {(row.recommendedBadges ?? []).map((badge) => {
+            const reasonText =
+              badge === 'REV'
+                ? `Increase revenue by ${row.revenue}`
+                : badge === 'VIS'
+                  ? `Increase visibility at ${row.toLocation} from ${row.visibilityBefore} to ${row.visibilityAfter}`
+                  : null
+            if (!reasonText) return null
+            return (
+              <div key={badge} className="flex items-start gap-2 text-[13px]">
+                <TuHoverIconWrap>
+                  <IconLightbulb />
+                </TuHoverIconWrap>
+                <span className="min-w-0 flex-1 font-medium leading-snug text-[#0a0a0a]">{reasonText}</span>
+              </div>
+            )
+          })}
+          {row.recommendedSub != null && (
+            <span className="pl-6 text-[12px] text-[#4b535c]">{row.recommendedSub}</span>
+          )}
+        </div>
+      </TuHoverSection>
+
+      {showOtherMovements && (
+        <TuHoverSection title="Other movements">
+          {other.rebalCount > 0 && (
+            <div className="flex items-center gap-2 text-[13px]">
+              <TuHoverIconWrap>
+                <IconRebalancing />
+              </TuHoverIconWrap>
+              <span className="font-medium leading-snug text-[#0a0a0a]">
+                +{other.rebalCount} rebalancing
+              </span>
+            </div>
+          )}
+          {other.replenCount > 0 && (
+            <div className="flex items-center gap-2 text-[13px]">
+              <TuHoverIconWrap>
+                <IconReplenishment />
+              </TuHoverIconWrap>
+              <span className="font-medium leading-snug text-[#0a0a0a]">
+                +{other.replenCount} replenishment
+              </span>
+            </div>
+          )}
+        </TuHoverSection>
+      )}
+
+      <div className="pt-2.5">
+        <button
+          type="button"
+          onClick={() => onOpenProductTransfers?.(row.productName)}
+          className="pointer-events-auto text-[13px] font-medium text-[#0267ff] hover:underline"
+        >
+          See all Transfers
+        </button>
+      </div>
     </div>
   )
 }
@@ -1463,8 +1705,7 @@ function EditableTuTransferBadge({
   onCancel,
   bgClassName,
   icon,
-  hoverPanel,
-}) {
+  hoverPanel }) {
   if (isEditing) {
     return (
       <input
@@ -1534,8 +1775,7 @@ function StockAnalysisDrilldown({
   setExplorerProductNameFilters,
   setActiveTab,
   productStatusOverrides,
-  setProductStatusOverrides,
-}) {
+  setProductStatusOverrides }) {
   const [selectedTransferDetail, setSelectedTransferDetail] = useState(null)
   const [approvedLocations, setApprovedLocations] = useState({})
   const [selectedLocationIds, setSelectedLocationIds] = useState(new Set())
@@ -1849,6 +2089,17 @@ function StockAnalysisDrilldown({
               </th>
               <th className="sticky top-0 z-20 bg-white text-right py-3 px-4 font-medium text-[#00050A]">Stockouts</th>
               <th className="sticky top-0 z-20 bg-white text-right py-3 px-4 font-medium text-[#00050A]">Coverage</th>
+              <th className="sticky top-0 z-20 bg-white text-right py-3 px-4 font-medium text-[#00050A]">
+                <span className="inline-flex items-center gap-1 justify-end">
+                  Storage capacity{' '}
+                  <span
+                    className="inline-flex cursor-help"
+                    title="The storage capacity status of the location after the recommended transfers"
+                  >
+                    <IconInfo />
+                  </span>
+                </span>
+              </th>
             </tr>
             <tr className="border-b border-[#E9EAEB] bg-white">
               <th className="w-10 max-w-[40px] bg-white py-2 px-2" />
@@ -1862,6 +2113,7 @@ function StockAnalysisDrilldown({
               </th>
               <th className="bg-white py-2 px-4 text-right text-[12px] font-normal text-[#4b535c]">—</th>
               <th className="bg-white py-2 px-4 text-right text-[12px] font-normal text-[#4b535c]">7.01 per wk</th>
+              <th className="bg-white py-2 px-4 text-right text-[12px] font-normal text-[#4b535c]">—</th>
               <th className="bg-white py-2 px-4 text-right text-[12px] font-normal text-[#4b535c]">—</th>
               <th className="bg-white py-2 px-4 text-right text-[12px] font-normal text-[#4b535c]">—</th>
             </tr>
@@ -2007,6 +2259,11 @@ function StockAnalysisDrilldown({
                     <span className="text-[12px] text-[#4b535c]">{loc.targetWeeks}</span>
                   </div>
                 </td>
+                <td className="py-3 px-4 text-right">
+                  <div className="flex justify-end">
+                    <StorageCapacityPill value={loc.storageCapacity ?? 'available'} />
+                  </div>
+                </td>
               </tr>
             ))}
           </tbody>
@@ -2054,12 +2311,19 @@ function ProductsDrilldown({
   trip,
   onBack,
   showBackButton = true,
-  recalculatedTimestamp,
   onDrawerFiltersActiveChange,
   setExplorerProductNameFilters,
   setActiveTab,
-}) {
-  const [selectedProduct, setSelectedProduct] = useState(null)
+  selectedProduct: controlledSelectedProduct,
+  onSelectedProductChange }) {
+  const [localSelectedProduct, setLocalSelectedProduct] = useState(null)
+  const isSelectedProductControlled = typeof onSelectedProductChange === 'function'
+  const selectedProduct = isSelectedProductControlled
+    ? controlledSelectedProduct
+    : localSelectedProduct
+  const setSelectedProduct = isSelectedProductControlled
+    ? onSelectedProductChange
+    : setLocalSelectedProduct
   const [productStatusOverrides, setProductStatusOverrides] = useState({})
   const [productTransfersOverrides, setProductTransfersOverrides] = useState({})
   const [editingTransfersProductId, setEditingTransfersProductId] = useState(null)
@@ -2069,6 +2333,7 @@ function ProductsDrilldown({
   const [filtersDropdownOpen, setFiltersDropdownOpen] = useState(false)
   const [productsActiveQuickFilter, setProductsActiveQuickFilter] = useState(null)
   const [bulkChangeStatusOpen, setBulkChangeStatusOpen] = useState(false)
+  const [bulkChangeUnitsOpen, setBulkChangeUnitsOpen] = useState(false)
   const [productColumnOrder, setProductColumnOrder] = useState(
     () => [...PRODUCTS_TABLE_DEFAULT_COLUMN_ORDER]
   )
@@ -2084,8 +2349,7 @@ function ProductsDrilldown({
     (acc, p) => ({
       transfers: acc.transfers + (p.transfers ?? 0),
       approved: acc.approved + (p.approvedTransfers ?? 0),
-      unapproved: acc.unapproved + (p.unapprovedTransfers ?? 0),
-    }),
+      unapproved: acc.unapproved + (p.unapprovedTransfers ?? 0) }),
     { transfers: 0, approved: 0, unapproved: 0 }
   )
   const products = (() => {
@@ -2104,18 +2368,7 @@ function ProductsDrilldown({
     }
     return list
   })()
-  const hasRecalculated = Boolean(recalculatedTimestamp)
 
-  const getProductRecommendationsUpdatedDisplay = (product) => {
-    const rowStatus = productStatusOverrides[product.id] ?? getRowStatus(product)
-    if (hasRecalculated && shouldUpdateRecommendationsTimestampForStatus(rowStatus)) {
-      return recalculatedTimestamp
-    }
-    return {
-      date: product.recommendationsUpdated || '26/02/2026',
-      time: product.recommendationsUpdatedTime || '',
-    }
-  }
 
   const toggleProductSelection = (id) => {
     setSelectedProductIds((prev) => {
@@ -2145,6 +2398,37 @@ function ProductsDrilldown({
     })
     setBulkChangeStatusOpen(false)
     setSelectedProductIds(new Set())
+  }
+
+  const handleBulkUndoEditsProducts = () => {
+    if (!selectedProductIds.size) return
+
+    const eligibleIds = []
+    selectedProductIds.forEach((id) => {
+      const p = baseProducts.find((row) => row.id === id)
+      const hasReplenSplit = p != null && p.replenTransfers != null && p.rebalTransfers != null
+      const hasOverride = Object.prototype.hasOwnProperty.call(replenTransferOverrides, id)
+      if (hasReplenSplit || hasOverride) eligibleIds.push(id)
+    })
+
+    if (eligibleIds.length > 0) {
+      setReplenTransferOverrides((prev) => {
+        const next = { ...prev }
+        eligibleIds.forEach((id) => {
+          delete next[id]
+        })
+        return next
+      })
+      setProductStatusOverrides((prev) => {
+        const next = { ...prev }
+        eligibleIds.forEach((id) => {
+          delete next[id]
+        })
+        return next
+      })
+    }
+
+    setBulkChangeUnitsOpen(false)
   }
 
   const onProductColDragStart = useCallback((visualIndex, e) => {
@@ -2232,8 +2516,7 @@ function ProductsDrilldown({
   const productDropProps = (visualIdx) => ({
     onDragEnter: onProductColDragEnter,
     onDragOver: onProductColDragOver,
-    onDrop: (e) => onProductColDrop(visualIdx, e),
-  })
+    onDrop: (e) => onProductColDrop(visualIdx, e) })
 
   function renderProductsHeaderCell(logicalIdx, visualIdx) {
     const isFirst = visualIdx === 0
@@ -2321,27 +2604,15 @@ function ProductsDrilldown({
               {grip}
               <span
                 className="inline-flex items-center gap-1 cursor-help"
-                title="Based on historical forecast accuracy at the product level. Lower confidence means recommendations carry more uncertainty."
+                title="Based on historical forecast accuracy at the product level. Low confidence means recommendations carry more uncertainty."
               >
                 Confidence <IconInfo />
               </span>
             </span>
           </th>
         )
+
       case 6:
-        return (
-          <th
-            key={logicalIdx}
-            className={`${productThPin(isFirst, isLast)}h-[62px] min-h-[62px] text-right px-4 align-middle font-medium text-[#00050A] min-w-[90px] box-border`}
-            {...d}
-          >
-            <span className="inline-flex w-full min-w-0 items-center justify-end gap-2">
-              {grip}
-              Recommendations updated
-            </span>
-          </th>
-        )
-      case 7:
         return (
           <th
             key={logicalIdx}
@@ -2360,7 +2631,7 @@ function ProductsDrilldown({
           </th>
         )
 
-      case 8:
+      case 7:
         return (
           <th
             key={logicalIdx}
@@ -2381,7 +2652,7 @@ function ProductsDrilldown({
             </span>
           </th>
         )
-      case 9:
+      case 8:
         return (
           <th
             key={logicalIdx}
@@ -2399,7 +2670,7 @@ function ProductsDrilldown({
             </span>
           </th>
         )
-      case 10:
+      case 9:
         return (
           <th
             key={logicalIdx}
@@ -2417,7 +2688,7 @@ function ProductsDrilldown({
             </span>
           </th>
         )
-      case 11:
+      case 10:
         return (
           <th
             key={logicalIdx}
@@ -2433,7 +2704,7 @@ function ProductsDrilldown({
             </span>
           </th>
         )
-      case 12:
+      case 11:
         return (
           <th
             key={logicalIdx}
@@ -2451,7 +2722,7 @@ function ProductsDrilldown({
             </span>
           </th>
         )
-      case 13:
+      case 12:
         return (
           <th
             key={logicalIdx}
@@ -2464,7 +2735,7 @@ function ProductsDrilldown({
             </span>
           </th>
         )
-      case 14:
+      case 13:
         return (
           <th
             key={logicalIdx}
@@ -2477,7 +2748,7 @@ function ProductsDrilldown({
             </span>
           </th>
         )
-      case 15:
+      case 14:
         return (
           <th
             key={logicalIdx}
@@ -2492,7 +2763,7 @@ function ProductsDrilldown({
             </span>
           </th>
         )
-      case 16:
+      case 15:
         return (
           <th
             key={logicalIdx}
@@ -2507,7 +2778,7 @@ function ProductsDrilldown({
             </span>
           </th>
         )
-      case 17:
+      case 16:
         return (
           <th
             key={logicalIdx}
@@ -2522,7 +2793,7 @@ function ProductsDrilldown({
             </span>
           </th>
         )
-      case 18:
+      case 17:
         return (
           <th
             key={logicalIdx}
@@ -2586,21 +2857,16 @@ function ProductsDrilldown({
         )
       case 5:
         return <th key={logicalIdx} className={`${pin}py-2 px-4 text-right`} />
+
       case 6:
-        return (
-          <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-normal text-[#4b535c] text-right`}>
-            —
-          </th>
-        )
-      case 7:
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] text-[#4b535c] text-right`}>
             —
           </th>
         )
-      case 8:
+      case 7:
         return <th key={logicalIdx} className={`${pin}py-2 px-4 text-right`} />
-      case 9:
+      case 8:
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
             <div className="flex flex-col items-end">
@@ -2609,7 +2875,7 @@ function ProductsDrilldown({
             </div>
           </th>
         )
-      case 10:
+      case 9:
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
             <div className="flex flex-col items-end">
@@ -2618,7 +2884,7 @@ function ProductsDrilldown({
             </div>
           </th>
         )
-      case 11:
+      case 10:
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
             <div className="flex flex-col items-end">
@@ -2627,43 +2893,43 @@ function ProductsDrilldown({
             </div>
           </th>
         )
-      case 12:
+      case 11:
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
             {productSummary.forecast}
           </th>
         )
-      case 13:
+      case 12:
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
             {productSummary.stockouts}
           </th>
         )
-      case 14:
+      case 13:
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
             {productSummary.locations}
           </th>
         )
-      case 15:
+      case 14:
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
             {productSummary.overstocks}
           </th>
         )
-      case 16:
+      case 15:
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
             {productSummary.understocks}
           </th>
         )
-      case 17:
+      case 16:
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
             {productSummary.depth}
           </th>
         )
-      case 18:
+      case 17:
         return <th key={logicalIdx} className={`${pin}py-2 px-4 text-right`} />
       default:
         return null
@@ -2786,18 +3052,8 @@ function ProductsDrilldown({
             </div>
           </td>
         )
+
       case 6:
-        return (
-          <td key={logicalIdx} className={`${pin}py-3 px-4 text-right align-top`}>
-            <div className="flex flex-col items-end gap-0.5 line-clamp-2 min-w-0">
-              <span className="text-[14px] text-[#4B535C]">{getProductRecommendationsUpdatedDisplay(p).date}</span>
-              {getProductRecommendationsUpdatedDisplay(p).time && (
-                <span className="text-[12px] text-[#4b535c]">{getProductRecommendationsUpdatedDisplay(p).time}</span>
-              )}
-            </div>
-          </td>
-        )
-      case 7:
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right align-top`}>
             <div className="flex justify-end line-clamp-2 min-w-0">
@@ -2809,7 +3065,7 @@ function ProductsDrilldown({
             </div>
           </td>
         )
-      case 8:
+      case 7:
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right align-top`}>
             <div className="flex justify-end line-clamp-2 min-w-0">
@@ -2817,7 +3073,7 @@ function ProductsDrilldown({
             </div>
           </td>
         )
-      case 9:
+      case 8:
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right align-top`}>
             <div className="flex flex-col items-end line-clamp-2 min-w-0">
@@ -2826,7 +3082,7 @@ function ProductsDrilldown({
             </div>
           </td>
         )
-      case 10:
+      case 9:
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right align-top`}>
             <div className="flex flex-col items-end line-clamp-2 min-w-0">
@@ -2835,7 +3091,7 @@ function ProductsDrilldown({
             </div>
           </td>
         )
-      case 11:
+      case 10:
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right align-top`}>
             <div className="flex flex-col items-end line-clamp-2 min-w-0">
@@ -2844,43 +3100,43 @@ function ProductsDrilldown({
             </div>
           </td>
         )
-      case 12:
+      case 11:
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right text-[#0a0a0a] align-top`}>
             <div className="line-clamp-2 min-w-0 w-full text-right">{p.forecast}</div>
           </td>
         )
-      case 13:
+      case 12:
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right text-[#0a0a0a] align-top`}>
             <div className="line-clamp-2 min-w-0 w-full text-right">{p.stockouts}</div>
           </td>
         )
-      case 14:
+      case 13:
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right text-[#0a0a0a] align-top`}>
             <div className="line-clamp-2 min-w-0 w-full text-right">{p.locations}</div>
           </td>
         )
-      case 15:
+      case 14:
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right text-[#0a0a0a] align-top`}>
             <div className="line-clamp-2 min-w-0 w-full text-right">{p.overstocks}</div>
           </td>
         )
-      case 16:
+      case 15:
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right text-[#0a0a0a] align-top`}>
             <div className="line-clamp-2 min-w-0 w-full text-right">{p.understocks}</div>
           </td>
         )
-      case 17:
+      case 16:
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right text-[#0a0a0a] align-top`}>
             <div className="line-clamp-2 min-w-0 w-full text-right">{p.depth}</div>
           </td>
         )
-      case 18:
+      case 17:
         return (
           <td
             key={logicalIdx}
@@ -2992,6 +3248,7 @@ function ProductsDrilldown({
           </div>
           <div className="flex min-w-0 flex-1 items-center overflow-x-auto">
             <ScheduleQuickFilterChips
+              chips={PRODUCTS_QUICK_FILTER_CHIPS}
               activeId={productsActiveQuickFilter}
               onChange={setProductsActiveQuickFilter}
             />
@@ -3122,7 +3379,10 @@ function ProductsDrilldown({
           <div className="relative">
             <button
               type="button"
-              onClick={() => setBulkChangeStatusOpen((o) => !o)}
+              onClick={() => {
+                setBulkChangeUnitsOpen(false)
+                setBulkChangeStatusOpen((o) => !o)
+              }}
               className="px-4 py-2 rounded-[4px] text-[14px] font-medium text-white hover:bg-white/10"
             >
               Change status
@@ -3149,18 +3409,46 @@ function ProductsDrilldown({
               </>
             )}
           </div>
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => {
+                setBulkChangeStatusOpen(false)
+                setBulkChangeUnitsOpen((o) => !o)
+              }}
+              className="px-4 py-2 rounded-[4px] text-[14px] font-medium text-white hover:bg-white/10"
+            >
+              Change units
+            </button>
+            {bulkChangeUnitsOpen && (
+              <>
+                <div className="fixed inset-0 z-[60]" aria-hidden onClick={() => setBulkChangeUnitsOpen(false)} />
+                <div
+                  className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 z-[70] min-w-[180px] rounded-[6px] border border-[#e5e7eb] bg-white py-1 shadow-lg"
+                  style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}
+                >
+                  <button
+                    type="button"
+                    onClick={handleBulkUndoEditsProducts}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-left text-[13px] font-medium text-[#0a0a0a] hover:bg-[#f3f4f6]"
+                  >
+                    Undo edits
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
         </div>
       )}
     </div>
   )
 }
 
-function LocationsTab({ recalculatedTimestamp, onDrawerFiltersActiveChange }) {
+function LocationsTab({ onDrawerFiltersActiveChange }) {
   const [selectedLocationIds, setSelectedLocationIds] = useState(new Set())
   const [locationStatusOverrides, setLocationStatusOverrides] = useState({})
   const [statusFilters, setStatusFilters] = useState([])
   const [filtersDropdownOpen, setFiltersDropdownOpen] = useState(false)
-  const [locationsActiveQuickFilter, setLocationsActiveQuickFilter] = useState(null)
 
   useEffect(() => {
     onDrawerFiltersActiveChange?.(statusFilters.length > 0)
@@ -3183,18 +3471,7 @@ function LocationsTab({ recalculatedTimestamp, onDrawerFiltersActiveChange }) {
     }
     return list
   })()
-  const hasRecalculated = Boolean(recalculatedTimestamp)
 
-  const getLocationRecommendationsUpdatedDisplay = (loc) => {
-    const rowStatus = locationStatusOverrides[loc.id] ?? getRowStatus(loc)
-    if (hasRecalculated && shouldUpdateRecommendationsTimestampForStatus(rowStatus)) {
-      return recalculatedTimestamp
-    }
-    return {
-      date: loc.recommendationsUpdated || '26/02/2026',
-      time: loc.recommendationsUpdatedTime || '',
-    }
-  }
 
   const toggleLocationSelection = (id) => {
     setSelectedLocationIds((prev) => {
@@ -3214,8 +3491,8 @@ function LocationsTab({ recalculatedTimestamp, onDrawerFiltersActiveChange }) {
   const [locationColumnOrder, setLocationColumnOrder] = useState(() =>
     Array.from({ length: LOCATIONS_TABLE_NUM_DATA_COLS }, (_, i) => i)
   )
-  /** Status (logical col 14) only pins to the right when it is the trailing column after reorder. */
-  const locationStatusColumnIsTrailing = locationColumnOrder[locationColumnOrder.length - 1] === 14
+  /** Status (logical col 13) only pins to the right when it is the trailing column after reorder. */
+  const locationStatusColumnIsTrailing = locationColumnOrder[locationColumnOrder.length - 1] === 13
 
   const onLocationColDragStart = useCallback((visualIndex, e) => {
     e.stopPropagation()
@@ -3254,7 +3531,7 @@ function LocationsTab({ recalculatedTimestamp, onDrawerFiltersActiveChange }) {
       ? 'sticky left-14 z-20 border-r border-[#e5e7eb] shadow-[4px_0_8px_rgba(0,0,0,0.04)] bg-white '
       : 'relative '
   const locStatusThPin = (logicalIdx) =>
-    logicalIdx === 14 && locationStatusColumnIsTrailing
+    logicalIdx === 13 && locationStatusColumnIsTrailing
       ? 'sticky right-0 z-30 border-l border-[#e5e7eb] shadow-[-4px_0_12px_-6px_rgba(15,23,42,0.12)] bg-white '
       : ''
   const locTdPin = (isFirst) =>
@@ -3262,15 +3539,14 @@ function LocationsTab({ recalculatedTimestamp, onDrawerFiltersActiveChange }) {
       ? 'sticky left-14 z-10 border-r border-[#e5e7eb] shadow-[4px_0_8px_rgba(0,0,0,0.04)] bg-white group-hover:bg-[#f9fafb] '
       : ''
   const locStatusTdPin = (logicalIdx) =>
-    logicalIdx === 14 && locationStatusColumnIsTrailing
+    logicalIdx === 13 && locationStatusColumnIsTrailing
       ? 'sticky right-0 z-20 border-l border-[#e5e7eb] shadow-[-4px_0_12px_-6px_rgba(15,23,42,0.12)] bg-white group-hover:bg-[#f9fafb] '
       : ''
 
   const locationDropProps = (visualIdx) => ({
     onDragEnter: onLocationColDragEnter,
     onDragOver: onLocationColDragOver,
-    onDrop: (e) => onLocationColDrop(visualIdx, e),
-  })
+    onDrop: (e) => onLocationColDrop(visualIdx, e) })
 
   function renderLocationsHeaderCell(logicalIdx, visualIdx) {
     const isFirst = visualIdx === 0
@@ -3368,17 +3644,8 @@ function LocationsTab({ recalculatedTimestamp, onDrawerFiltersActiveChange }) {
             )}
           </th>
         )
+
       case 7:
-        return (
-          <th
-            key={logicalIdx}
-            className={`${thPin}h-[62px] min-h-[62px] text-right px-4 align-middle font-medium text-[#00050A] min-w-[90px] box-border`}
-            {...d}
-          >
-            {rowEnd('Recommendations updated')}
-          </th>
-        )
-      case 8:
         return (
           <th
             key={logicalIdx}
@@ -3395,7 +3662,7 @@ function LocationsTab({ recalculatedTimestamp, onDrawerFiltersActiveChange }) {
             )}
           </th>
         )
-      case 9:
+      case 8:
         return (
           <th
             key={logicalIdx}
@@ -3405,7 +3672,7 @@ function LocationsTab({ recalculatedTimestamp, onDrawerFiltersActiveChange }) {
             {rowEnd('Sales')}
           </th>
         )
-      case 10:
+      case 9:
         return (
           <th
             key={logicalIdx}
@@ -3417,7 +3684,7 @@ function LocationsTab({ recalculatedTimestamp, onDrawerFiltersActiveChange }) {
             )}
           </th>
         )
-      case 11:
+      case 10:
         return (
           <th
             key={logicalIdx}
@@ -3427,7 +3694,7 @@ function LocationsTab({ recalculatedTimestamp, onDrawerFiltersActiveChange }) {
             {rowEnd('Stockouts')}
           </th>
         )
-      case 12:
+      case 11:
         return (
           <th
             key={logicalIdx}
@@ -3439,7 +3706,7 @@ function LocationsTab({ recalculatedTimestamp, onDrawerFiltersActiveChange }) {
             )}
           </th>
         )
-      case 13:
+      case 12:
         return (
           <th
             key={logicalIdx}
@@ -3451,7 +3718,7 @@ function LocationsTab({ recalculatedTimestamp, onDrawerFiltersActiveChange }) {
             )}
           </th>
         )
-      case 14:
+      case 13:
         return (
           <th
             key={logicalIdx}
@@ -3510,13 +3777,8 @@ function LocationsTab({ recalculatedTimestamp, onDrawerFiltersActiveChange }) {
             477 units
           </th>
         )
+
       case 7:
-        return (
-          <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-normal text-[#4b535c] text-right`}>
-            —
-          </th>
-        )
-      case 8:
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
             <div className="flex flex-col items-end">
@@ -3525,7 +3787,7 @@ function LocationsTab({ recalculatedTimestamp, onDrawerFiltersActiveChange }) {
             </div>
           </th>
         )
-      case 9:
+      case 8:
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
             <div className="flex flex-col items-end">
@@ -3534,31 +3796,31 @@ function LocationsTab({ recalculatedTimestamp, onDrawerFiltersActiveChange }) {
             </div>
           </th>
         )
-      case 10:
+      case 9:
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
             154.61 per wk
           </th>
         )
-      case 11:
+      case 10:
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
             189 → 383
           </th>
         )
-      case 12:
+      case 11:
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
             301 → 28
           </th>
         )
-      case 13:
+      case 12:
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
             1,270 → …
           </th>
         )
-      case 14:
+      case 13:
         return <th key={logicalIdx} className={`${pin}py-2 px-4 text-right`} />
       default:
         return null
@@ -3634,23 +3896,8 @@ function LocationsTab({ recalculatedTimestamp, onDrawerFiltersActiveChange }) {
             <div className="line-clamp-2 min-w-0">{loc.recommendedOut}</div>
           </td>
         )
+
       case 7:
-        return (
-          <td key={logicalIdx} className={`${pin}py-3 px-4 text-right align-top`}>
-            {(() => {
-              const display = getLocationRecommendationsUpdatedDisplay(loc)
-              return (
-            <div className="flex flex-col items-end gap-0.5 line-clamp-2 min-w-0">
-              <span className="text-[14px] text-[#4B535C]">{display.date}</span>
-              {display.time && (
-                <span className="text-[12px] text-[#4b535c]">{display.time}</span>
-              )}
-            </div>
-              )
-            })()}
-          </td>
-        )
-      case 8:
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right align-top`}>
             <div className="flex flex-col items-end line-clamp-2 min-w-0">
@@ -3659,7 +3906,7 @@ function LocationsTab({ recalculatedTimestamp, onDrawerFiltersActiveChange }) {
             </div>
           </td>
         )
-      case 9:
+      case 8:
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right align-top`}>
             <div className="flex flex-col items-end line-clamp-2 min-w-0">
@@ -3668,31 +3915,31 @@ function LocationsTab({ recalculatedTimestamp, onDrawerFiltersActiveChange }) {
             </div>
           </td>
         )
-      case 10:
+      case 9:
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right text-[#0a0a0a] align-top`}>
             <div className="line-clamp-2 min-w-0">{loc.forecast}</div>
           </td>
         )
-      case 11:
+      case 10:
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right text-[#0a0a0a] align-top`}>
             <div className="line-clamp-2 min-w-0">{loc.stockouts}</div>
           </td>
         )
-      case 12:
+      case 11:
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right text-[#0a0a0a] align-top`}>
             <div className="line-clamp-2 min-w-0">{loc.overstocks}</div>
           </td>
         )
-      case 13:
+      case 12:
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right text-[#0a0a0a] align-top`}>
             <div className="line-clamp-2 min-w-0">{loc.understocks}</div>
           </td>
         )
-      case 14:
+      case 13:
         return (
           <td
             key={logicalIdx}
@@ -3781,12 +4028,6 @@ function LocationsTab({ recalculatedTimestamp, onDrawerFiltersActiveChange }) {
               </div>
             </>
           )}
-        </div>
-        <div className="flex min-w-0 flex-1 items-center overflow-x-auto">
-          <ScheduleQuickFilterChips
-            activeId={locationsActiveQuickFilter}
-            onChange={setLocationsActiveQuickFilter}
-          />
         </div>
       </div>
 
@@ -3894,11 +4135,19 @@ function renderExplorerColumnHeaderLabel(col) {
 }
 
 const EXPLORER_TABLE_COLUMNS = [
-  { id: 'productDetails', label: 'Product details', alignment: 'left', minWidth: 'min-w-[260px]' },
+  { id: 'productDetails', label: 'SKU details', alignment: 'left', minWidth: 'min-w-[260px]' },
   { id: 'fromLocation', label: 'From location', alignment: 'left', minWidth: 'min-w-[150px]' },
   { id: 'toLocation', label: 'To location', alignment: 'left', minWidth: 'min-w-[150px]' },
   { id: 'movementType', label: 'Movement type', alignment: 'left', minWidth: 'min-w-[100px]' },
-  { id: 'transfers', label: 'Transfers', alignment: 'right', minWidth: 'min-w-[90px]' },
+  {
+    id: 'confidence',
+    label: 'Confidence',
+    alignment: 'right',
+    minWidth: 'min-w-[110px]',
+    tooltip:
+      'Based on historical forecast accuracy at the product level. Low confidence means recommendations carry more uncertainty.',
+  },
+  { id: 'transfers', label: 'Transfers', alignment: 'right', minWidth: 'min-w-[110px]' },
   { id: 'revenue', label: 'Revenue increase', alignment: 'right', minWidth: 'min-w-[110px]', tooltip: null },
   {
     id: 'recommended',
@@ -3908,46 +4157,70 @@ const EXPLORER_TABLE_COLUMNS = [
     tooltip: null,
   },
   {
-    id: 'confidence',
-    label: 'Confidence',
+    id: 'stockInCirculation',
+    label: 'Stock in circulation (receiving)',
     alignment: 'right',
-    minWidth: 'min-w-[110px]',
-    tooltip:
-      'Based on historical forecast accuracy at the product level. Lower confidence means recommendations carry more uncertainty.',
+    minWidth: 'min-w-[160px]',
+    tooltip: 'on-hand + pending from production + in transit',
   },
-  {
-    id: 'coverage',
-    label: 'Coverage',
-    alignment: 'right',
-    minWidth: 'min-w-[120px]',
-    tooltip:
-      "How well current stock is meeting forecasted demand. 'X% below target' means stock is short of target; 'All SKUs in target' means coverage is on track.",
-  },
-  {
-    id: 'nextEvent',
-    label: 'Next event',
-    alignment: 'right',
-    minWidth: 'min-w-[130px]',
-    subtitle: 'Submission deadline',
-    tooltip: 'The next scheduled inventory event for this product across all locations in scope',
-  },
-  { id: 'stockouts', label: 'Stockouts', alignment: 'right', minWidth: 'min-w-[90px]' },
   { id: 'sales', label: 'Sales', alignment: 'right', minWidth: 'min-w-[120px]', subtitle: 'L7D / L30D' },
   { id: 'forecast', label: 'Forecast', alignment: 'right', minWidth: 'min-w-[100px]', subtitle: 'per wk', tooltip: null },
-  {
-    id: 'stockInCirculation',
-    label: 'Stock in circulation',
-    alignment: 'right',
-    minWidth: 'min-w-[140px]',
-    tooltip:
-      'This includes stock in transit, stock on hand and stock pending from production. This will be for both parent & child locations (if applicable).',
-  },
   {
     id: 'warehouseUnits',
     label: 'Warehouse units',
     alignment: 'right',
     minWidth: 'min-w-[140px]',
     tooltip: 'Units reserved to sell at this location and units available to allocate to stores',
+  },
+  {
+    id: 'coverage',
+    label: 'Coverage (receiving)',
+    alignment: 'right',
+    minWidth: 'min-w-[120px]',
+    tooltip: 'How well current stock at the receiving location is meeting forecasted demand, before and after this proposal.',
+  },
+  {
+    id: 'nextEvent',
+    label: 'Next inventory event',
+    alignment: 'right',
+    minWidth: 'min-w-[130px]',
+    subtitle: 'Creation date',
+    tooltip: 'The next scheduled inventory event for this product across all locations in scope',
+  },
+  {
+    id: 'serviceLevel',
+    label: 'Service level',
+    alignment: 'right',
+    minWidth: 'min-w-[160px]',
+    tooltip:
+      'The probability of selling / value of the last unit of stock at the receiving location, after this proposal is applied.',
+  },
+  {
+    id: 'storageCapacity',
+    label: 'Storage capacity (receiving)',
+    alignment: 'right',
+    minWidth: 'min-w-[140px]',
+    tooltip: 'The storage capacity status of the location after the recommended transfers',
+  },
+  {
+    id: 'initialAllocation',
+    label: 'Initial allocation',
+    alignment: 'right',
+    minWidth: 'min-w-[100px]',
+  },
+  {
+    id: 'firstStockDate',
+    label: 'First stock date',
+    alignment: 'right',
+    minWidth: 'min-w-[120px]',
+    tooltip: 'Date stock was first received at the receiving location',
+  },
+  {
+    id: 'firstSalesDate',
+    label: 'First sales date',
+    alignment: 'right',
+    minWidth: 'min-w-[120px]',
+    tooltip: 'Date stock was first sold at the receiving location',
   },
   { id: 'status', label: 'Status', alignment: 'right', minWidth: 'min-w-[150px]' },
 ]
@@ -3963,8 +4236,7 @@ const EXPLORER_STATUS_FILTER_LABELS = {
   approved: 'Approved',
   unapproved: 'Unapproved',
   needs_review: 'Needs review',
-  edited: 'Edited',
-}
+  edited: 'Edited' }
 
 function filterExplorerRows(
   rows,
@@ -3974,8 +4246,7 @@ function filterExplorerRows(
     movementTypeFilters,
     confidenceFilters,
     statusFilters,
-    statusOverrides = {},
-  }
+    statusOverrides = {} }
 ) {
   return rows.filter((row) => {
     if (departmentFilters.length > 0 && !departmentFilters.includes(row.department)) {
@@ -4008,7 +4279,7 @@ function filterExplorerRows(
 const EXPLORER_TABLE_COLUMN_COUNT = EXPLORER_TABLE_COLUMNS.length
 const EXPLORER_TABLE_TOTAL_COLUMN_COUNT = EXPLORER_TABLE_COLUMN_COUNT + 1
 
-function ExplorerTransfersInput({ value, onChange }) {
+function ExplorerTransfersInput({ value, onChange, className = '' }) {
   return (
     <input
       type="number"
@@ -4016,8 +4287,42 @@ function ExplorerTransfersInput({ value, onChange }) {
       value={value}
       onChange={(e) => onChange(e.target.value)}
       onClick={(e) => e.stopPropagation()}
-      className="w-16 h-7 px-2 rounded-[4px] border border-[#e9eaeb] text-[14px] text-[#0a0a0a] text-right focus:outline-none"
+      className={`w-16 h-7 px-2 rounded-[4px] border text-[14px] text-[#0a0a0a] text-right focus:outline-none ${
+        className || 'border-[#e9eaeb]'
+      }`}
     />
+  )
+}
+
+function ExplorerOvercommitBanner({ overcommittedLocations }) {
+  if (!overcommittedLocations.length) return null
+  const visible = overcommittedLocations.slice(0, 3)
+  const remaining = overcommittedLocations.length - visible.length
+
+  return (
+    <div className="mb-3 flex flex-col gap-1.5 rounded-[6px] border border-[#FCD34D] bg-[#FEF3C7] px-3 py-2.5">
+      {visible.map(({ name, overBy, editedCount }) => (
+        <div key={name} className="flex items-start gap-1.5 text-[13px] leading-snug text-[#B45309]">
+          <span className="mt-0.5 shrink-0 text-[#B45309]">
+            <IconWarning />
+          </span>
+          <span>
+            {name} is overcommitted by {overBy} units across {editedCount} edited row
+            {editedCount === 1 ? '' : 's'}
+          </span>
+        </div>
+      ))}
+      {remaining > 0 && (
+        <div className="flex items-start gap-1.5 text-[13px] leading-snug text-[#B45309]">
+          <span className="mt-0.5 shrink-0 text-[#B45309]">
+            <IconWarning />
+          </span>
+          <span>
+            and {remaining} more location{remaining === 1 ? '' : 's'} overcommitted
+          </span>
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -4028,21 +4333,26 @@ function renderExplorerBodyCell(row, col, {
   handleExplorerStatusChange,
   getEffectiveTransfers,
   handleTransfersEdit,
-}) {
+  onOpenProductTransfers,
+  getAvailableToSend,
+  isLocationOvercommitted,
+  explorerTransferOverrides }) {
   const alignClass = col.alignment === 'right' ? 'text-right' : ''
 
   switch (col.id) {
     case 'productDetails':
       return (
         <td key={col.id} className={`${explorerTdClass} ${col.minWidth}`}>
-          <div className="flex items-start gap-4 min-w-0">
-            <div className="w-12 h-12 rounded-[4px] bg-[#f3f4f6] shrink-0" />
-            <div className="flex flex-col gap-0.5 min-w-0">
-              <span className="text-[14px] font-medium text-[#0a0a0a]">{row.productName}</span>
-              <span className="text-[12px] text-[#4b535c]">{row.sku}</span>
-              <span className="text-[12px] text-[#4b535c]">{row.colour}</span>
+          <TuHoverPopover panel={<SkuDetailsHoverCard row={row} />}>
+            <div className="flex min-w-0 items-start gap-4">
+              <div className="h-12 w-12 shrink-0 rounded-[4px] bg-[#f3f4f6]" />
+              <div className="flex min-w-0 flex-col gap-0.5">
+                <span className="text-[14px] font-medium text-[#0a0a0a]">{row.productName}</span>
+                <span className="text-[12px] text-[#4b535c]">{row.sku}</span>
+                <span className="text-[12px] text-[#4b535c]">{row.colour}</span>
+              </div>
             </div>
-          </div>
+          </TuHoverPopover>
         </td>
       )
     case 'fromLocation':
@@ -4063,21 +4373,83 @@ function renderExplorerBodyCell(row, col, {
           <MovementTypePills movementType={[row.movementType]} />
         </td>
       )
-    case 'transfers':
+    case 'transfers': {
+      const effectiveTransfers = getEffectiveTransfers(row)
+      if (row.movementType === 'rebalancing') {
+        const openTransfers = () => onOpenProductTransfers?.(row.productName)
+        return (
+          <td
+            key={col.id}
+            className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-end gap-1.5">
+              <button
+                type="button"
+                onClick={openTransfers}
+                className="text-[14px] text-[#0a0a0a] hover:text-[#0267ff] cursor-pointer"
+              >
+                {effectiveTransfers}
+              </button>
+              <button
+                type="button"
+                onClick={openTransfers}
+                className="inline-flex items-center justify-center rounded-[4px] p-0.5 text-[#6b7280] hover:bg-[#f3f4f6] hover:text-[#0a0a0a] cursor-pointer"
+                aria-label={`Edit transfers for ${row.productName} in Transfers drilldown`}
+              >
+                <IconEdit />
+              </button>
+            </div>
+          </td>
+        )
+      }
+      const availableToSend = getAvailableToSend?.(row) ?? 0
+      const isOvercommitted = isLocationOvercommitted?.(row.fromLocation) ?? false
+      const isEditedRow =
+        explorerTransferOverrides?.[row.id] !== undefined &&
+        explorerTransferOverrides[row.id] !== row.transfers
+      const availableConstrained = !isOvercommitted && availableToSend <= 0
       return (
         <td
           key={col.id}
           className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="flex justify-end">
-            <ExplorerTransfersInput
-              value={getEffectiveTransfers(row)}
-              onChange={(newValue) => handleTransfersEdit(row.id, newValue)}
-            />
-          </div>
+          <TuHoverPopover
+            panel={
+              <ExplorerTransfersHoverCard
+                row={row}
+                transferUnits={effectiveTransfers}
+                availableToSend={Math.max(0, availableToSend)}
+                isOvercommitted={isOvercommitted}
+                onOpenProductTransfers={onOpenProductTransfers}
+              />
+            }
+          >
+            <div className="flex flex-col items-end gap-0.5">
+              <ExplorerTransfersInput
+                value={effectiveTransfers}
+                onChange={(newValue) => handleTransfersEdit(row.id, newValue)}
+                className={
+                  isOvercommitted && isEditedRow ? 'border-[#DC2626]' : undefined
+                }
+              />
+              {isOvercommitted ? (
+                <span className="text-[12px] text-[#B45309]">availability exceeded</span>
+              ) : (
+                <span
+                  className={`text-[12px] ${
+                    availableConstrained ? 'text-[#B45309]' : 'text-[#166534]'
+                  }`}
+                >
+                  {availableToSend} available to send
+                </span>
+              )}
+            </div>
+          </TuHoverPopover>
         </td>
       )
+    }
     case 'revenue':
       return (
         <td key={col.id} className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}>
@@ -4113,28 +4485,24 @@ function renderExplorerBodyCell(row, col, {
           </div>
         </td>
       )
+    case 'serviceLevel':
+      return (
+        <td key={col.id} className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}>
+          <span className="text-[14px] text-[#0a0a0a]">{row.serviceLevel}</span>
+        </td>
+      )
     case 'coverage':
       return (
         <td key={col.id} className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}>
-          <div className="flex justify-end">
-            <ProductCoverageText
-              coverageWeeks={row.coverageWeeks}
-              coverageTarget={row.coverageTarget}
-              coverage={row.coverage}
-            />
-          </div>
+          <span className="text-[14px] text-[#0a0a0a]">
+            {row.coverageWeeksBefore} → {row.coverageWeeksAfter} wks
+          </span>
         </td>
       )
     case 'nextEvent':
       return (
         <td key={col.id} className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}>
           <ProductNextEventCell nextEvent={row.nextEvent} />
-        </td>
-      )
-    case 'stockouts':
-      return (
-        <td key={col.id} className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}>
-          <span className="text-[14px] text-[#0a0a0a]">{row.stockoutsLine}</span>
         </td>
       )
     case 'sales':
@@ -4161,6 +4529,14 @@ function renderExplorerBodyCell(row, col, {
           </div>
         </td>
       )
+    case 'storageCapacity':
+      return (
+        <td key={col.id} className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}>
+          <div className="flex justify-end">
+            <StorageCapacityPill value={row.storageCapacity} />
+          </div>
+        </td>
+      )
     case 'warehouseUnits':
       return (
         <td key={col.id} className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}>
@@ -4168,6 +4544,24 @@ function renderExplorerBodyCell(row, col, {
             <span className="text-[14px] text-[#0a0a0a]">{row.warehouseAllocateLine}</span>
             <span className="text-[12px] text-[#4b535c]">{row.warehouseSellLine}</span>
           </div>
+        </td>
+      )
+    case 'initialAllocation':
+      return (
+        <td key={col.id} className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}>
+          <span className="text-[14px] text-[#0a0a0a]">{row.initialAllocation} units</span>
+        </td>
+      )
+    case 'firstStockDate':
+      return (
+        <td key={col.id} className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}>
+          <span className="text-[14px] text-[#0a0a0a]">{row.firstStockDate}</span>
+        </td>
+      )
+    case 'firstSalesDate':
+      return (
+        <td key={col.id} className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}>
+          <span className="text-[14px] text-[#0a0a0a]">{row.firstSalesDate ?? '—'}</span>
         </td>
       )
     case 'status':
@@ -4283,7 +4677,7 @@ function ExplorerTable({
   setExplorerConfidenceFilters,
   explorerStatusFilters,
   setExplorerStatusFilters,
-}) {
+  onOpenProductTransfers }) {
   const [explorerSearch, setExplorerSearch] = useState('')
   const [explorerActiveQuickFilter, setExplorerActiveQuickFilter] = useState(null)
   const [explorerFiltersDropdownOpen, setExplorerFiltersDropdownOpen] = useState(false)
@@ -4303,6 +4697,61 @@ function ExplorerTable({
 
   const getEffectiveTransfers = (row) =>
     explorerTransferOverrides[row.id] !== undefined ? explorerTransferOverrides[row.id] : row.transfers
+
+  const locationCapacityStats = useMemo(() => {
+    const stats = new Map()
+    for (const row of data) {
+      const from = row.fromLocation
+      const capacity = SENDING_LOCATION_CAPACITY[from]
+      if (capacity === undefined) continue
+
+      let entry = stats.get(from)
+      if (!entry) {
+        entry = { sum: 0, capacity, overBy: 0, editedCount: 0 }
+        stats.set(from, entry)
+      }
+
+      const effective =
+        explorerTransferOverrides[row.id] !== undefined
+          ? explorerTransferOverrides[row.id]
+          : row.transfers
+      entry.sum += effective
+
+      if (
+        explorerTransferOverrides[row.id] !== undefined &&
+        explorerTransferOverrides[row.id] !== row.transfers
+      ) {
+        entry.editedCount += 1
+      }
+    }
+
+    for (const entry of stats.values()) {
+      entry.overBy = Math.max(0, entry.sum - entry.capacity)
+    }
+    return stats
+  }, [data, explorerTransferOverrides])
+
+  const getAvailableToSend = (row) => {
+    const entry = locationCapacityStats.get(row.fromLocation)
+    if (!entry) return 0
+    return entry.capacity - entry.sum
+  }
+
+  const isLocationOvercommitted = (fromLocation) => {
+    const entry = locationCapacityStats.get(fromLocation)
+    if (!entry) return false
+    return entry.sum > entry.capacity
+  }
+
+  const overcommittedLocations = useMemo(() => {
+    const list = []
+    for (const [name, entry] of locationCapacityStats) {
+      if (entry.overBy > 0) {
+        list.push({ name, overBy: entry.overBy, editedCount: entry.editedCount })
+      }
+    }
+    return list
+  }, [locationCapacityStats])
 
   const toggleExplorerRowSelection = (rowId) => {
     setExplorerSelectedRowIds((prev) => {
@@ -4336,7 +4785,7 @@ function ExplorerTable({
 
     explorerSelectedRowIds.forEach((rowId) => {
       const row = data.find((r) => r.id === rowId)
-      if (!row) return
+      if (!row || row.movementType === 'rebalancing') return
       const effectiveCurrent = getEffectiveTransfers(row)
       const newValue =
         action === 'set_zero' ? 0 : Math.max(0, effectiveCurrent + action)
@@ -4354,6 +4803,32 @@ function ExplorerTable({
     setExplorerBulkChangeUnitsOpen(false)
   }
 
+  const handleBulkUndoEdits = () => {
+    if (!explorerSelectedRowIds.size) return
+
+    setExplorerTransferOverrides((prev) => {
+      const next = { ...prev }
+      explorerSelectedRowIds.forEach((rowId) => {
+        const row = data.find((r) => r.id === rowId)
+        if (!row || row.movementType === 'rebalancing') return
+        delete next[rowId]
+      })
+      return next
+    })
+
+    setExplorerStatusOverrides((prev) => {
+      const next = { ...prev }
+      explorerSelectedRowIds.forEach((rowId) => {
+        const row = data.find((r) => r.id === rowId)
+        if (!row || row.movementType === 'rebalancing') return
+        delete next[rowId]
+      })
+      return next
+    })
+
+    setExplorerBulkChangeUnitsOpen(false)
+  }
+
   const getEffectiveStatus = (row) => explorerStatusOverrides[row.id] ?? getRowStatus(row)
 
   const explorerFilterCount =
@@ -4362,6 +4837,12 @@ function ExplorerTable({
     explorerMovementTypeFilters.length +
     explorerConfidenceFilters.length +
     explorerStatusFilters.length
+
+  const hasClearableExplorerFilters =
+    explorerDepartmentFilters.length > 0 ||
+    explorerProductNameFilters.length > 0 ||
+    explorerConfidenceFilters.length > 0 ||
+    explorerStatusFilters.length > 0
 
   const hasAnyFilter =
     explorerDepartmentFilters.length > 0 ||
@@ -4377,7 +4858,6 @@ function ExplorerTable({
   const clearAllExplorerFilters = () => {
     setExplorerDepartmentFilters([])
     setExplorerProductNameFilters([])
-    setExplorerMovementTypeFilters([])
     setExplorerConfidenceFilters([])
     setExplorerStatusFilters([])
   }
@@ -4390,8 +4870,7 @@ function ExplorerTable({
         movementTypeFilters: explorerMovementTypeFilters,
         confidenceFilters: explorerConfidenceFilters,
         statusFilters: explorerStatusFilters,
-        statusOverrides: explorerStatusOverrides,
-      }),
+        statusOverrides: explorerStatusOverrides }),
     [
       data,
       explorerDepartmentFilters,
@@ -4446,8 +4925,7 @@ function ExplorerTable({
       salesL7: sumSalesL7,
       salesL30: sumSalesL30,
       currentUnits: `${sumCurrentUnits} units`,
-      inTransit: `${sumInTransit} in transit`,
-    }
+      inTransit: `${sumInTransit} in transit` }
   }, [filteredData, explorerTransferOverrides])
 
   const explorerThClass =
@@ -4577,9 +5055,13 @@ function ExplorerTable({
                           type="checkbox"
                           checked={explorerMovementTypeFilters.includes(opt.id)}
                           onChange={(e) => {
-                            setExplorerMovementTypeFilters((prev) =>
-                              e.target.checked ? [...prev, opt.id] : prev.filter((x) => x !== opt.id)
-                            )
+                            setExplorerMovementTypeFilters((prev) => {
+                              if (e.target.checked) {
+                                return prev.includes(opt.id) ? prev : [...prev, opt.id]
+                              }
+                              if (prev.length <= 1) return prev
+                              return prev.filter((x) => x !== opt.id)
+                            })
                           }}
                           className="size-4 rounded border-[#d1d5db] text-[#0267ff]"
                         />
@@ -4653,6 +5135,7 @@ function ExplorerTable({
           </div>
         </div>
         <ScheduleQuickFilterChips
+          chips={EXPLORER_QUICK_FILTER_CHIPS}
           activeId={explorerActiveQuickFilter}
           onChange={setExplorerActiveQuickFilter}
         />
@@ -4692,25 +5175,18 @@ function ExplorerTable({
               </button>
             </span>
           ))}
-          {explorerMovementTypeFilters.map((id) => {
-            const label = MOVEMENT_TYPE_FILTER_OPTIONS.find((o) => o.id === id)?.label ?? id
+          {(() => {
+            const movementTypeChipLabel = MOVEMENT_TYPE_FILTER_OPTIONS.filter((o) =>
+              explorerMovementTypeFilters.includes(o.id)
+            )
+              .map((o) => o.label)
+              .join(' + ')
             return (
-              <span
-                key={`movement-${id}`}
-                className="inline-flex items-center gap-1.5 pl-3 pr-1.5 py-1.5 rounded-[4px] bg-[#f3f4f6] text-[#4b535c] border border-[#e5e7eb]"
-              >
-                <span>Movement type: {label}</span>
-                <button
-                  type="button"
-                  onClick={() => setExplorerMovementTypeFilters((prev) => prev.filter((x) => x !== id))}
-                  className="p-0.5 rounded-[4px] text-[#6b7280] hover:bg-[#e5e7eb] hover:text-[#374151]"
-                  aria-label={`Remove filter: Movement type ${label}`}
-                >
-                  <IconClose className="size-3.5" />
-                </button>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[4px] bg-[#f3f4f6] text-[#4b535c] border border-[#e5e7eb]">
+                <span>Movement type: {movementTypeChipLabel || 'Replenishment'}</span>
               </span>
             )
-          })}
+          })()}
           {explorerConfidenceFilters.map((id) => {
             const label = CONFIDENCE_FILTER_OPTIONS.find((o) => o.id === id)?.label ?? id
             return (
@@ -4746,15 +5222,19 @@ function ExplorerTable({
               </button>
             </span>
           ))}
-          <button
-            type="button"
-            onClick={clearAllExplorerFilters}
-            className="text-[12px] font-medium text-[#4b535c] hover:text-[#0a0a0a]"
-          >
-            Clear all
-          </button>
+          {hasClearableExplorerFilters && (
+            <button
+              type="button"
+              onClick={clearAllExplorerFilters}
+              className="text-[12px] font-medium text-[#4b535c] hover:text-[#0a0a0a]"
+            >
+              Clear all
+            </button>
+          )}
         </div>
       )}
+
+      <ExplorerOvercommitBanner overcommittedLocations={overcommittedLocations} />
 
     <div className="border border-[#e5e7eb] rounded-[8px] overflow-hidden bg-white">
       <div className="max-h-[min(65vh,800px)] overflow-x-auto overflow-y-auto">
@@ -4803,8 +5283,7 @@ function ExplorerTable({
                 renderExplorerTotalsCell(col, totals, {
                   explorerTotalsThClass,
                   explorerTotalsEmptyThClass,
-                  explorerStatusTotalsThClass,
-                })
+                  explorerStatusTotalsThClass })
               )}
             </tr>
             )}
@@ -4835,7 +5314,10 @@ function ExplorerTable({
                     handleExplorerStatusChange,
                     getEffectiveTransfers,
                     handleTransfersEdit,
-                  })
+                    onOpenProductTransfers,
+                    getAvailableToSend,
+                    isLocationOvercommitted,
+                    explorerTransferOverrides })
                 )}
               </tr>
               ))
@@ -4917,9 +5399,23 @@ function ExplorerTable({
                   onClick={() => setExplorerBulkChangeUnitsOpen(false)}
                 />
                 <div
-                  className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 z-[70] min-w-[180px] rounded-[6px] border border-[#e5e7eb] bg-white py-1 shadow-lg"
+                  className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 z-[70] min-w-[280px] rounded-[6px] border border-[#e5e7eb] bg-white py-1 shadow-lg"
                   style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}
                 >
+                  {Array.from(explorerSelectedRowIds).some((id) => {
+                    const row = data.find((r) => r.id === id)
+                    return row?.movementType === 'rebalancing'
+                  }) && (
+                    <div className="mx-1 mb-1 flex items-start gap-1.5 rounded-[4px] bg-[#FEF3C7] px-2.5 py-2 text-[12px] leading-snug text-[#B45309]">
+                      <span className="mt-0.5 shrink-0 text-[#B45309]">
+                        <IconWarning />
+                      </span>
+                      <span>
+                        Unit edits apply to replenishment rows only. Rebalancing edits happen in the
+                        Transfers drilldown.
+                      </span>
+                    </div>
+                  )}
                   <div className="px-3 py-2 text-[12px] font-medium text-[#4b535c]">Adjust by</div>
                   {[
                     { action: 1, label: '+1' },
@@ -4943,6 +5439,14 @@ function ExplorerTable({
                     className="w-full flex items-center gap-2 px-3 py-2 text-left text-[13px] font-medium text-[#0a0a0a] hover:bg-[#f3f4f6]"
                   >
                     Set all to 0
+                  </button>
+                  <div className="border-t border-[#e5e7eb] my-1" role="separator" />
+                  <button
+                    type="button"
+                    onClick={handleBulkUndoEdits}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-left text-[13px] font-medium text-[#0a0a0a] hover:bg-[#f3f4f6]"
+                  >
+                    Undo edits
                   </button>
                 </div>
               </>
@@ -5245,21 +5749,25 @@ export default function ScheduleDetailPage() {
   const [explorerSelectedRowIds, setExplorerSelectedRowIds] = useState(new Set())
   const [explorerDepartmentFilters, setExplorerDepartmentFilters] = useState([])
   const [explorerProductNameFilters, setExplorerProductNameFilters] = useState([])
-  const [explorerMovementTypeFilters, setExplorerMovementTypeFilters] = useState([])
+  const [explorerMovementTypeFilters, setExplorerMovementTypeFilters] = useState(['replenishment'])
   const [explorerConfidenceFilters, setExplorerConfidenceFilters] = useState([])
   const [explorerStatusFilters, setExplorerStatusFilters] = useState([])
+  const [productsTabSelectedProduct, setProductsTabSelectedProduct] = useState(null)
   const [tripStatusOverrides, setTripStatusOverrides] = useState({})
   const [selectedTrip, setSelectedTrip] = useState(null)
   const [selectedTripIds, setSelectedTripIds] = useState(new Set())
   const [statusFilters, setStatusFilters] = useState([])
   const [filtersDropdownOpen, setFiltersDropdownOpen] = useState(false)
-  const [tripsActiveQuickFilter, setTripsActiveQuickFilter] = useState(null)
   const [productsDrawerFiltersActive, setProductsDrawerFiltersActive] = useState(false)
   const [locationsDrawerFiltersActive, setLocationsDrawerFiltersActive] = useState(false)
   const [explorerDrawerFiltersActive, setExplorerDrawerFiltersActive] = useState(false)
-  const [staleDataBannerDismissed, setStaleDataBannerDismissed] = useState(false)
-  const [recalculatedTimestamp, setRecalculatedTimestamp] = useState(null)
-  const hasRecalculated = Boolean(recalculatedTimestamp)
+
+  const handleOpenProductTransfersFromExplorer = (productName) => {
+    const product = findProductByName(productName)
+    if (!product) return
+    setProductsTabSelectedProduct(product)
+    setActiveTab('products')
+  }
 
   const hasActiveFilters =
     activeTab === 'products'
@@ -5297,8 +5805,8 @@ export default function ScheduleDetailPage() {
   const [tripColumnOrder, setTripColumnOrder] = useState(() =>
     Array.from({ length: TRIPS_TABLE_NUM_DATA_COLS }, (_, i) => i)
   )
-  /** Status (logical col 8) only pins to the right when it is the trailing column after reorder. */
-  const tripStatusColumnIsTrailing = tripColumnOrder[tripColumnOrder.length - 1] === 8
+  /** Status (logical col 7) only pins to the right when it is the trailing column after reorder. */
+  const tripStatusColumnIsTrailing = tripColumnOrder[tripColumnOrder.length - 1] === 7
 
   const onTripColDragStart = useCallback((visualIndex, e) => {
     e.stopPropagation()
@@ -5388,20 +5896,6 @@ export default function ScheduleDetailPage() {
 
   const [bulkChangeStatusOpen, setBulkChangeStatusOpen] = useState(false)
 
-  const handleRecalculate = () => {
-    setRecalculatedTimestamp(getNowRecommendationsTimestamp())
-    setStaleDataBannerDismissed(true)
-  }
-
-  const getRecommendationsUpdatedDisplay = (row, status) => {
-    if (hasRecalculated && shouldUpdateRecommendationsTimestampForStatus(status)) {
-      return recalculatedTimestamp
-    }
-    return {
-      date: row.recommendationsUpdated || '26/02/2026',
-      time: row.recommendationsUpdatedTime || '',
-    }
-  }
 
   const handleBulkStatusChange = (statusId) => {
     if (!selectedTripIds.size) return
@@ -5459,14 +5953,6 @@ export default function ScheduleDetailPage() {
                 >
                   <IconDocument />
                 </button>
-                <button
-                  type="button"
-                  onClick={handleRecalculate}
-                  className="h-10 px-4 rounded-[4px] border border-[#00050a] bg-white text-[#00050a] text-[14px] font-medium flex items-center gap-2 hover:bg-[#f3f4f6]"
-                  style={{ display: hasRecalculated ? 'none' : undefined }}
-                >
-                  Re-calculate
-                </button>
               </>
             )}
             {showSummary ? (
@@ -5488,28 +5974,6 @@ export default function ScheduleDetailPage() {
           </div>
         </div>
       </header>
-
-      {!showSummary && !staleDataBannerDismissed && !hasRecalculated && (
-        <div className="w-full rounded-[6px] border border-solid border-[#0267ff] bg-[#ebf3ff] p-4 flex items-start gap-3 min-w-0">
-          <DsIconInfo className="size-6 shrink-0 text-[#0267ff]" aria-hidden />
-          <div className="flex min-w-0 flex-1 flex-col gap-1">
-            <span className="text-[16px] font-medium leading-normal text-[#00050a]">
-              The data in this batch is old
-            </span>
-            <span className="text-[14px] font-normal leading-normal text-[#4b535c]">
-              You've sent us new data and/or your parameters have changed. Re-calculate to refresh recommendations - approved and edited rows will be preserved.
-            </span>
-          </div>
-          <button
-            type="button"
-            onClick={() => setStaleDataBannerDismissed(true)}
-            className="shrink-0 inline-flex items-center justify-center rounded-[4px] p-1.5 text-[#4b535c] hover:bg-black/[0.04]"
-            aria-label="Dismiss stale data notification"
-          >
-            <IconClose className="size-4" />
-          </button>
-        </div>
-      )}
 
       {showSummary ? (
         <SummaryPage />
@@ -5626,14 +6090,14 @@ export default function ScheduleDetailPage() {
             trip={TRIPS_OPERA[0]}
             onBack={() => {}}
             showBackButton={false}
-            recalculatedTimestamp={recalculatedTimestamp}
             onDrawerFiltersActiveChange={setProductsDrawerFiltersActive}
             setExplorerProductNameFilters={setExplorerProductNameFilters}
             setActiveTab={setActiveTab}
+            selectedProduct={productsTabSelectedProduct}
+            onSelectedProductChange={setProductsTabSelectedProduct}
           />
         ) : activeTab === 'locations' ? (
           <LocationsTab
-            recalculatedTimestamp={recalculatedTimestamp}
             onDrawerFiltersActiveChange={setLocationsDrawerFiltersActive}
           />
         ) : activeTab === 'explorer' ? (
@@ -5656,12 +6120,12 @@ export default function ScheduleDetailPage() {
             setExplorerConfidenceFilters={setExplorerConfidenceFilters}
             explorerStatusFilters={explorerStatusFilters}
             setExplorerStatusFilters={setExplorerStatusFilters}
+            onOpenProductTransfers={handleOpenProductTransfersFromExplorer}
           />
         ) : selectedTrip ? (
             <ProductsDrilldown
               trip={selectedTrip}
               onBack={() => setSelectedTrip(null)}
-              recalculatedTimestamp={recalculatedTimestamp}
               onDrawerFiltersActiveChange={setProductsDrawerFiltersActive}
               setExplorerProductNameFilters={setExplorerProductNameFilters}
               setActiveTab={setActiveTab}
@@ -5731,12 +6195,6 @@ export default function ScheduleDetailPage() {
                     </div>
                   </>
                 )}
-              </div>
-              <div className="flex min-w-0 flex-1 items-center overflow-x-auto">
-                <ScheduleQuickFilterChips
-                  activeId={tripsActiveQuickFilter}
-                  onChange={setTripsActiveQuickFilter}
-                />
               </div>
             </div>
 
@@ -5844,8 +6302,7 @@ export default function ScheduleDetailPage() {
                       const dropProps = {
                         onDragEnter: onTripColDragEnter,
                         onDragOver: onTripColDragOver,
-                        onDrop: (e) => onTripColDrop(visualIdx, e),
-                      }
+                        onDrop: (e) => onTripColDrop(visualIdx, e) }
                       switch (logicalIdx) {
                         case 0:
                           return (
@@ -5938,21 +6395,8 @@ export default function ScheduleDetailPage() {
                               {resizer}
                             </th>
                           )
+
                         case 6:
-                          return (
-                            <th
-                              key={logicalIdx}
-                              className="sticky top-0 z-20 bg-white relative h-[62px] min-h-[62px] whitespace-nowrap px-3 text-right align-middle font-medium text-[#0a0a0a] box-border"
-                              {...dropProps}
-                            >
-                              <span className="inline-flex w-full items-center justify-end gap-2 whitespace-nowrap">
-                                {grip}
-                                Recommendations updated
-                              </span>
-                              {resizer}
-                            </th>
-                          )
-                        case 7:
                           return (
                             <th
                               key={logicalIdx}
@@ -5966,7 +6410,7 @@ export default function ScheduleDetailPage() {
                               {resizer}
                             </th>
                           )
-                        case 8:
+                        case 7:
                           return (
                             <th
                               key={logicalIdx}
@@ -6043,14 +6487,8 @@ export default function ScheduleDetailPage() {
                               {tripSummary.recommended}
                             </th>
                           )
+
                         case 6:
-                          return (
-                            <th
-                              key={logicalIdx}
-                              className="sticky top-[62px] z-20 bg-white py-2 px-3 text-right text-[12px] font-normal text-[#4b535c]"
-                            />
-                          )
-                        case 7:
                           return (
                             <th
                               key={logicalIdx}
@@ -6059,7 +6497,7 @@ export default function ScheduleDetailPage() {
                               {tripSummary.products}
                             </th>
                           )
-                        case 8:
+                        case 7:
                           return (
                             <th
                               key={logicalIdx}
@@ -6172,31 +6610,14 @@ export default function ScheduleDetailPage() {
                                   </div>
                                 </td>
                               )
+
                             case 6:
-                              return (
-                                <td key={logicalIdx} className="py-3 px-3 align-top text-right">
-                                  {(() => {
-                                    const display = getRecommendationsUpdatedDisplay(row, rowStatus)
-                                    return (
-                                  <div className="flex flex-col gap-0.5 items-end">
-                                    <span className="text-[14px] text-[#4B535C]">
-                                      {display.date}
-                                    </span>
-                                    {display.time && (
-                                      <span className="text-[12px] text-[#4b535c]">{display.time}</span>
-                                    )}
-                                  </div>
-                                    )
-                                  })()}
-                                </td>
-                              )
-                            case 7:
                               return (
                                 <td key={logicalIdx} className="py-3 px-3 align-top text-right">
                                   <span className="text-[#0a0a0a]">{row.products}</span>
                                 </td>
                               )
-                            case 8:
+                            case 7:
                               return (
                                 <td
                                   key={logicalIdx}
