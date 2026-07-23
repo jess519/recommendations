@@ -4157,12 +4157,20 @@ const EXPLORER_TABLE_COLUMNS = [
     tooltip: null,
   },
   {
-    id: 'serviceLevel',
-    label: 'Service level',
+    id: 'stockInCirculation',
+    label: 'Stock in circulation (receiving)',
     alignment: 'right',
     minWidth: 'min-w-[160px]',
-    tooltip:
-      'The probability of selling / value of the last unit of stock at the receiving location, after this proposal is applied.',
+    tooltip: 'on-hand + pending from production + in transit',
+  },
+  { id: 'sales', label: 'Sales', alignment: 'right', minWidth: 'min-w-[120px]', subtitle: 'L7D / L30D' },
+  { id: 'forecast', label: 'Forecast', alignment: 'right', minWidth: 'min-w-[100px]', subtitle: 'per wk', tooltip: null },
+  {
+    id: 'warehouseUnits',
+    label: 'Warehouse units',
+    alignment: 'right',
+    minWidth: 'min-w-[140px]',
+    tooltip: 'Units reserved to sell at this location and units available to allocate to stores',
   },
   {
     id: 'coverage',
@@ -4179,14 +4187,13 @@ const EXPLORER_TABLE_COLUMNS = [
     subtitle: 'Creation date',
     tooltip: 'The next scheduled inventory event for this product across all locations in scope',
   },
-  { id: 'sales', label: 'Sales', alignment: 'right', minWidth: 'min-w-[120px]', subtitle: 'L7D / L30D' },
-  { id: 'forecast', label: 'Forecast', alignment: 'right', minWidth: 'min-w-[100px]', subtitle: 'per wk', tooltip: null },
   {
-    id: 'stockInCirculation',
-    label: 'Stock in circulation (receiving)',
+    id: 'serviceLevel',
+    label: 'Service level',
     alignment: 'right',
     minWidth: 'min-w-[160px]',
-    tooltip: 'on-hand + pending from production + in transit',
+    tooltip:
+      'The probability of selling / value of the last unit of stock at the receiving location, after this proposal is applied.',
   },
   {
     id: 'storageCapacity',
@@ -4194,13 +4201,6 @@ const EXPLORER_TABLE_COLUMNS = [
     alignment: 'right',
     minWidth: 'min-w-[140px]',
     tooltip: 'The storage capacity status of the location after the recommended transfers',
-  },
-  {
-    id: 'warehouseUnits',
-    label: 'Warehouse units',
-    alignment: 'right',
-    minWidth: 'min-w-[140px]',
-    tooltip: 'Units reserved to sell at this location and units available to allocate to stores',
   },
   {
     id: 'initialAllocation',
