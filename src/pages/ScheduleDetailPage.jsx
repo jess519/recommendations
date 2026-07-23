@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback, useLayoutEffect, useMemo } fr
 import { createPortal } from 'react-dom'
 import { Filter, Plus, Copy } from 'lucide-react'
 import { ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts'
-import { IconSearch, IconChevronDown, IconChevronRight, IconShare, IconDocument, IconClose, IconArrowLeft, IconGears, IconTruckTu, IconPackageTu, IconRebalancing, IconReplenishment, IconCalendarNote, IconTrendUp, IconFilterFunnel, IconColumnSettings, IconSortOrder, IconEdit, IconWarning } from '../components/icons'
+import { IconSearch, IconChevronDown, IconChevronRight, IconShare, IconDocument, IconClose, IconArrowLeft, IconGears, IconTruckTu, IconPackageTu, IconRebalancing, IconReplenishment, IconCalendarNote, IconTrendUp, IconFilterFunnel, IconColumnSettings, IconSortOrder, IconEdit, IconWarning, IconLightbulb } from '../components/icons'
 function IconInfo() {
   return (
     <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="shrink-0 text-[#9ca3af]" aria-hidden>
@@ -713,6 +713,19 @@ function buildExplorerRow(rowIndex, product, size, fromLoc, toLoc, movementType)
     movementType,
     transfers,
     availableToSend,
+    visibilityBefore: rowIndex % 11 === 0 ? 2 : rowIndex % 5 === 0 ? 1 : 0,
+    visibilityAfter: rowIndex % 11 === 0 ? 3 : rowIndex % 5 === 0 ? 2 : 1,
+    otherMovements:
+      movementType === 'rebalancing'
+        ? null
+        : rowIndex % 10 < 3
+          ? (() => {
+              const variant = rowIndex % 3
+              if (variant === 0) return { rebalCount: 1 + (rowIndex % 3), replenCount: 0 }
+              if (variant === 1) return { rebalCount: 0, replenCount: 1 + (rowIndex % 2) }
+              return { rebalCount: 1 + (rowIndex % 2), replenCount: 1 + (rowIndex % 3) }
+            })()
+          : null,
     revenue: `€${(0.5 + (rowIndex * 0.37) % 4.5).toFixed(2)}K`,
     recommended: '1',
     recommendedBadges: BADGE_CYCLE[rowIndex % BADGE_CYCLE.length],
@@ -1490,6 +1503,115 @@ function TuHoverSection({ title, children }) {
     <div className="border-b border-[#E9EAEB] py-2.5 last:border-b-0 last:pb-0">
       <div className="mb-2 text-[10px] font-bold uppercase tracking-[0.04em] text-[#9ca3af]">{title}</div>
       <div className="flex flex-col gap-1.5">{children}</div>
+    </div>
+  )
+}
+
+/** Explorer replen Transfers cell hover — route, this transfer, recommendation, other movements */
+function ExplorerTransfersHoverCard({ row, transferUnits, onOpenProductTransfers }) {
+  const availableToSend = row.availableToSend ?? 0
+  const other = row.otherMovements
+  const showOtherMovements =
+    other != null && (other.rebalCount > 0 || other.replenCount > 0)
+
+  return (
+    <div className="pointer-events-auto w-[min(320px,calc(100vw-1.5rem))] max-h-[min(520px,72vh)] overflow-y-auto rounded-[6px] border border-[#E9EAEB] bg-white p-4 shadow-[0_4px_20px_rgba(0,0,0,0.12)]">
+      <div className="border-b border-[#E9EAEB] pb-3 text-[14px] font-semibold leading-snug text-[#0a0a0a]">
+        {row.fromLocation} → {row.toLocation}
+      </div>
+
+      <TuHoverSection title="This transfer">
+        <div className="flex items-start justify-between gap-2 text-[13px]">
+          <div className="flex min-w-0 flex-1 items-center gap-2">
+            <TuHoverIconWrap>
+              {row.movementType === 'replenishment' ? <IconReplenishment /> : <IconRebalancing />}
+            </TuHoverIconWrap>
+            <span className="font-medium leading-snug text-[#0a0a0a]">Movement type</span>
+          </div>
+          <MovementTypePills movementType={[row.movementType]} />
+        </div>
+        <TuHoverRow
+          icon={<IconPackageTu className="!size-3.5" />}
+          label="Transfer units"
+          value={transferUnits}
+        />
+        <TuHoverRow
+          icon={<IconPackageTu className="!size-3.5" />}
+          label="Available to send"
+          value={availableToSend}
+        />
+      </TuHoverSection>
+
+      <TuHoverSection title="Recommendation">
+        <div className="flex flex-col gap-1.5">
+          <div className="flex items-start justify-between gap-2 text-[13px]">
+            <div className="flex min-w-0 flex-1 items-center gap-2">
+              <TuHoverIconWrap>
+                <IconTrendUp />
+              </TuHoverIconWrap>
+              <span className="font-medium leading-snug text-[#0a0a0a]">Recommended units</span>
+            </div>
+            <span className="shrink-0 rounded-[4px] bg-[#f3f4f6] px-2 py-0.5 text-right text-[11px] font-semibold leading-snug text-[#0a0a0a] tabular-nums">
+              {row.recommended}
+            </span>
+          </div>
+          {(row.recommendedBadges ?? []).map((badge) => {
+            const reasonText =
+              badge === 'REV'
+                ? `Increase revenue by ${row.revenue}`
+                : badge === 'VIS'
+                  ? `Increase visibility at ${row.toLocation} from ${row.visibilityBefore} to ${row.visibilityAfter}`
+                  : null
+            if (!reasonText) return null
+            return (
+              <div key={badge} className="flex items-start gap-2 text-[13px]">
+                <TuHoverIconWrap>
+                  <IconLightbulb />
+                </TuHoverIconWrap>
+                <span className="min-w-0 flex-1 font-medium leading-snug text-[#0a0a0a]">{reasonText}</span>
+              </div>
+            )
+          })}
+          {row.recommendedSub != null && (
+            <span className="pl-6 text-[12px] text-[#4b535c]">{row.recommendedSub}</span>
+          )}
+        </div>
+      </TuHoverSection>
+
+      {showOtherMovements && (
+        <TuHoverSection title="Other movements">
+          {other.rebalCount > 0 && (
+            <div className="flex items-center gap-2 text-[13px]">
+              <TuHoverIconWrap>
+                <IconRebalancing />
+              </TuHoverIconWrap>
+              <span className="font-medium leading-snug text-[#0a0a0a]">
+                +{other.rebalCount} rebalancing
+              </span>
+            </div>
+          )}
+          {other.replenCount > 0 && (
+            <div className="flex items-center gap-2 text-[13px]">
+              <TuHoverIconWrap>
+                <IconReplenishment />
+              </TuHoverIconWrap>
+              <span className="font-medium leading-snug text-[#0a0a0a]">
+                +{other.replenCount} replenishment
+              </span>
+            </div>
+          )}
+        </TuHoverSection>
+      )}
+
+      <div className="pt-2.5">
+        <button
+          type="button"
+          onClick={() => onOpenProductTransfers?.(row.productName)}
+          className="pointer-events-auto text-[13px] font-medium text-[#0267ff] hover:underline"
+        >
+          See all Transfers
+        </button>
+      </div>
     </div>
   )
 }
@@ -4225,19 +4347,29 @@ function renderExplorerBodyCell(row, col, {
           className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="flex flex-col items-end gap-0.5">
-            <ExplorerTransfersInput
-              value={effectiveTransfers}
-              onChange={(newValue) => handleTransfersEdit(row.id, newValue)}
-            />
-            <span
-              className={`text-[12px] ${
-                availableConstrained ? 'text-[#B45309]' : 'text-[#166534]'
-              }`}
-            >
-              {availableToSend} available to send
-            </span>
-          </div>
+          <TuHoverPopover
+            panel={
+              <ExplorerTransfersHoverCard
+                row={row}
+                transferUnits={effectiveTransfers}
+                onOpenProductTransfers={onOpenProductTransfers}
+              />
+            }
+          >
+            <div className="flex flex-col items-end gap-0.5">
+              <ExplorerTransfersInput
+                value={effectiveTransfers}
+                onChange={(newValue) => handleTransfersEdit(row.id, newValue)}
+              />
+              <span
+                className={`text-[12px] ${
+                  availableConstrained ? 'text-[#B45309]' : 'text-[#166534]'
+                }`}
+              >
+                {availableToSend} available to send
+              </span>
+            </div>
+          </TuHoverPopover>
         </td>
       )
     }
