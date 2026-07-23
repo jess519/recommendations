@@ -780,7 +780,6 @@ const STATUS_OPTIONS = [
   { id: 'unapproved', displayLabel: 'Unapproved', dotClass: 'bg-[#878d94]' },
   { id: 'needs_review_from_user', displayLabel: 'Needs review', dotClass: 'bg-[#bd5800]' },
   { id: 'partially_approved', displayLabel: 'Partially approved', dotClass: 'bg-[#f29a35]' },
-  { id: 'remove_edits', displayLabel: 'Remove edits', dotClass: 'bg-[#A855F7]' },
 ]
 
 // Selectable options only (short action labels in dropdown; badge shows full displayLabel)
@@ -788,7 +787,6 @@ const STATUS_DROPDOWN_OPTIONS = [
   { id: 'approved_by_user', dropdownLabel: 'Approve', dotClass: 'bg-[#08a16a]' },
   { id: 'unapproved', dropdownLabel: 'Unapprove', dotClass: 'bg-[#878d94]' },
   { id: 'needs_review_from_user', dropdownLabel: 'Needs review', dotClass: 'bg-[#bd5800]' },
-  { id: 'remove_edits', dropdownLabel: 'Remove edits', dotClass: 'bg-[#A855F7]' },
 ]
 
 const STATUS_BADGE_CLASSES = {
@@ -797,7 +795,6 @@ const STATUS_BADGE_CLASSES = {
   last_edited_by_user: 'bg-[#ebf3ff] text-[#0a0a0a] border-[#0267ff]',
   unapproved: 'bg-[#f4f4f5] text-[#0a0a0a] border-[#878d94]',
   needs_review_from_user: 'bg-[#ffe4cc] text-[#0a0a0a] border-[#bd5800]',
-  remove_edits: 'bg-[#f3e8ff] text-[#7c3aed]',
   partially_approved: 'bg-[#fef3c7] text-[#92400e]' }
 
 const CONFIDENCE_PILL_CONFIG = {
@@ -2146,6 +2143,7 @@ function ProductsDrilldown({
   const [filtersDropdownOpen, setFiltersDropdownOpen] = useState(false)
   const [productsActiveQuickFilter, setProductsActiveQuickFilter] = useState(null)
   const [bulkChangeStatusOpen, setBulkChangeStatusOpen] = useState(false)
+  const [bulkChangeUnitsOpen, setBulkChangeUnitsOpen] = useState(false)
   const [productColumnOrder, setProductColumnOrder] = useState(
     () => [...PRODUCTS_TABLE_DEFAULT_COLUMN_ORDER]
   )
@@ -2210,6 +2208,37 @@ function ProductsDrilldown({
     })
     setBulkChangeStatusOpen(false)
     setSelectedProductIds(new Set())
+  }
+
+  const handleBulkUndoEditsProducts = () => {
+    if (!selectedProductIds.size) return
+
+    const eligibleIds = []
+    selectedProductIds.forEach((id) => {
+      const p = baseProducts.find((row) => row.id === id)
+      const hasReplenSplit = p != null && p.replenTransfers != null && p.rebalTransfers != null
+      const hasOverride = Object.prototype.hasOwnProperty.call(replenTransferOverrides, id)
+      if (hasReplenSplit || hasOverride) eligibleIds.push(id)
+    })
+
+    if (eligibleIds.length > 0) {
+      setReplenTransferOverrides((prev) => {
+        const next = { ...prev }
+        eligibleIds.forEach((id) => {
+          delete next[id]
+        })
+        return next
+      })
+      setProductStatusOverrides((prev) => {
+        const next = { ...prev }
+        eligibleIds.forEach((id) => {
+          delete next[id]
+        })
+        return next
+      })
+    }
+
+    setBulkChangeUnitsOpen(false)
   }
 
   const onProductColDragStart = useCallback((visualIndex, e) => {
@@ -3159,7 +3188,10 @@ function ProductsDrilldown({
           <div className="relative">
             <button
               type="button"
-              onClick={() => setBulkChangeStatusOpen((o) => !o)}
+              onClick={() => {
+                setBulkChangeUnitsOpen(false)
+                setBulkChangeStatusOpen((o) => !o)
+              }}
               className="px-4 py-2 rounded-[4px] text-[14px] font-medium text-white hover:bg-white/10"
             >
               Change status
@@ -3182,6 +3214,35 @@ function ProductsDrilldown({
                       <span>{o.dropdownLabel}</span>
                     </button>
                   ))}
+                </div>
+              </>
+            )}
+          </div>
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => {
+                setBulkChangeStatusOpen(false)
+                setBulkChangeUnitsOpen((o) => !o)
+              }}
+              className="px-4 py-2 rounded-[4px] text-[14px] font-medium text-white hover:bg-white/10"
+            >
+              Change units
+            </button>
+            {bulkChangeUnitsOpen && (
+              <>
+                <div className="fixed inset-0 z-[60]" aria-hidden onClick={() => setBulkChangeUnitsOpen(false)} />
+                <div
+                  className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 z-[70] min-w-[180px] rounded-[6px] border border-[#e5e7eb] bg-white py-1 shadow-lg"
+                  style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}
+                >
+                  <button
+                    type="button"
+                    onClick={handleBulkUndoEditsProducts}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-left text-[13px] font-medium text-[#0a0a0a] hover:bg-[#f3f4f6]"
+                  >
+                    Undo edits
+                  </button>
                 </div>
               </>
             )}
@@ -4398,6 +4459,28 @@ function ExplorerTable({
     setExplorerBulkChangeUnitsOpen(false)
   }
 
+  const handleBulkUndoEdits = () => {
+    if (!explorerSelectedRowIds.size) return
+
+    setExplorerTransferOverrides((prev) => {
+      const next = { ...prev }
+      explorerSelectedRowIds.forEach((rowId) => {
+        delete next[rowId]
+      })
+      return next
+    })
+
+    setExplorerStatusOverrides((prev) => {
+      const next = { ...prev }
+      explorerSelectedRowIds.forEach((rowId) => {
+        delete next[rowId]
+      })
+      return next
+    })
+
+    setExplorerBulkChangeUnitsOpen(false)
+  }
+
   const getEffectiveStatus = (row) => explorerStatusOverrides[row.id] ?? getRowStatus(row)
 
   const explorerFilterCount =
@@ -4983,6 +5066,14 @@ function ExplorerTable({
                     className="w-full flex items-center gap-2 px-3 py-2 text-left text-[13px] font-medium text-[#0a0a0a] hover:bg-[#f3f4f6]"
                   >
                     Set all to 0
+                  </button>
+                  <div className="border-t border-[#e5e7eb] my-1" role="separator" />
+                  <button
+                    type="button"
+                    onClick={handleBulkUndoEdits}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-left text-[13px] font-medium text-[#0a0a0a] hover:bg-[#f3f4f6]"
+                  >
+                    Undo edits
                   </button>
                 </div>
               </>
