@@ -517,6 +517,17 @@ const CHART_DATA = Array.from({ length: 22 }, (_, i) => {
 
 const EXPLORER_WAREHOUSE = 'Log01 entrepot logtex'
 
+/** Hardcoded sending-location capacity for Explorer overcommit detection (prototype) */
+const SENDING_LOCATION_CAPACITY = {
+  'Log01 entrepot logtex': 250,
+  Opéra: 50,
+  'G.L. Haussmann Maro': 50,
+  'La Défense': 50,
+  'Cap 3000': 50,
+  'Lyon Herriot': 50,
+  'Printemps Lille': 50,
+}
+
 const EXPLORER_STORES = [
   'Opéra',
   'G.L. Haussmann Maro',
@@ -1508,8 +1519,12 @@ function TuHoverSection({ title, children }) {
 }
 
 /** Explorer replen Transfers cell hover — route, this transfer, recommendation, other movements */
-function ExplorerTransfersHoverCard({ row, transferUnits, onOpenProductTransfers }) {
-  const availableToSend = row.availableToSend ?? 0
+function ExplorerTransfersHoverCard({
+  row,
+  transferUnits,
+  availableToSend,
+  isOvercommitted,
+  onOpenProductTransfers }) {
   const other = row.otherMovements
   const showOtherMovements =
     other != null && (other.rebalCount > 0 || other.replenCount > 0)
@@ -1535,11 +1550,23 @@ function ExplorerTransfersHoverCard({ row, transferUnits, onOpenProductTransfers
           label="Transfer units"
           value={transferUnits}
         />
-        <TuHoverRow
-          icon={<IconPackageTu className="!size-3.5" />}
-          label="Available to send"
-          value={availableToSend}
-        />
+        <div className="flex items-start justify-between gap-2 text-[13px]">
+          <div className="flex min-w-0 flex-1 items-center gap-2">
+            <TuHoverIconWrap>
+              <IconPackageTu className="!size-3.5" />
+            </TuHoverIconWrap>
+            <span className="font-medium leading-snug text-[#0a0a0a]">Available to send</span>
+          </div>
+          <span
+            className={`max-w-[52%] shrink-0 rounded-[4px] px-2 py-0.5 text-right text-[11px] font-semibold leading-snug tabular-nums ${
+              isOvercommitted
+                ? 'bg-[#FEE4E2] text-[#B45309]'
+                : 'bg-[#f3f4f6] text-[#0a0a0a]'
+            }`}
+          >
+            {isOvercommitted ? 'Availability exceeded' : availableToSend}
+          </span>
+        </div>
       </TuHoverSection>
 
       <TuHoverSection title="Recommendation">
@@ -4252,7 +4279,7 @@ function filterExplorerRows(
 const EXPLORER_TABLE_COLUMN_COUNT = EXPLORER_TABLE_COLUMNS.length
 const EXPLORER_TABLE_TOTAL_COLUMN_COUNT = EXPLORER_TABLE_COLUMN_COUNT + 1
 
-function ExplorerTransfersInput({ value, onChange }) {
+function ExplorerTransfersInput({ value, onChange, className = '' }) {
   return (
     <input
       type="number"
@@ -4260,8 +4287,42 @@ function ExplorerTransfersInput({ value, onChange }) {
       value={value}
       onChange={(e) => onChange(e.target.value)}
       onClick={(e) => e.stopPropagation()}
-      className="w-16 h-7 px-2 rounded-[4px] border border-[#e9eaeb] text-[14px] text-[#0a0a0a] text-right focus:outline-none"
+      className={`w-16 h-7 px-2 rounded-[4px] border text-[14px] text-[#0a0a0a] text-right focus:outline-none ${
+        className || 'border-[#e9eaeb]'
+      }`}
     />
+  )
+}
+
+function ExplorerOvercommitBanner({ overcommittedLocations }) {
+  if (!overcommittedLocations.length) return null
+  const visible = overcommittedLocations.slice(0, 3)
+  const remaining = overcommittedLocations.length - visible.length
+
+  return (
+    <div className="mb-3 flex flex-col gap-1.5 rounded-[6px] border border-[#FCD34D] bg-[#FEF3C7] px-3 py-2.5">
+      {visible.map(({ name, overBy, editedCount }) => (
+        <div key={name} className="flex items-start gap-1.5 text-[13px] leading-snug text-[#B45309]">
+          <span className="mt-0.5 shrink-0 text-[#B45309]">
+            <IconWarning />
+          </span>
+          <span>
+            {name} is overcommitted by {overBy} units across {editedCount} edited row
+            {editedCount === 1 ? '' : 's'}
+          </span>
+        </div>
+      ))}
+      {remaining > 0 && (
+        <div className="flex items-start gap-1.5 text-[13px] leading-snug text-[#B45309]">
+          <span className="mt-0.5 shrink-0 text-[#B45309]">
+            <IconWarning />
+          </span>
+          <span>
+            and {remaining} more location{remaining === 1 ? '' : 's'} overcommitted
+          </span>
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -4272,7 +4333,9 @@ function renderExplorerBodyCell(row, col, {
   handleExplorerStatusChange,
   getEffectiveTransfers,
   handleTransfersEdit,
-  onOpenProductTransfers }) {
+  onOpenProductTransfers,
+  getAvailableToSend,
+  isLocationOvercommitted }) {
   const alignClass = col.alignment === 'right' ? 'text-right' : ''
 
   switch (col.id) {
@@ -4339,8 +4402,9 @@ function renderExplorerBodyCell(row, col, {
           </td>
         )
       }
-      const availableToSend = row.availableToSend ?? 0
-      const availableConstrained = availableToSend < effectiveTransfers
+      const availableToSend = getAvailableToSend?.(row) ?? 0
+      const isOvercommitted = isLocationOvercommitted?.(row.fromLocation) ?? false
+      const availableConstrained = !isOvercommitted && availableToSend <= 0
       return (
         <td
           key={col.id}
@@ -4352,6 +4416,8 @@ function renderExplorerBodyCell(row, col, {
               <ExplorerTransfersHoverCard
                 row={row}
                 transferUnits={effectiveTransfers}
+                availableToSend={Math.max(0, availableToSend)}
+                isOvercommitted={isOvercommitted}
                 onOpenProductTransfers={onOpenProductTransfers}
               />
             }
@@ -4360,14 +4426,19 @@ function renderExplorerBodyCell(row, col, {
               <ExplorerTransfersInput
                 value={effectiveTransfers}
                 onChange={(newValue) => handleTransfersEdit(row.id, newValue)}
+                className={isOvercommitted ? 'border-[#DC2626]' : undefined}
               />
-              <span
-                className={`text-[12px] ${
-                  availableConstrained ? 'text-[#B45309]' : 'text-[#166534]'
-                }`}
-              >
-                {availableToSend} available to send
-              </span>
+              {isOvercommitted ? (
+                <span className="text-[12px] text-[#B45309]">availability exceeded</span>
+              ) : (
+                <span
+                  className={`text-[12px] ${
+                    availableConstrained ? 'text-[#B45309]' : 'text-[#166534]'
+                  }`}
+                >
+                  {availableToSend} available to send
+                </span>
+              )}
             </div>
           </TuHoverPopover>
         </td>
@@ -4620,6 +4691,61 @@ function ExplorerTable({
 
   const getEffectiveTransfers = (row) =>
     explorerTransferOverrides[row.id] !== undefined ? explorerTransferOverrides[row.id] : row.transfers
+
+  const locationCapacityStats = useMemo(() => {
+    const stats = new Map()
+    for (const row of data) {
+      const from = row.fromLocation
+      const capacity = SENDING_LOCATION_CAPACITY[from]
+      if (capacity === undefined) continue
+
+      let entry = stats.get(from)
+      if (!entry) {
+        entry = { sum: 0, capacity, overBy: 0, editedCount: 0 }
+        stats.set(from, entry)
+      }
+
+      const effective =
+        explorerTransferOverrides[row.id] !== undefined
+          ? explorerTransferOverrides[row.id]
+          : row.transfers
+      entry.sum += effective
+
+      if (
+        explorerTransferOverrides[row.id] !== undefined &&
+        explorerTransferOverrides[row.id] !== row.transfers
+      ) {
+        entry.editedCount += 1
+      }
+    }
+
+    for (const entry of stats.values()) {
+      entry.overBy = Math.max(0, entry.sum - entry.capacity)
+    }
+    return stats
+  }, [data, explorerTransferOverrides])
+
+  const getAvailableToSend = (row) => {
+    const entry = locationCapacityStats.get(row.fromLocation)
+    if (!entry) return 0
+    return entry.capacity - entry.sum
+  }
+
+  const isLocationOvercommitted = (fromLocation) => {
+    const entry = locationCapacityStats.get(fromLocation)
+    if (!entry) return false
+    return entry.sum > entry.capacity
+  }
+
+  const overcommittedLocations = useMemo(() => {
+    const list = []
+    for (const [name, entry] of locationCapacityStats) {
+      if (entry.overBy > 0) {
+        list.push({ name, overBy: entry.overBy, editedCount: entry.editedCount })
+      }
+    }
+    return list
+  }, [locationCapacityStats])
 
   const toggleExplorerRowSelection = (rowId) => {
     setExplorerSelectedRowIds((prev) => {
@@ -5102,6 +5228,8 @@ function ExplorerTable({
         </div>
       )}
 
+      <ExplorerOvercommitBanner overcommittedLocations={overcommittedLocations} />
+
     <div className="border border-[#e5e7eb] rounded-[8px] overflow-hidden bg-white">
       <div className="max-h-[min(65vh,800px)] overflow-x-auto overflow-y-auto">
         <table className="w-full text-[14px] bg-white">
@@ -5180,7 +5308,9 @@ function ExplorerTable({
                     handleExplorerStatusChange,
                     getEffectiveTransfers,
                     handleTransfersEdit,
-                    onOpenProductTransfers })
+                    onOpenProductTransfers,
+                    getAvailableToSend,
+                    isLocationOvercommitted })
                 )}
               </tr>
               ))
