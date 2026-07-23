@@ -465,20 +465,20 @@ const PRODUCTS_EDITED_IDS = [1, 3]
 // Mock locations for stock analysis drilldown (keyed by product id)
 const LOCATIONS_BY_PRODUCT = {
   1: [
-    { id: 1, name: 'Opéra', code: 'A1A', movementType: ["rebalancing"], stock: '6 → 12', tu: '6 → 12', tuWarehouse: 6, tuTruck: [3, 3], tuReplen: [2], salesL7: 1, salesL30: 2, forecast: 1.87, stockouts: '0 → 0', coverage: '0% → 100%', targetWeeks: 6, receivingWeeksCoverage: '3.2 → 6.4 (6 target)', recommendationReason: 'Increase revenue', revenueIncrease: '€679', availableToSend: 4, sendingStock: '10 → 7', sendingCoverage: '2.1 → 1.8 (4 target)', approvalStatus: 'approved_by_system' },
-    { id: 2, name: 'G.L. Haussmann Maro', code: 'AIA', movementType: ["rebalancing"], stock: '6 → 6', tu: '4 → 5', tuWarehouse: 3, tuTruck: [1], tuReplen: [2], salesL7: 0, salesL30: 0, forecast: 0, stockouts: '0 → 0', coverage: '0% → 0%', targetWeeks: 4, receivingWeeksCoverage: 'N/A (0 forecast)', recommendationReason: 'Reduce overstock', revenueIncrease: '€120', availableToSend: 3, sendingStock: '8 → 5', sendingCoverage: 'N/A (0 forecast)' },
-    { id: 3, name: 'La Défense', code: 'A2B', movementType: ["rebalancing"], stock: '5 → 5', tu: '4 → 5', tuWarehouse: 3, tuTruck: [1], tuReplen: [1], salesL7: 1, salesL30: 1, forecast: 0.76, stockouts: '0 → 0', coverage: '100% → 100%', targetWeeks: 4, receivingWeeksCoverage: '5.2 → 5.8 (4 target)', recommendationReason: 'Increase revenue', revenueIncrease: '€245', availableToSend: 4, sendingStock: '9 → 6', sendingCoverage: '1.8 → 1.2 (4 target)', approvalStatus: 'edited_by_user', editedByUser: 'Csabi Toth' },
-    { id: 4, name: 'Cap 3000', code: 'A3E', movementType: ["replenishment","rebalancing"], stock: '4 → 4', tu: '0 → 1', tuWarehouse: null, tuTruck: [1], salesL7: 0, salesL30: 2, forecast: 0.32, stockouts: '0 → 0', coverage: '0% → 0%', targetWeeks: 4, receivingWeeksCoverage: 'N/A (0 forecast)', recommendationReason: 'Improve coverage', revenueIncrease: '€89', availableToSend: 2, sendingStock: '6 → 5', sendingCoverage: 'N/A (0 forecast)', approvalStatus: 'approved_by_user', approvedByUser: 'Jess Briggs' },
-    { id: 5, name: 'Lyon Herriot', code: 'A4C', movementType: ["rebalancing"], stock: '5 → 5', tu: '0 → 1', tuWarehouse: null, tuTruck: [1], tuReplen: [], salesL7: 1, salesL30: 1, forecast: 0.54, stockouts: '0 → 0', coverage: '0% → 0%', targetWeeks: 4, receivingWeeksCoverage: '4.1 → 4.5 (4 target)', recommendationReason: 'Increase revenue', revenueIncrease: '€156', availableToSend: 3, sendingStock: '7 → 6', sendingCoverage: '2.4 → 2.0 (4 target)' },
-    { id: 6, name: 'Printemps Lille', code: 'ASF', movementType: ["rebalancing"], stock: '8 → 8', tu: '0 → 20', tuWarehouse: 4, tuTruck: [20], tuReplen: [1], salesL7: 2, salesL30: 4, forecast: 2.1, stockouts: '0 → 0', coverage: '100% → 100%', targetWeeks: 6, receivingWeeksCoverage: '3.8 → 6.2 (6 target)', recommendationReason: 'Increase revenue', revenueIncrease: '€1.2K', availableToSend: 5, sendingStock: '12 → 8', sendingCoverage: '3.2 → 2.1 (6 target)', approvalStatus: 'approved_by_system' },
+    { id: 1, name: 'Opéra', code: 'A1A', movementType: ["rebalancing"], stock: '6 → 12', tu: '6 → 12', tuWarehouse: 6, tuTruck: [3, 3], tuReplen: [2], salesL7: 1, salesL30: 2, forecast: 1.87, stockouts: '0 → 0', coverage: '0% → 100%', targetWeeks: 6, receivingWeeksCoverage: '3.2 → 6.4 (6 target)', recommendationReason: 'Increase revenue', revenueIncrease: '€679', availableToSend: 4, sendingStock: '10 → 7', sendingCoverage: '2.1 → 1.8 (4 target)', approvalStatus: 'approved_by_system', storageCapacity: 'available' },
+    { id: 2, name: 'G.L. Haussmann Maro', code: 'AIA', movementType: ["rebalancing"], stock: '6 → 6', tu: '4 → 5', tuWarehouse: 3, tuTruck: [1], tuReplen: [2], salesL7: 0, salesL30: 0, forecast: 0, stockouts: '0 → 0', coverage: '0% → 0%', targetWeeks: 4, receivingWeeksCoverage: 'N/A (0 forecast)', recommendationReason: 'Reduce overstock', revenueIncrease: '€120', availableToSend: 3, sendingStock: '8 → 5', sendingCoverage: 'N/A (0 forecast)', storageCapacity: 'full' },
+    { id: 3, name: 'La Défense', code: 'A2B', movementType: ["rebalancing"], stock: '5 → 5', tu: '4 → 5', tuWarehouse: 3, tuTruck: [1], tuReplen: [1], salesL7: 1, salesL30: 1, forecast: 0.76, stockouts: '0 → 0', coverage: '100% → 100%', targetWeeks: 4, receivingWeeksCoverage: '5.2 → 5.8 (4 target)', recommendationReason: 'Increase revenue', revenueIncrease: '€245', availableToSend: 4, sendingStock: '9 → 6', sendingCoverage: '1.8 → 1.2 (4 target)', approvalStatus: 'edited_by_user', editedByUser: 'Csabi Toth', storageCapacity: 'available' },
+    { id: 4, name: 'Cap 3000', code: 'A3E', movementType: ["replenishment","rebalancing"], stock: '4 → 4', tu: '0 → 1', tuWarehouse: null, tuTruck: [1], salesL7: 0, salesL30: 2, forecast: 0.32, stockouts: '0 → 0', coverage: '0% → 0%', targetWeeks: 4, receivingWeeksCoverage: 'N/A (0 forecast)', recommendationReason: 'Improve coverage', revenueIncrease: '€89', availableToSend: 2, sendingStock: '6 → 5', sendingCoverage: 'N/A (0 forecast)', approvalStatus: 'approved_by_user', approvedByUser: 'Jess Briggs', storageCapacity: 'full' },
+    { id: 5, name: 'Lyon Herriot', code: 'A4C', movementType: ["rebalancing"], stock: '5 → 5', tu: '0 → 1', tuWarehouse: null, tuTruck: [1], tuReplen: [], salesL7: 1, salesL30: 1, forecast: 0.54, stockouts: '0 → 0', coverage: '0% → 0%', targetWeeks: 4, receivingWeeksCoverage: '4.1 → 4.5 (4 target)', recommendationReason: 'Increase revenue', revenueIncrease: '€156', availableToSend: 3, sendingStock: '7 → 6', sendingCoverage: '2.4 → 2.0 (4 target)', storageCapacity: 'available' },
+    { id: 6, name: 'Printemps Lille', code: 'ASF', movementType: ["rebalancing"], stock: '8 → 8', tu: '0 → 20', tuWarehouse: 4, tuTruck: [20], tuReplen: [1], salesL7: 2, salesL30: 4, forecast: 2.1, stockouts: '0 → 0', coverage: '100% → 100%', targetWeeks: 6, receivingWeeksCoverage: '3.8 → 6.2 (6 target)', recommendationReason: 'Increase revenue', revenueIncrease: '€1.2K', availableToSend: 5, sendingStock: '12 → 8', sendingCoverage: '3.2 → 2.1 (6 target)', approvalStatus: 'approved_by_system', storageCapacity: 'available' },
   ],
   2: [
-    { id: 1, name: 'Opéra', code: 'A1A', movementType: ["rebalancing"], stock: '4 → 4', tu: '4 → 4', tuWarehouse: 4, tuTruck: [], salesL7: 2, salesL30: 3, forecast: 0.54, stockouts: '0 → 0', coverage: '100% → 100%', targetWeeks: 4, receivingWeeksCoverage: '5.2 → 5.2 (4 target)', recommendationReason: 'Increase revenue', revenueIncrease: '€312', availableToSend: 4, sendingStock: '8 → 4', sendingCoverage: '2.0 → 1.0 (4 target)', approvalStatus: 'approved_by_user', approvedByUser: 'Jess Briggs' },
-    { id: 2, name: 'La Défense', code: 'A2B', movementType: ["rebalancing"], stock: '3 → 3', tu: '3 → 3', tuWarehouse: 3, tuTruck: [], salesL7: 1, salesL30: 2, forecast: 0.45, stockouts: '0 → 0', coverage: '100% → 100%', targetWeeks: 4, receivingWeeksCoverage: '4.1 → 4.1 (4 target)', recommendationReason: 'Reduce understock', revenueIncrease: '€98', availableToSend: 3, sendingStock: '6 → 3', sendingCoverage: '1.5 → 0.8 (4 target)', approvalStatus: 'edited_by_user', editedByUser: 'Csabi Toth' },
+    { id: 1, name: 'Opéra', code: 'A1A', movementType: ["rebalancing"], stock: '4 → 4', tu: '4 → 4', tuWarehouse: 4, tuTruck: [], salesL7: 2, salesL30: 3, forecast: 0.54, stockouts: '0 → 0', coverage: '100% → 100%', targetWeeks: 4, receivingWeeksCoverage: '5.2 → 5.2 (4 target)', recommendationReason: 'Increase revenue', revenueIncrease: '€312', availableToSend: 4, sendingStock: '8 → 4', sendingCoverage: '2.0 → 1.0 (4 target)', approvalStatus: 'approved_by_user', approvedByUser: 'Jess Briggs', storageCapacity: 'full' },
+    { id: 2, name: 'La Défense', code: 'A2B', movementType: ["rebalancing"], stock: '3 → 3', tu: '3 → 3', tuWarehouse: 3, tuTruck: [], salesL7: 1, salesL30: 2, forecast: 0.45, stockouts: '0 → 0', coverage: '100% → 100%', targetWeeks: 4, receivingWeeksCoverage: '4.1 → 4.1 (4 target)', recommendationReason: 'Reduce understock', revenueIncrease: '€98', availableToSend: 3, sendingStock: '6 → 3', sendingCoverage: '1.5 → 0.8 (4 target)', approvalStatus: 'edited_by_user', editedByUser: 'Csabi Toth', storageCapacity: 'available' },
   ],
   3: [
-    { id: 1, name: 'Opéra', code: 'A1A', movementType: ["rebalancing"], stock: '6 → 6', tu: '6 → 6', tuWarehouse: 6, tuTruck: [], salesL7: 1, salesL30: 4, forecast: 2.1, stockouts: '0 → 0', coverage: '100% → 100%', targetWeeks: 6, receivingWeeksCoverage: '2.9 → 2.9 (6 target)', recommendationReason: 'Increase revenue', revenueIncrease: '€445', availableToSend: 6, sendingStock: '12 → 6', sendingCoverage: '2.8 → 1.4 (6 target)' },
-    { id: 2, name: 'G.L. Haussmann Maro', code: 'AIA', movementType: ["rebalancing"], stock: '5 → 5', tu: '5 → 5', tuWarehouse: 5, tuTruck: [], salesL7: 0, salesL30: 0, forecast: 0, stockouts: '0 → 0', coverage: '0% → 0%', targetWeeks: 5, receivingWeeksCoverage: 'N/A (0 forecast)', recommendationReason: 'Improve coverage', revenueIncrease: '€0', availableToSend: 5, sendingStock: '10 → 5', sendingCoverage: 'N/A (0 forecast)', approvalStatus: 'approved_by_system' },
+    { id: 1, name: 'Opéra', code: 'A1A', movementType: ["rebalancing"], stock: '6 → 6', tu: '6 → 6', tuWarehouse: 6, tuTruck: [], salesL7: 1, salesL30: 4, forecast: 2.1, stockouts: '0 → 0', coverage: '100% → 100%', targetWeeks: 6, receivingWeeksCoverage: '2.9 → 2.9 (6 target)', recommendationReason: 'Increase revenue', revenueIncrease: '€445', availableToSend: 6, sendingStock: '12 → 6', sendingCoverage: '2.8 → 1.4 (6 target)', storageCapacity: 'available' },
+    { id: 2, name: 'G.L. Haussmann Maro', code: 'AIA', movementType: ["rebalancing"], stock: '5 → 5', tu: '5 → 5', tuWarehouse: 5, tuTruck: [], salesL7: 0, salesL30: 0, forecast: 0, stockouts: '0 → 0', coverage: '0% → 0%', targetWeeks: 5, receivingWeeksCoverage: 'N/A (0 forecast)', recommendationReason: 'Improve coverage', revenueIncrease: '€0', availableToSend: 5, sendingStock: '10 → 5', sendingCoverage: 'N/A (0 forecast)', approvalStatus: 'approved_by_system', storageCapacity: 'full' },
   ] }
 
 const DEFAULT_LOCATIONS = LOCATIONS_BY_PRODUCT[1]
@@ -724,6 +724,7 @@ function buildExplorerRow(rowIndex, product, size, fromLoc, toLoc, movementType)
     salesL30: salesL7 * 5,
     currentUnits: 10 + (rowIndex * 5) % 50,
     currentUnitsInTransit: rowIndex % 6,
+    storageCapacity: rowIndex % 4 === 0 ? 'full' : 'available',
     warehouseAllocateLine: `${50 + (rowIndex * 3) % 20} → ${45 + (rowIndex * 3) % 20}`,
     warehouseSellLine: `${65 + (rowIndex * 5) % 25} → ${58 + (rowIndex * 5) % 25}`,
     forecast: Number(((rowIndex * 0.31) % 3 + 0.5).toFixed(2)),
@@ -827,6 +828,21 @@ function ConfidencePill({ value }) {
     >
       <span className={`size-2 rounded-full shrink-0 ${cfg.dotClass}`} aria-hidden />
       <span className="truncate">{cfg.label}</span>
+    </span>
+  )
+}
+
+function StorageCapacityPill({ value }) {
+  if (value === 'full') {
+    return (
+      <span className="inline-flex max-w-full items-center justify-center rounded-full bg-[#FEE4E2] px-2.5 py-1 text-[12px] font-medium text-[#B42318]">
+        Full
+      </span>
+    )
+  }
+  return (
+    <span className="inline-flex max-w-full items-center justify-center rounded-full bg-[#F2F4F7] px-2.5 py-1 text-[12px] font-medium text-[#101828]">
+      Available
     </span>
   )
 }
@@ -1931,6 +1947,17 @@ function StockAnalysisDrilldown({
               </th>
               <th className="sticky top-0 z-20 bg-white text-right py-3 px-4 font-medium text-[#00050A]">Stockouts</th>
               <th className="sticky top-0 z-20 bg-white text-right py-3 px-4 font-medium text-[#00050A]">Coverage</th>
+              <th className="sticky top-0 z-20 bg-white text-right py-3 px-4 font-medium text-[#00050A]">
+                <span className="inline-flex items-center gap-1 justify-end">
+                  Storage capacity{' '}
+                  <span
+                    className="inline-flex cursor-help"
+                    title="The storage capacity status of the location after the recommended transfers"
+                  >
+                    <IconInfo />
+                  </span>
+                </span>
+              </th>
             </tr>
             <tr className="border-b border-[#E9EAEB] bg-white">
               <th className="w-10 max-w-[40px] bg-white py-2 px-2" />
@@ -1944,6 +1971,7 @@ function StockAnalysisDrilldown({
               </th>
               <th className="bg-white py-2 px-4 text-right text-[12px] font-normal text-[#4b535c]">—</th>
               <th className="bg-white py-2 px-4 text-right text-[12px] font-normal text-[#4b535c]">7.01 per wk</th>
+              <th className="bg-white py-2 px-4 text-right text-[12px] font-normal text-[#4b535c]">—</th>
               <th className="bg-white py-2 px-4 text-right text-[12px] font-normal text-[#4b535c]">—</th>
               <th className="bg-white py-2 px-4 text-right text-[12px] font-normal text-[#4b535c]">—</th>
             </tr>
@@ -2087,6 +2115,11 @@ function StockAnalysisDrilldown({
                   <div className="flex flex-col items-end">
                     <span className="text-[#0a0a0a]">{loc.coverage}</span>
                     <span className="text-[12px] text-[#4b535c]">{loc.targetWeeks}</span>
+                  </div>
+                </td>
+                <td className="py-3 px-4 text-right">
+                  <div className="flex justify-end">
+                    <StorageCapacityPill value={loc.storageCapacity ?? 'available'} />
                   </div>
                 </td>
               </tr>
@@ -4005,6 +4038,13 @@ const EXPLORER_TABLE_COLUMNS = [
     tooltip: 'on-hand + pending from production + in transit',
   },
   {
+    id: 'storageCapacity',
+    label: 'Storage capacity (receiving)',
+    alignment: 'right',
+    minWidth: 'min-w-[140px]',
+    tooltip: 'The storage capacity status of the location after the recommended transfers',
+  },
+  {
     id: 'warehouseUnits',
     label: 'Warehouse units',
     alignment: 'right',
@@ -4246,6 +4286,14 @@ function renderExplorerBodyCell(row, col, {
           <div className="flex flex-col items-end gap-0.5">
             <span className="text-[14px] text-[#0a0a0a]">{row.currentUnits} units</span>
             <span className="text-[12px] text-[#4b535c]">{row.currentUnitsInTransit} in transit</span>
+          </div>
+        </td>
+      )
+    case 'storageCapacity':
+      return (
+        <td key={col.id} className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}>
+          <div className="flex justify-end">
+            <StorageCapacityPill value={row.storageCapacity} />
           </div>
         </td>
       )
