@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useLayoutEffect, useMemo } from 'react'
 import { createPortal } from 'react-dom'
-import { Filter, Plus } from 'lucide-react'
+import { Filter, Plus, Copy } from 'lucide-react'
 import { ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts'
 import { IconSearch, IconChevronDown, IconChevronRight, IconShare, IconDocument, IconClose, IconArrowLeft, IconGears, IconTruckTu, IconPackageTu, IconRebalancing, IconReplenishment, IconCalendarNote, IconTrendUp, IconFilterFunnel, IconColumnSettings, IconSortOrder } from '../components/icons'
 function IconInfo() {
@@ -525,7 +525,15 @@ const EXPLORER_PRODUCTS = [
     baseSku: 'A1252810',
     colour: 'Noir',
     department: 'Handbags',
-    sizes: ['M'],
+    subDepartment: 'Sac à main',
+    material: 'Cuir',
+    gender: 'Femme',
+    rrp: '€890',
+    ws: '€0',
+    ic: '€45',
+    seasonAndEvent: 'Winter 26 · Vague 1',
+    // Two sizes → sibling SKUs share product attrs, differ on life-to-date sales
+    sizes: ['S', 'M'],
     movementTypes: ['replenishment', 'rebalancing'] },
   {
     id: 'exp-p6',
@@ -533,6 +541,13 @@ const EXPLORER_PRODUCTS = [
     baseSku: 'A1252811',
     colour: 'Noir',
     department: 'Handbags',
+    subDepartment: 'Sac à main',
+    material: 'Cuir verni',
+    gender: 'Femme',
+    rrp: '€750',
+    ws: '€12',
+    ic: '€38',
+    seasonAndEvent: 'Winter 26 · Vague 2',
     sizes: ['S'],
     movementTypes: ['replenishment', 'rebalancing'] },
   {
@@ -541,6 +556,13 @@ const EXPLORER_PRODUCTS = [
     baseSku: 'A1398810',
     colour: 'Noir',
     department: 'Crossbody',
+    subDepartment: 'Bandoulière',
+    material: 'Nylon',
+    gender: 'Unisexe',
+    rrp: '€420',
+    ws: '€0',
+    ic: '€22',
+    seasonAndEvent: 'SS26 · Drop 3',
     sizes: ['L'],
     movementTypes: ['replenishment'] },
   {
@@ -549,6 +571,13 @@ const EXPLORER_PRODUCTS = [
     baseSku: 'A101080',
     colour: 'Bleu petrole',
     department: 'Bucket bags',
+    subDepartment: 'Seau',
+    material: 'Laine',
+    gender: 'Femme',
+    rrp: '€85',
+    ws: '€0',
+    ic: '€10',
+    seasonAndEvent: 'Winter 26 · Vague 2',
     sizes: ['M'],
     movementTypes: ['replenishment'] },
   {
@@ -557,6 +586,13 @@ const EXPLORER_PRODUCTS = [
     baseSku: 'A1398811',
     colour: 'Noir',
     department: 'Crossbody',
+    subDepartment: 'Bandoulière',
+    material: 'Cuir',
+    gender: 'Homme',
+    rrp: '€380',
+    ws: '€25',
+    ic: '€18',
+    seasonAndEvent: 'SS26 · Drop 1',
     sizes: ['S'],
     movementTypes: ['rebalancing'] },
   {
@@ -565,6 +601,13 @@ const EXPLORER_PRODUCTS = [
     baseSku: 'A101081',
     colour: 'Bleu petrole',
     department: 'Bucket bags',
+    subDepartment: 'Foulard',
+    material: 'Cachemire',
+    gender: 'Femme',
+    rrp: '€120',
+    ws: '€8',
+    ic: '€15',
+    seasonAndEvent: 'AW25 · Continuity',
     sizes: ['S'],
     movementTypes: ['rebalancing'] },
 ]
@@ -652,6 +695,14 @@ function buildExplorerRow(rowIndex, product, size, fromLoc, toLoc, movementType)
     size,
     colour: product.colour,
     department: product.department,
+    subDepartment: product.subDepartment,
+    material: product.material,
+    gender: product.gender,
+    rrp: product.rrp,
+    ws: product.ws,
+    ic: product.ic,
+    seasonAndEvent: product.seasonAndEvent,
+    lifeToDateSales: (rowIndex * 7) % 51, // ~0–50 units, varies per SKU-location row
     fromLocation: fromLoc,
     toLocation: toLoc,
     movementType,
@@ -1177,12 +1228,28 @@ function TransferDetailView({ transfer, product, trip, onBack }) {
 /**
  * Portals hover content to document.body with fixed positioning so it is not clipped
  * by scroll containers (e.g. stock analysis table wrapper).
+ *
+ * Leave is delayed briefly so panels that opt into pointer-events-auto (e.g. Explorer
+ * SKU copy controls) remain reachable. Default panel content stays pointer-events-none.
  */
 function TuHoverPopover({ children, panel }) {
   const wrapRef = useRef(null)
   const popRef = useRef(null)
+  const closeTimerRef = useRef(null)
   const [open, setOpen] = useState(false)
   const [coords, setCoords] = useState({ left: 0, top: 0 })
+
+  const clearCloseTimer = useCallback(() => {
+    if (closeTimerRef.current != null) {
+      clearTimeout(closeTimerRef.current)
+      closeTimerRef.current = null
+    }
+  }, [])
+
+  const scheduleClose = useCallback(() => {
+    clearCloseTimer()
+    closeTimerRef.current = setTimeout(() => setOpen(false), 200)
+  }, [clearCloseTimer])
 
   const updatePosition = useCallback(() => {
     const el = wrapRef.current
@@ -1245,7 +1312,10 @@ function TuHoverPopover({ children, panel }) {
     }
   }, [open, updatePosition])
 
+  useEffect(() => () => clearCloseTimer(), [clearCloseTimer])
+
   const handleEnter = () => {
+    clearCloseTimer()
     const el = wrapRef.current
     if (el) {
       const rect = el.getBoundingClientRect()
@@ -1256,7 +1326,7 @@ function TuHoverPopover({ children, panel }) {
 
   return (
     <>
-      <div ref={wrapRef} className="relative inline-block" onMouseEnter={handleEnter} onMouseLeave={() => setOpen(false)}>
+      <div ref={wrapRef} className="relative inline-block" onMouseEnter={handleEnter} onMouseLeave={scheduleClose}>
         {children}
       </div>
       {open &&
@@ -1265,12 +1335,94 @@ function TuHoverPopover({ children, panel }) {
             ref={popRef}
             className="pointer-events-none fixed z-[10000]"
             style={{ left: coords.left, top: coords.top, transform: 'translateY(-50%)' }}
+            onMouseEnter={clearCloseTimer}
+            onMouseLeave={scheduleClose}
           >
             {panel}
           </div>,
           document.body
         )}
     </>
+  )
+}
+
+function SkuDetailsCopyId({ label, value }) {
+  const [copied, setCopied] = useState(false)
+  const copiedTimerRef = useRef(null)
+
+  useEffect(() => () => {
+    if (copiedTimerRef.current != null) clearTimeout(copiedTimerRef.current)
+  }, [])
+
+  const handleCopy = async (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    try {
+      await navigator.clipboard.writeText(value)
+    } catch {
+      // Prototype: ignore clipboard failures (insecure context, permissions, etc.)
+    }
+    setCopied(true)
+    if (copiedTimerRef.current != null) clearTimeout(copiedTimerRef.current)
+    copiedTimerRef.current = setTimeout(() => setCopied(false), 1500)
+  }
+
+  return (
+    <div className="pointer-events-auto flex min-w-0 flex-1 flex-col gap-0.5">
+      <span className="text-[10px] font-bold uppercase tracking-[0.04em] text-[#9ca3af]">{label}</span>
+      <div className="flex min-w-0 items-center gap-1.5">
+        <span className="min-w-0 truncate text-[13px] font-medium tabular-nums text-[#0a0a0a]">{value}</span>
+        <button
+          type="button"
+          onClick={handleCopy}
+          onMouseDown={(e) => e.stopPropagation()}
+          className="pointer-events-auto inline-flex shrink-0 items-center justify-center rounded-[4px] p-0.5 text-[#4b535c] hover:bg-[#f3f4f6] hover:text-[#0a0a0a] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-sky-500"
+          aria-label={copied ? 'Copied' : `Copy ${label}`}
+          title={copied ? 'Copied!' : `Copy ${label}`}
+        >
+          {copied ? (
+            <span className="px-0.5 text-[11px] font-semibold text-[#15803d]">Copied!</span>
+          ) : (
+            <Copy className="h-3.5 w-3.5 shrink-0" aria-hidden />
+          )}
+        </button>
+      </div>
+    </div>
+  )
+}
+
+function SkuDetailsAttrRow({ label, value }) {
+  const display = value === null || value === undefined || value === '' ? '—' : value
+  return (
+    <div className="flex items-start justify-between gap-3 text-[13px]">
+      <span className="min-w-0 text-[#4b535c]">{label}</span>
+      <span className="max-w-[58%] shrink-0 text-right font-medium tabular-nums text-[#0a0a0a]">{String(display)}</span>
+    </div>
+  )
+}
+
+/** Product / SKU attribute panel for Explorer SKU details hover */
+function SkuDetailsHoverCard({ row }) {
+  const lifeToDate =
+    row.lifeToDateSales == null ? '—' : `${row.lifeToDateSales} unit${row.lifeToDateSales === 1 ? '' : 's'}`
+  return (
+    <div className="pointer-events-auto w-[min(300px,calc(100vw-1.5rem))] rounded-[8px] border border-[#E9EAEB] bg-white p-4 shadow-[0_4px_16px_rgba(0,0,0,0.1)]">
+      <div className="pointer-events-auto flex gap-3 border-b border-[#E9EAEB] pb-3">
+        <SkuDetailsCopyId label="Product ID" value={row.productId} />
+        <SkuDetailsCopyId label="SKU ID" value={row.sku} />
+      </div>
+      <div className="mt-3 flex flex-col gap-2">
+        <SkuDetailsAttrRow label="RRP" value={row.rrp} />
+        <SkuDetailsAttrRow label="WS" value={row.ws} />
+        <SkuDetailsAttrRow label="IC" value={row.ic} />
+        <SkuDetailsAttrRow label="Season and event" value={row.seasonAndEvent} />
+        <SkuDetailsAttrRow label="Life to date sales" value={lifeToDate} />
+        <SkuDetailsAttrRow label="Department" value={row.department} />
+        <SkuDetailsAttrRow label="Sub-department" value={row.subDepartment} />
+        <SkuDetailsAttrRow label="Material" value={row.material} />
+        <SkuDetailsAttrRow label="Gender" value={row.gender} />
+      </div>
+    </div>
   )
 }
 
@@ -3901,14 +4053,16 @@ function renderExplorerBodyCell(row, col, {
     case 'productDetails':
       return (
         <td key={col.id} className={`${explorerTdClass} ${col.minWidth}`}>
-          <div className="flex items-start gap-4 min-w-0">
-            <div className="w-12 h-12 rounded-[4px] bg-[#f3f4f6] shrink-0" />
-            <div className="flex flex-col gap-0.5 min-w-0">
-              <span className="text-[14px] font-medium text-[#0a0a0a]">{row.productName}</span>
-              <span className="text-[12px] text-[#4b535c]">{row.sku}</span>
-              <span className="text-[12px] text-[#4b535c]">{row.colour}</span>
+          <TuHoverPopover panel={<SkuDetailsHoverCard row={row} />}>
+            <div className="flex min-w-0 items-start gap-4">
+              <div className="h-12 w-12 shrink-0 rounded-[4px] bg-[#f3f4f6]" />
+              <div className="flex min-w-0 flex-col gap-0.5">
+                <span className="text-[14px] font-medium text-[#0a0a0a]">{row.productName}</span>
+                <span className="text-[12px] text-[#4b535c]">{row.sku}</span>
+                <span className="text-[12px] text-[#4b535c]">{row.colour}</span>
+              </div>
             </div>
-          </div>
+          </TuHoverPopover>
         </td>
       )
     case 'fromLocation':
