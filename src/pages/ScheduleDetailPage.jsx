@@ -4523,6 +4523,12 @@ function ExplorerTable({
     explorerConfidenceFilters.length +
     explorerStatusFilters.length
 
+  const hasClearableExplorerFilters =
+    explorerDepartmentFilters.length > 0 ||
+    explorerProductNameFilters.length > 0 ||
+    explorerConfidenceFilters.length > 0 ||
+    explorerStatusFilters.length > 0
+
   const hasAnyFilter =
     explorerDepartmentFilters.length > 0 ||
     explorerProductNameFilters.length > 0 ||
@@ -4901,13 +4907,15 @@ function ExplorerTable({
               </button>
             </span>
           ))}
-          <button
-            type="button"
-            onClick={clearAllExplorerFilters}
-            className="text-[12px] font-medium text-[#4b535c] hover:text-[#0a0a0a]"
-          >
-            Clear all
-          </button>
+          {hasClearableExplorerFilters && (
+            <button
+              type="button"
+              onClick={clearAllExplorerFilters}
+              className="text-[12px] font-medium text-[#4b535c] hover:text-[#0a0a0a]"
+            >
+              Clear all
+            </button>
+          )}
         </div>
       )}
 
