@@ -4335,7 +4335,8 @@ function renderExplorerBodyCell(row, col, {
   handleTransfersEdit,
   onOpenProductTransfers,
   getAvailableToSend,
-  isLocationOvercommitted }) {
+  isLocationOvercommitted,
+  explorerTransferOverrides }) {
   const alignClass = col.alignment === 'right' ? 'text-right' : ''
 
   switch (col.id) {
@@ -4404,6 +4405,9 @@ function renderExplorerBodyCell(row, col, {
       }
       const availableToSend = getAvailableToSend?.(row) ?? 0
       const isOvercommitted = isLocationOvercommitted?.(row.fromLocation) ?? false
+      const isEditedRow =
+        explorerTransferOverrides?.[row.id] !== undefined &&
+        explorerTransferOverrides[row.id] !== row.transfers
       const availableConstrained = !isOvercommitted && availableToSend <= 0
       return (
         <td
@@ -4426,7 +4430,9 @@ function renderExplorerBodyCell(row, col, {
               <ExplorerTransfersInput
                 value={effectiveTransfers}
                 onChange={(newValue) => handleTransfersEdit(row.id, newValue)}
-                className={isOvercommitted ? 'border-[#DC2626]' : undefined}
+                className={
+                  isOvercommitted && isEditedRow ? 'border-[#DC2626]' : undefined
+                }
               />
               {isOvercommitted ? (
                 <span className="text-[12px] text-[#B45309]">availability exceeded</span>
@@ -5310,7 +5316,8 @@ function ExplorerTable({
                     handleTransfersEdit,
                     onOpenProductTransfers,
                     getAvailableToSend,
-                    isLocationOvercommitted })
+                    isLocationOvercommitted,
+                    explorerTransferOverrides })
                 )}
               </tr>
               ))
