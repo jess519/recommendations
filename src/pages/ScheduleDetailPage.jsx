@@ -444,15 +444,15 @@ const LOCATIONS_TABLE_DATA = [
 // Mock products for trip drilldown (keyed by trip id)
 const PRODUCTS_BY_TRIP = {
   1: [
-    { id: 1, name: 'Croi-sac zip l', sku: 'A1398810', colour: 'Noir', movementType: ["rebalancing"], transfers: 3, transfersSub: 1, approvedTransfers: 3, unapprovedTransfers: 0, revenue: '€1.48K', recommended: 1, recommendedBadges: ['REV'], recommendedSub: 2, confidence: 'very_high', coverage: 'All SKUs in target', coverageWeeks: 5.2, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 1, salesL30: 2, forecast: 1.87, stockouts: '0 → 0', locations: '2 → 2', overstocks: '4 → 1', understocks: '8 → 5', depth: '5.0 → 5.0',     status: 'approved_by_system', currentUnits: 12, currentUnitsInTransit: 3, warehouseAllocateLine: '52 → 48', warehouseSellLine: '68 → 62' },
+    { id: 1, name: 'Croi-sac zip l', sku: 'A1398810', colour: 'Noir', movementType: ["rebalancing"], transfers: 3, transfersSub: 1, approvedTransfers: 3, unapprovedTransfers: 0, revenue: '€1.48K', recommended: 1, recommendedBadges: ['REV'], recommendedSub: 2, confidence: 'high', coverage: 'All SKUs in target', coverageWeeks: 5.2, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 1, salesL30: 2, forecast: 1.87, stockouts: '0 → 0', locations: '2 → 2', overstocks: '4 → 1', understocks: '8 → 5', depth: '5.0 → 5.0',     status: 'approved_by_system', currentUnits: 12, currentUnitsInTransit: 3, warehouseAllocateLine: '52 → 48', warehouseSellLine: '68 → 62' },
     { id: 2, name: 'Pre-sac seau m', sku: 'A101080', colour: 'Bleu petrole', movementType: ["rebalancing"], transfers: 2, transfersSub: 1, approvedTransfers: 0, unapprovedTransfers: 2, revenue: '€1.12K', recommended: 2, recommendedBadges: ['VIS'], recommendedSub: 1, confidence: 'high', coverage: '2% below target', coverageWeeks: 3.8, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 2, salesL30: 3, forecast: 0.54, stockouts: '0 → 1', locations: '2 → 1', overstocks: '3 → 0', understocks: '2 → 0', depth: '3.0 → 6.0', currentUnits: 8, currentUnitsInTransit: 0, warehouseAllocateLine: '58 → 51', warehouseSellLine: '72 → 65' },
     { id: 3, name: 'Ang-sac pte main m', sku: 'A1252810', colour: 'Figue', movementType: ["rebalancing"], transfers: 3, transfersSub: 2, approvedTransfers: 2, unapprovedTransfers: 1, revenue: '€1.89K', recommended: 3, recommendedBadges: ['REV', 'VIS'], recommendedSub: 1, confidence: 'high', coverage: '5% below target', coverageWeeks: 3.1, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 1, salesL30: 4, forecast: 2.1, stockouts: '1 → 0', locations: '2 → 2', overstocks: '5 → 2', understocks: '6 → 3', depth: '4.2 → 4.8',     status: 'last_edited_by_user', editedByUser: 'Csabi Toth', currentUnits: 25, currentUnitsInTransit: 5, warehouseAllocateLine: '48 → 42', warehouseSellLine: '65 → 58' },
-    { id: 4, name: 'Croi-sac zip s', sku: 'A1398811', colour: 'Noir', movementType: ["rebalancing"], transfers: 1, transfersSub: 2, approvedTransfers: 1, unapprovedTransfers: 0, revenue: '€0.98K', recommended: 1, recommendedBadges: ['REV'], recommendedSub: 2, confidence: 'medium', coverage: 'All SKUs in target', coverageWeeks: 6.1, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 0, salesL30: 1, forecast: 0.32, stockouts: '0 → 0', locations: '1 → 2', overstocks: '2 → 1', understocks: '4 → 2', depth: '5.0 → 5.0', status: 'approved_by_user', approvedByUser: 'Jess Briggs', currentUnits: 3, currentUnitsInTransit: 1, warehouseAllocateLine: '55 → 50', warehouseSellLine: '70 → 63' },
+    { id: 4, name: 'Croi-sac zip s', sku: 'A1398811', colour: 'Noir', movementType: ["rebalancing"], transfers: 1, transfersSub: 2, approvedTransfers: 1, unapprovedTransfers: 0, revenue: '€0.98K', recommended: 1, recommendedBadges: ['REV'], recommendedSub: 2, confidence: 'high', coverage: 'All SKUs in target', coverageWeeks: 6.1, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 0, salesL30: 1, forecast: 0.32, stockouts: '0 → 0', locations: '1 → 2', overstocks: '2 → 1', understocks: '4 → 2', depth: '5.0 → 5.0', status: 'approved_by_user', approvedByUser: 'Jess Briggs', currentUnits: 3, currentUnitsInTransit: 1, warehouseAllocateLine: '55 → 50', warehouseSellLine: '70 → 63' },
     { id: 5, name: 'Pre-sac seau s', sku: 'A101081', colour: 'Bleu petrole', movementType: ["replenishment"], transfers: 2, transfersSub: 1, approvedTransfers: 1, unapprovedTransfers: 1, revenue: '€0.76K', recommended: 2, recommendedBadges: ['VIS'], recommendedSub: 1, confidence: 'low', coverage: '8% below target', coverageWeeks: 2.9, coverageTarget: 6, nextEvent: { name: 'UK weekly replenishment', date: '16/06/2026' }, salesL7: 1, salesL30: 2, forecast: 0.54, stockouts: '0 → 1', locations: '2 → 1', overstocks: '3 → 0', understocks: '2 → 0', depth: '3.0 → 6.0', status: 'needs_review_from_user', currentUnits: 15, currentUnitsInTransit: 2, warehouseAllocateLine: '50 → 45', warehouseSellLine: '68 → 61' },
-    { id: 6, name: 'Ang-sac pte main s', sku: 'A1252811', colour: 'Figue', movementType: ["replenishment","rebalancing"], transfers: 4, transfersSub: 1, replenTransfers: 2, rebalTransfers: 2, approvedTransfers: 2, unapprovedTransfers: 2, revenue: '€0.65K', recommended: 1, recommendedBadges: ['REV'], recommendedSub: 1, confidence: 'very_low', coverage: '67% below target', coverageWeeks: 1.4, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 0, salesL30: 1, forecast: 0.21, stockouts: '0 → 0', locations: '2 → 2', overstocks: '4 → 1', understocks: '3 → 1', depth: '4.0 → 4.5', status: 'partially_approved', currentUnits: 7, currentUnitsInTransit: 0, warehouseAllocateLine: '57 → 44', warehouseSellLine: '57 → 51' },
+    { id: 6, name: 'Ang-sac pte main s', sku: 'A1252811', colour: 'Figue', movementType: ["replenishment","rebalancing"], transfers: 4, transfersSub: 1, replenTransfers: 2, rebalTransfers: 2, approvedTransfers: 2, unapprovedTransfers: 2, revenue: '€0.65K', recommended: 1, recommendedBadges: ['REV'], recommendedSub: 1, confidence: 'low', coverage: '67% below target', coverageWeeks: 1.4, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 0, salesL30: 1, forecast: 0.21, stockouts: '0 → 0', locations: '2 → 2', overstocks: '4 → 1', understocks: '3 → 1', depth: '4.0 → 4.5', status: 'partially_approved', currentUnits: 7, currentUnitsInTransit: 0, warehouseAllocateLine: '57 → 44', warehouseSellLine: '57 → 51' },
   ],
   2: [
-    { id: 7, name: 'Sac zip l', sku: 'B200001', colour: 'Noir', movementType: ["rebalancing"], transfers: 2, transfersSub: 1, approvedTransfers: 2, unapprovedTransfers: 0, revenue: '€0.89K', recommended: 2, recommendedBadges: ['REV'], recommendedSub: 1, confidence: 'medium', coverage: '3% below target', coverageWeeks: 4.8, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 1, salesL30: 2, forecast: 0.45, stockouts: '0 → 0', locations: '2 → 2', overstocks: '2 → 1', understocks: '5 → 3', depth: '4.5 → 5.0', status: 'approved_by_user', approvedByUser: 'Jess Briggs', currentUnits: 18, currentUnitsInTransit: 4, warehouseAllocateLine: '40 → 36', warehouseSellLine: '50 → 45' },
+    { id: 7, name: 'Sac zip l', sku: 'B200001', colour: 'Noir', movementType: ["rebalancing"], transfers: 2, transfersSub: 1, approvedTransfers: 2, unapprovedTransfers: 0, revenue: '€0.89K', recommended: 2, recommendedBadges: ['REV'], recommendedSub: 1, confidence: 'high', coverage: '3% below target', coverageWeeks: 4.8, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 1, salesL30: 2, forecast: 0.45, stockouts: '0 → 0', locations: '2 → 2', overstocks: '2 → 1', understocks: '5 → 3', depth: '4.5 → 5.0', status: 'approved_by_user', approvedByUser: 'Jess Briggs', currentUnits: 18, currentUnitsInTransit: 4, warehouseAllocateLine: '40 → 36', warehouseSellLine: '50 → 45' },
     { id: 8, name: 'Sac seau m', sku: 'B200002', colour: 'Noir', movementType: ["rebalancing"], transfers: 1, transfersSub: 2, approvedTransfers: 0, unapprovedTransfers: 1, revenue: '€0.52K', recommended: 1, recommendedBadges: ['VIS'], recommendedSub: 2, confidence: 'high', coverage: 'All SKUs in target', coverageWeeks: 6.3, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 0, salesL30: 1, forecast: 0.28, stockouts: '0 → 1', locations: '1 → 2', overstocks: '1 → 0', understocks: '3 → 1', depth: '3.6 → 4.3', status: 'last_edited_by_user', editedByUser: 'Csabi Toth', currentUnits: 11, currentUnitsInTransit: 2, warehouseAllocateLine: '35 → 30', warehouseSellLine: '42 → 38' },
   ] }
 
@@ -620,11 +620,8 @@ const MOVEMENT_TYPE_FILTER_OPTIONS = [
 ]
 
 const CONFIDENCE_FILTER_OPTIONS = [
-  { id: 'very_high', label: 'Very high' },
   { id: 'high', label: 'High' },
-  { id: 'medium', label: 'Medium' },
   { id: 'low', label: 'Low' },
-  { id: 'very_low', label: 'Very low' },
 ]
 
 const STATUS_CYCLE = [
@@ -635,7 +632,7 @@ const STATUS_CYCLE = [
   'approved_by_user',
 ]
 
-const CONFIDENCE_CYCLE = ['very_high', 'high', 'high', 'medium', 'medium', 'low', 'very_low']
+const CONFIDENCE_CYCLE = ['high', 'high', 'high', 'low']
 const BADGE_CYCLE = [['REV'], ['VIS'], ['REV', 'VIS'], ['REV'], ['VIS']]
 
 function buildExplorerRow(rowIndex, product, size, fromLoc, toLoc, movementType) {
@@ -799,29 +796,17 @@ const STATUS_BADGE_CLASSES = {
   partially_approved: 'bg-[#fef3c7] text-[#92400e]' }
 
 const CONFIDENCE_PILL_CONFIG = {
-  very_high: {
-    label: 'Very high',
-    badgeClass: 'bg-[#cce8dc] text-[#0a0a0a] border-[#067a4e]',
-    dotClass: 'bg-[#067a4e]' },
   high: {
     label: 'High',
     badgeClass: 'bg-[#e4f4ef] text-[#0a0a0a] border-[#08a16a]',
     dotClass: 'bg-[#08a16a]' },
-  medium: {
-    label: 'Medium',
-    badgeClass: 'bg-[#fef9c3] text-[#0a0a0a] border-[#ca8a04]',
-    dotClass: 'bg-[#eab308]' },
   low: {
     label: 'Low',
     badgeClass: 'bg-[#ffe4cc] text-[#0a0a0a] border-[#bd5800]',
-    dotClass: 'bg-[#bd5800]' },
-  very_low: {
-    label: 'Very low',
-    badgeClass: 'bg-[#fee2e2] text-[#0a0a0a] border-[#dc2626]',
-    dotClass: 'bg-[#dc2626]' } }
+    dotClass: 'bg-[#bd5800]' } }
 
 function ConfidencePill({ value }) {
-  const cfg = CONFIDENCE_PILL_CONFIG[value] || CONFIDENCE_PILL_CONFIG.medium
+  const cfg = CONFIDENCE_PILL_CONFIG[value] || CONFIDENCE_PILL_CONFIG.high
   return (
     <span
       className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-[6px] border text-[12px] font-medium border-transparent ${cfg.badgeClass}`}
@@ -2453,7 +2438,7 @@ function ProductsDrilldown({
               {grip}
               <span
                 className="inline-flex items-center gap-1 cursor-help"
-                title="Based on historical forecast accuracy at the product level. Lower confidence means recommendations carry more uncertainty."
+                title="Based on historical forecast accuracy at the product level. Low confidence means recommendations carry more uncertainty."
               >
                 Confidence <IconInfo />
               </span>
@@ -3994,7 +3979,7 @@ const EXPLORER_TABLE_COLUMNS = [
     alignment: 'right',
     minWidth: 'min-w-[110px]',
     tooltip:
-      'Based on historical forecast accuracy at the product level. Lower confidence means recommendations carry more uncertainty.',
+      'Based on historical forecast accuracy at the product level. Low confidence means recommendations carry more uncertainty.',
   },
   { id: 'transfers', label: 'Transfers', alignment: 'right', minWidth: 'min-w-[110px]' },
   { id: 'revenue', label: 'Revenue increase', alignment: 'right', minWidth: 'min-w-[110px]', tooltip: null },
