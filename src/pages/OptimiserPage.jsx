@@ -1066,9 +1066,7 @@ function createDefaultScheduleBlock(id) {
     movementTypes: [],
     networkTag: '',
     tripCapacityTag: '',
-    confidenceLevels: ['Very High', 'High', 'Medium', 'Low', 'Very Low'],
-    aggressiveness: '',
-    basicMode: false,
+    coverageMode: 'next-inventory-date',
     targetCoverageValue: '',
     targetCoverageUnit: 'Weeks',
     repeatEvery: 1,
@@ -1126,27 +1124,6 @@ function ScheduleTimeSelect({ value, onChange }) {
   )
 }
 
-function ScheduleBasicModeSwitch({ checked, onChange, ariaLabel = 'Basic mode' }) {
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      aria-label={ariaLabel}
-      onClick={onChange}
-      className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${
-        checked ? 'bg-[#1d4ed8]' : 'bg-[#d1d5db]'
-      }`}
-    >
-      <span
-        className={`inline-block size-4 rounded-full bg-white shadow transition-transform ${
-          checked ? 'translate-x-[18px]' : 'translate-x-0.5'
-        }`}
-      />
-    </button>
-  )
-}
-
 function ScheduleDetailsBlock({ block, onUpdate }) {
   return (
     <div className="rounded-[4px] border border-[#e5e7eb] bg-[#fafafa] p-4">
@@ -1180,82 +1157,98 @@ function ScheduleDetailsBlock({ block, onUpdate }) {
           onChange={(next) => onUpdate({ tripCapacityTag: next })}
         />
 
-        <section className="mt-4 flex flex-col gap-4">
-          <div className="flex items-center justify-between gap-4">
-            <p className="text-[14px] font-medium text-[#0a0a0a]">Schedule reasoning</p>
-            <div className="flex shrink-0 items-center gap-2">
-              <span className="text-[14px] text-[#4b535c] whitespace-nowrap">Basic</span>
-              <ScheduleBasicModeSwitch
-                checked={block.basicMode}
-                onChange={() => onUpdate({ basicMode: !block.basicMode })}
+        <section className="mt-4 flex flex-col gap-3">
+          <p className="text-[14px] font-medium text-[#0a0a0a]">Coverage</p>
+          <div className="flex flex-col gap-3">
+            <label
+              className={`flex cursor-pointer items-start gap-3 rounded-[10px] border bg-white p-4 hover:border-[#0267ff]/40 has-[:checked]:border-[#0267ff] ${
+                block.coverageMode === 'next-inventory-date' ? 'border-[#0267ff]' : 'border-[#e5e7eb]'
+              }`}
+            >
+              <input
+                type="radio"
+                name={`coverageMode-${block.id}`}
+                value="next-inventory-date"
+                checked={block.coverageMode === 'next-inventory-date'}
+                onChange={() => onUpdate({ coverageMode: 'next-inventory-date' })}
+                className="mt-1 size-4 shrink-0 border-[#e5e7eb] text-[#0267ff] focus:ring-[#0267ff]"
               />
+              <div className="flex min-w-0 flex-col gap-1">
+                <span className="text-[14px] font-medium text-[#0a0a0a]">Use next inventory date</span>
+                <span className="text-[12px] font-normal text-[#4b535c]">
+                  Sol will cover inventory up until the next scheduled proposal.
+                </span>
+              </div>
+            </label>
+            <label
+              className={`flex cursor-pointer items-start gap-3 rounded-[10px] border bg-white p-4 hover:border-[#0267ff]/40 has-[:checked]:border-[#0267ff] ${
+                block.coverageMode === 'parameter-coverage' ? 'border-[#0267ff]' : 'border-[#e5e7eb]'
+              }`}
+            >
+              <input
+                type="radio"
+                name={`coverageMode-${block.id}`}
+                value="parameter-coverage"
+                checked={block.coverageMode === 'parameter-coverage'}
+                onChange={() => onUpdate({ coverageMode: 'parameter-coverage' })}
+                className="mt-1 size-4 shrink-0 border-[#e5e7eb] text-[#0267ff] focus:ring-[#0267ff]"
+              />
+              <div className="flex min-w-0 flex-col gap-1">
+                <span className="text-[14px] font-medium text-[#0a0a0a]">Use your parameter coverage</span>
+                <span className="text-[12px] font-normal text-[#4b535c]">
+                  Sol will use the target coverage set in your parameters.
+                </span>
+              </div>
+            </label>
+            <label
+              className={`flex cursor-pointer items-start gap-3 rounded-[10px] border bg-white p-4 hover:border-[#0267ff]/40 has-[:checked]:border-[#0267ff] ${
+                block.coverageMode === 'set-target-coverage' ? 'border-[#0267ff]' : 'border-[#e5e7eb]'
+              }`}
+            >
+              <input
+                type="radio"
+                name={`coverageMode-${block.id}`}
+                value="set-target-coverage"
+                checked={block.coverageMode === 'set-target-coverage'}
+                onChange={() => onUpdate({ coverageMode: 'set-target-coverage' })}
+                className="mt-1 size-4 shrink-0 border-[#e5e7eb] text-[#0267ff] focus:ring-[#0267ff]"
+              />
+              <div className="flex min-w-0 flex-col gap-1">
+                <span className="text-[14px] font-medium text-[#0a0a0a]">Set target coverage</span>
+                <span className="text-[12px] font-normal text-[#4b535c]">
+                  Enter how many weeks (or days) of stock you want locations to hold.
+                </span>
+              </div>
+            </label>
+          </div>
+
+          {block.coverageMode === 'set-target-coverage' && (
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Target coverage</label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  placeholder="0"
+                  value={block.targetCoverageValue}
+                  onChange={(e) => onUpdate({ targetCoverageValue: e.target.value })}
+                  className="h-12 w-[100px] shrink-0 rounded-[4px] border border-[#EAEAEA] bg-white px-4 text-[14px] text-[#0a0a0a] placeholder:text-[#9ca3af] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                />
+                <div className="relative shrink-0">
+                  <select
+                    value={block.targetCoverageUnit}
+                    onChange={(e) => onUpdate({ targetCoverageUnit: e.target.value })}
+                    className="h-12 w-[120px] appearance-none rounded-[4px] border border-[#EAEAEA] bg-white py-0 pl-4 pr-10 text-[14px] text-[#0a0a0a]"
+                  >
+                    <option value="Weeks">Weeks</option>
+                    <option value="Days">Days</option>
+                  </select>
+                  <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[#4b535c]">
+                    <IconChevronDownSelect />
+                  </span>
+                </div>
+              </div>
             </div>
-          </div>
-          <div className="flex w-full flex-col items-end gap-1">
-            <p className="w-full whitespace-nowrap text-right text-[11px] leading-[14px] text-[#4b535c]">
-              Use target coverage instead of next schedule date, confidence and aggressiveness.
-            </p>
-            <p className="text-right text-[12px] leading-[16px] text-[#9ca3af]">For simpler setups.</p>
-          </div>
-
-        {!block.basicMode && (
-          <>
-        <CreateScheduleScopeMultiSelect
-          label="Confidence level"
-          helperText="Select which Autone confidence recommendations you see in the scheduled proposal."
-          placeholder="Select confidence levels"
-          options={['Very High', 'High', 'Medium', 'Low', 'Very Low']}
-          includeValues={block.confidenceLevels}
-          onIncludeChange={(next) => onUpdate({ confidenceLevels: next })}
-          excludeValues={[]}
-          onExcludeChange={() => {}}
-          hideModeToggle={true}
-          showSelectAll={true}
-          showSelectedLabels={true}
-        />
-
-        <CreateScheduleScopeSingleSelect
-          label="Aggressiveness"
-          helperText="Higher aggressiveness adds more safety stock to this schedule's recommendations."
-          placeholder="Select aggressiveness"
-          options={['Conservative', 'Balanced', 'Aggressive']}
-          value={block.aggressiveness}
-          onChange={(next) => onUpdate({ aggressiveness: next })}
-        />
-          </>
-        )}
-
-        {block.basicMode && (
-        <div className="flex flex-col gap-1.5">
-          <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Target coverage</label>
-          <div className="flex items-center gap-2">
-            <input
-              type="number"
-              placeholder="0"
-              value={block.targetCoverageValue}
-              onChange={(e) => onUpdate({ targetCoverageValue: e.target.value })}
-              className="h-12 w-[100px] shrink-0 rounded-[4px] border border-[#EAEAEA] bg-white px-4 text-[14px] text-[#0a0a0a] placeholder:text-[#9ca3af] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-            />
-            <div className="relative shrink-0">
-              <select
-                value={block.targetCoverageUnit}
-                onChange={(e) => onUpdate({ targetCoverageUnit: e.target.value })}
-                className="h-12 w-[120px] appearance-none rounded-[4px] border border-[#EAEAEA] bg-white py-0 pl-4 pr-10 text-[14px] text-[#0a0a0a]"
-              >
-                <option value="Weeks">Weeks</option>
-                <option value="Days">Days</option>
-              </select>
-              <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[#4b535c]">
-                <IconChevronDownSelect />
-              </span>
-            </div>
-          </div>
-          <p className="text-[12px] text-[#4b535c]">
-            Instead of covering you until the next scheduled proposal, input how many weeks of stock you want your
-            locations to hold.
-          </p>
-        </div>
-        )}
+          )}
         </section>
 
         <section className="mt-4 flex flex-col gap-4">
@@ -2232,6 +2225,9 @@ export default function OptimiserPage({ onAddJob, openAddJob, resetToUpcoming, o
   const [isAdhocFlow, setIsAdhocFlow] = useState(false)
   const [adhocStep, setAdhocStep] = useState(1)
   const [adhocMovementType, setAdhocMovementType] = useState([])
+  const [adhocCoverageMode, setAdhocCoverageMode] = useState('parameter-coverage')
+  const [adhocTargetCoverageValue, setAdhocTargetCoverageValue] = useState('')
+  const [adhocTargetCoverageUnit, setAdhocTargetCoverageUnit] = useState('Weeks')
   const [adhocApprovalMode, setAdhocApprovalMode] = useState('auto-approve')
   const [adhocExceptions, setAdhocExceptions] = useState(() => createDefaultScheduleExceptions())
   const [locationScopeOption, setLocationScopeOption] = useState('all')
@@ -2540,6 +2536,78 @@ export default function OptimiserPage({ onAddJob, openAddJob, resetToUpcoming, o
                 hideModeToggle={true}
                 showSelectedLabels={true}
               />
+              <section className="flex flex-col gap-3">
+                <h3 className="text-[14px] font-medium text-[#0a0a0a]">Coverage</h3>
+                <div className="flex flex-col gap-3">
+                  <label
+                    className={`flex cursor-pointer items-start gap-3 rounded-[10px] border bg-white p-4 hover:border-[#0267ff]/40 has-[:checked]:border-[#0267ff] ${
+                      adhocCoverageMode === 'parameter-coverage' ? 'border-[#0267ff]' : 'border-[#e5e7eb]'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="adhocCoverageMode"
+                      value="parameter-coverage"
+                      checked={adhocCoverageMode === 'parameter-coverage'}
+                      onChange={() => setAdhocCoverageMode('parameter-coverage')}
+                      className="mt-1 size-4 shrink-0 border-[#e5e7eb] text-[#0267ff] focus:ring-[#0267ff]"
+                    />
+                    <div className="flex min-w-0 flex-col gap-1">
+                      <span className="text-[14px] font-medium text-[#0a0a0a]">Use your parameter coverage</span>
+                      <span className="text-[12px] font-normal text-[#4b535c]">
+                        Sol will use the target coverage set in your parameters.
+                      </span>
+                    </div>
+                  </label>
+                  <label
+                    className={`flex cursor-pointer items-start gap-3 rounded-[10px] border bg-white p-4 hover:border-[#0267ff]/40 has-[:checked]:border-[#0267ff] ${
+                      adhocCoverageMode === 'set-target-coverage' ? 'border-[#0267ff]' : 'border-[#e5e7eb]'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="adhocCoverageMode"
+                      value="set-target-coverage"
+                      checked={adhocCoverageMode === 'set-target-coverage'}
+                      onChange={() => setAdhocCoverageMode('set-target-coverage')}
+                      className="mt-1 size-4 shrink-0 border-[#e5e7eb] text-[#0267ff] focus:ring-[#0267ff]"
+                    />
+                    <div className="flex min-w-0 flex-col gap-1">
+                      <span className="text-[14px] font-medium text-[#0a0a0a]">Set target coverage</span>
+                      <span className="text-[12px] font-normal text-[#4b535c]">
+                        Enter how many weeks (or days) of stock you want locations to hold.
+                      </span>
+                    </div>
+                  </label>
+                </div>
+                {adhocCoverageMode === 'set-target-coverage' && (
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Target coverage</label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="number"
+                        placeholder="0"
+                        value={adhocTargetCoverageValue}
+                        onChange={(e) => setAdhocTargetCoverageValue(e.target.value)}
+                        className="h-12 w-[100px] shrink-0 rounded-[4px] border border-[#EAEAEA] bg-white px-4 text-[14px] text-[#0a0a0a] placeholder:text-[#9ca3af] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      />
+                      <div className="relative shrink-0">
+                        <select
+                          value={adhocTargetCoverageUnit}
+                          onChange={(e) => setAdhocTargetCoverageUnit(e.target.value)}
+                          className="h-12 w-[120px] appearance-none rounded-[4px] border border-[#EAEAEA] bg-white py-0 pl-4 pr-10 text-[14px] text-[#0a0a0a]"
+                        >
+                          <option value="Weeks">Weeks</option>
+                          <option value="Days">Days</option>
+                        </select>
+                        <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[#4b535c]">
+                          <IconChevronDownSelect />
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </section>
               <ScopeSelectionSection {...scopeSelectionSectionProps} />
             </div>
           </div>
