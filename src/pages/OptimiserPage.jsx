@@ -515,6 +515,24 @@ function CreateScheduleScopeSingleSelect({
   )
 }
 
+/** Mock available product/location counts for scope filter headers (prototype). */
+function mockScopeAvailableCount(seed, activeDimensions) {
+  if (activeDimensions.length === 0) return null
+  let n = seed
+  for (const selectedCount of activeDimensions) {
+    n = Math.max(1, Math.floor(n * (1 - Math.min(0.75, 0.28 + 0.06 * selectedCount))))
+  }
+  return n
+}
+
+function formatScopeCount(n) {
+  return n === null ? null : n.toLocaleString()
+}
+
+function scopeDimensionSelectedCount(includeValues = [], excludeValues = []) {
+  return includeValues.length + excludeValues.length
+}
+
 /** Product + geographic scope filters for create schedule scope selection. */
 function CreateScheduleScopeFilterPanel({
   warehouseInclude,
@@ -583,12 +601,57 @@ function CreateScheduleScopeFilterPanel({
     extraVisibleFilters.includes(key)
   )
 
+  const productActiveDimensions = [
+    scopeDimensionSelectedCount(departmentInclude, departmentExclude),
+    scopeDimensionSelectedCount(seasonsInclude, seasonsExclude),
+    scopeDimensionSelectedCount(productsInclude, productsExclude),
+    ...visibleProductExtras.map(({ key }) =>
+      scopeDimensionSelectedCount(
+        expandedFieldState[key].include,
+        expandedFieldState[key].exclude
+      )
+    ),
+  ].filter((selectedCount) => selectedCount > 0)
+
+  const geoActiveDimensions = [
+    scopeDimensionSelectedCount(warehouseInclude, warehouseExclude),
+    scopeDimensionSelectedCount(locationTypesInclude, locationTypesExclude),
+    scopeDimensionSelectedCount(locationsInclude, locationsExclude),
+    ...visibleLocationExtras.map(({ key }) =>
+      scopeDimensionSelectedCount(
+        expandedFieldState[key].include,
+        expandedFieldState[key].exclude
+      )
+    ),
+  ].filter((selectedCount) => selectedCount > 0)
+
+  const productsAvailableCount = mockScopeAvailableCount(4025, productActiveDimensions)
+  const locationsAvailableCount = mockScopeAvailableCount(31, geoActiveDimensions)
+
   return (
     <>
     <div className="rounded-[4px] border border-[#e5e7eb] bg-[#fafafa] p-4">
       <div className="grid grid-cols-2 gap-x-6 gap-y-3">
-        <h4 className="text-[13px] font-medium text-[#0a0a0a] uppercase tracking-[0.04em]">Product scope</h4>
-        <h4 className="text-[13px] font-medium text-[#0a0a0a] uppercase tracking-[0.04em]">Geographic scope</h4>
+        <div className="flex items-center justify-between gap-2">
+          <h4 className="text-[13px] font-medium text-[#0a0a0a] uppercase tracking-[0.04em]">
+            Product scope
+          </h4>
+          {productsAvailableCount != null && (
+            <span className="inline-flex shrink-0 items-center rounded-full bg-[#dcfce7] px-2.5 py-1 text-[12px] font-medium text-[#166534]">
+              {formatScopeCount(productsAvailableCount)} products available
+            </span>
+          )}
+        </div>
+        <div className="flex items-center justify-between gap-2">
+          <h4 className="text-[13px] font-medium text-[#0a0a0a] uppercase tracking-[0.04em]">
+            Geographic scope
+          </h4>
+          {locationsAvailableCount != null && (
+            <span className="inline-flex shrink-0 items-center rounded-full bg-[#dcfce7] px-2.5 py-1 text-[12px] font-medium text-[#166534]">
+              {formatScopeCount(locationsAvailableCount)} locations available
+            </span>
+          )}
+        </div>
 
         <div className="w-full self-start">
           <CreateScheduleScopeMultiSelect
