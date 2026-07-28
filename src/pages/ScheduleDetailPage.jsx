@@ -740,7 +740,6 @@ function buildExplorerRow(rowIndex, product, size, fromLoc, toLoc, movementType)
     ws: product.ws,
     ic: product.ic,
     seasonAndEvent: product.seasonAndEvent,
-    lifeToDateSales: (rowIndex * 7) % 51, // ~0–50 units, varies per SKU-location row
     fromLocation: fromLoc,
     toLocation: toLoc,
     movementType,
@@ -1454,8 +1453,6 @@ function SkuDetailsAttrRow({ label, value }) {
 
 /** Product / SKU attribute panel for Explorer SKU details hover */
 function SkuDetailsHoverCard({ row }) {
-  const lifeToDate =
-    row.lifeToDateSales == null ? '—' : `${row.lifeToDateSales} unit${row.lifeToDateSales === 1 ? '' : 's'}`
   return (
     <div className="pointer-events-auto w-[min(300px,calc(100vw-1.5rem))] rounded-[8px] border border-[#E9EAEB] bg-white p-4 shadow-[0_4px_16px_rgba(0,0,0,0.1)]">
       <div className="pointer-events-auto flex gap-3 border-b border-[#E9EAEB] pb-3">
@@ -1467,7 +1464,6 @@ function SkuDetailsHoverCard({ row }) {
         <SkuDetailsAttrRow label="WS" value={row.ws} />
         <SkuDetailsAttrRow label="IC" value={row.ic} />
         <SkuDetailsAttrRow label="Season and event" value={row.seasonAndEvent} />
-        <SkuDetailsAttrRow label="Life to date sales" value={lifeToDate} />
         <SkuDetailsAttrRow label="Department" value={row.department} />
         <SkuDetailsAttrRow label="Sub-department" value={row.subDepartment} />
         <SkuDetailsAttrRow label="Material" value={row.material} />
