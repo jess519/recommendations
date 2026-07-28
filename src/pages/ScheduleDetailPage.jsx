@@ -4976,7 +4976,7 @@ function ExplorerTable({
   )
 
   return (
-    <div className="relative flex flex-col gap-[15px]">
+    <div className="flex flex-col gap-[15px]">
       <div className="flex flex-wrap items-center gap-3 mb-4 min-w-0">
         <div className="flex items-center gap-3 shrink-0">
           <div className="flex items-center h-10 rounded-[4px] border border-[#e9eaeb] bg-white w-[200px] max-w-[280px]">
@@ -5160,6 +5160,21 @@ function ExplorerTable({
           activeId={explorerActiveQuickFilter}
           onChange={setExplorerActiveQuickFilter}
         />
+        <button
+          type="button"
+          title="CX prototype only — not a product feature"
+          onClick={() => setExplorerReducedColumns((on) => !on)}
+          className="ml-auto inline-flex max-w-[280px] items-start gap-1.5 rounded-[6px] border border-dashed border-[#9CA3AF] bg-[#F9FAFB] px-2.5 py-2 text-left text-[12px] leading-snug text-[#6B7280] shadow-sm hover:bg-[#F3F4F6]"
+        >
+          <span className="mt-0.5 shrink-0 text-[#9CA3AF]">
+            <IconWarning />
+          </span>
+          <span>
+            {explorerReducedColumns
+              ? 'Reduced columns (prototype) — click for full'
+              : 'Full columns (prototype) — click for reduced'}
+          </span>
+        </button>
       </div>
 
       {explorerFilterCount > 0 && (
@@ -5475,22 +5490,6 @@ function ExplorerTable({
           </div>
         </div>
       )}
-
-      <button
-        type="button"
-        title="CX prototype only — not a product feature"
-        onClick={() => setExplorerReducedColumns((on) => !on)}
-        className="absolute bottom-3 right-3 z-40 inline-flex max-w-[280px] items-start gap-1.5 rounded-[6px] border border-dashed border-[#9CA3AF] bg-[#F9FAFB] px-2.5 py-2 text-left text-[12px] leading-snug text-[#6B7280] shadow-sm hover:bg-[#F3F4F6]"
-      >
-        <span className="mt-0.5 shrink-0 text-[#9CA3AF]">
-          <IconWarning />
-        </span>
-        <span>
-          {explorerReducedColumns
-            ? 'Reduced columns (prototype) — click for full'
-            : 'Full columns (prototype) — click for reduced'}
-        </span>
-      </button>
     </div>
   )
 }
