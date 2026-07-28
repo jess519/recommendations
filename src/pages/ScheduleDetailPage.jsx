@@ -100,7 +100,7 @@ const PRODUCTS_TAB_SUMMARY_TOTALS = {
   revenue: '€6.9K',
   recommendedUnits: '18 units',
   recommendedTrips: '5 trips',
-  stockUnits: '70 SOH',
+  stockUnits: '70',
   stockInTransit: '11 in transit & PFP',
   warehouseAllocate: '320 → 280 to allocate',
   warehouseSell: '400 → 360 to sell',
@@ -2675,9 +2675,9 @@ function ProductsDrilldown({
               {grip}
               <span
                 className="inline-flex items-center gap-1 cursor-help"
-                title="Stock on-hand. In transit & PFP shown as secondary context. Includes parent & child locations if applicable."
+                title="Stock on-hand at the receiving location. In transit & PFP shown as secondary context."
               >
-                Stock in circulation <IconInfo />
+                Units in circulation (receiving) <IconInfo />
               </span>
             </span>
           </th>
@@ -2882,7 +2882,10 @@ function ProductsDrilldown({
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
             <div className="flex flex-col items-end">
-              <span>{productSummary.stockUnits}</span>
+              <span className="inline-flex items-baseline gap-1">
+                <span className="text-[14px] text-[#0a0a0a]">{productSummary.stockUnits}</span>
+                <span className="text-[14px] text-[#0a0a0a]">SOH</span>
+              </span>
               <span className="text-[12px] text-[#4b535c]">{productSummary.stockInTransit}</span>
             </div>
           </th>
@@ -3090,12 +3093,14 @@ function ProductsDrilldown({
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right align-top`}>
             <div className="flex flex-col items-end line-clamp-2 min-w-0">
               <span className="inline-flex items-baseline gap-1">
-                <span className="text-[#0a0a0a]">{p.currentUnits ?? '—'}</span>
-                <span className="text-[12px] text-[#4b535c]">SOH</span>
+                <span className="text-[14px] text-[#0a0a0a]">{p.currentUnits ?? '—'}</span>
+                <span className="text-[14px] text-[#0a0a0a]">SOH</span>
               </span>
-              <span className="text-[12px] text-[#4b535c]">
-                {p.currentUnitsInTransit ?? 0} in transit & PFP
-              </span>
+              {(p.currentUnitsInTransit ?? 0) > 0 && (
+                <span className="text-[12px] text-[#4b535c]">
+                  {p.currentUnitsInTransit} in transit & PFP
+                </span>
+              )}
             </div>
           </td>
         )
@@ -3672,9 +3677,9 @@ function LocationsTab({ onDrawerFiltersActiveChange }) {
             {rowEnd(
               <span
                 className="inline-flex items-center gap-1 cursor-help"
-                title="Stock on-hand. In transit & PFP shown as secondary context. Includes parent & child locations if applicable."
+                title="Stock on-hand at the receiving location. In transit & PFP shown as secondary context."
               >
-                Stock in circulation <IconInfo />
+                Units in circulation (receiving) <IconInfo />
               </span>
             )}
           </th>
@@ -3800,8 +3805,8 @@ function LocationsTab({ onDrawerFiltersActiveChange }) {
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
             <div className="flex flex-col items-end">
               <span className="inline-flex items-baseline gap-1">
-                <span>2,450</span>
-                <span className="text-[12px] text-[#4b535c]">SOH</span>
+                <span className="text-[14px] text-[#0a0a0a]">2,450</span>
+                <span className="text-[14px] text-[#0a0a0a]">SOH</span>
               </span>
               <span className="text-[12px] text-[#4b535c]">180 in transit & PFP</span>
             </div>
@@ -3922,12 +3927,14 @@ function LocationsTab({ onDrawerFiltersActiveChange }) {
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right align-top`}>
             <div className="flex flex-col items-end line-clamp-2 min-w-0">
               <span className="inline-flex items-baseline gap-1">
-                <span className="text-[#0a0a0a]">{loc.stockInCirculation ?? '—'}</span>
-                <span className="text-[12px] text-[#4b535c]">SOH</span>
+                <span className="text-[14px] text-[#0a0a0a]">{loc.stockInCirculation ?? '—'}</span>
+                <span className="text-[14px] text-[#0a0a0a]">SOH</span>
               </span>
-              <span className="text-[12px] text-[#4b535c]">
-                {loc.stockInTransit ?? 0} in transit & PFP
-              </span>
+              {(loc.stockInTransit ?? 0) > 0 && (
+                <span className="text-[12px] text-[#4b535c]">
+                  {loc.stockInTransit} in transit & PFP
+                </span>
+              )}
             </div>
           </td>
         )
@@ -4535,15 +4542,17 @@ function renderExplorerBodyCell(row, col, {
       return (
         <td key={col.id} className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}>
           <div className="flex flex-col items-end gap-0.5">
-            <span className="inline-flex items-baseline gap-1">
-              <span className="text-[14px] text-[#0a0a0a]">
+            <span className="inline-flex items-baseline gap-1 text-[14px] text-[#0a0a0a]">
+              <span>
                 {row.stockBefore} → {row.stockAfter}
               </span>
-              <span className="text-[12px] text-[#4b535c]">SOH</span>
+              <span>SOH</span>
             </span>
-            <span className="text-[12px] text-[#4b535c]">
-              {row.stockInTransitAndPfp} in transit & PFP
-            </span>
+            {row.stockInTransitAndPfp > 0 && (
+              <span className="text-[12px] text-[#4b535c]">
+                {row.stockInTransitAndPfp} in transit & PFP
+              </span>
+            )}
             {row.stockFromOtherStores != null && (
               <span className="text-[12px] text-[#4b535c]">
                 +{row.stockFromOtherStores} from other stores
@@ -4652,11 +4661,13 @@ function renderExplorerTotalsCell(col, totals, { explorerTotalsThClass, explorer
       return (
         <th key={col.id} className={`${baseClass} ${col.minWidth} text-right`}>
           <div className="flex flex-col items-end">
-            <span className="inline-flex items-baseline gap-1">
+            <span className="inline-flex items-baseline gap-1 text-[14px] text-[#0a0a0a]">
               <span>{totals.stockBeforeAfter}</span>
-              <span className="text-[12px] text-[#4b535c]">SOH</span>
+              <span>SOH</span>
             </span>
-            <span className="text-[12px] text-[#4b535c]">{totals.inTransit}</span>
+            {totals.inTransit != null && (
+              <span className="text-[12px] text-[#4b535c]">{totals.inTransit}</span>
+            )}
           </div>
         </th>
       )
@@ -5012,7 +5023,8 @@ function ExplorerTable({
       salesL7: sumSalesL7,
       salesL30: sumSalesL30,
       stockBeforeAfter: `${sumStockBefore} → ${sumStockAfter}`,
-      inTransit: `${sumInTransitAndPfp} in transit & PFP` }
+      inTransit:
+        sumInTransitAndPfp > 0 ? `${sumInTransitAndPfp} in transit & PFP` : null }
   }, [filteredData, explorerTransferOverrides])
 
   const explorerThClass =
