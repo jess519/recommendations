@@ -662,9 +662,6 @@ function buildExplorerRow(rowIndex, product, size, fromLoc, toLoc, movementType)
   // Usually headroom (green); every 7th row is constrained (orange by default).
   const availableToSend =
     rowIndex % 7 === 0 ? Math.max(0, transfers - 2 - (rowIndex % 3)) : transfers + 2 + (rowIndex % 5)
-  // Service level: ~1/3 probability / service level / £ last-unit. sizeIdx shifts
-  // sibling SKUs by ≥10pp (or €8). Injected lows: prob <30%, service level >70%, £ <€5.
-  const framing = rowIndex % 3
   const sizeIdx = Math.max(0, product.sizes.indexOf(size))
   const initialAllocation = 1 + ((rowIndex * 7 + sizeIdx * 3) % 20)
   const [createDd, createMm, createYyyy] = SCHEDULE_CREATION_DATE.split('/').map(Number)
@@ -689,20 +686,6 @@ function buildExplorerRow(rowIndex, product, size, fromLoc, toLoc, movementType)
           d.setDate(d.getDate() - salesDaysAgo)
           return formatExplorerDate(d)
         })()
-  let serviceLevel
-  if (framing === 0) {
-    let pct = 40 + ((rowIndex * 5) % 40) + sizeIdx * 12
-    if (rowIndex % 18 === 0) pct = 15 + sizeIdx * 12
-    serviceLevel = `${Math.min(95, pct)}% p(sell) last unit`
-  } else if (framing === 1) {
-    let pct = 20 + ((rowIndex * 5) % 40) + sizeIdx * 12
-    if (rowIndex % 18 === 1) pct = 75 + sizeIdx * 12
-    serviceLevel = `${Math.min(95, pct)}% service level`
-  } else {
-    let euros = 8 + ((rowIndex * 3) % 30) + sizeIdx * 8
-    if (rowIndex % 18 === 2) euros = 2 + sizeIdx * 8
-    serviceLevel = `€${euros} last unit`
-  }
   const otherMovements =
     movementType === 'rebalancing'
       ? null
@@ -756,7 +739,6 @@ function buildExplorerRow(rowIndex, product, size, fromLoc, toLoc, movementType)
     recommendedBadges: BADGE_CYCLE[rowIndex % BADGE_CYCLE.length],
     recommendedSub: rowIndex % 3 === 0 ? '2' : undefined,
     confidence: CONFIDENCE_CYCLE[rowIndex % CONFIDENCE_CYCLE.length],
-    serviceLevel,
     coverageWeeksBefore,
     coverageWeeksAfter,
     nextEvent: {
@@ -4220,14 +4202,6 @@ const EXPLORER_TABLE_COLUMNS = [
     tooltip: 'The next scheduled inventory event for this product across all locations in scope',
   },
   {
-    id: 'serviceLevel',
-    label: 'Service level',
-    alignment: 'right',
-    minWidth: 'min-w-[160px]',
-    tooltip:
-      'The probability of selling / value of the last unit of stock at the receiving location, after this proposal is applied.',
-  },
-  {
     id: 'storageCapacity',
     label: 'Storage capacity (receiving)',
     alignment: 'right',
@@ -4501,12 +4475,6 @@ function renderExplorerBodyCell(row, col, {
           <div className="flex justify-end">
             <ConfidencePill value={row.confidence} />
           </div>
-        </td>
-      )
-    case 'serviceLevel':
-      return (
-        <td key={col.id} className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}>
-          <span className="text-[14px] text-[#0a0a0a]">{row.serviceLevel}</span>
         </td>
       )
     case 'coverage':
