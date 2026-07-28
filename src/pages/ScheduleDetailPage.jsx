@@ -703,6 +703,28 @@ function buildExplorerRow(rowIndex, product, size, fromLoc, toLoc, movementType)
     if (rowIndex % 18 === 2) euros = 2 + sizeIdx * 8
     serviceLevel = `€${euros} last unit`
   }
+  const otherMovements =
+    movementType === 'rebalancing'
+      ? null
+      : rowIndex % 10 < 3
+        ? (() => {
+            const variant = rowIndex % 3
+            if (variant === 0) return { rebalCount: 1 + (rowIndex % 3), replenCount: 0 }
+            if (variant === 1) return { rebalCount: 0, replenCount: 1 + (rowIndex % 2) }
+            return { rebalCount: 1 + (rowIndex % 2), replenCount: 1 + (rowIndex % 3) }
+          })()
+        : null
+  // Aligned with otherMovements: only replen rows that already show "Other movements" in the hover card
+  const stockFromOtherStores =
+    otherMovements != null ? 4 + (rowIndex % 5) * 2 : null // 4–12 units from other stores
+  // Small (~8–15) or larger (~45–54) bases; "why so big" rows start lower (~5–8)
+  const stockBefore =
+    stockFromOtherStores != null
+      ? 5 + (rowIndex % 4)
+      : rowIndex % 5 === 0
+        ? 45 + (rowIndex % 10)
+        : 8 + (rowIndex % 8)
+  const stockAfter = stockBefore + transfers + (stockFromOtherStores ?? 0)
   return {
     id: `exp-row-${rowIndex}`,
     productId: product.id,
@@ -726,17 +748,10 @@ function buildExplorerRow(rowIndex, product, size, fromLoc, toLoc, movementType)
     availableToSend,
     visibilityBefore: rowIndex % 11 === 0 ? 2 : rowIndex % 5 === 0 ? 1 : 0,
     visibilityAfter: rowIndex % 11 === 0 ? 3 : rowIndex % 5 === 0 ? 2 : 1,
-    otherMovements:
-      movementType === 'rebalancing'
-        ? null
-        : rowIndex % 10 < 3
-          ? (() => {
-              const variant = rowIndex % 3
-              if (variant === 0) return { rebalCount: 1 + (rowIndex % 3), replenCount: 0 }
-              if (variant === 1) return { rebalCount: 0, replenCount: 1 + (rowIndex % 2) }
-              return { rebalCount: 1 + (rowIndex % 2), replenCount: 1 + (rowIndex % 3) }
-            })()
-          : null,
+    otherMovements,
+    stockBefore,
+    stockAfter,
+    stockFromOtherStores,
     revenue: `€${(0.5 + (rowIndex * 0.37) % 4.5).toFixed(2)}K`,
     recommended: '1',
     recommendedBadges: BADGE_CYCLE[rowIndex % BADGE_CYCLE.length],
@@ -4158,7 +4173,7 @@ const EXPLORER_TABLE_COLUMNS = [
   },
   {
     id: 'stockInCirculation',
-    label: 'Stock in circulation (receiving)',
+    label: 'Units in circulation (receiving)',
     alignment: 'right',
     minWidth: 'min-w-[160px]',
     tooltip: 'on-hand + pending from production + in transit',
@@ -4538,8 +4553,15 @@ function renderExplorerBodyCell(row, col, {
       return (
         <td key={col.id} className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}>
           <div className="flex flex-col items-end gap-0.5">
-            <span className="text-[14px] text-[#0a0a0a]">{row.currentUnits} units</span>
+            <span className="text-[14px] text-[#0a0a0a]">
+              {row.stockBefore} → {row.stockAfter}
+            </span>
             <span className="text-[12px] text-[#4b535c]">{row.currentUnitsInTransit} in transit</span>
+            {row.stockFromOtherStores != null && (
+              <span className="text-[12px] text-[#4b535c]">
+                +{row.stockFromOtherStores} from other stores
+              </span>
+            )}
           </div>
         </td>
       )
@@ -4643,7 +4665,7 @@ function renderExplorerTotalsCell(col, totals, { explorerTotalsThClass, explorer
       return (
         <th key={col.id} className={`${baseClass} ${col.minWidth} text-right`}>
           <div className="flex flex-col items-end">
-            <span>{totals.currentUnits}</span>
+            <span>{totals.stockBeforeAfter}</span>
             <span className="text-[12px] text-[#4b535c]">{totals.inTransit}</span>
           </div>
         </th>
@@ -4936,7 +4958,8 @@ function ExplorerTable({
     const sumRecommended = filteredData.reduce((sum, row) => sum + parseInt(row.recommended, 10), 0)
     const sumSalesL7 = filteredData.reduce((sum, row) => sum + row.salesL7, 0)
     const sumSalesL30 = filteredData.reduce((sum, row) => sum + row.salesL30, 0)
-    const sumCurrentUnits = filteredData.reduce((sum, row) => sum + row.currentUnits, 0)
+    const sumStockBefore = filteredData.reduce((sum, row) => sum + row.stockBefore, 0)
+    const sumStockAfter = filteredData.reduce((sum, row) => sum + row.stockAfter, 0)
     const sumInTransit = filteredData.reduce((sum, row) => sum + row.currentUnitsInTransit, 0)
     return {
       skuLocations: `${filteredData.length} SKU-locations`,
@@ -4945,7 +4968,7 @@ function ExplorerTable({
       recommended: `${sumRecommended} units`,
       salesL7: sumSalesL7,
       salesL30: sumSalesL30,
-      currentUnits: `${sumCurrentUnits} units`,
+      stockBeforeAfter: `${sumStockBefore} → ${sumStockAfter}`,
       inTransit: `${sumInTransit} in transit` }
   }, [filteredData, explorerTransferOverrides])
 
