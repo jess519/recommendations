@@ -100,8 +100,8 @@ const PRODUCTS_TAB_SUMMARY_TOTALS = {
   revenue: '€6.9K',
   recommendedUnits: '18 units',
   recommendedTrips: '5 trips',
-  stockUnits: '70 units',
-  stockInTransit: '11 in transit',
+  stockUnits: '70 SOH',
+  stockInTransit: '11 in transit & PFP',
   warehouseAllocate: '320 → 280 to allocate',
   warehouseSell: '400 → 360 to sell',
   salesL7: '138 L7D',
@@ -767,6 +767,7 @@ function buildExplorerRow(rowIndex, product, size, fromLoc, toLoc, movementType)
     salesL30: salesL7 * 5,
     currentUnits: 10 + (rowIndex * 5) % 50,
     currentUnitsInTransit: rowIndex % 6,
+    stockInTransitAndPfp: rowIndex % 11,
     storageCapacity: rowIndex % 4 === 0 ? 'full' : 'available',
     warehouseAllocateLine: `${50 + (rowIndex * 3) % 20} → ${45 + (rowIndex * 3) % 20}`,
     warehouseSellLine: `${65 + (rowIndex * 5) % 25} → ${58 + (rowIndex * 5) % 25}`,
@@ -2674,7 +2675,7 @@ function ProductsDrilldown({
               {grip}
               <span
                 className="inline-flex items-center gap-1 cursor-help"
-                title="This includes stock in transit, stock on hand and stock pending from production. This will be for both parent & child locations (if applicable)."
+                title="Stock on-hand. In transit & PFP shown as secondary context. Includes parent & child locations if applicable."
               >
                 Stock in circulation <IconInfo />
               </span>
@@ -3088,8 +3089,13 @@ function ProductsDrilldown({
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right align-top`}>
             <div className="flex flex-col items-end line-clamp-2 min-w-0">
-              <span className="text-[#0a0a0a]">{p.currentUnits ?? '—'}</span>
-              <span className="text-[12px] text-[#4b535c]">{p.currentUnitsInTransit ?? 0}</span>
+              <span className="inline-flex items-baseline gap-1">
+                <span className="text-[#0a0a0a]">{p.currentUnits ?? '—'}</span>
+                <span className="text-[12px] text-[#4b535c]">SOH</span>
+              </span>
+              <span className="text-[12px] text-[#4b535c]">
+                {p.currentUnitsInTransit ?? 0} in transit & PFP
+              </span>
             </div>
           </td>
         )
@@ -3666,7 +3672,7 @@ function LocationsTab({ onDrawerFiltersActiveChange }) {
             {rowEnd(
               <span
                 className="inline-flex items-center gap-1 cursor-help"
-                title="This includes stock in transit, stock on hand and stock pending from production. This will be for both parent & child locations (if applicable)."
+                title="Stock on-hand. In transit & PFP shown as secondary context. Includes parent & child locations if applicable."
               >
                 Stock in circulation <IconInfo />
               </span>
@@ -3793,8 +3799,11 @@ function LocationsTab({ onDrawerFiltersActiveChange }) {
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
             <div className="flex flex-col items-end">
-              <span>2,450 units</span>
-              <span className="text-[12px] text-[#4b535c]">180 in transit</span>
+              <span className="inline-flex items-baseline gap-1">
+                <span>2,450</span>
+                <span className="text-[12px] text-[#4b535c]">SOH</span>
+              </span>
+              <span className="text-[12px] text-[#4b535c]">180 in transit & PFP</span>
             </div>
           </th>
         )
@@ -3912,8 +3921,13 @@ function LocationsTab({ onDrawerFiltersActiveChange }) {
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right align-top`}>
             <div className="flex flex-col items-end line-clamp-2 min-w-0">
-              <span className="text-[#0a0a0a]">{loc.stockInCirculation ?? '—'}</span>
-              <span className="text-[12px] text-[#4b535c]">{loc.stockInTransit ?? 0}</span>
+              <span className="inline-flex items-baseline gap-1">
+                <span className="text-[#0a0a0a]">{loc.stockInCirculation ?? '—'}</span>
+                <span className="text-[12px] text-[#4b535c]">SOH</span>
+              </span>
+              <span className="text-[12px] text-[#4b535c]">
+                {loc.stockInTransit ?? 0} in transit & PFP
+              </span>
             </div>
           </td>
         )
@@ -4172,7 +4186,7 @@ const EXPLORER_TABLE_COLUMNS = [
     label: 'Units in circulation (receiving)',
     alignment: 'right',
     minWidth: 'min-w-[160px]',
-    tooltip: 'on-hand + pending from production + in transit',
+    tooltip: 'Stock on-hand at the receiving location. In transit & PFP shown as secondary context.',
   },
   { id: 'sales', label: 'Sales', alignment: 'right', minWidth: 'min-w-[120px]', subtitle: 'L7D / L30D' },
   { id: 'forecast', label: 'Forecast', alignment: 'right', minWidth: 'min-w-[100px]', subtitle: 'per wk', tooltip: null },
@@ -4521,10 +4535,15 @@ function renderExplorerBodyCell(row, col, {
       return (
         <td key={col.id} className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}>
           <div className="flex flex-col items-end gap-0.5">
-            <span className="text-[14px] text-[#0a0a0a]">
-              {row.stockBefore} → {row.stockAfter}
+            <span className="inline-flex items-baseline gap-1">
+              <span className="text-[14px] text-[#0a0a0a]">
+                {row.stockBefore} → {row.stockAfter}
+              </span>
+              <span className="text-[12px] text-[#4b535c]">SOH</span>
             </span>
-            <span className="text-[12px] text-[#4b535c]">{row.currentUnitsInTransit} in transit</span>
+            <span className="text-[12px] text-[#4b535c]">
+              {row.stockInTransitAndPfp} in transit & PFP
+            </span>
             {row.stockFromOtherStores != null && (
               <span className="text-[12px] text-[#4b535c]">
                 +{row.stockFromOtherStores} from other stores
@@ -4633,7 +4652,10 @@ function renderExplorerTotalsCell(col, totals, { explorerTotalsThClass, explorer
       return (
         <th key={col.id} className={`${baseClass} ${col.minWidth} text-right`}>
           <div className="flex flex-col items-end">
-            <span>{totals.stockBeforeAfter}</span>
+            <span className="inline-flex items-baseline gap-1">
+              <span>{totals.stockBeforeAfter}</span>
+              <span className="text-[12px] text-[#4b535c]">SOH</span>
+            </span>
             <span className="text-[12px] text-[#4b535c]">{totals.inTransit}</span>
           </div>
         </th>
@@ -4981,7 +5003,7 @@ function ExplorerTable({
     const sumSalesL30 = filteredData.reduce((sum, row) => sum + row.salesL30, 0)
     const sumStockBefore = filteredData.reduce((sum, row) => sum + row.stockBefore, 0)
     const sumStockAfter = filteredData.reduce((sum, row) => sum + row.stockAfter, 0)
-    const sumInTransit = filteredData.reduce((sum, row) => sum + row.currentUnitsInTransit, 0)
+    const sumInTransitAndPfp = filteredData.reduce((sum, row) => sum + row.stockInTransitAndPfp, 0)
     return {
       skuLocations: `${filteredData.length} SKU-locations`,
       transfers: `${sumTransfers} units`,
@@ -4990,7 +5012,7 @@ function ExplorerTable({
       salesL7: sumSalesL7,
       salesL30: sumSalesL30,
       stockBeforeAfter: `${sumStockBefore} → ${sumStockAfter}`,
-      inTransit: `${sumInTransit} in transit` }
+      inTransit: `${sumInTransitAndPfp} in transit & PFP` }
   }, [filteredData, explorerTransferOverrides])
 
   const explorerThClass =
