@@ -1,6 +1,6 @@
-import { useState, useRef, useEffect, useLayoutEffect, useCallback, Fragment } from 'react'
+import { useState, useRef, useEffect, useLayoutEffect, useCallback } from 'react'
 import { createPortal } from 'react-dom'
-import { Pencil, Check, Plus } from 'lucide-react'
+import { Pencil, Check, Plus, Loader2 } from 'lucide-react'
 import { IconPlus, IconChevronDown, IconClose, IconChevronDownSelect, IconArrowLeft } from '../components/icons'
 import {
   ScheduleBlockApprovalExceptions,
@@ -73,46 +73,6 @@ function getScopeExcludeChipText(excludeValues) {
   if (excludeValues.length === 1) return `All except: ${excludeValues[0]}`
   if (excludeValues.length === 2) return `All except: ${excludeValues[0]}, ${excludeValues[1]}`
   return `All except: ${excludeValues[0]}, ${excludeValues[1]}, +${excludeValues.length - 2} more`
-}
-
-function ActiveFilterChips({ entries }) {
-  const hasAny = entries.some((e) => e.includeValues.length > 0 || e.excludeValues.length > 0)
-  if (!hasAny) return null
-
-  return (
-    <div className="flex w-full flex-wrap gap-2 py-3">
-      {entries.map((entry) => (
-        <Fragment key={entry.fieldKey}>
-          {entry.includeValues.length >= 1 && (
-            <span className="inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3 py-1.5 text-[13px] font-medium text-[#1d4ed8]">
-              <span>{`${entry.label}: ${entry.includeValues.length} selected`}</span>
-              <button
-                type="button"
-                onClick={entry.onClearInclude}
-                aria-label={`Clear ${entry.label} includes`}
-                className="shrink-0 flex items-center justify-center text-[#1d4ed8] hover:text-[#1e40af]"
-              >
-                <IconClose className="size-3.5" />
-              </button>
-            </span>
-          )}
-          {entry.excludeValues.length >= 1 && (
-            <span className="inline-flex items-center gap-2 rounded-full border border-red-100 bg-red-50 px-3 py-1.5 text-[13px] font-medium text-[#b91c1c]">
-              <span>{`${entry.label}: ${getScopeExcludeChipText(entry.excludeValues)}`}</span>
-              <button
-                type="button"
-                onClick={entry.onClearExclude}
-                aria-label={`Clear ${entry.label} excludes`}
-                className="shrink-0 flex items-center justify-center text-[#b91c1c] hover:text-[#991b1b]"
-              >
-                <IconClose className="size-3.5" />
-              </button>
-            </span>
-          )}
-        </Fragment>
-      ))}
-    </div>
-  )
 }
 
 const scopeModeToggleButtonClass = (active) =>
@@ -515,6 +475,24 @@ function CreateScheduleScopeSingleSelect({
   )
 }
 
+/** Mock available product/location counts for scope filter headers (prototype). */
+function mockScopeAvailableCount(seed, activeDimensions) {
+  if (activeDimensions.length === 0) return null
+  let n = seed
+  for (const selectedCount of activeDimensions) {
+    n = Math.max(1, Math.floor(n * (1 - Math.min(0.75, 0.28 + 0.06 * selectedCount))))
+  }
+  return n
+}
+
+function formatScopeCount(n) {
+  return n === null ? null : n.toLocaleString()
+}
+
+function scopeDimensionSelectedCount(includeValues = [], excludeValues = []) {
+  return includeValues.length + excludeValues.length
+}
+
 /** Product + geographic scope filters for create schedule scope selection. */
 function CreateScheduleScopeFilterPanel({
   warehouseInclude,
@@ -583,12 +561,57 @@ function CreateScheduleScopeFilterPanel({
     extraVisibleFilters.includes(key)
   )
 
+  const productActiveDimensions = [
+    scopeDimensionSelectedCount(departmentInclude, departmentExclude),
+    scopeDimensionSelectedCount(seasonsInclude, seasonsExclude),
+    scopeDimensionSelectedCount(productsInclude, productsExclude),
+    ...visibleProductExtras.map(({ key }) =>
+      scopeDimensionSelectedCount(
+        expandedFieldState[key].include,
+        expandedFieldState[key].exclude
+      )
+    ),
+  ].filter((selectedCount) => selectedCount > 0)
+
+  const geoActiveDimensions = [
+    scopeDimensionSelectedCount(warehouseInclude, warehouseExclude),
+    scopeDimensionSelectedCount(locationTypesInclude, locationTypesExclude),
+    scopeDimensionSelectedCount(locationsInclude, locationsExclude),
+    ...visibleLocationExtras.map(({ key }) =>
+      scopeDimensionSelectedCount(
+        expandedFieldState[key].include,
+        expandedFieldState[key].exclude
+      )
+    ),
+  ].filter((selectedCount) => selectedCount > 0)
+
+  const productsAvailableCount = mockScopeAvailableCount(4025, productActiveDimensions)
+  const locationsAvailableCount = mockScopeAvailableCount(31, geoActiveDimensions)
+
   return (
     <>
     <div className="rounded-[4px] border border-[#e5e7eb] bg-[#fafafa] p-4">
       <div className="grid grid-cols-2 gap-x-6 gap-y-3">
-        <h4 className="text-[13px] font-medium text-[#0a0a0a] uppercase tracking-[0.04em]">Product scope</h4>
-        <h4 className="text-[13px] font-medium text-[#0a0a0a] uppercase tracking-[0.04em]">Geographic scope</h4>
+        <div className="flex items-center justify-between gap-2">
+          <h4 className="text-[13px] font-medium text-[#0a0a0a] uppercase tracking-[0.04em]">
+            Product scope
+          </h4>
+          {productsAvailableCount != null && (
+            <span className="inline-flex shrink-0 items-center rounded-full bg-[#dcfce7] px-2.5 py-1 text-[12px] font-medium text-[#166534]">
+              {formatScopeCount(productsAvailableCount)} products available
+            </span>
+          )}
+        </div>
+        <div className="flex items-center justify-between gap-2">
+          <h4 className="text-[13px] font-medium text-[#0a0a0a] uppercase tracking-[0.04em]">
+            Geographic scope
+          </h4>
+          {locationsAvailableCount != null && (
+            <span className="inline-flex shrink-0 items-center rounded-full bg-[#dcfce7] px-2.5 py-1 text-[12px] font-medium text-[#166534]">
+              {formatScopeCount(locationsAvailableCount)} locations available
+            </span>
+          )}
+        </div>
 
         <div className="w-full self-start">
           <CreateScheduleScopeMultiSelect
@@ -806,7 +829,6 @@ function ScopeSelectionSection({
   heading = 'Which products and locations does this schedule cover?',
   locationScopeOption,
   setLocationScopeOption,
-  scopeActiveFilterEntries,
   isMoreFiltersOpen,
   setIsMoreFiltersOpen,
   toggleExtraFilter,
@@ -891,7 +913,6 @@ function ScopeSelectionSection({
 
       {locationScopeOption === 'select' && (
         <>
-          <ActiveFilterChips entries={scopeActiveFilterEntries} />
           <CreateScheduleScopeFilterPanel
             warehouseInclude={warehouseInclude}
             setWarehouseInclude={setWarehouseInclude}
@@ -961,14 +982,6 @@ const SUBMISSION_DAYS = [
   { key: 'friday', letter: 'F' },
   { key: 'saturday', letter: 'S' },
 ]
-
-function formatRepeatUnitLabel(unit, count) {
-  if (count === 1) return unit
-  if (unit === 'day') return 'days'
-  if (unit === 'week') return 'weeks'
-  if (unit === 'month') return 'months'
-  return unit
-}
 
 function capitalizeDay(day) {
   if (!day) return ''
@@ -1074,9 +1087,7 @@ function createDefaultScheduleBlock(id) {
     movementTypes: [],
     networkTag: '',
     tripCapacityTag: '',
-    confidenceLevels: ['Very High', 'High', 'Medium', 'Low', 'Very Low'],
-    aggressiveness: '',
-    basicMode: false,
+    coverageMode: 'next-inventory-date',
     targetCoverageValue: '',
     targetCoverageUnit: 'Weeks',
     repeatEvery: 1,
@@ -1134,109 +1145,10 @@ function ScheduleTimeSelect({ value, onChange }) {
   )
 }
 
-function buildBlockSummary(block) {
-  const segments = []
-  const movementTypes = block.movementTypes ?? []
-  const exceptions = block.exceptions ?? []
-
-  if (movementTypes.length === 0) {
-    segments.push('No movement type')
-  } else if (movementTypes.length === 1) {
-    segments.push(movementTypes[0])
-  } else if (movementTypes.length === 2) {
-    segments.push('Replenishment & Rebalancing')
-  } else {
-    segments.push(movementTypes.join(' & '))
-  }
-
-  const unit = formatRepeatUnitLabel(block.repeatEveryUnit, block.repeatEvery)
-  segments.push(`every ${block.repeatEvery} ${unit}`)
-  const deadlineLabel = resolveSubmissionDeadlineLabel(block)
-  if (deadlineLabel) {
-    segments.push(deadlineLabel)
-  }
-
-  if (block.approvalMode === 'manual-review') {
-    segments.push('Manual review')
-  } else if (exceptions.length === 0) {
-    segments.push('Auto-approve')
-  } else if (exceptions.length === 1) {
-    segments.push('Auto-approve · 1 exception')
-  } else {
-    segments.push(`Auto-approve · ${exceptions.length} exceptions`)
-  }
-
-  return segments.join(' · ')
-}
-
-function ScheduleBasicModeSwitch({ checked, onChange, ariaLabel = 'Basic mode' }) {
+function ScheduleDetailsBlock({ block, onUpdate }) {
   return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      aria-label={ariaLabel}
-      onClick={onChange}
-      className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${
-        checked ? 'bg-[#1d4ed8]' : 'bg-[#d1d5db]'
-      }`}
-    >
-      <span
-        className={`inline-block size-4 rounded-full bg-white shadow transition-transform ${
-          checked ? 'translate-x-[18px]' : 'translate-x-0.5'
-        }`}
-      />
-    </button>
-  )
-}
-
-function ScheduleDetailsBlock({ block, index, isExpanded, onToggleExpand, onRemove, canRemove, onUpdate }) {
-  const headerTitle = block.name.trim() ? block.name : `Untitled schedule ${index + 1}`
-
-  return (
-    <div className="rounded-[4px] border border-[#e5e7eb] bg-[#fafafa]">
-      <div
-        className={`flex justify-between px-4 ${
-          isExpanded ? 'h-12 items-center border-b border-[#e5e7eb]' : 'h-auto items-center py-2'
-        }`}
-      >
-        {isExpanded ? (
-          <span className="truncate text-[15px] font-medium text-[#0a0a0a]">{headerTitle}</span>
-        ) : (
-          <div className="min-w-0 flex-1 pr-3">
-            <div className="text-[15px] font-medium text-[#0a0a0a]">{headerTitle}</div>
-            <p className="mt-0.5 text-[12px] text-[#4b535c]">{buildBlockSummary(block)}</p>
-          </div>
-        )}
-        <div className="flex shrink-0 items-center gap-2">
-          {canRemove && (
-            <button
-              type="button"
-              onClick={() => onRemove(block.id)}
-              aria-label="Remove schedule block"
-              className="flex h-7 w-7 items-center justify-center text-[#4b535c] hover:text-[#0a0a0a]"
-            >
-              <IconClose className="size-4" />
-            </button>
-          )}
-          <button
-            type="button"
-            onClick={onToggleExpand}
-            aria-label={isExpanded ? 'Collapse schedule block' : 'Expand schedule block'}
-            aria-expanded={isExpanded}
-            className="flex h-7 w-7 items-center justify-center text-[#4b535c] hover:text-[#0a0a0a]"
-          >
-            <IconChevronDown
-              className={`size-4 shrink-0 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
-              aria-hidden
-            />
-          </button>
-        </div>
-      </div>
-
-      {isExpanded && (
-        <div className="p-4">
-          <div className="flex flex-col gap-4">
+    <div className="rounded-[4px] border border-[#e5e7eb] bg-[#fafafa] p-4">
+      <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-1.5">
           <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Schedule name</label>
           <input
@@ -1247,17 +1159,6 @@ function ScheduleDetailsBlock({ block, index, isExpanded, onToggleExpand, onRemo
             className="h-12 rounded-[4px] border border-[#EAEAEA] px-4 text-[14px] text-[#0a0a0a]"
           />
         </div>
-        <CreateScheduleScopeMultiSelect
-          label="Movement type"
-          placeholder="Select movement type"
-          options={['Replenishment', 'Rebalancing']}
-          includeValues={block.movementTypes}
-          onIncludeChange={(next) => onUpdate({ movementTypes: next })}
-          excludeValues={[]}
-          onExcludeChange={() => {}}
-          hideModeToggle={true}
-          showSelectedLabels={true}
-        />
 
         <CreateScheduleScopeSingleSelect
           label="Network tag"
@@ -1277,82 +1178,98 @@ function ScheduleDetailsBlock({ block, index, isExpanded, onToggleExpand, onRemo
           onChange={(next) => onUpdate({ tripCapacityTag: next })}
         />
 
-        <section className="mt-4 flex flex-col gap-4">
-          <div className="flex items-center justify-between gap-4">
-            <p className="text-[14px] font-medium text-[#0a0a0a]">Schedule reasoning</p>
-            <div className="flex shrink-0 items-center gap-2">
-              <span className="text-[14px] text-[#4b535c] whitespace-nowrap">Basic</span>
-              <ScheduleBasicModeSwitch
-                checked={block.basicMode}
-                onChange={() => onUpdate({ basicMode: !block.basicMode })}
+        <section className="mt-4 flex flex-col gap-3">
+          <p className="text-[14px] font-medium text-[#0a0a0a]">Coverage</p>
+          <div className="flex flex-col gap-3">
+            <label
+              className={`flex cursor-pointer items-start gap-3 rounded-[10px] border bg-white p-4 hover:border-[#0267ff]/40 has-[:checked]:border-[#0267ff] ${
+                block.coverageMode === 'next-inventory-date' ? 'border-[#0267ff]' : 'border-[#e5e7eb]'
+              }`}
+            >
+              <input
+                type="radio"
+                name={`coverageMode-${block.id}`}
+                value="next-inventory-date"
+                checked={block.coverageMode === 'next-inventory-date'}
+                onChange={() => onUpdate({ coverageMode: 'next-inventory-date' })}
+                className="mt-1 size-4 shrink-0 border-[#e5e7eb] text-[#0267ff] focus:ring-[#0267ff]"
               />
+              <div className="flex min-w-0 flex-col gap-1">
+                <span className="text-[14px] font-medium text-[#0a0a0a]">Use next inventory date</span>
+                <span className="text-[12px] font-normal text-[#4b535c]">
+                  Sol will cover inventory up until the next scheduled proposal.
+                </span>
+              </div>
+            </label>
+            <label
+              className={`flex cursor-pointer items-start gap-3 rounded-[10px] border bg-white p-4 hover:border-[#0267ff]/40 has-[:checked]:border-[#0267ff] ${
+                block.coverageMode === 'parameter-coverage' ? 'border-[#0267ff]' : 'border-[#e5e7eb]'
+              }`}
+            >
+              <input
+                type="radio"
+                name={`coverageMode-${block.id}`}
+                value="parameter-coverage"
+                checked={block.coverageMode === 'parameter-coverage'}
+                onChange={() => onUpdate({ coverageMode: 'parameter-coverage' })}
+                className="mt-1 size-4 shrink-0 border-[#e5e7eb] text-[#0267ff] focus:ring-[#0267ff]"
+              />
+              <div className="flex min-w-0 flex-col gap-1">
+                <span className="text-[14px] font-medium text-[#0a0a0a]">Use your parameter coverage</span>
+                <span className="text-[12px] font-normal text-[#4b535c]">
+                  Sol will use the target coverage set in your parameters.
+                </span>
+              </div>
+            </label>
+            <label
+              className={`flex cursor-pointer items-start gap-3 rounded-[10px] border bg-white p-4 hover:border-[#0267ff]/40 has-[:checked]:border-[#0267ff] ${
+                block.coverageMode === 'set-target-coverage' ? 'border-[#0267ff]' : 'border-[#e5e7eb]'
+              }`}
+            >
+              <input
+                type="radio"
+                name={`coverageMode-${block.id}`}
+                value="set-target-coverage"
+                checked={block.coverageMode === 'set-target-coverage'}
+                onChange={() => onUpdate({ coverageMode: 'set-target-coverage' })}
+                className="mt-1 size-4 shrink-0 border-[#e5e7eb] text-[#0267ff] focus:ring-[#0267ff]"
+              />
+              <div className="flex min-w-0 flex-col gap-1">
+                <span className="text-[14px] font-medium text-[#0a0a0a]">Set target coverage</span>
+                <span className="text-[12px] font-normal text-[#4b535c]">
+                  Enter how many weeks (or days) of stock you want locations to hold.
+                </span>
+              </div>
+            </label>
+          </div>
+
+          {block.coverageMode === 'set-target-coverage' && (
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Target coverage</label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  placeholder="0"
+                  value={block.targetCoverageValue}
+                  onChange={(e) => onUpdate({ targetCoverageValue: e.target.value })}
+                  className="h-12 w-[100px] shrink-0 rounded-[4px] border border-[#EAEAEA] bg-white px-4 text-[14px] text-[#0a0a0a] placeholder:text-[#9ca3af] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                />
+                <div className="relative shrink-0">
+                  <select
+                    value={block.targetCoverageUnit}
+                    onChange={(e) => onUpdate({ targetCoverageUnit: e.target.value })}
+                    className="h-12 w-[120px] appearance-none rounded-[4px] border border-[#EAEAEA] bg-white py-0 pl-4 pr-10 text-[14px] text-[#0a0a0a]"
+                  >
+                    <option value="Weeks">Weeks</option>
+                    <option value="Days">Days</option>
+                  </select>
+                  <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[#4b535c]">
+                    <IconChevronDownSelect />
+                  </span>
+                </div>
+              </div>
             </div>
-          </div>
-          <div className="flex w-full flex-col items-end gap-1">
-            <p className="w-full whitespace-nowrap text-right text-[11px] leading-[14px] text-[#4b535c]">
-              Use target coverage instead of next schedule date, confidence and aggressiveness.
-            </p>
-            <p className="text-right text-[12px] leading-[16px] text-[#9ca3af]">For simpler setups.</p>
-          </div>
-
-        {!block.basicMode && (
-          <>
-        <CreateScheduleScopeMultiSelect
-          label="Confidence level"
-          helperText="Select which Autone confidence recommendations you see in the scheduled proposal."
-          placeholder="Select confidence levels"
-          options={['Very High', 'High', 'Medium', 'Low', 'Very Low']}
-          includeValues={block.confidenceLevels}
-          onIncludeChange={(next) => onUpdate({ confidenceLevels: next })}
-          excludeValues={[]}
-          onExcludeChange={() => {}}
-          hideModeToggle={true}
-          showSelectAll={true}
-          showSelectedLabels={true}
-        />
-
-        <CreateScheduleScopeSingleSelect
-          label="Aggressiveness"
-          helperText="Higher aggressiveness adds more safety stock to this schedule's recommendations."
-          placeholder="Select aggressiveness"
-          options={['Conservative', 'Balanced', 'Aggressive']}
-          value={block.aggressiveness}
-          onChange={(next) => onUpdate({ aggressiveness: next })}
-        />
-          </>
-        )}
-
-        {block.basicMode && (
-        <div className="flex flex-col gap-1.5">
-          <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Target coverage</label>
-          <div className="flex items-center gap-2">
-            <input
-              type="number"
-              placeholder="0"
-              value={block.targetCoverageValue}
-              onChange={(e) => onUpdate({ targetCoverageValue: e.target.value })}
-              className="h-12 w-[100px] shrink-0 rounded-[4px] border border-[#EAEAEA] bg-white px-4 text-[14px] text-[#0a0a0a] placeholder:text-[#9ca3af] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-            />
-            <div className="relative shrink-0">
-              <select
-                value={block.targetCoverageUnit}
-                onChange={(e) => onUpdate({ targetCoverageUnit: e.target.value })}
-                className="h-12 w-[120px] appearance-none rounded-[4px] border border-[#EAEAEA] bg-white py-0 pl-4 pr-10 text-[14px] text-[#0a0a0a]"
-              >
-                <option value="Weeks">Weeks</option>
-                <option value="Days">Days</option>
-              </select>
-              <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[#4b535c]">
-                <IconChevronDownSelect />
-              </span>
-            </div>
-          </div>
-          <p className="text-[12px] text-[#4b535c]">
-            Instead of covering you until the next scheduled proposal, input how many weeks of stock you want your
-            locations to hold.
-          </p>
-        </div>
-        )}
+          )}
         </section>
 
         <section className="mt-4 flex flex-col gap-4">
@@ -1596,9 +1513,7 @@ function ScheduleDetailsBlock({ block, index, isExpanded, onToggleExpand, onRemo
             </div>
           )}
         </section>
-          </div>
-        </div>
-      )}
+      </div>
     </div>
   )
 }
@@ -1820,6 +1735,7 @@ const ongoingSchedules = [
     uniqueTrips: 113,
     transferUnits: 2308,
     isScheduled: true,
+    status: 'pending',
   },
   {
     id: 'uk-weekly-replen',
@@ -1838,6 +1754,7 @@ const ongoingSchedules = [
     uniqueTrips: 48,
     transferUnits: 1120,
     isScheduled: true,
+    status: 'running',
   },
   {
     id: 'fr-weekly-rebal',
@@ -2223,11 +2140,20 @@ function ScheduleTable({
         </div>
         {schedules.map((schedule) => {
           const displayName = scheduleNames[schedule.id] ?? schedule.name
+          const isBatchInFlight =
+            schedule.status === 'pending' || schedule.status === 'running'
+          const rowInteractive = isClickable && !isBatchInFlight
           return (
             <div
               key={schedule.id}
-              className={`grid ${tableGrid} gap-4 border-b border-[#EAEAEA] px-5 py-4 text-[14px] text-[#0a0a0a] transition-colors last:border-b-0${isClickable ? ' cursor-pointer hover:bg-[#FAFAFA]' : ''}`}
-              onClick={isClickable ? () => onRowClick(schedule) : undefined}
+              className={`grid ${tableGrid} gap-4 border-b border-[#EAEAEA] px-5 py-4 text-[14px] text-[#0a0a0a] transition-colors last:border-b-0${
+                isBatchInFlight
+                  ? ' cursor-not-allowed opacity-60'
+                  : rowInteractive
+                    ? ' cursor-pointer hover:bg-[#FAFAFA]'
+                    : ''
+              }`}
+              onClick={rowInteractive ? () => onRowClick(schedule) : undefined}
             >
               <div className="min-w-0 font-medium">
                 {renamingId === schedule.id ? (
@@ -2253,11 +2179,18 @@ function ScheduleTable({
                   />
                 ) : (
                   <div className="flex items-center gap-2 min-w-0">
-                    {schedule.isScheduled && (
-                      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="shrink-0 text-[#4b535c]" aria-label="Scheduled batch">
-                        <circle cx="7" cy="7" r="5.5" stroke="currentColor" strokeWidth="1.5" />
-                        <path d="M7 4v3l2 1.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
+                    {isBatchInFlight ? (
+                      <Loader2
+                        className="size-3.5 shrink-0 animate-spin text-[#4b535c]"
+                        aria-label={schedule.status === 'running' ? 'Running batch' : 'Pending batch'}
+                      />
+                    ) : (
+                      schedule.isScheduled && (
+                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="shrink-0 text-[#4b535c]" aria-label="Scheduled batch">
+                          <circle cx="7" cy="7" r="5.5" stroke="currentColor" strokeWidth="1.5" />
+                          <path d="M7 4v3l2 1.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      )
                     )}
                     <span className="block truncate">{displayName}</span>
                   </div>
@@ -2277,11 +2210,19 @@ function ScheduleTable({
                 </div>
               </div>
               <div className="min-w-0 truncate">{schedule.movementType}</div>
-              <ScopeHoverPopover scope={schedule.scope}>
+              {isBatchInFlight ? (
                 <div className="min-w-0 truncate text-[#4b535c]">{getScopeSummary(schedule.scope)}</div>
-              </ScopeHoverPopover>
-              <div className="min-w-0 truncate">{schedule.revenueIncrease}</div>
-              <div className="min-w-0">{formatScheduleMetric(schedule.uniqueTrips)}</div>
+              ) : (
+                <ScopeHoverPopover scope={schedule.scope}>
+                  <div className="min-w-0 truncate text-[#4b535c]">{getScopeSummary(schedule.scope)}</div>
+                </ScopeHoverPopover>
+              )}
+              <div className="min-w-0 truncate">
+                {isBatchInFlight ? 'Pending' : schedule.revenueIncrease}
+              </div>
+              <div className="min-w-0">
+                {isBatchInFlight ? 'Pending' : formatScheduleMetric(schedule.uniqueTrips)}
+              </div>
               <div className="min-w-0">{formatScheduleMetric(schedule.transferUnits)}</div>
               {showErrorCode && (
                 <div className="min-w-0 break-words text-[#4b535c]">{schedule.errorCode}</div>
@@ -2290,25 +2231,29 @@ function ScheduleTable({
                 className="relative flex items-center justify-end"
                 onClick={(e) => e.stopPropagation()}
               >
-                <button
-                  type="button"
-                  aria-label="Row actions"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    setOpenKebabId(openKebabId === schedule.id ? null : schedule.id)
-                  }}
-                  className="flex size-8 items-center justify-center rounded-[4px] text-[#4b535c] hover:bg-[#F3F4F6] hover:text-[#0a0a0a]"
-                >
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
-                    <circle cx="8" cy="3" r="1.5" fill="currentColor" />
-                    <circle cx="8" cy="8" r="1.5" fill="currentColor" />
-                    <circle cx="8" cy="13" r="1.5" fill="currentColor" />
-                  </svg>
-                </button>
-                {openKebabId === schedule.id && (
-                  <div className="absolute right-0 top-full z-30 mt-1 w-[160px] rounded-[4px] border border-[#EAEAEA] bg-white py-1 shadow-[0px_8px_25px_0px_rgba(0,0,0,0.12)]">
-                    {actions.map((action) => renderKebabAction(action, schedule))}
-                  </div>
+                {!isBatchInFlight && (
+                  <>
+                    <button
+                      type="button"
+                      aria-label="Row actions"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setOpenKebabId(openKebabId === schedule.id ? null : schedule.id)
+                      }}
+                      className="flex size-8 items-center justify-center rounded-[4px] text-[#4b535c] hover:bg-[#F3F4F6] hover:text-[#0a0a0a]"
+                    >
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
+                        <circle cx="8" cy="3" r="1.5" fill="currentColor" />
+                        <circle cx="8" cy="8" r="1.5" fill="currentColor" />
+                        <circle cx="8" cy="13" r="1.5" fill="currentColor" />
+                      </svg>
+                    </button>
+                    {openKebabId === schedule.id && (
+                      <div className="absolute right-0 top-full z-30 mt-1 w-[160px] rounded-[4px] border border-[#EAEAEA] bg-white py-1 shadow-[0px_8px_25px_0px_rgba(0,0,0,0.12)]">
+                        {actions.map((action) => renderKebabAction(action, schedule))}
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             </div>
@@ -2331,6 +2276,9 @@ export default function OptimiserPage({ onAddJob, openAddJob, resetToUpcoming, o
   const [isAdhocFlow, setIsAdhocFlow] = useState(false)
   const [adhocStep, setAdhocStep] = useState(1)
   const [adhocMovementType, setAdhocMovementType] = useState([])
+  const [adhocCoverageMode, setAdhocCoverageMode] = useState('parameter-coverage')
+  const [adhocTargetCoverageValue, setAdhocTargetCoverageValue] = useState('')
+  const [adhocTargetCoverageUnit, setAdhocTargetCoverageUnit] = useState('Weeks')
   const [adhocApprovalMode, setAdhocApprovalMode] = useState('auto-approve')
   const [adhocExceptions, setAdhocExceptions] = useState(() => createDefaultScheduleExceptions())
   const [locationScopeOption, setLocationScopeOption] = useState('all')
@@ -2357,27 +2305,9 @@ export default function OptimiserPage({ onAddJob, openAddJob, resetToUpcoming, o
   const [expandedFieldState, setExpandedFieldState] = useState(createInitialExpandedFieldState)
   const [currentStep, setCurrentStep] = useState(1)
   const [proposalName, setProposalName] = useState('')
-  const [scheduleBlocks, setScheduleBlocks] = useState([createDefaultScheduleBlock('block-1')])
-  const [expandedBlockId, setExpandedBlockId] = useState('block-1')
-  const updateScheduleBlock = (blockId, updates) => {
-    setScheduleBlocks((prev) => prev.map((b) => (b.id === blockId ? { ...b, ...updates } : b)))
-  }
-  const addScheduleBlock = () => {
-    if (scheduleBlocks.length >= 2) return
-    const newBlock = createDefaultScheduleBlock(`block-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`)
-    setScheduleBlocks((prev) => [...prev, newBlock])
-    setExpandedBlockId(newBlock.id)
-  }
-  const removeScheduleBlock = (blockId) => {
-    setScheduleBlocks((prev) => {
-      if (prev.length <= 1) return prev
-      const next = prev.filter((b) => b.id !== blockId)
-      setExpandedBlockId((prevExpanded) => {
-        if (prevExpanded !== blockId) return prevExpanded
-        return next[0]?.id ?? null
-      })
-      return next
-    })
+  const [scheduleDetails, setScheduleDetails] = useState(() => createDefaultScheduleBlock('schedule-1'))
+  const updateScheduleDetails = (updates) => {
+    setScheduleDetails((prev) => ({ ...prev, ...updates }))
   }
   const statusTabs = [
     { id: 'ongoing', label: 'Ongoing' },
@@ -2423,77 +2353,6 @@ export default function OptimiserPage({ onAddJob, openAddJob, resetToUpcoming, o
     }
   }
 
-  const scopeActiveFilterEntries = [
-    {
-      fieldKey: 'department',
-      label: 'Department',
-      includeValues: departmentInclude,
-      excludeValues: departmentExclude,
-      onClearInclude: () => setDepartmentInclude([]),
-      onClearExclude: () => setDepartmentExclude([]),
-    },
-    {
-      fieldKey: 'seasons',
-      label: 'Seasons',
-      includeValues: seasonsInclude,
-      excludeValues: seasonsExclude,
-      onClearInclude: () => setSeasonsInclude([]),
-      onClearExclude: () => setSeasonsExclude([]),
-    },
-    {
-      fieldKey: 'products',
-      label: 'Products',
-      includeValues: productsInclude,
-      excludeValues: productsExclude,
-      onClearInclude: () => setProductsInclude([]),
-      onClearExclude: () => setProductsExclude([]),
-    },
-    {
-      fieldKey: 'warehouse',
-      label: 'Warehouse',
-      includeValues: warehouseInclude,
-      excludeValues: warehouseExclude,
-      onClearInclude: () => setWarehouseInclude([]),
-      onClearExclude: () => setWarehouseExclude([]),
-    },
-    {
-      fieldKey: 'locationTypes',
-      label: 'Location Types',
-      includeValues: locationTypesInclude,
-      excludeValues: locationTypesExclude,
-      onClearInclude: () => setLocationTypesInclude([]),
-      onClearExclude: () => setLocationTypesExclude([]),
-    },
-    {
-      fieldKey: 'locations',
-      label: 'Locations',
-      includeValues: locationsInclude,
-      excludeValues: locationsExclude,
-      onClearInclude: () => setLocationsInclude([]),
-      onClearExclude: () => setLocationsExclude([]),
-    },
-    ...SCOPE_EXPANDED_PRODUCT_FIELDS.filter(({ key }) => extraVisibleFilters.includes(key)).map(
-      ({ key, label }) => ({
-      fieldKey: key,
-      label,
-      includeValues: expandedFieldState[key].include,
-      excludeValues: expandedFieldState[key].exclude,
-      onClearInclude: () => updateExpandedField(key, { include: [] }),
-      onClearExclude: () => updateExpandedField(key, { exclude: [] }),
-    })
-    ),
-    ...SCOPE_EXPANDED_LOCATION_FIELDS.filter(({ key }) => extraVisibleFilters.includes(key)).map(
-      ({ key, label }) => ({
-      fieldKey: key,
-      label,
-      includeValues: expandedFieldState[key].include,
-      excludeValues: expandedFieldState[key].exclude,
-      onClearInclude: () => updateExpandedField(key, { include: [] }),
-      onClearExclude: () => updateExpandedField(key, { exclude: [] }),
-    })
-    ),
-  ]
-
   const CREATE_SCHEDULE_WIZARD_STEPS = [
     {
       title: 'Scope',
@@ -2528,7 +2387,6 @@ export default function OptimiserPage({ onAddJob, openAddJob, resetToUpcoming, o
   const scopeSelectionSectionProps = {
     locationScopeOption,
     setLocationScopeOption,
-    scopeActiveFilterEntries,
     isMoreFiltersOpen,
     setIsMoreFiltersOpen,
     toggleExtraFilter,
@@ -2657,6 +2515,78 @@ export default function OptimiserPage({ onAddJob, openAddJob, resetToUpcoming, o
                 hideModeToggle={true}
                 showSelectedLabels={true}
               />
+              <section className="flex flex-col gap-3">
+                <h3 className="text-[14px] font-medium text-[#0a0a0a]">Coverage</h3>
+                <div className="flex flex-col gap-3">
+                  <label
+                    className={`flex cursor-pointer items-start gap-3 rounded-[10px] border bg-white p-4 hover:border-[#0267ff]/40 has-[:checked]:border-[#0267ff] ${
+                      adhocCoverageMode === 'parameter-coverage' ? 'border-[#0267ff]' : 'border-[#e5e7eb]'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="adhocCoverageMode"
+                      value="parameter-coverage"
+                      checked={adhocCoverageMode === 'parameter-coverage'}
+                      onChange={() => setAdhocCoverageMode('parameter-coverage')}
+                      className="mt-1 size-4 shrink-0 border-[#e5e7eb] text-[#0267ff] focus:ring-[#0267ff]"
+                    />
+                    <div className="flex min-w-0 flex-col gap-1">
+                      <span className="text-[14px] font-medium text-[#0a0a0a]">Use your parameter coverage</span>
+                      <span className="text-[12px] font-normal text-[#4b535c]">
+                        Sol will use the target coverage set in your parameters.
+                      </span>
+                    </div>
+                  </label>
+                  <label
+                    className={`flex cursor-pointer items-start gap-3 rounded-[10px] border bg-white p-4 hover:border-[#0267ff]/40 has-[:checked]:border-[#0267ff] ${
+                      adhocCoverageMode === 'set-target-coverage' ? 'border-[#0267ff]' : 'border-[#e5e7eb]'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="adhocCoverageMode"
+                      value="set-target-coverage"
+                      checked={adhocCoverageMode === 'set-target-coverage'}
+                      onChange={() => setAdhocCoverageMode('set-target-coverage')}
+                      className="mt-1 size-4 shrink-0 border-[#e5e7eb] text-[#0267ff] focus:ring-[#0267ff]"
+                    />
+                    <div className="flex min-w-0 flex-col gap-1">
+                      <span className="text-[14px] font-medium text-[#0a0a0a]">Set target coverage</span>
+                      <span className="text-[12px] font-normal text-[#4b535c]">
+                        Enter how many weeks (or days) of stock you want locations to hold.
+                      </span>
+                    </div>
+                  </label>
+                </div>
+                {adhocCoverageMode === 'set-target-coverage' && (
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Target coverage</label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="number"
+                        placeholder="0"
+                        value={adhocTargetCoverageValue}
+                        onChange={(e) => setAdhocTargetCoverageValue(e.target.value)}
+                        className="h-12 w-[100px] shrink-0 rounded-[4px] border border-[#EAEAEA] bg-white px-4 text-[14px] text-[#0a0a0a] placeholder:text-[#9ca3af] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      />
+                      <div className="relative shrink-0">
+                        <select
+                          value={adhocTargetCoverageUnit}
+                          onChange={(e) => setAdhocTargetCoverageUnit(e.target.value)}
+                          className="h-12 w-[120px] appearance-none rounded-[4px] border border-[#EAEAEA] bg-white py-0 pl-4 pr-10 text-[14px] text-[#0a0a0a]"
+                        >
+                          <option value="Weeks">Weeks</option>
+                          <option value="Days">Days</option>
+                        </select>
+                        <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[#4b535c]">
+                          <IconChevronDownSelect />
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </section>
               <ScopeSelectionSection {...scopeSelectionSectionProps} />
             </div>
           </div>
@@ -2826,6 +2756,17 @@ export default function OptimiserPage({ onAddJob, openAddJob, resetToUpcoming, o
         {currentStep === 1 && (
           <div className="border border-[#EAEAEA] rounded-[4px] bg-white overflow-visible">
             <div className="px-5 pb-6 pt-2 flex flex-col gap-6">
+              <CreateScheduleScopeMultiSelect
+                label="Movement type"
+                placeholder="Select movement type"
+                options={['Replenishment', 'Rebalancing']}
+                includeValues={scheduleDetails.movementTypes}
+                onIncludeChange={(next) => updateScheduleDetails({ movementTypes: next })}
+                excludeValues={[]}
+                onExcludeChange={() => {}}
+                hideModeToggle={true}
+                showSelectedLabels={true}
+              />
               <ScopeSelectionSection {...scopeSelectionSectionProps} />
             </div>
           </div>
@@ -2833,31 +2774,10 @@ export default function OptimiserPage({ onAddJob, openAddJob, resetToUpcoming, o
 
         {currentStep === 2 && (
           <div className="max-w-[800px]">
-            <div className="flex flex-col gap-3">
-              {scheduleBlocks.map((block, index) => (
-                <ScheduleDetailsBlock
-                  key={block.id}
-                  block={block}
-                  index={index}
-                  isExpanded={block.id === expandedBlockId}
-                  onToggleExpand={() =>
-                    setExpandedBlockId((prev) => (prev === block.id ? null : block.id))
-                  }
-                  onRemove={removeScheduleBlock}
-                  canRemove={scheduleBlocks.length > 1}
-                  onUpdate={(updates) => updateScheduleBlock(block.id, updates)}
-                />
-              ))}
-            </div>
-            {scheduleBlocks.length < 2 && (
-              <button
-                type="button"
-                onClick={addScheduleBlock}
-                className="mt-4 flex h-12 w-full items-center justify-center rounded-[4px] border border-dashed border-[#1d4ed8] text-[14px] font-medium text-[#1d4ed8] hover:bg-[#1d4ed8]/5"
-              >
-                + schedule details & rules
-              </button>
-            )}
+            <ScheduleDetailsBlock
+              block={scheduleDetails}
+              onUpdate={updateScheduleDetails}
+            />
           </div>
         )}
 

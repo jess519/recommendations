@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback, useLayoutEffect, useMemo } fr
 import { createPortal } from 'react-dom'
 import { Filter, Plus, Copy } from 'lucide-react'
 import { ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts'
-import { IconSearch, IconChevronDown, IconChevronRight, IconShare, IconDocument, IconClose, IconArrowLeft, IconGears, IconTruckTu, IconPackageTu, IconRebalancing, IconReplenishment, IconCalendarNote, IconTrendUp, IconFilterFunnel, IconColumnSettings, IconSortOrder, IconEdit, IconWarning, IconLightbulb } from '../components/icons'
+import { IconSearch, IconChevronDown, IconChevronRight, IconShare, IconDocument, IconClose, IconArrowLeft, IconGears, IconTruckTu, IconPackageTu, IconRebalancing, IconReplenishment, IconCalendarNote, IconTrendUp, IconFilterFunnel, IconColumnSettings, IconSortOrder, IconWarning, IconLightbulb } from '../components/icons'
 function IconInfo() {
   return (
     <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="shrink-0 text-[#9ca3af]" aria-hidden>
@@ -100,8 +100,8 @@ const PRODUCTS_TAB_SUMMARY_TOTALS = {
   revenue: '€6.9K',
   recommendedUnits: '18 units',
   recommendedTrips: '5 trips',
-  stockUnits: '70 units',
-  stockInTransit: '11 in transit',
+  stockUnits: '70',
+  stockInTransit: '11 in transit & PFP',
   warehouseAllocate: '320 → 280 to allocate',
   warehouseSell: '400 → 360 to sell',
   salesL7: '138 L7D',
@@ -662,9 +662,6 @@ function buildExplorerRow(rowIndex, product, size, fromLoc, toLoc, movementType)
   // Usually headroom (green); every 7th row is constrained (orange by default).
   const availableToSend =
     rowIndex % 7 === 0 ? Math.max(0, transfers - 2 - (rowIndex % 3)) : transfers + 2 + (rowIndex % 5)
-  // Service level: ~1/3 probability / service level / £ last-unit. sizeIdx shifts
-  // sibling SKUs by ≥10pp (or €8). Injected lows: prob <30%, service level >70%, £ <€5.
-  const framing = rowIndex % 3
   const sizeIdx = Math.max(0, product.sizes.indexOf(size))
   const initialAllocation = 1 + ((rowIndex * 7 + sizeIdx * 3) % 20)
   const [createDd, createMm, createYyyy] = SCHEDULE_CREATION_DATE.split('/').map(Number)
@@ -689,20 +686,28 @@ function buildExplorerRow(rowIndex, product, size, fromLoc, toLoc, movementType)
           d.setDate(d.getDate() - salesDaysAgo)
           return formatExplorerDate(d)
         })()
-  let serviceLevel
-  if (framing === 0) {
-    let pct = 40 + ((rowIndex * 5) % 40) + sizeIdx * 12
-    if (rowIndex % 18 === 0) pct = 15 + sizeIdx * 12
-    serviceLevel = `${Math.min(95, pct)}% p(sell) last unit`
-  } else if (framing === 1) {
-    let pct = 20 + ((rowIndex * 5) % 40) + sizeIdx * 12
-    if (rowIndex % 18 === 1) pct = 75 + sizeIdx * 12
-    serviceLevel = `${Math.min(95, pct)}% service level`
-  } else {
-    let euros = 8 + ((rowIndex * 3) % 30) + sizeIdx * 8
-    if (rowIndex % 18 === 2) euros = 2 + sizeIdx * 8
-    serviceLevel = `€${euros} last unit`
-  }
+  const otherMovements =
+    movementType === 'rebalancing'
+      ? null
+      : rowIndex % 10 < 3
+        ? (() => {
+            const variant = rowIndex % 3
+            if (variant === 0) return { rebalCount: 1 + (rowIndex % 3), replenCount: 0 }
+            if (variant === 1) return { rebalCount: 0, replenCount: 1 + (rowIndex % 2) }
+            return { rebalCount: 1 + (rowIndex % 2), replenCount: 1 + (rowIndex % 3) }
+          })()
+        : null
+  // Aligned with otherMovements: only replen rows that already show "Other movements" in the hover card
+  const stockFromOtherStores =
+    otherMovements != null ? 4 + (rowIndex % 5) * 2 : null // 4–12 units from other stores
+  // Small (~8–15) or larger (~45–54) bases; "why so big" rows start lower (~5–8)
+  const stockBefore =
+    stockFromOtherStores != null
+      ? 5 + (rowIndex % 4)
+      : rowIndex % 5 === 0
+        ? 45 + (rowIndex % 10)
+        : 8 + (rowIndex % 8)
+  const stockAfter = stockBefore + transfers + (stockFromOtherStores ?? 0)
   return {
     id: `exp-row-${rowIndex}`,
     productId: product.id,
@@ -718,7 +723,6 @@ function buildExplorerRow(rowIndex, product, size, fromLoc, toLoc, movementType)
     ws: product.ws,
     ic: product.ic,
     seasonAndEvent: product.seasonAndEvent,
-    lifeToDateSales: (rowIndex * 7) % 51, // ~0–50 units, varies per SKU-location row
     fromLocation: fromLoc,
     toLocation: toLoc,
     movementType,
@@ -726,23 +730,15 @@ function buildExplorerRow(rowIndex, product, size, fromLoc, toLoc, movementType)
     availableToSend,
     visibilityBefore: rowIndex % 11 === 0 ? 2 : rowIndex % 5 === 0 ? 1 : 0,
     visibilityAfter: rowIndex % 11 === 0 ? 3 : rowIndex % 5 === 0 ? 2 : 1,
-    otherMovements:
-      movementType === 'rebalancing'
-        ? null
-        : rowIndex % 10 < 3
-          ? (() => {
-              const variant = rowIndex % 3
-              if (variant === 0) return { rebalCount: 1 + (rowIndex % 3), replenCount: 0 }
-              if (variant === 1) return { rebalCount: 0, replenCount: 1 + (rowIndex % 2) }
-              return { rebalCount: 1 + (rowIndex % 2), replenCount: 1 + (rowIndex % 3) }
-            })()
-          : null,
+    otherMovements,
+    stockBefore,
+    stockAfter,
+    stockFromOtherStores,
     revenue: `€${(0.5 + (rowIndex * 0.37) % 4.5).toFixed(2)}K`,
     recommended: '1',
     recommendedBadges: BADGE_CYCLE[rowIndex % BADGE_CYCLE.length],
     recommendedSub: rowIndex % 3 === 0 ? '2' : undefined,
     confidence: CONFIDENCE_CYCLE[rowIndex % CONFIDENCE_CYCLE.length],
-    serviceLevel,
     coverageWeeksBefore,
     coverageWeeksAfter,
     nextEvent: {
@@ -753,6 +749,7 @@ function buildExplorerRow(rowIndex, product, size, fromLoc, toLoc, movementType)
     salesL30: salesL7 * 5,
     currentUnits: 10 + (rowIndex * 5) % 50,
     currentUnitsInTransit: rowIndex % 6,
+    stockInTransitAndPfp: rowIndex % 11,
     storageCapacity: rowIndex % 4 === 0 ? 'full' : 'available',
     warehouseAllocateLine: `${50 + (rowIndex * 3) % 20} → ${45 + (rowIndex * 3) % 20}`,
     warehouseSellLine: `${65 + (rowIndex * 5) % 25} → ${58 + (rowIndex * 5) % 25}`,
@@ -1439,8 +1436,6 @@ function SkuDetailsAttrRow({ label, value }) {
 
 /** Product / SKU attribute panel for Explorer SKU details hover */
 function SkuDetailsHoverCard({ row }) {
-  const lifeToDate =
-    row.lifeToDateSales == null ? '—' : `${row.lifeToDateSales} unit${row.lifeToDateSales === 1 ? '' : 's'}`
   return (
     <div className="pointer-events-auto w-[min(300px,calc(100vw-1.5rem))] rounded-[8px] border border-[#E9EAEB] bg-white p-4 shadow-[0_4px_16px_rgba(0,0,0,0.1)]">
       <div className="pointer-events-auto flex gap-3 border-b border-[#E9EAEB] pb-3">
@@ -1452,7 +1447,6 @@ function SkuDetailsHoverCard({ row }) {
         <SkuDetailsAttrRow label="WS" value={row.ws} />
         <SkuDetailsAttrRow label="IC" value={row.ic} />
         <SkuDetailsAttrRow label="Season and event" value={row.seasonAndEvent} />
-        <SkuDetailsAttrRow label="Life to date sales" value={lifeToDate} />
         <SkuDetailsAttrRow label="Department" value={row.department} />
         <SkuDetailsAttrRow label="Sub-department" value={row.subDepartment} />
         <SkuDetailsAttrRow label="Material" value={row.material} />
@@ -2663,9 +2657,9 @@ function ProductsDrilldown({
               {grip}
               <span
                 className="inline-flex items-center gap-1 cursor-help"
-                title="This includes stock in transit, stock on hand and stock pending from production. This will be for both parent & child locations (if applicable)."
+                title="Stock on-hand at the receiving location. In transit & PFP shown as secondary context."
               >
-                Stock in circulation <IconInfo />
+                Units in circulation (receiving) <IconInfo />
               </span>
             </span>
           </th>
@@ -2870,7 +2864,10 @@ function ProductsDrilldown({
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
             <div className="flex flex-col items-end">
-              <span>{productSummary.stockUnits}</span>
+              <span className="inline-flex items-baseline gap-1">
+                <span className="text-[14px] text-[#0a0a0a]">{productSummary.stockUnits}</span>
+                <span className="text-[14px] text-[#0a0a0a]">SOH</span>
+              </span>
               <span className="text-[12px] text-[#4b535c]">{productSummary.stockInTransit}</span>
             </div>
           </th>
@@ -3077,8 +3074,15 @@ function ProductsDrilldown({
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right align-top`}>
             <div className="flex flex-col items-end line-clamp-2 min-w-0">
-              <span className="text-[#0a0a0a]">{p.currentUnits ?? '—'}</span>
-              <span className="text-[12px] text-[#4b535c]">{p.currentUnitsInTransit ?? 0}</span>
+              <span className="inline-flex items-baseline gap-1">
+                <span className="text-[14px] text-[#0a0a0a]">{p.currentUnits ?? '—'}</span>
+                <span className="text-[14px] text-[#0a0a0a]">SOH</span>
+              </span>
+              {(p.currentUnitsInTransit ?? 0) > 0 && (
+                <span className="text-[12px] text-[#4b535c]">
+                  {p.currentUnitsInTransit} in transit & PFP
+                </span>
+              )}
             </div>
           </td>
         )
@@ -3655,9 +3659,9 @@ function LocationsTab({ onDrawerFiltersActiveChange }) {
             {rowEnd(
               <span
                 className="inline-flex items-center gap-1 cursor-help"
-                title="This includes stock in transit, stock on hand and stock pending from production. This will be for both parent & child locations (if applicable)."
+                title="Stock on-hand at the receiving location. In transit & PFP shown as secondary context."
               >
-                Stock in circulation <IconInfo />
+                Units in circulation (receiving) <IconInfo />
               </span>
             )}
           </th>
@@ -3782,8 +3786,11 @@ function LocationsTab({ onDrawerFiltersActiveChange }) {
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
             <div className="flex flex-col items-end">
-              <span>2,450 units</span>
-              <span className="text-[12px] text-[#4b535c]">180 in transit</span>
+              <span className="inline-flex items-baseline gap-1">
+                <span className="text-[14px] text-[#0a0a0a]">2,450</span>
+                <span className="text-[14px] text-[#0a0a0a]">SOH</span>
+              </span>
+              <span className="text-[12px] text-[#4b535c]">180 in transit & PFP</span>
             </div>
           </th>
         )
@@ -3901,8 +3908,15 @@ function LocationsTab({ onDrawerFiltersActiveChange }) {
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right align-top`}>
             <div className="flex flex-col items-end line-clamp-2 min-w-0">
-              <span className="text-[#0a0a0a]">{loc.stockInCirculation ?? '—'}</span>
-              <span className="text-[12px] text-[#4b535c]">{loc.stockInTransit ?? 0}</span>
+              <span className="inline-flex items-baseline gap-1">
+                <span className="text-[14px] text-[#0a0a0a]">{loc.stockInCirculation ?? '—'}</span>
+                <span className="text-[14px] text-[#0a0a0a]">SOH</span>
+              </span>
+              {(loc.stockInTransit ?? 0) > 0 && (
+                <span className="text-[12px] text-[#4b535c]">
+                  {loc.stockInTransit} in transit & PFP
+                </span>
+              )}
             </div>
           </td>
         )
@@ -4158,10 +4172,10 @@ const EXPLORER_TABLE_COLUMNS = [
   },
   {
     id: 'stockInCirculation',
-    label: 'Stock in circulation (receiving)',
+    label: 'Units in circulation (receiving)',
     alignment: 'right',
     minWidth: 'min-w-[160px]',
-    tooltip: 'on-hand + pending from production + in transit',
+    tooltip: 'Stock on-hand at the receiving location. In transit & PFP shown as secondary context.',
   },
   { id: 'sales', label: 'Sales', alignment: 'right', minWidth: 'min-w-[120px]', subtitle: 'L7D / L30D' },
   { id: 'forecast', label: 'Forecast', alignment: 'right', minWidth: 'min-w-[100px]', subtitle: 'per wk', tooltip: null },
@@ -4186,14 +4200,6 @@ const EXPLORER_TABLE_COLUMNS = [
     minWidth: 'min-w-[130px]',
     subtitle: 'Creation date',
     tooltip: 'The next scheduled inventory event for this product across all locations in scope',
-  },
-  {
-    id: 'serviceLevel',
-    label: 'Service level',
-    alignment: 'right',
-    minWidth: 'min-w-[160px]',
-    tooltip:
-      'The probability of selling / value of the last unit of stock at the receiving location, after this proposal is applied.',
   },
   {
     id: 'storageCapacity',
@@ -4223,6 +4229,21 @@ const EXPLORER_TABLE_COLUMNS = [
     tooltip: 'Date stock was first sold at the receiving location',
   },
   { id: 'status', label: 'Status', alignment: 'right', minWidth: 'min-w-[150px]' },
+]
+
+/** CX prototype — ordered subset; Confidence sits after Recommended (differs from full order) */
+const EXPLORER_REDUCED_COLUMN_IDS = [
+  'productDetails',
+  'fromLocation',
+  'toLocation',
+  'transfers',
+  'revenue',
+  'recommended',
+  'confidence',
+  'coverage',
+  'stockInCirculation',
+  'forecast',
+  'status',
 ]
 
 const EXPLORER_STATUS_FILTER_OPTIONS = [
@@ -4375,34 +4396,6 @@ function renderExplorerBodyCell(row, col, {
       )
     case 'transfers': {
       const effectiveTransfers = getEffectiveTransfers(row)
-      if (row.movementType === 'rebalancing') {
-        const openTransfers = () => onOpenProductTransfers?.(row.productName)
-        return (
-          <td
-            key={col.id}
-            className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-end gap-1.5">
-              <button
-                type="button"
-                onClick={openTransfers}
-                className="text-[14px] text-[#0a0a0a] hover:text-[#0267ff] cursor-pointer"
-              >
-                {effectiveTransfers}
-              </button>
-              <button
-                type="button"
-                onClick={openTransfers}
-                className="inline-flex items-center justify-center rounded-[4px] p-0.5 text-[#6b7280] hover:bg-[#f3f4f6] hover:text-[#0a0a0a] cursor-pointer"
-                aria-label={`Edit transfers for ${row.productName} in Transfers drilldown`}
-              >
-                <IconEdit />
-              </button>
-            </div>
-          </td>
-        )
-      }
       const availableToSend = getAvailableToSend?.(row) ?? 0
       const isOvercommitted = isLocationOvercommitted?.(row.fromLocation) ?? false
       const isEditedRow =
@@ -4485,12 +4478,6 @@ function renderExplorerBodyCell(row, col, {
           </div>
         </td>
       )
-    case 'serviceLevel':
-      return (
-        <td key={col.id} className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}>
-          <span className="text-[14px] text-[#0a0a0a]">{row.serviceLevel}</span>
-        </td>
-      )
     case 'coverage':
       return (
         <td key={col.id} className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}>
@@ -4524,8 +4511,22 @@ function renderExplorerBodyCell(row, col, {
       return (
         <td key={col.id} className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}>
           <div className="flex flex-col items-end gap-0.5">
-            <span className="text-[14px] text-[#0a0a0a]">{row.currentUnits} units</span>
-            <span className="text-[12px] text-[#4b535c]">{row.currentUnitsInTransit} in transit</span>
+            <span className="inline-flex items-baseline gap-1 text-[14px] text-[#0a0a0a]">
+              <span>
+                {row.stockBefore} → {row.stockAfter}
+              </span>
+              <span>SOH</span>
+            </span>
+            {row.stockInTransitAndPfp > 0 && (
+              <span className="text-[12px] text-[#4b535c]">
+                {row.stockInTransitAndPfp} in transit & PFP
+              </span>
+            )}
+            {row.stockFromOtherStores != null && (
+              <span className="text-[12px] text-[#4b535c]">
+                +{row.stockFromOtherStores} from other stores
+              </span>
+            )}
           </div>
         </td>
       )
@@ -4629,8 +4630,13 @@ function renderExplorerTotalsCell(col, totals, { explorerTotalsThClass, explorer
       return (
         <th key={col.id} className={`${baseClass} ${col.minWidth} text-right`}>
           <div className="flex flex-col items-end">
-            <span>{totals.currentUnits}</span>
-            <span className="text-[12px] text-[#4b535c]">{totals.inTransit}</span>
+            <span className="inline-flex items-baseline gap-1 text-[14px] text-[#0a0a0a]">
+              <span>{totals.stockBeforeAfter}</span>
+              <span>SOH</span>
+            </span>
+            {totals.inTransit != null && (
+              <span className="text-[12px] text-[#4b535c]">{totals.inTransit}</span>
+            )}
           </div>
         </th>
       )
@@ -4641,10 +4647,10 @@ function renderExplorerTotalsCell(col, totals, { explorerTotalsThClass, explorer
   }
 }
 
-function ExplorerEmptyState() {
+function ExplorerEmptyState({ colSpan }) {
   return (
     <tr>
-      <td colSpan={EXPLORER_TABLE_TOTAL_COLUMN_COUNT} className="py-20 px-6">
+      <td colSpan={colSpan} className="py-20 px-6">
         <div className="flex flex-col items-center text-center">
           <Filter className="w-16 h-16 text-[#9ca3af] mb-4" aria-hidden />
           <p className="text-[18px] font-medium text-[#0a0a0a]">Dataset is too large</p>
@@ -4683,7 +4689,43 @@ function ExplorerTable({
   const [explorerFiltersDropdownOpen, setExplorerFiltersDropdownOpen] = useState(false)
   const [explorerBulkChangeStatusOpen, setExplorerBulkChangeStatusOpen] = useState(false)
   const [explorerBulkChangeUnitsOpen, setExplorerBulkChangeUnitsOpen] = useState(false)
+  const [explorerReducedColumns, setExplorerReducedColumns] = useState(true)
+  const [explorerBulkActionError, setExplorerBulkActionError] = useState(null)
   const explorerSelectAllRef = useRef(null)
+  const explorerBulkErrorTimeoutRef = useRef(null)
+
+  const dismissExplorerBulkActionError = () => {
+    if (explorerBulkErrorTimeoutRef.current) {
+      clearTimeout(explorerBulkErrorTimeoutRef.current)
+      explorerBulkErrorTimeoutRef.current = null
+    }
+    setExplorerBulkActionError(null)
+  }
+
+  const showExplorerBulkActionError = (message) => {
+    if (explorerBulkErrorTimeoutRef.current) {
+      clearTimeout(explorerBulkErrorTimeoutRef.current)
+    }
+    setExplorerBulkActionError(message)
+    explorerBulkErrorTimeoutRef.current = setTimeout(() => {
+      setExplorerBulkActionError(null)
+      explorerBulkErrorTimeoutRef.current = null
+    }, 4000)
+  }
+
+  useEffect(() => {
+    return () => {
+      if (explorerBulkErrorTimeoutRef.current) {
+        clearTimeout(explorerBulkErrorTimeoutRef.current)
+      }
+    }
+  }, [])
+
+  const visibleColumns = useMemo(() => {
+    if (!explorerReducedColumns) return EXPLORER_TABLE_COLUMNS
+    const byId = new Map(EXPLORER_TABLE_COLUMNS.map((col) => [col.id, col]))
+    return EXPLORER_REDUCED_COLUMN_IDS.map((id) => byId.get(id)).filter(Boolean)
+  }, [explorerReducedColumns])
 
   const handleExplorerStatusChange = (rowId, newStatus) => {
     setExplorerStatusOverrides((prev) => ({ ...prev, [rowId]: newStatus }))
@@ -4785,7 +4827,7 @@ function ExplorerTable({
 
     explorerSelectedRowIds.forEach((rowId) => {
       const row = data.find((r) => r.id === rowId)
-      if (!row || row.movementType === 'rebalancing') return
+      if (!row) return
       const effectiveCurrent = getEffectiveTransfers(row)
       const newValue =
         action === 'set_zero' ? 0 : Math.max(0, effectiveCurrent + action)
@@ -4795,11 +4837,39 @@ function ExplorerTable({
       }
     })
 
-    if (Object.keys(transferUpdates).length > 0) {
-      setExplorerTransferOverrides((prev) => ({ ...prev, ...transferUpdates }))
-      setExplorerStatusOverrides((prev) => ({ ...prev, ...statusUpdates }))
+    if (Object.keys(transferUpdates).length === 0) {
+      setExplorerBulkChangeUnitsOpen(false)
+      return
     }
 
+    // Project per-sending-location sums with proposed updates (atomic capacity check)
+    const projectedSums = new Map()
+    for (const [fromLocation, entry] of locationCapacityStats) {
+      projectedSums.set(fromLocation, entry.sum)
+    }
+    for (const rowId of Object.keys(transferUpdates)) {
+      const row = data.find((r) => r.id === rowId)
+      if (!row) continue
+      const capacity = SENDING_LOCATION_CAPACITY[row.fromLocation]
+      if (capacity === undefined) continue
+      const currentEffective = getEffectiveTransfers(row)
+      const next =
+        (projectedSums.get(row.fromLocation) ?? 0) - currentEffective + transferUpdates[rowId]
+      projectedSums.set(row.fromLocation, next)
+    }
+    for (const [fromLocation, projectedSum] of projectedSums) {
+      const capacity = SENDING_LOCATION_CAPACITY[fromLocation]
+      if (capacity !== undefined && projectedSum > capacity) {
+        showExplorerBulkActionError(
+          "Can't apply — one or more edits would overcommit a sending location."
+        )
+        setExplorerBulkChangeUnitsOpen(false)
+        return
+      }
+    }
+
+    setExplorerTransferOverrides((prev) => ({ ...prev, ...transferUpdates }))
+    setExplorerStatusOverrides((prev) => ({ ...prev, ...statusUpdates }))
     setExplorerBulkChangeUnitsOpen(false)
   }
 
@@ -4809,8 +4879,6 @@ function ExplorerTable({
     setExplorerTransferOverrides((prev) => {
       const next = { ...prev }
       explorerSelectedRowIds.forEach((rowId) => {
-        const row = data.find((r) => r.id === rowId)
-        if (!row || row.movementType === 'rebalancing') return
         delete next[rowId]
       })
       return next
@@ -4819,8 +4887,6 @@ function ExplorerTable({
     setExplorerStatusOverrides((prev) => {
       const next = { ...prev }
       explorerSelectedRowIds.forEach((rowId) => {
-        const row = data.find((r) => r.id === rowId)
-        if (!row || row.movementType === 'rebalancing') return
         delete next[rowId]
       })
       return next
@@ -4915,8 +4981,9 @@ function ExplorerTable({
     const sumRecommended = filteredData.reduce((sum, row) => sum + parseInt(row.recommended, 10), 0)
     const sumSalesL7 = filteredData.reduce((sum, row) => sum + row.salesL7, 0)
     const sumSalesL30 = filteredData.reduce((sum, row) => sum + row.salesL30, 0)
-    const sumCurrentUnits = filteredData.reduce((sum, row) => sum + row.currentUnits, 0)
-    const sumInTransit = filteredData.reduce((sum, row) => sum + row.currentUnitsInTransit, 0)
+    const sumStockBefore = filteredData.reduce((sum, row) => sum + row.stockBefore, 0)
+    const sumStockAfter = filteredData.reduce((sum, row) => sum + row.stockAfter, 0)
+    const sumInTransitAndPfp = filteredData.reduce((sum, row) => sum + row.stockInTransitAndPfp, 0)
     return {
       skuLocations: `${filteredData.length} SKU-locations`,
       transfers: `${sumTransfers} units`,
@@ -4924,8 +4991,9 @@ function ExplorerTable({
       recommended: `${sumRecommended} units`,
       salesL7: sumSalesL7,
       salesL30: sumSalesL30,
-      currentUnits: `${sumCurrentUnits} units`,
-      inTransit: `${sumInTransit} in transit` }
+      stockBeforeAfter: `${sumStockBefore} → ${sumStockAfter}`,
+      inTransit:
+        sumInTransitAndPfp > 0 ? `${sumInTransitAndPfp} in transit & PFP` : null }
   }, [filteredData, explorerTransferOverrides])
 
   const explorerThClass =
@@ -4956,6 +5024,27 @@ function ExplorerTable({
 
   return (
     <div className="flex flex-col gap-[15px]">
+      {explorerBulkActionError && (
+        <div
+          role="alert"
+          className="fixed bottom-24 left-1/2 z-[80] flex max-w-md -translate-x-1/2 items-start gap-2 rounded-[6px] border border-[#FCD34D] bg-[#FEF3C7] px-3 py-2.5 shadow-lg"
+        >
+          <span className="mt-0.5 shrink-0 text-[#B45309]">
+            <IconWarning />
+          </span>
+          <span className="min-w-0 flex-1 text-[13px] leading-snug text-[#B45309]">
+            {explorerBulkActionError}
+          </span>
+          <button
+            type="button"
+            onClick={dismissExplorerBulkActionError}
+            className="shrink-0 rounded-[4px] p-0.5 text-[#B45309] hover:bg-[#FDE68A]"
+            aria-label="Dismiss"
+          >
+            <IconClose className="size-3.5" />
+          </button>
+        </div>
+      )}
       <div className="flex flex-wrap items-center gap-3 mb-4 min-w-0">
         <div className="flex items-center gap-3 shrink-0">
           <div className="flex items-center h-10 rounded-[4px] border border-[#e9eaeb] bg-white w-[200px] max-w-[280px]">
@@ -5139,6 +5228,21 @@ function ExplorerTable({
           activeId={explorerActiveQuickFilter}
           onChange={setExplorerActiveQuickFilter}
         />
+        <button
+          type="button"
+          title="CX prototype only — not a product feature"
+          onClick={() => setExplorerReducedColumns((on) => !on)}
+          className="ml-auto inline-flex max-w-[280px] items-start gap-1.5 rounded-[6px] border border-dashed border-[#9CA3AF] bg-[#F9FAFB] px-2.5 py-2 text-left text-[12px] leading-snug text-[#6B7280] shadow-sm hover:bg-[#F3F4F6]"
+        >
+          <span className="mt-0.5 shrink-0 text-[#9CA3AF]">
+            <IconWarning />
+          </span>
+          <span>
+            {explorerReducedColumns
+              ? 'Reduced columns (prototype) — click for full'
+              : 'Full columns (prototype) — click for reduced'}
+          </span>
+        </button>
       </div>
 
       {explorerFilterCount > 0 && (
@@ -5254,7 +5358,7 @@ function ExplorerTable({
                   />
                 </label>
               </th>
-              {EXPLORER_TABLE_COLUMNS.map((col) => {
+              {visibleColumns.map((col) => {
                 const isStatus = col.id === 'status'
                 const isRight = col.alignment === 'right'
                 return (
@@ -5279,7 +5383,7 @@ function ExplorerTable({
             {hasAnyFilter && (
             <tr className="border-b border-[#E9EAEB]">
               <th className={explorerCheckboxTotalsThClass} />
-              {EXPLORER_TABLE_COLUMNS.map((col) =>
+              {visibleColumns.map((col) =>
                 renderExplorerTotalsCell(col, totals, {
                   explorerTotalsThClass,
                   explorerTotalsEmptyThClass,
@@ -5290,7 +5394,7 @@ function ExplorerTable({
           </thead>
           <tbody>
             {!hasAnyFilter ? (
-              <ExplorerEmptyState />
+              <ExplorerEmptyState colSpan={visibleColumns.length + 1} />
             ) : (
               filteredData.map((row) => (
               <tr key={row.id} className="group border-b border-[#E9EAEB] bg-white hover:bg-[#f9fafb]">
@@ -5306,7 +5410,7 @@ function ExplorerTable({
                     onChange={() => toggleExplorerRowSelection(row.id)}
                   />
                 </td>
-                {EXPLORER_TABLE_COLUMNS.map((col) =>
+                {visibleColumns.map((col) =>
                   renderExplorerBodyCell(row, col, {
                     explorerTdClass,
                     explorerStatusTdClass,
@@ -5402,20 +5506,6 @@ function ExplorerTable({
                   className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 z-[70] min-w-[280px] rounded-[6px] border border-[#e5e7eb] bg-white py-1 shadow-lg"
                   style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}
                 >
-                  {Array.from(explorerSelectedRowIds).some((id) => {
-                    const row = data.find((r) => r.id === id)
-                    return row?.movementType === 'rebalancing'
-                  }) && (
-                    <div className="mx-1 mb-1 flex items-start gap-1.5 rounded-[4px] bg-[#FEF3C7] px-2.5 py-2 text-[12px] leading-snug text-[#B45309]">
-                      <span className="mt-0.5 shrink-0 text-[#B45309]">
-                        <IconWarning />
-                      </span>
-                      <span>
-                        Unit edits apply to replenishment rows only. Rebalancing edits happen in the
-                        Transfers drilldown.
-                      </span>
-                    </div>
-                  )}
                   <div className="px-3 py-2 text-[12px] font-medium text-[#4b535c]">Adjust by</div>
                   {[
                     { action: 1, label: '+1' },
