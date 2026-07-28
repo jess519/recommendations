@@ -4242,6 +4242,7 @@ const EXPLORER_REDUCED_COLUMN_IDS = [
   'confidence',
   'coverage',
   'stockInCirculation',
+  'forecast',
   'status',
 ]
 
