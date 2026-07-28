@@ -962,14 +962,6 @@ const SUBMISSION_DAYS = [
   { key: 'saturday', letter: 'S' },
 ]
 
-function formatRepeatUnitLabel(unit, count) {
-  if (count === 1) return unit
-  if (unit === 'day') return 'days'
-  if (unit === 'week') return 'weeks'
-  if (unit === 'month') return 'months'
-  return unit
-}
-
 function capitalizeDay(day) {
   if (!day) return ''
   return day.charAt(0).toUpperCase() + day.slice(1)
@@ -1134,41 +1126,6 @@ function ScheduleTimeSelect({ value, onChange }) {
   )
 }
 
-function buildBlockSummary(block) {
-  const segments = []
-  const movementTypes = block.movementTypes ?? []
-  const exceptions = block.exceptions ?? []
-
-  if (movementTypes.length === 0) {
-    segments.push('No movement type')
-  } else if (movementTypes.length === 1) {
-    segments.push(movementTypes[0])
-  } else if (movementTypes.length === 2) {
-    segments.push('Replenishment & Rebalancing')
-  } else {
-    segments.push(movementTypes.join(' & '))
-  }
-
-  const unit = formatRepeatUnitLabel(block.repeatEveryUnit, block.repeatEvery)
-  segments.push(`every ${block.repeatEvery} ${unit}`)
-  const deadlineLabel = resolveSubmissionDeadlineLabel(block)
-  if (deadlineLabel) {
-    segments.push(deadlineLabel)
-  }
-
-  if (block.approvalMode === 'manual-review') {
-    segments.push('Manual review')
-  } else if (exceptions.length === 0) {
-    segments.push('Auto-approve')
-  } else if (exceptions.length === 1) {
-    segments.push('Auto-approve · 1 exception')
-  } else {
-    segments.push(`Auto-approve · ${exceptions.length} exceptions`)
-  }
-
-  return segments.join(' · ')
-}
-
 function ScheduleBasicModeSwitch({ checked, onChange, ariaLabel = 'Basic mode' }) {
   return (
     <button
@@ -1190,53 +1147,10 @@ function ScheduleBasicModeSwitch({ checked, onChange, ariaLabel = 'Basic mode' }
   )
 }
 
-function ScheduleDetailsBlock({ block, index, isExpanded, onToggleExpand, onRemove, canRemove, onUpdate }) {
-  const headerTitle = block.name.trim() ? block.name : `Untitled schedule ${index + 1}`
-
+function ScheduleDetailsBlock({ block, onUpdate }) {
   return (
-    <div className="rounded-[4px] border border-[#e5e7eb] bg-[#fafafa]">
-      <div
-        className={`flex justify-between px-4 ${
-          isExpanded ? 'h-12 items-center border-b border-[#e5e7eb]' : 'h-auto items-center py-2'
-        }`}
-      >
-        {isExpanded ? (
-          <span className="truncate text-[15px] font-medium text-[#0a0a0a]">{headerTitle}</span>
-        ) : (
-          <div className="min-w-0 flex-1 pr-3">
-            <div className="text-[15px] font-medium text-[#0a0a0a]">{headerTitle}</div>
-            <p className="mt-0.5 text-[12px] text-[#4b535c]">{buildBlockSummary(block)}</p>
-          </div>
-        )}
-        <div className="flex shrink-0 items-center gap-2">
-          {canRemove && (
-            <button
-              type="button"
-              onClick={() => onRemove(block.id)}
-              aria-label="Remove schedule block"
-              className="flex h-7 w-7 items-center justify-center text-[#4b535c] hover:text-[#0a0a0a]"
-            >
-              <IconClose className="size-4" />
-            </button>
-          )}
-          <button
-            type="button"
-            onClick={onToggleExpand}
-            aria-label={isExpanded ? 'Collapse schedule block' : 'Expand schedule block'}
-            aria-expanded={isExpanded}
-            className="flex h-7 w-7 items-center justify-center text-[#4b535c] hover:text-[#0a0a0a]"
-          >
-            <IconChevronDown
-              className={`size-4 shrink-0 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
-              aria-hidden
-            />
-          </button>
-        </div>
-      </div>
-
-      {isExpanded && (
-        <div className="p-4">
-          <div className="flex flex-col gap-4">
+    <div className="rounded-[4px] border border-[#e5e7eb] bg-[#fafafa] p-4">
+      <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-1.5">
           <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Schedule name</label>
           <input
@@ -1247,17 +1161,6 @@ function ScheduleDetailsBlock({ block, index, isExpanded, onToggleExpand, onRemo
             className="h-12 rounded-[4px] border border-[#EAEAEA] px-4 text-[14px] text-[#0a0a0a]"
           />
         </div>
-        <CreateScheduleScopeMultiSelect
-          label="Movement type"
-          placeholder="Select movement type"
-          options={['Replenishment', 'Rebalancing']}
-          includeValues={block.movementTypes}
-          onIncludeChange={(next) => onUpdate({ movementTypes: next })}
-          excludeValues={[]}
-          onExcludeChange={() => {}}
-          hideModeToggle={true}
-          showSelectedLabels={true}
-        />
 
         <CreateScheduleScopeSingleSelect
           label="Network tag"
@@ -1596,9 +1499,7 @@ function ScheduleDetailsBlock({ block, index, isExpanded, onToggleExpand, onRemo
             </div>
           )}
         </section>
-          </div>
-        </div>
-      )}
+      </div>
     </div>
   )
 }
@@ -2357,27 +2258,9 @@ export default function OptimiserPage({ onAddJob, openAddJob, resetToUpcoming, o
   const [expandedFieldState, setExpandedFieldState] = useState(createInitialExpandedFieldState)
   const [currentStep, setCurrentStep] = useState(1)
   const [proposalName, setProposalName] = useState('')
-  const [scheduleBlocks, setScheduleBlocks] = useState([createDefaultScheduleBlock('block-1')])
-  const [expandedBlockId, setExpandedBlockId] = useState('block-1')
-  const updateScheduleBlock = (blockId, updates) => {
-    setScheduleBlocks((prev) => prev.map((b) => (b.id === blockId ? { ...b, ...updates } : b)))
-  }
-  const addScheduleBlock = () => {
-    if (scheduleBlocks.length >= 2) return
-    const newBlock = createDefaultScheduleBlock(`block-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`)
-    setScheduleBlocks((prev) => [...prev, newBlock])
-    setExpandedBlockId(newBlock.id)
-  }
-  const removeScheduleBlock = (blockId) => {
-    setScheduleBlocks((prev) => {
-      if (prev.length <= 1) return prev
-      const next = prev.filter((b) => b.id !== blockId)
-      setExpandedBlockId((prevExpanded) => {
-        if (prevExpanded !== blockId) return prevExpanded
-        return next[0]?.id ?? null
-      })
-      return next
-    })
+  const [scheduleDetails, setScheduleDetails] = useState(() => createDefaultScheduleBlock('schedule-1'))
+  const updateScheduleDetails = (updates) => {
+    setScheduleDetails((prev) => ({ ...prev, ...updates }))
   }
   const statusTabs = [
     { id: 'ongoing', label: 'Ongoing' },
@@ -2826,6 +2709,17 @@ export default function OptimiserPage({ onAddJob, openAddJob, resetToUpcoming, o
         {currentStep === 1 && (
           <div className="border border-[#EAEAEA] rounded-[4px] bg-white overflow-visible">
             <div className="px-5 pb-6 pt-2 flex flex-col gap-6">
+              <CreateScheduleScopeMultiSelect
+                label="Movement type"
+                placeholder="Select movement type"
+                options={['Replenishment', 'Rebalancing']}
+                includeValues={scheduleDetails.movementTypes}
+                onIncludeChange={(next) => updateScheduleDetails({ movementTypes: next })}
+                excludeValues={[]}
+                onExcludeChange={() => {}}
+                hideModeToggle={true}
+                showSelectedLabels={true}
+              />
               <ScopeSelectionSection {...scopeSelectionSectionProps} />
             </div>
           </div>
@@ -2833,31 +2727,10 @@ export default function OptimiserPage({ onAddJob, openAddJob, resetToUpcoming, o
 
         {currentStep === 2 && (
           <div className="max-w-[800px]">
-            <div className="flex flex-col gap-3">
-              {scheduleBlocks.map((block, index) => (
-                <ScheduleDetailsBlock
-                  key={block.id}
-                  block={block}
-                  index={index}
-                  isExpanded={block.id === expandedBlockId}
-                  onToggleExpand={() =>
-                    setExpandedBlockId((prev) => (prev === block.id ? null : block.id))
-                  }
-                  onRemove={removeScheduleBlock}
-                  canRemove={scheduleBlocks.length > 1}
-                  onUpdate={(updates) => updateScheduleBlock(block.id, updates)}
-                />
-              ))}
-            </div>
-            {scheduleBlocks.length < 2 && (
-              <button
-                type="button"
-                onClick={addScheduleBlock}
-                className="mt-4 flex h-12 w-full items-center justify-center rounded-[4px] border border-dashed border-[#1d4ed8] text-[14px] font-medium text-[#1d4ed8] hover:bg-[#1d4ed8]/5"
-              >
-                + schedule details & rules
-              </button>
-            )}
+            <ScheduleDetailsBlock
+              block={scheduleDetails}
+              onUpdate={updateScheduleDetails}
+            />
           </div>
         )}
 
