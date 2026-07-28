@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback, useLayoutEffect, useMemo } fr
 import { createPortal } from 'react-dom'
 import { Filter, Plus, Copy } from 'lucide-react'
 import { ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts'
-import { IconSearch, IconChevronDown, IconChevronRight, IconShare, IconDocument, IconClose, IconArrowLeft, IconGears, IconTruckTu, IconPackageTu, IconRebalancing, IconReplenishment, IconCalendarNote, IconTrendUp, IconFilterFunnel, IconColumnSettings, IconSortOrder, IconEdit, IconWarning, IconLightbulb } from '../components/icons'
+import { IconSearch, IconChevronDown, IconChevronRight, IconShare, IconDocument, IconClose, IconArrowLeft, IconGears, IconTruckTu, IconPackageTu, IconRebalancing, IconReplenishment, IconCalendarNote, IconTrendUp, IconFilterFunnel, IconColumnSettings, IconSortOrder, IconWarning, IconLightbulb } from '../components/icons'
 function IconInfo() {
   return (
     <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="shrink-0 text-[#9ca3af]" aria-hidden>
@@ -4400,34 +4400,6 @@ function renderExplorerBodyCell(row, col, {
       )
     case 'transfers': {
       const effectiveTransfers = getEffectiveTransfers(row)
-      if (row.movementType === 'rebalancing') {
-        const openTransfers = () => onOpenProductTransfers?.(row.productName)
-        return (
-          <td
-            key={col.id}
-            className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-end gap-1.5">
-              <button
-                type="button"
-                onClick={openTransfers}
-                className="text-[14px] text-[#0a0a0a] hover:text-[#0267ff] cursor-pointer"
-              >
-                {effectiveTransfers}
-              </button>
-              <button
-                type="button"
-                onClick={openTransfers}
-                className="inline-flex items-center justify-center rounded-[4px] p-0.5 text-[#6b7280] hover:bg-[#f3f4f6] hover:text-[#0a0a0a] cursor-pointer"
-                aria-label={`Edit transfers for ${row.productName} in Transfers drilldown`}
-              >
-                <IconEdit />
-              </button>
-            </div>
-          </td>
-        )
-      }
       const availableToSend = getAvailableToSend?.(row) ?? 0
       const isOvercommitted = isLocationOvercommitted?.(row.fromLocation) ?? false
       const isEditedRow =
@@ -4716,7 +4688,36 @@ function ExplorerTable({
   const [explorerBulkChangeStatusOpen, setExplorerBulkChangeStatusOpen] = useState(false)
   const [explorerBulkChangeUnitsOpen, setExplorerBulkChangeUnitsOpen] = useState(false)
   const [explorerReducedColumns, setExplorerReducedColumns] = useState(true)
+  const [explorerBulkActionError, setExplorerBulkActionError] = useState(null)
   const explorerSelectAllRef = useRef(null)
+  const explorerBulkErrorTimeoutRef = useRef(null)
+
+  const dismissExplorerBulkActionError = () => {
+    if (explorerBulkErrorTimeoutRef.current) {
+      clearTimeout(explorerBulkErrorTimeoutRef.current)
+      explorerBulkErrorTimeoutRef.current = null
+    }
+    setExplorerBulkActionError(null)
+  }
+
+  const showExplorerBulkActionError = (message) => {
+    if (explorerBulkErrorTimeoutRef.current) {
+      clearTimeout(explorerBulkErrorTimeoutRef.current)
+    }
+    setExplorerBulkActionError(message)
+    explorerBulkErrorTimeoutRef.current = setTimeout(() => {
+      setExplorerBulkActionError(null)
+      explorerBulkErrorTimeoutRef.current = null
+    }, 4000)
+  }
+
+  useEffect(() => {
+    return () => {
+      if (explorerBulkErrorTimeoutRef.current) {
+        clearTimeout(explorerBulkErrorTimeoutRef.current)
+      }
+    }
+  }, [])
 
   const visibleColumns = useMemo(() => {
     if (!explorerReducedColumns) return EXPLORER_TABLE_COLUMNS
@@ -4824,7 +4825,7 @@ function ExplorerTable({
 
     explorerSelectedRowIds.forEach((rowId) => {
       const row = data.find((r) => r.id === rowId)
-      if (!row || row.movementType === 'rebalancing') return
+      if (!row) return
       const effectiveCurrent = getEffectiveTransfers(row)
       const newValue =
         action === 'set_zero' ? 0 : Math.max(0, effectiveCurrent + action)
@@ -4834,11 +4835,39 @@ function ExplorerTable({
       }
     })
 
-    if (Object.keys(transferUpdates).length > 0) {
-      setExplorerTransferOverrides((prev) => ({ ...prev, ...transferUpdates }))
-      setExplorerStatusOverrides((prev) => ({ ...prev, ...statusUpdates }))
+    if (Object.keys(transferUpdates).length === 0) {
+      setExplorerBulkChangeUnitsOpen(false)
+      return
     }
 
+    // Project per-sending-location sums with proposed updates (atomic capacity check)
+    const projectedSums = new Map()
+    for (const [fromLocation, entry] of locationCapacityStats) {
+      projectedSums.set(fromLocation, entry.sum)
+    }
+    for (const rowId of Object.keys(transferUpdates)) {
+      const row = data.find((r) => r.id === rowId)
+      if (!row) continue
+      const capacity = SENDING_LOCATION_CAPACITY[row.fromLocation]
+      if (capacity === undefined) continue
+      const currentEffective = getEffectiveTransfers(row)
+      const next =
+        (projectedSums.get(row.fromLocation) ?? 0) - currentEffective + transferUpdates[rowId]
+      projectedSums.set(row.fromLocation, next)
+    }
+    for (const [fromLocation, projectedSum] of projectedSums) {
+      const capacity = SENDING_LOCATION_CAPACITY[fromLocation]
+      if (capacity !== undefined && projectedSum > capacity) {
+        showExplorerBulkActionError(
+          "Can't apply — one or more edits would overcommit a sending location."
+        )
+        setExplorerBulkChangeUnitsOpen(false)
+        return
+      }
+    }
+
+    setExplorerTransferOverrides((prev) => ({ ...prev, ...transferUpdates }))
+    setExplorerStatusOverrides((prev) => ({ ...prev, ...statusUpdates }))
     setExplorerBulkChangeUnitsOpen(false)
   }
 
@@ -4848,8 +4877,6 @@ function ExplorerTable({
     setExplorerTransferOverrides((prev) => {
       const next = { ...prev }
       explorerSelectedRowIds.forEach((rowId) => {
-        const row = data.find((r) => r.id === rowId)
-        if (!row || row.movementType === 'rebalancing') return
         delete next[rowId]
       })
       return next
@@ -4858,8 +4885,6 @@ function ExplorerTable({
     setExplorerStatusOverrides((prev) => {
       const next = { ...prev }
       explorerSelectedRowIds.forEach((rowId) => {
-        const row = data.find((r) => r.id === rowId)
-        if (!row || row.movementType === 'rebalancing') return
         delete next[rowId]
       })
       return next
@@ -4996,6 +5021,27 @@ function ExplorerTable({
 
   return (
     <div className="flex flex-col gap-[15px]">
+      {explorerBulkActionError && (
+        <div
+          role="alert"
+          className="fixed bottom-24 left-1/2 z-[80] flex max-w-md -translate-x-1/2 items-start gap-2 rounded-[6px] border border-[#FCD34D] bg-[#FEF3C7] px-3 py-2.5 shadow-lg"
+        >
+          <span className="mt-0.5 shrink-0 text-[#B45309]">
+            <IconWarning />
+          </span>
+          <span className="min-w-0 flex-1 text-[13px] leading-snug text-[#B45309]">
+            {explorerBulkActionError}
+          </span>
+          <button
+            type="button"
+            onClick={dismissExplorerBulkActionError}
+            className="shrink-0 rounded-[4px] p-0.5 text-[#B45309] hover:bg-[#FDE68A]"
+            aria-label="Dismiss"
+          >
+            <IconClose className="size-3.5" />
+          </button>
+        </div>
+      )}
       <div className="flex flex-wrap items-center gap-3 mb-4 min-w-0">
         <div className="flex items-center gap-3 shrink-0">
           <div className="flex items-center h-10 rounded-[4px] border border-[#e9eaeb] bg-white w-[200px] max-w-[280px]">
@@ -5457,20 +5503,6 @@ function ExplorerTable({
                   className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 z-[70] min-w-[280px] rounded-[6px] border border-[#e5e7eb] bg-white py-1 shadow-lg"
                   style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}
                 >
-                  {Array.from(explorerSelectedRowIds).some((id) => {
-                    const row = data.find((r) => r.id === id)
-                    return row?.movementType === 'rebalancing'
-                  }) && (
-                    <div className="mx-1 mb-1 flex items-start gap-1.5 rounded-[4px] bg-[#FEF3C7] px-2.5 py-2 text-[12px] leading-snug text-[#B45309]">
-                      <span className="mt-0.5 shrink-0 text-[#B45309]">
-                        <IconWarning />
-                      </span>
-                      <span>
-                        Unit edits apply to replenishment rows only. Rebalancing edits happen in the
-                        Transfers drilldown.
-                      </span>
-                    </div>
-                  )}
                   <div className="px-3 py-2 text-[12px] font-medium text-[#4b535c]">Adjust by</div>
                   {[
                     { action: 1, label: '+1' },
