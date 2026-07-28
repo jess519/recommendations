@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useLayoutEffect, useCallback } from 'react'
 import { createPortal } from 'react-dom'
-import { Pencil, Check, Plus } from 'lucide-react'
+import { Pencil, Check, Plus, Loader2 } from 'lucide-react'
 import { IconPlus, IconChevronDown, IconClose, IconChevronDownSelect, IconArrowLeft } from '../components/icons'
 import {
   ScheduleBlockApprovalExceptions,
@@ -1735,6 +1735,7 @@ const ongoingSchedules = [
     uniqueTrips: 113,
     transferUnits: 2308,
     isScheduled: true,
+    status: 'pending',
   },
   {
     id: 'uk-weekly-replen',
@@ -1753,6 +1754,7 @@ const ongoingSchedules = [
     uniqueTrips: 48,
     transferUnits: 1120,
     isScheduled: true,
+    status: 'running',
   },
   {
     id: 'fr-weekly-rebal',
@@ -2138,11 +2140,20 @@ function ScheduleTable({
         </div>
         {schedules.map((schedule) => {
           const displayName = scheduleNames[schedule.id] ?? schedule.name
+          const isBatchInFlight =
+            schedule.status === 'pending' || schedule.status === 'running'
+          const rowInteractive = isClickable && !isBatchInFlight
           return (
             <div
               key={schedule.id}
-              className={`grid ${tableGrid} gap-4 border-b border-[#EAEAEA] px-5 py-4 text-[14px] text-[#0a0a0a] transition-colors last:border-b-0${isClickable ? ' cursor-pointer hover:bg-[#FAFAFA]' : ''}`}
-              onClick={isClickable ? () => onRowClick(schedule) : undefined}
+              className={`grid ${tableGrid} gap-4 border-b border-[#EAEAEA] px-5 py-4 text-[14px] text-[#0a0a0a] transition-colors last:border-b-0${
+                isBatchInFlight
+                  ? ' cursor-not-allowed opacity-60'
+                  : rowInteractive
+                    ? ' cursor-pointer hover:bg-[#FAFAFA]'
+                    : ''
+              }`}
+              onClick={rowInteractive ? () => onRowClick(schedule) : undefined}
             >
               <div className="min-w-0 font-medium">
                 {renamingId === schedule.id ? (
@@ -2168,11 +2179,18 @@ function ScheduleTable({
                   />
                 ) : (
                   <div className="flex items-center gap-2 min-w-0">
-                    {schedule.isScheduled && (
-                      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="shrink-0 text-[#4b535c]" aria-label="Scheduled batch">
-                        <circle cx="7" cy="7" r="5.5" stroke="currentColor" strokeWidth="1.5" />
-                        <path d="M7 4v3l2 1.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
+                    {isBatchInFlight ? (
+                      <Loader2
+                        className="size-3.5 shrink-0 animate-spin text-[#4b535c]"
+                        aria-label={schedule.status === 'running' ? 'Running batch' : 'Pending batch'}
+                      />
+                    ) : (
+                      schedule.isScheduled && (
+                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="shrink-0 text-[#4b535c]" aria-label="Scheduled batch">
+                          <circle cx="7" cy="7" r="5.5" stroke="currentColor" strokeWidth="1.5" />
+                          <path d="M7 4v3l2 1.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      )
                     )}
                     <span className="block truncate">{displayName}</span>
                   </div>
@@ -2192,11 +2210,19 @@ function ScheduleTable({
                 </div>
               </div>
               <div className="min-w-0 truncate">{schedule.movementType}</div>
-              <ScopeHoverPopover scope={schedule.scope}>
+              {isBatchInFlight ? (
                 <div className="min-w-0 truncate text-[#4b535c]">{getScopeSummary(schedule.scope)}</div>
-              </ScopeHoverPopover>
-              <div className="min-w-0 truncate">{schedule.revenueIncrease}</div>
-              <div className="min-w-0">{formatScheduleMetric(schedule.uniqueTrips)}</div>
+              ) : (
+                <ScopeHoverPopover scope={schedule.scope}>
+                  <div className="min-w-0 truncate text-[#4b535c]">{getScopeSummary(schedule.scope)}</div>
+                </ScopeHoverPopover>
+              )}
+              <div className="min-w-0 truncate">
+                {isBatchInFlight ? 'Pending' : schedule.revenueIncrease}
+              </div>
+              <div className="min-w-0">
+                {isBatchInFlight ? 'Pending' : formatScheduleMetric(schedule.uniqueTrips)}
+              </div>
               <div className="min-w-0">{formatScheduleMetric(schedule.transferUnits)}</div>
               {showErrorCode && (
                 <div className="min-w-0 break-words text-[#4b535c]">{schedule.errorCode}</div>
@@ -2205,25 +2231,29 @@ function ScheduleTable({
                 className="relative flex items-center justify-end"
                 onClick={(e) => e.stopPropagation()}
               >
-                <button
-                  type="button"
-                  aria-label="Row actions"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    setOpenKebabId(openKebabId === schedule.id ? null : schedule.id)
-                  }}
-                  className="flex size-8 items-center justify-center rounded-[4px] text-[#4b535c] hover:bg-[#F3F4F6] hover:text-[#0a0a0a]"
-                >
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
-                    <circle cx="8" cy="3" r="1.5" fill="currentColor" />
-                    <circle cx="8" cy="8" r="1.5" fill="currentColor" />
-                    <circle cx="8" cy="13" r="1.5" fill="currentColor" />
-                  </svg>
-                </button>
-                {openKebabId === schedule.id && (
-                  <div className="absolute right-0 top-full z-30 mt-1 w-[160px] rounded-[4px] border border-[#EAEAEA] bg-white py-1 shadow-[0px_8px_25px_0px_rgba(0,0,0,0.12)]">
-                    {actions.map((action) => renderKebabAction(action, schedule))}
-                  </div>
+                {!isBatchInFlight && (
+                  <>
+                    <button
+                      type="button"
+                      aria-label="Row actions"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setOpenKebabId(openKebabId === schedule.id ? null : schedule.id)
+                      }}
+                      className="flex size-8 items-center justify-center rounded-[4px] text-[#4b535c] hover:bg-[#F3F4F6] hover:text-[#0a0a0a]"
+                    >
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
+                        <circle cx="8" cy="3" r="1.5" fill="currentColor" />
+                        <circle cx="8" cy="8" r="1.5" fill="currentColor" />
+                        <circle cx="8" cy="13" r="1.5" fill="currentColor" />
+                      </svg>
+                    </button>
+                    {openKebabId === schedule.id && (
+                      <div className="absolute right-0 top-full z-30 mt-1 w-[160px] rounded-[4px] border border-[#EAEAEA] bg-white py-1 shadow-[0px_8px_25px_0px_rgba(0,0,0,0.12)]">
+                        {actions.map((action) => renderKebabAction(action, schedule))}
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             </div>
