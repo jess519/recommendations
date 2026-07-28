@@ -4225,6 +4225,20 @@ const EXPLORER_TABLE_COLUMNS = [
   { id: 'status', label: 'Status', alignment: 'right', minWidth: 'min-w-[150px]' },
 ]
 
+/** CX prototype — ordered subset; Confidence sits after Recommended (differs from full order) */
+const EXPLORER_REDUCED_COLUMN_IDS = [
+  'productDetails',
+  'fromLocation',
+  'toLocation',
+  'transfers',
+  'revenue',
+  'recommended',
+  'confidence',
+  'coverage',
+  'stockInCirculation',
+  'status',
+]
+
 const EXPLORER_STATUS_FILTER_OPTIONS = [
   { id: 'approved', label: 'Approved' },
   { id: 'unapproved', label: 'Unapproved' },
@@ -4641,10 +4655,10 @@ function renderExplorerTotalsCell(col, totals, { explorerTotalsThClass, explorer
   }
 }
 
-function ExplorerEmptyState() {
+function ExplorerEmptyState({ colSpan }) {
   return (
     <tr>
-      <td colSpan={EXPLORER_TABLE_TOTAL_COLUMN_COUNT} className="py-20 px-6">
+      <td colSpan={colSpan} className="py-20 px-6">
         <div className="flex flex-col items-center text-center">
           <Filter className="w-16 h-16 text-[#9ca3af] mb-4" aria-hidden />
           <p className="text-[18px] font-medium text-[#0a0a0a]">Dataset is too large</p>
@@ -4683,7 +4697,14 @@ function ExplorerTable({
   const [explorerFiltersDropdownOpen, setExplorerFiltersDropdownOpen] = useState(false)
   const [explorerBulkChangeStatusOpen, setExplorerBulkChangeStatusOpen] = useState(false)
   const [explorerBulkChangeUnitsOpen, setExplorerBulkChangeUnitsOpen] = useState(false)
+  const [explorerReducedColumns, setExplorerReducedColumns] = useState(true)
   const explorerSelectAllRef = useRef(null)
+
+  const visibleColumns = useMemo(() => {
+    if (!explorerReducedColumns) return EXPLORER_TABLE_COLUMNS
+    const byId = new Map(EXPLORER_TABLE_COLUMNS.map((col) => [col.id, col]))
+    return EXPLORER_REDUCED_COLUMN_IDS.map((id) => byId.get(id)).filter(Boolean)
+  }, [explorerReducedColumns])
 
   const handleExplorerStatusChange = (rowId, newStatus) => {
     setExplorerStatusOverrides((prev) => ({ ...prev, [rowId]: newStatus }))
@@ -4955,7 +4976,7 @@ function ExplorerTable({
   )
 
   return (
-    <div className="flex flex-col gap-[15px]">
+    <div className="relative flex flex-col gap-[15px]">
       <div className="flex flex-wrap items-center gap-3 mb-4 min-w-0">
         <div className="flex items-center gap-3 shrink-0">
           <div className="flex items-center h-10 rounded-[4px] border border-[#e9eaeb] bg-white w-[200px] max-w-[280px]">
@@ -5254,7 +5275,7 @@ function ExplorerTable({
                   />
                 </label>
               </th>
-              {EXPLORER_TABLE_COLUMNS.map((col) => {
+              {visibleColumns.map((col) => {
                 const isStatus = col.id === 'status'
                 const isRight = col.alignment === 'right'
                 return (
@@ -5279,7 +5300,7 @@ function ExplorerTable({
             {hasAnyFilter && (
             <tr className="border-b border-[#E9EAEB]">
               <th className={explorerCheckboxTotalsThClass} />
-              {EXPLORER_TABLE_COLUMNS.map((col) =>
+              {visibleColumns.map((col) =>
                 renderExplorerTotalsCell(col, totals, {
                   explorerTotalsThClass,
                   explorerTotalsEmptyThClass,
@@ -5290,7 +5311,7 @@ function ExplorerTable({
           </thead>
           <tbody>
             {!hasAnyFilter ? (
-              <ExplorerEmptyState />
+              <ExplorerEmptyState colSpan={visibleColumns.length + 1} />
             ) : (
               filteredData.map((row) => (
               <tr key={row.id} className="group border-b border-[#E9EAEB] bg-white hover:bg-[#f9fafb]">
@@ -5306,7 +5327,7 @@ function ExplorerTable({
                     onChange={() => toggleExplorerRowSelection(row.id)}
                   />
                 </td>
-                {EXPLORER_TABLE_COLUMNS.map((col) =>
+                {visibleColumns.map((col) =>
                   renderExplorerBodyCell(row, col, {
                     explorerTdClass,
                     explorerStatusTdClass,
@@ -5454,6 +5475,22 @@ function ExplorerTable({
           </div>
         </div>
       )}
+
+      <button
+        type="button"
+        title="CX prototype only — not a product feature"
+        onClick={() => setExplorerReducedColumns((on) => !on)}
+        className="absolute bottom-3 right-3 z-40 inline-flex max-w-[280px] items-start gap-1.5 rounded-[6px] border border-dashed border-[#9CA3AF] bg-[#F9FAFB] px-2.5 py-2 text-left text-[12px] leading-snug text-[#6B7280] shadow-sm hover:bg-[#F3F4F6]"
+      >
+        <span className="mt-0.5 shrink-0 text-[#9CA3AF]">
+          <IconWarning />
+        </span>
+        <span>
+          {explorerReducedColumns
+            ? 'Reduced columns (prototype) — click for full'
+            : 'Full columns (prototype) — click for reduced'}
+        </span>
+      </button>
     </div>
   )
 }
