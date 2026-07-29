@@ -1215,7 +1215,7 @@ function ScheduleDetailsBlock({ block, onUpdate }) {
                 className="mt-1 size-4 shrink-0 border-[#e5e7eb] text-[#0267ff] focus:ring-[#0267ff]"
               />
               <div className="flex min-w-0 flex-col gap-1">
-                <span className="text-[14px] font-medium text-[#0a0a0a]">Use your parameter coverage</span>
+                <span className="text-[14px] font-medium text-[#0a0a0a]">Use your coverage parameter</span>
                 <span className="text-[12px] font-normal text-[#4b535c]">
                   Sol will use the target coverage set in your parameters.
                 </span>
@@ -2125,7 +2125,7 @@ function ScheduleTable({
       )}
       <div className="mt-6 rounded-[4px] border border-[#EAEAEA] bg-white">
         <div
-          className={`grid ${tableGrid} gap-4 border-b border-[#EAEAEA] bg-[#F8F8F8] px-5 py-3 text-[12px] font-medium uppercase tracking-[0.04em] text-[#4b535c]`}
+          className={`grid ${tableGrid} gap-4 border-b border-[#EAEAEA] bg-[#F8F8F8] px-5 py-3 text-[12px] font-medium tracking-[0.04em] text-[#4b535c]`}
         >
           <span>Batch name</span>
           <span>Created</span>
@@ -2134,7 +2134,7 @@ function ScheduleTable({
           <span>Scope</span>
           <span>Revenue increase</span>
           <span>Unique trips</span>
-          <span>Transfer units</span>
+          <span>Transfer</span>
           {showErrorCode && <span>Error code</span>}
           <span />
         </div>
@@ -2375,7 +2375,7 @@ export default function OptimiserPage({ onAddJob, openAddJob, resetToUpcoming, o
     {
       title: 'Scope',
       subtitle: 'Define the movement type, products, and locations for this ad-hoc run.',
-      continueLabel: 'Continue to Approval & submission',
+      continueLabel: 'Continue to approval & submission',
     },
     {
       title: 'Approval & submission',
@@ -2505,7 +2505,7 @@ export default function OptimiserPage({ onAddJob, openAddJob, resetToUpcoming, o
           <div className="border border-[#EAEAEA] rounded-[4px] bg-white overflow-visible">
             <div className="px-5 pb-6 pt-2 flex flex-col gap-6">
               <CreateScheduleScopeMultiSelect
-                label="Movement type"
+                label="Movement"
                 placeholder="Select movement type"
                 options={['Replenishment', 'Rebalancing']}
                 includeValues={adhocMovementType}
@@ -2532,7 +2532,7 @@ export default function OptimiserPage({ onAddJob, openAddJob, resetToUpcoming, o
                       className="mt-1 size-4 shrink-0 border-[#e5e7eb] text-[#0267ff] focus:ring-[#0267ff]"
                     />
                     <div className="flex min-w-0 flex-col gap-1">
-                      <span className="text-[14px] font-medium text-[#0a0a0a]">Use your parameter coverage</span>
+                      <span className="text-[14px] font-medium text-[#0a0a0a]">Use your coverage parameter</span>
                       <span className="text-[12px] font-normal text-[#4b535c]">
                         Sol will use the target coverage set in your parameters.
                       </span>
@@ -2757,7 +2757,7 @@ export default function OptimiserPage({ onAddJob, openAddJob, resetToUpcoming, o
           <div className="border border-[#EAEAEA] rounded-[4px] bg-white overflow-visible">
             <div className="px-5 pb-6 pt-2 flex flex-col gap-6">
               <CreateScheduleScopeMultiSelect
-                label="Movement type"
+                label="Movement"
                 placeholder="Select movement type"
                 options={['Replenishment', 'Rebalancing']}
                 includeValues={scheduleDetails.movementTypes}

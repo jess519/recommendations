@@ -95,10 +95,10 @@ const SCHEDULE_SUBMISSION_DEADLINE = '28/02/2026'
 /** Hardcoded totals for Products tab summary row (6 visible products, trip id 1). */
 const PRODUCTS_TAB_SUMMARY_TOTALS = {
   productDetails: '6 products',
-  transfersUnits: '12 units',
+  transfersUnits: '12',
   transfersTrips: '5 trips',
   revenue: '€6.9K',
-  recommendedUnits: '18 units',
+  recommendedUnits: '18',
   recommendedTrips: '5 trips',
   stockUnits: '70',
   stockInTransit: '11 in transit & PFP',
@@ -116,17 +116,17 @@ const PRODUCTS_TAB_SUMMARY_TOTALS = {
 /** Hardcoded totals for Trips tab summary row (TRIPS_ALL, default full dataset view). */
 const TRIPS_TAB_SUMMARY_TOTALS_FULL = {
   sendingTrips: '22 trips',
-  transfers: '2,038 units',
+  transfers: '2,038',
   revenue: '€435.3K',
-  recommended: '2,151 units',
+  recommended: '2,151',
   products: '257 products' }
 
 /** Hardcoded totals for Trips tab summary row (TRIPS_OPERA subset view). */
 const TRIPS_TAB_SUMMARY_TOTALS_OPERA = {
   sendingTrips: '9 trips',
-  transfers: '241 units',
+  transfers: '241',
   revenue: '€48.1K',
-  recommended: '241 units',
+  recommended: '241',
   products: '147 products' }
 
 const TRIPS_OPERA = [
@@ -801,8 +801,8 @@ function IconCheck() {
 }
 
 const STATUS_OPTIONS = [
-  { id: 'approved_by_system', displayLabel: 'Approved by system', dotClass: 'bg-[#08a16a]' },
-  { id: 'approved_by_user', displayLabel: 'Approved by user', dotClass: 'bg-[#08a16a]' },
+  { id: 'approved_by_system', displayLabel: 'System approved', dotClass: 'bg-[#08a16a]' },
+  { id: 'approved_by_user', displayLabel: 'User approved', dotClass: 'bg-[#08a16a]' },
   { id: 'last_edited_by_user', displayLabel: 'Edited', dotClass: 'bg-[#0267ff]' },
   { id: 'unapproved', displayLabel: 'Unapproved', dotClass: 'bg-[#878d94]' },
   { id: 'needs_review_from_user', displayLabel: 'Needs review', dotClass: 'bg-[#bd5800]' },
@@ -2527,7 +2527,7 @@ function ProductsDrilldown({
           >
             <span className="inline-flex min-w-0 items-center gap-2">
               {grip}
-              Product details
+              Product
             </span>
           </th>
         )
@@ -2540,7 +2540,7 @@ function ProductsDrilldown({
           >
             <span className="inline-flex min-w-0 items-center gap-2">
               {grip}
-              Movement type
+              Movement
             </span>
           </th>
         )
@@ -2659,7 +2659,7 @@ function ProductsDrilldown({
                 className="inline-flex items-center gap-1 cursor-help"
                 title="Stock on-hand at the receiving location. In transit & PFP shown as secondary context."
               >
-                Units in circulation (receiving) <IconInfo />
+                Units (to) <IconInfo />
               </span>
             </span>
           </th>
@@ -2677,7 +2677,7 @@ function ProductsDrilldown({
                 className="inline-flex items-center gap-1 cursor-help"
                 title="Units reserved to sell at this location and units available to allocate to stores"
               >
-                Warehouse units <IconInfo />
+                Warehouse <IconInfo />
               </span>
             </span>
           </th>
@@ -3586,7 +3586,7 @@ function LocationsTab({ onDrawerFiltersActiveChange }) {
           >
             <span className="inline-flex min-w-0 items-center gap-2">
               {grip}
-              Movement type
+              Movement
             </span>
           </th>
         )
@@ -3661,7 +3661,7 @@ function LocationsTab({ onDrawerFiltersActiveChange }) {
                 className="inline-flex items-center gap-1 cursor-help"
                 title="Stock on-hand at the receiving location. In transit & PFP shown as secondary context."
               >
-                Units in circulation (receiving) <IconInfo />
+                Units (to) <IconInfo />
               </span>
             )}
           </th>
@@ -3749,7 +3749,7 @@ function LocationsTab({ onDrawerFiltersActiveChange }) {
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
             <div className="flex flex-col items-end">
-              <span>477 units</span>
+              <span>477</span>
               <span className="text-[12px] text-[#4b535c]">32 trips</span>
             </div>
           </th>
@@ -3758,7 +3758,7 @@ function LocationsTab({ onDrawerFiltersActiveChange }) {
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
             <div className="flex flex-col items-end">
-              <span>477 units</span>
+              <span>477</span>
               <span className="text-[12px] text-[#4b535c]">35 trips</span>
             </div>
           </th>
@@ -3772,13 +3772,13 @@ function LocationsTab({ onDrawerFiltersActiveChange }) {
       case 5:
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
-            477 units
+            477
           </th>
         )
       case 6:
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
-            477 units
+            477
           </th>
         )
 
@@ -4149,10 +4149,10 @@ function renderExplorerColumnHeaderLabel(col) {
 }
 
 const EXPLORER_TABLE_COLUMNS = [
-  { id: 'productDetails', label: 'SKU details', alignment: 'left', minWidth: 'min-w-[260px]' },
+  { id: 'productDetails', label: 'SKU', alignment: 'left', minWidth: 'min-w-[260px]' },
   { id: 'fromLocation', label: 'From location', alignment: 'left', minWidth: 'min-w-[150px]' },
   { id: 'toLocation', label: 'To location', alignment: 'left', minWidth: 'min-w-[150px]' },
-  { id: 'movementType', label: 'Movement type', alignment: 'left', minWidth: 'min-w-[100px]' },
+  { id: 'movementType', label: 'Movement', alignment: 'left', minWidth: 'min-w-[100px]' },
   {
     id: 'confidence',
     label: 'Confidence',
@@ -4172,7 +4172,7 @@ const EXPLORER_TABLE_COLUMNS = [
   },
   {
     id: 'stockInCirculation',
-    label: 'Units in circulation (receiving)',
+    label: 'Units (to)',
     alignment: 'right',
     minWidth: 'min-w-[160px]',
     tooltip: 'Stock on-hand at the receiving location. In transit & PFP shown as secondary context.',
@@ -4181,21 +4181,21 @@ const EXPLORER_TABLE_COLUMNS = [
   { id: 'forecast', label: 'Forecast', alignment: 'right', minWidth: 'min-w-[100px]', subtitle: 'per wk', tooltip: null },
   {
     id: 'warehouseUnits',
-    label: 'Warehouse units',
+    label: 'Warehouse',
     alignment: 'right',
     minWidth: 'min-w-[140px]',
     tooltip: 'Units reserved to sell at this location and units available to allocate to stores',
   },
   {
     id: 'coverage',
-    label: 'Coverage (receiving)',
+    label: 'Coverage (to)',
     alignment: 'right',
     minWidth: 'min-w-[120px]',
     tooltip: 'How well current stock at the receiving location is meeting forecasted demand, before and after this proposal.',
   },
   {
     id: 'nextEvent',
-    label: 'Next inventory event',
+    label: 'Next event',
     alignment: 'right',
     minWidth: 'min-w-[130px]',
     subtitle: 'Creation date',
@@ -4203,7 +4203,7 @@ const EXPLORER_TABLE_COLUMNS = [
   },
   {
     id: 'storageCapacity',
-    label: 'Storage capacity (receiving)',
+    label: 'Storage capacity (to)',
     alignment: 'right',
     minWidth: 'min-w-[140px]',
     tooltip: 'The storage capacity status of the location after the recommended transfers',
@@ -4216,14 +4216,14 @@ const EXPLORER_TABLE_COLUMNS = [
   },
   {
     id: 'firstStockDate',
-    label: 'First stock date',
+    label: 'First stock',
     alignment: 'right',
     minWidth: 'min-w-[120px]',
     tooltip: 'Date stock was first received at the receiving location',
   },
   {
     id: 'firstSalesDate',
-    label: 'First sales date',
+    label: 'First sales',
     alignment: 'right',
     minWidth: 'min-w-[120px]',
     tooltip: 'Date stock was first sold at the receiving location',
@@ -4550,7 +4550,7 @@ function renderExplorerBodyCell(row, col, {
     case 'initialAllocation':
       return (
         <td key={col.id} className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}>
-          <span className="text-[14px] text-[#0a0a0a]">{row.initialAllocation} units</span>
+          <span className="text-[14px] text-[#0a0a0a]">{row.initialAllocation}</span>
         </td>
       )
     case 'firstStockDate':
@@ -4986,9 +4986,9 @@ function ExplorerTable({
     const sumInTransitAndPfp = filteredData.reduce((sum, row) => sum + row.stockInTransitAndPfp, 0)
     return {
       skuLocations: `${filteredData.length} SKU-locations`,
-      transfers: `${sumTransfers} units`,
+      transfers: `${sumTransfers}`,
       revenue: `€${sumRevenueK.toFixed(1)}K`,
-      recommended: `${sumRecommended} units`,
+      recommended: `${sumRecommended}`,
       salesL7: sumSalesL7,
       salesL30: sumSalesL30,
       stockBeforeAfter: `${sumStockBefore} → ${sumStockAfter}`,
@@ -5133,7 +5133,7 @@ function ExplorerTable({
 
                   <div className="border-t border-[#e5e7eb] pt-3 mt-3">
                     <div className="text-[12px] font-medium uppercase tracking-[0.04em] text-[#4b535c] mb-2">
-                      Movement type
+                      Movement
                     </div>
                     {MOVEMENT_TYPE_FILTER_OPTIONS.map((opt) => (
                       <label
@@ -5287,7 +5287,7 @@ function ExplorerTable({
               .join(' + ')
             return (
               <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[4px] bg-[#f3f4f6] text-[#4b535c] border border-[#e5e7eb]">
-                <span>Movement type: {movementTypeChipLabel || 'Replenishment'}</span>
+                <span>Movement: {movementTypeChipLabel || 'Replenishment'}</span>
               </span>
             )
           })()}
@@ -5696,7 +5696,7 @@ function SummaryGroupedTable({ firstColumnLabel, rows, showApprovalBreakdown }) 
                 Stockouts
               </th>
               <th className="h-[62px] min-h-[62px] px-4 text-right align-middle font-medium text-[#00050A] min-w-[140px]">
-                Warehouse units
+                Warehouse
               </th>
             </tr>
           </thead>
@@ -6403,7 +6403,7 @@ export default function ScheduleDetailPage() {
                             >
                               <span className="inline-flex min-w-0 items-center gap-2">
                                 {grip}
-                                Sending location
+                                From location
                               </span>
                               {resizer}
                             </th>
@@ -6417,7 +6417,7 @@ export default function ScheduleDetailPage() {
                             >
                               <span className="inline-flex min-w-0 items-center gap-2">
                                 {grip}
-                                Receiving location
+                                To location
                               </span>
                               {resizer}
                             </th>
@@ -6431,7 +6431,7 @@ export default function ScheduleDetailPage() {
                             >
                               <span className="inline-flex min-w-0 items-center gap-2">
                                 {grip}
-                                Movement type
+                                Movement
                               </span>
                               {resizer}
                             </th>
