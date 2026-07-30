@@ -1149,17 +1149,6 @@ function ScheduleDetailsBlock({ block, onUpdate }) {
   return (
     <div className="rounded-[4px] border border-[#e5e7eb] bg-[#fafafa] p-4">
       <div className="flex flex-col gap-4">
-        <div className="flex flex-col gap-1.5">
-          <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Schedule name</label>
-          <input
-            type="text"
-            value={block.name}
-            onChange={(e) => onUpdate({ name: e.target.value })}
-            placeholder="e.g. Spring/Summer 25 Replenishment"
-            className="h-12 rounded-[4px] border border-[#EAEAEA] px-4 text-[14px] text-[#0a0a0a]"
-          />
-        </div>
-
         <CreateScheduleScopeSingleSelect
           label="Network tag"
           helperText="This schedule will apply the tagged constraints set in your Network parameters."
@@ -1215,7 +1204,7 @@ function ScheduleDetailsBlock({ block, onUpdate }) {
                 className="mt-1 size-4 shrink-0 border-[#e5e7eb] text-[#0267ff] focus:ring-[#0267ff]"
               />
               <div className="flex min-w-0 flex-col gap-1">
-                <span className="text-[14px] font-medium text-[#0a0a0a]">Use your parameter coverage</span>
+                <span className="text-[14px] font-medium text-[#0a0a0a]">Use your coverage parameter</span>
                 <span className="text-[12px] font-normal text-[#4b535c]">
                   Sol will use the target coverage set in your parameters.
                 </span>
@@ -2125,7 +2114,7 @@ function ScheduleTable({
       )}
       <div className="mt-6 rounded-[4px] border border-[#EAEAEA] bg-white">
         <div
-          className={`grid ${tableGrid} gap-4 border-b border-[#EAEAEA] bg-[#F8F8F8] px-5 py-3 text-[12px] font-medium uppercase tracking-[0.04em] text-[#4b535c]`}
+          className={`grid ${tableGrid} gap-4 border-b border-[#EAEAEA] bg-[#F8F8F8] px-5 py-3 text-[12px] font-medium tracking-[0.04em] text-[#4b535c]`}
         >
           <span>Batch name</span>
           <span>Created</span>
@@ -2134,7 +2123,7 @@ function ScheduleTable({
           <span>Scope</span>
           <span>Revenue increase</span>
           <span>Unique trips</span>
-          <span>Transfer units</span>
+          <span>Transfer</span>
           {showErrorCode && <span>Error code</span>}
           <span />
         </div>
@@ -2276,6 +2265,7 @@ export default function OptimiserPage({ onAddJob, openAddJob, resetToUpcoming, o
   const [isAdhocFlow, setIsAdhocFlow] = useState(false)
   const [adhocStep, setAdhocStep] = useState(1)
   const [adhocMovementType, setAdhocMovementType] = useState([])
+  const [adhocName, setAdhocName] = useState('')
   const [adhocCoverageMode, setAdhocCoverageMode] = useState('parameter-coverage')
   const [adhocTargetCoverageValue, setAdhocTargetCoverageValue] = useState('')
   const [adhocTargetCoverageUnit, setAdhocTargetCoverageUnit] = useState('Weeks')
@@ -2375,7 +2365,7 @@ export default function OptimiserPage({ onAddJob, openAddJob, resetToUpcoming, o
     {
       title: 'Scope',
       subtitle: 'Define the movement type, products, and locations for this ad-hoc run.',
-      continueLabel: 'Continue to Approval & submission',
+      continueLabel: 'Continue to approval & submission',
     },
     {
       title: 'Approval & submission',
@@ -2504,8 +2494,18 @@ export default function OptimiserPage({ onAddJob, openAddJob, resetToUpcoming, o
         {adhocStep === 1 && (
           <div className="border border-[#EAEAEA] rounded-[4px] bg-white overflow-visible">
             <div className="px-5 pb-6 pt-2 flex flex-col gap-6">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Name</label>
+                <input
+                  type="text"
+                  value={adhocName}
+                  onChange={(e) => setAdhocName(e.target.value)}
+                  placeholder="e.g. Spring/Summer 25 Replenishment"
+                  className="h-12 rounded-[4px] border border-[#EAEAEA] px-4 text-[14px] text-[#0a0a0a]"
+                />
+              </div>
               <CreateScheduleScopeMultiSelect
-                label="Movement type"
+                label="Movement"
                 placeholder="Select movement type"
                 options={['Replenishment', 'Rebalancing']}
                 includeValues={adhocMovementType}
@@ -2532,7 +2532,7 @@ export default function OptimiserPage({ onAddJob, openAddJob, resetToUpcoming, o
                       className="mt-1 size-4 shrink-0 border-[#e5e7eb] text-[#0267ff] focus:ring-[#0267ff]"
                     />
                     <div className="flex min-w-0 flex-col gap-1">
-                      <span className="text-[14px] font-medium text-[#0a0a0a]">Use your parameter coverage</span>
+                      <span className="text-[14px] font-medium text-[#0a0a0a]">Use your coverage parameter</span>
                       <span className="text-[12px] font-normal text-[#4b535c]">
                         Sol will use the target coverage set in your parameters.
                       </span>
@@ -2756,8 +2756,18 @@ export default function OptimiserPage({ onAddJob, openAddJob, resetToUpcoming, o
         {currentStep === 1 && (
           <div className="border border-[#EAEAEA] rounded-[4px] bg-white overflow-visible">
             <div className="px-5 pb-6 pt-2 flex flex-col gap-6">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Name</label>
+                <input
+                  type="text"
+                  value={scheduleDetails.name}
+                  onChange={(e) => updateScheduleDetails({ name: e.target.value })}
+                  placeholder="e.g. Spring/Summer 25 Replenishment"
+                  className="h-12 rounded-[4px] border border-[#EAEAEA] px-4 text-[14px] text-[#0a0a0a]"
+                />
+              </div>
               <CreateScheduleScopeMultiSelect
-                label="Movement type"
+                label="Movement"
                 placeholder="Select movement type"
                 options={['Replenishment', 'Rebalancing']}
                 includeValues={scheduleDetails.movementTypes}
