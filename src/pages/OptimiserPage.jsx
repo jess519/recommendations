@@ -1149,17 +1149,6 @@ function ScheduleDetailsBlock({ block, onUpdate }) {
   return (
     <div className="rounded-[4px] border border-[#e5e7eb] bg-[#fafafa] p-4">
       <div className="flex flex-col gap-4">
-        <div className="flex flex-col gap-1.5">
-          <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Schedule name</label>
-          <input
-            type="text"
-            value={block.name}
-            onChange={(e) => onUpdate({ name: e.target.value })}
-            placeholder="e.g. Spring/Summer 25 Replenishment"
-            className="h-12 rounded-[4px] border border-[#EAEAEA] px-4 text-[14px] text-[#0a0a0a]"
-          />
-        </div>
-
         <CreateScheduleScopeSingleSelect
           label="Network tag"
           helperText="This schedule will apply the tagged constraints set in your Network parameters."
@@ -2276,6 +2265,7 @@ export default function OptimiserPage({ onAddJob, openAddJob, resetToUpcoming, o
   const [isAdhocFlow, setIsAdhocFlow] = useState(false)
   const [adhocStep, setAdhocStep] = useState(1)
   const [adhocMovementType, setAdhocMovementType] = useState([])
+  const [adhocName, setAdhocName] = useState('')
   const [adhocCoverageMode, setAdhocCoverageMode] = useState('parameter-coverage')
   const [adhocTargetCoverageValue, setAdhocTargetCoverageValue] = useState('')
   const [adhocTargetCoverageUnit, setAdhocTargetCoverageUnit] = useState('Weeks')
@@ -2504,6 +2494,16 @@ export default function OptimiserPage({ onAddJob, openAddJob, resetToUpcoming, o
         {adhocStep === 1 && (
           <div className="border border-[#EAEAEA] rounded-[4px] bg-white overflow-visible">
             <div className="px-5 pb-6 pt-2 flex flex-col gap-6">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Name</label>
+                <input
+                  type="text"
+                  value={adhocName}
+                  onChange={(e) => setAdhocName(e.target.value)}
+                  placeholder="e.g. Spring/Summer 25 Replenishment"
+                  className="h-12 rounded-[4px] border border-[#EAEAEA] px-4 text-[14px] text-[#0a0a0a]"
+                />
+              </div>
               <CreateScheduleScopeMultiSelect
                 label="Movement"
                 placeholder="Select movement type"
@@ -2756,6 +2756,16 @@ export default function OptimiserPage({ onAddJob, openAddJob, resetToUpcoming, o
         {currentStep === 1 && (
           <div className="border border-[#EAEAEA] rounded-[4px] bg-white overflow-visible">
             <div className="px-5 pb-6 pt-2 flex flex-col gap-6">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[14px] font-normal text-[#000000] opacity-[0.67]">Name</label>
+                <input
+                  type="text"
+                  value={scheduleDetails.name}
+                  onChange={(e) => updateScheduleDetails({ name: e.target.value })}
+                  placeholder="e.g. Spring/Summer 25 Replenishment"
+                  className="h-12 rounded-[4px] border border-[#EAEAEA] px-4 text-[14px] text-[#0a0a0a]"
+                />
+              </div>
               <CreateScheduleScopeMultiSelect
                 label="Movement"
                 placeholder="Select movement type"
