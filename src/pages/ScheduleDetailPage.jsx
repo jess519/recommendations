@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useLayoutEffect, useMemo } from 'react'
 import { createPortal } from 'react-dom'
-import { Filter, Plus, Copy } from 'lucide-react'
+import { Plus, Copy } from 'lucide-react'
 import { ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts'
 import { IconSearch, IconChevronDown, IconChevronRight, IconShare, IconDocument, IconClose, IconArrowLeft, IconGears, IconTruckTu, IconPackageTu, IconRebalancing, IconReplenishment, IconCalendarNote, IconTrendUp, IconFilterFunnel, IconColumnSettings, IconSortOrder, IconWarning, IconLightbulb } from '../components/icons'
 function IconInfo() {
@@ -4153,6 +4153,7 @@ const EXPLORER_TABLE_COLUMNS = [
   { id: 'fromLocation', label: 'From location', alignment: 'left', minWidth: 'min-w-[150px]' },
   { id: 'toLocation', label: 'To location', alignment: 'left', minWidth: 'min-w-[150px]' },
   { id: 'movementType', label: 'Movement', alignment: 'left', minWidth: 'min-w-[100px]' },
+  { id: 'transfers', label: 'Transfers', alignment: 'right', minWidth: 'min-w-[110px]' },
   {
     id: 'confidence',
     label: 'Confidence',
@@ -4161,7 +4162,6 @@ const EXPLORER_TABLE_COLUMNS = [
     tooltip:
       'Based on historical forecast accuracy at the product level. Low confidence means recommendations carry more uncertainty.',
   },
-  { id: 'transfers', label: 'Transfers', alignment: 'right', minWidth: 'min-w-[110px]' },
   { id: 'revenue', label: 'Revenue increase', alignment: 'right', minWidth: 'min-w-[110px]', tooltip: null },
   {
     id: 'recommended',
@@ -4236,6 +4236,7 @@ const EXPLORER_REDUCED_COLUMN_IDS = [
   'productDetails',
   'fromLocation',
   'toLocation',
+  'movementType',
   'transfers',
   'revenue',
   'recommended',
@@ -4264,7 +4265,6 @@ function filterExplorerRows(
   {
     departmentFilters,
     productNameFilters,
-    movementTypeFilters,
     confidenceFilters,
     statusFilters,
     statusOverrides = {} }
@@ -4274,9 +4274,6 @@ function filterExplorerRows(
       return false
     }
     if (productNameFilters.length > 0 && !productNameFilters.includes(row.productName)) {
-      return false
-    }
-    if (movementTypeFilters.length > 0 && !movementTypeFilters.includes(row.movementType)) {
       return false
     }
     if (confidenceFilters.length > 0 && !confidenceFilters.includes(row.confidence)) {
@@ -4647,23 +4644,6 @@ function renderExplorerTotalsCell(col, totals, { explorerTotalsThClass, explorer
   }
 }
 
-function ExplorerEmptyState({ colSpan }) {
-  return (
-    <tr>
-      <td colSpan={colSpan} className="py-20 px-6">
-        <div className="flex flex-col items-center text-center">
-          <Filter className="w-16 h-16 text-[#9ca3af] mb-4" aria-hidden />
-          <p className="text-[18px] font-medium text-[#0a0a0a]">Dataset is too large</p>
-          <p className="mt-2 text-[14px] text-[#4b535c] max-w-[420px]">
-            You&apos;re trying to load 318,239 SKU-locations but the maximum is 300,000. Apply filters to
-            reduce the dataset size.
-          </p>
-        </div>
-      </td>
-    </tr>
-  )
-}
-
 function ExplorerTable({
   data,
   onDrawerFiltersActiveChange,
@@ -4677,8 +4657,6 @@ function ExplorerTable({
   setExplorerDepartmentFilters,
   explorerProductNameFilters,
   setExplorerProductNameFilters,
-  explorerMovementTypeFilters,
-  setExplorerMovementTypeFilters,
   explorerConfidenceFilters,
   setExplorerConfidenceFilters,
   explorerStatusFilters,
@@ -4900,7 +4878,6 @@ function ExplorerTable({
   const explorerFilterCount =
     explorerDepartmentFilters.length +
     explorerProductNameFilters.length +
-    explorerMovementTypeFilters.length +
     explorerConfidenceFilters.length +
     explorerStatusFilters.length
 
@@ -4913,7 +4890,6 @@ function ExplorerTable({
   const hasAnyFilter =
     explorerDepartmentFilters.length > 0 ||
     explorerProductNameFilters.length > 0 ||
-    explorerMovementTypeFilters.length > 0 ||
     explorerConfidenceFilters.length > 0 ||
     explorerStatusFilters.length > 0
 
@@ -4933,7 +4909,6 @@ function ExplorerTable({
       filterExplorerRows(data, {
         departmentFilters: explorerDepartmentFilters,
         productNameFilters: explorerProductNameFilters,
-        movementTypeFilters: explorerMovementTypeFilters,
         confidenceFilters: explorerConfidenceFilters,
         statusFilters: explorerStatusFilters,
         statusOverrides: explorerStatusOverrides }),
@@ -4941,7 +4916,6 @@ function ExplorerTable({
       data,
       explorerDepartmentFilters,
       explorerProductNameFilters,
-      explorerMovementTypeFilters,
       explorerConfidenceFilters,
       explorerStatusFilters,
       explorerStatusOverrides,
@@ -4955,11 +4929,9 @@ function ExplorerTable({
   }
 
   const allExplorerRowsSelected =
-    hasAnyFilter &&
     filteredData.length > 0 &&
     filteredData.every((row) => explorerSelectedRowIds.has(row.id))
   const someExplorerRowsSelected =
-    hasAnyFilter &&
     filteredData.some((row) => explorerSelectedRowIds.has(row.id)) &&
     !allExplorerRowsSelected
 
@@ -5133,34 +5105,6 @@ function ExplorerTable({
 
                   <div className="border-t border-[#e5e7eb] pt-3 mt-3">
                     <div className="text-[12px] font-medium uppercase tracking-[0.04em] text-[#4b535c] mb-2">
-                      Movement
-                    </div>
-                    {MOVEMENT_TYPE_FILTER_OPTIONS.map((opt) => (
-                      <label
-                        key={opt.id}
-                        className="flex items-center gap-2 px-0 py-1.5 hover:bg-[#f3f4f6] cursor-pointer rounded-[4px]"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={explorerMovementTypeFilters.includes(opt.id)}
-                          onChange={(e) => {
-                            setExplorerMovementTypeFilters((prev) => {
-                              if (e.target.checked) {
-                                return prev.includes(opt.id) ? prev : [...prev, opt.id]
-                              }
-                              if (prev.length <= 1) return prev
-                              return prev.filter((x) => x !== opt.id)
-                            })
-                          }}
-                          className="size-4 rounded border-[#d1d5db] text-[#0267ff]"
-                        />
-                        <span className="text-[14px] text-[#0a0a0a]">{opt.label}</span>
-                      </label>
-                    ))}
-                  </div>
-
-                  <div className="border-t border-[#e5e7eb] pt-3 mt-3">
-                    <div className="text-[12px] font-medium uppercase tracking-[0.04em] text-[#4b535c] mb-2">
                       Confidence
                     </div>
                     {CONFIDENCE_FILTER_OPTIONS.map((opt) => (
@@ -5279,18 +5223,6 @@ function ExplorerTable({
               </button>
             </span>
           ))}
-          {(() => {
-            const movementTypeChipLabel = MOVEMENT_TYPE_FILTER_OPTIONS.filter((o) =>
-              explorerMovementTypeFilters.includes(o.id)
-            )
-              .map((o) => o.label)
-              .join(' + ')
-            return (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[4px] bg-[#f3f4f6] text-[#4b535c] border border-[#e5e7eb]">
-                <span>Movement: {movementTypeChipLabel || 'Replenishment'}</span>
-              </span>
-            )
-          })()}
           {explorerConfidenceFilters.map((id) => {
             const label = CONFIDENCE_FILTER_OPTIONS.find((o) => o.id === id)?.label ?? id
             return (
@@ -5352,7 +5284,7 @@ function ExplorerTable({
                     type="checkbox"
                     className={explorerCheckboxInputClass}
                     aria-label="Select all"
-                    disabled={!hasAnyFilter || filteredData.length === 0}
+                    disabled={filteredData.length === 0}
                     checked={allExplorerRowsSelected}
                     onChange={toggleAllExplorerRows}
                   />
@@ -5380,7 +5312,6 @@ function ExplorerTable({
                 )
               })}
             </tr>
-            {hasAnyFilter && (
             <tr className="border-b border-[#E9EAEB]">
               <th className={explorerCheckboxTotalsThClass} />
               {visibleColumns.map((col) =>
@@ -5390,13 +5321,9 @@ function ExplorerTable({
                   explorerStatusTotalsThClass })
               )}
             </tr>
-            )}
           </thead>
           <tbody>
-            {!hasAnyFilter ? (
-              <ExplorerEmptyState colSpan={visibleColumns.length + 1} />
-            ) : (
-              filteredData.map((row) => (
+            {filteredData.map((row) => (
               <tr key={row.id} className="group border-b border-[#E9EAEB] bg-white hover:bg-[#f9fafb]">
                 <td
                   className={explorerCheckboxTdClass}
@@ -5424,8 +5351,7 @@ function ExplorerTable({
                     explorerTransferOverrides })
                 )}
               </tr>
-              ))
-            )}
+            ))}
           </tbody>
         </table>
       </div>
@@ -5833,13 +5759,11 @@ export default function ScheduleDetailPage() {
   const [viewShowsFullDataset, setViewShowsFullDataset] = useState(true)
   const [selectedView, setSelectedView] = useState('Show all recommendations')
   const [viewDropdownOpen, setViewDropdownOpen] = useState(false)
-  const [includeZeroTransfers, setIncludeZeroTransfers] = useState(false)
   const [explorerStatusOverrides, setExplorerStatusOverrides] = useState({})
   const [explorerTransferOverrides, setExplorerTransferOverrides] = useState({})
   const [explorerSelectedRowIds, setExplorerSelectedRowIds] = useState(new Set())
   const [explorerDepartmentFilters, setExplorerDepartmentFilters] = useState([])
   const [explorerProductNameFilters, setExplorerProductNameFilters] = useState([])
-  const [explorerMovementTypeFilters, setExplorerMovementTypeFilters] = useState(['replenishment'])
   const [explorerConfidenceFilters, setExplorerConfidenceFilters] = useState([])
   const [explorerStatusFilters, setExplorerStatusFilters] = useState([])
   const [productsTabSelectedProduct, setProductsTabSelectedProduct] = useState(null)
@@ -6153,25 +6077,6 @@ export default function ScheduleDetailPage() {
                 </>
               )}
             </div>
-            <div className="flex items-center gap-2 shrink-0">
-              <span className="text-[14px] text-[#4b535c] whitespace-nowrap">Include zero transfers</span>
-              <button
-                type="button"
-                role="switch"
-                aria-checked={includeZeroTransfers}
-                aria-label="Include zero transfers"
-                onClick={() => setIncludeZeroTransfers((on) => !on)}
-                className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${
-                  includeZeroTransfers ? 'bg-[#1d4ed8]' : 'bg-[#d1d5db]'
-                }`}
-              >
-                <span
-                  className={`inline-block size-4 rounded-full bg-white shadow transition-transform ${
-                    includeZeroTransfers ? 'translate-x-[18px]' : 'translate-x-0.5'
-                  }`}
-                />
-              </button>
-            </div>
           </div>
         </div>
 
@@ -6204,8 +6109,6 @@ export default function ScheduleDetailPage() {
             setExplorerDepartmentFilters={setExplorerDepartmentFilters}
             explorerProductNameFilters={explorerProductNameFilters}
             setExplorerProductNameFilters={setExplorerProductNameFilters}
-            explorerMovementTypeFilters={explorerMovementTypeFilters}
-            setExplorerMovementTypeFilters={setExplorerMovementTypeFilters}
             explorerConfidenceFilters={explorerConfidenceFilters}
             setExplorerConfidenceFilters={setExplorerConfidenceFilters}
             explorerStatusFilters={explorerStatusFilters}
