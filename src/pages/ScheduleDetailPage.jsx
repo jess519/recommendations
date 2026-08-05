@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useLayoutEffect, useMemo } from 'react'
 import { createPortal } from 'react-dom'
-import { Filter, Plus, Copy } from 'lucide-react'
+import { Plus, Copy } from 'lucide-react'
 import { ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts'
 import { IconSearch, IconChevronDown, IconChevronRight, IconShare, IconDocument, IconClose, IconArrowLeft, IconGears, IconTruckTu, IconPackageTu, IconRebalancing, IconReplenishment, IconCalendarNote, IconTrendUp, IconFilterFunnel, IconColumnSettings, IconSortOrder, IconWarning, IconLightbulb } from '../components/icons'
 function IconInfo() {
@@ -4644,23 +4644,6 @@ function renderExplorerTotalsCell(col, totals, { explorerTotalsThClass, explorer
   }
 }
 
-function ExplorerEmptyState({ colSpan }) {
-  return (
-    <tr>
-      <td colSpan={colSpan} className="py-20 px-6">
-        <div className="flex flex-col items-center text-center">
-          <Filter className="w-16 h-16 text-[#9ca3af] mb-4" aria-hidden />
-          <p className="text-[18px] font-medium text-[#0a0a0a]">Dataset is too large</p>
-          <p className="mt-2 text-[14px] text-[#4b535c] max-w-[420px]">
-            You&apos;re trying to load 318,239 SKU-locations but the maximum is 300,000. Apply filters to
-            reduce the dataset size.
-          </p>
-        </div>
-      </td>
-    </tr>
-  )
-}
-
 function ExplorerTable({
   data,
   onDrawerFiltersActiveChange,
@@ -4946,11 +4929,9 @@ function ExplorerTable({
   }
 
   const allExplorerRowsSelected =
-    hasAnyFilter &&
     filteredData.length > 0 &&
     filteredData.every((row) => explorerSelectedRowIds.has(row.id))
   const someExplorerRowsSelected =
-    hasAnyFilter &&
     filteredData.some((row) => explorerSelectedRowIds.has(row.id)) &&
     !allExplorerRowsSelected
 
@@ -5303,7 +5284,7 @@ function ExplorerTable({
                     type="checkbox"
                     className={explorerCheckboxInputClass}
                     aria-label="Select all"
-                    disabled={!hasAnyFilter || filteredData.length === 0}
+                    disabled={filteredData.length === 0}
                     checked={allExplorerRowsSelected}
                     onChange={toggleAllExplorerRows}
                   />
@@ -5331,7 +5312,6 @@ function ExplorerTable({
                 )
               })}
             </tr>
-            {hasAnyFilter && (
             <tr className="border-b border-[#E9EAEB]">
               <th className={explorerCheckboxTotalsThClass} />
               {visibleColumns.map((col) =>
@@ -5341,13 +5321,9 @@ function ExplorerTable({
                   explorerStatusTotalsThClass })
               )}
             </tr>
-            )}
           </thead>
           <tbody>
-            {!hasAnyFilter ? (
-              <ExplorerEmptyState colSpan={visibleColumns.length + 1} />
-            ) : (
-              filteredData.map((row) => (
+            {filteredData.map((row) => (
               <tr key={row.id} className="group border-b border-[#E9EAEB] bg-white hover:bg-[#f9fafb]">
                 <td
                   className={explorerCheckboxTdClass}
@@ -5375,8 +5351,7 @@ function ExplorerTable({
                     explorerTransferOverrides })
                 )}
               </tr>
-              ))
-            )}
+            ))}
           </tbody>
         </table>
       </div>
