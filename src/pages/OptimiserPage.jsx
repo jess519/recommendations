@@ -25,9 +25,6 @@ const SCOPE_EXPANDED_FIELD_KEYS = [
   'manufacturers',
   'materials',
   'productGroups',
-  'sizeRuns',
-  'sizes',
-  'skus',
   'styles',
   'subClasses',
   'subDepartments',
@@ -47,9 +44,6 @@ const SCOPE_EXPANDED_PRODUCT_FIELDS = [
   { key: 'manufacturers', label: 'Manufacturers' },
   { key: 'materials', label: 'Materials' },
   { key: 'productGroups', label: 'Product groups' },
-  { key: 'sizeRuns', label: 'Size runs' },
-  { key: 'sizes', label: 'Sizes' },
-  { key: 'skus', label: 'SKUs' },
   { key: 'styles', label: 'Styles' },
   { key: 'subClasses', label: 'Sub-classes' },
   { key: 'subDepartments', label: 'Sub-departments' },
@@ -624,8 +618,6 @@ function CreateScheduleScopeFilterPanel({
             onExcludeChange={setDepartmentExclude}
             mode={departmentMode}
             onModeChange={setDepartmentMode}
-            showBulkAdd
-            onBulkAddClick={() => openBulkPaste('Departments')}
           />
         </div>
         <div className="w-full self-start">
@@ -656,8 +648,6 @@ function CreateScheduleScopeFilterPanel({
             onExcludeChange={setSeasonsExclude}
             mode={seasonsMode}
             onModeChange={setSeasonsMode}
-            showBulkAdd
-            onBulkAddClick={() => openBulkPaste('Seasons')}
           />
         </div>
         <div className="w-full self-start">
@@ -671,8 +661,6 @@ function CreateScheduleScopeFilterPanel({
             onExcludeChange={setLocationTypesExclude}
             mode={locationTypesMode}
             onModeChange={setLocationTypesMode}
-            showBulkAdd
-            onBulkAddClick={() => openBulkPaste('Location Types')}
           />
         </div>
 

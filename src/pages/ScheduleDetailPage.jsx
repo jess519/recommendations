@@ -5287,7 +5287,7 @@ function ExplorerTable({
               .join(' + ')
             return (
               <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[4px] bg-[#f3f4f6] text-[#4b535c] border border-[#e5e7eb]">
-                <span>Movement: {movementTypeChipLabel || 'Replenishment'}</span>
+                <span>Movement type: {movementTypeChipLabel || 'Replenishment + Rebalancing'}</span>
               </span>
             )
           })()}
@@ -5833,13 +5833,15 @@ export default function ScheduleDetailPage() {
   const [viewShowsFullDataset, setViewShowsFullDataset] = useState(true)
   const [selectedView, setSelectedView] = useState('Show all recommendations')
   const [viewDropdownOpen, setViewDropdownOpen] = useState(false)
-  const [includeZeroTransfers, setIncludeZeroTransfers] = useState(false)
   const [explorerStatusOverrides, setExplorerStatusOverrides] = useState({})
   const [explorerTransferOverrides, setExplorerTransferOverrides] = useState({})
   const [explorerSelectedRowIds, setExplorerSelectedRowIds] = useState(new Set())
   const [explorerDepartmentFilters, setExplorerDepartmentFilters] = useState([])
   const [explorerProductNameFilters, setExplorerProductNameFilters] = useState([])
-  const [explorerMovementTypeFilters, setExplorerMovementTypeFilters] = useState(['replenishment'])
+  const [explorerMovementTypeFilters, setExplorerMovementTypeFilters] = useState([
+    'replenishment',
+    'rebalancing',
+  ])
   const [explorerConfidenceFilters, setExplorerConfidenceFilters] = useState([])
   const [explorerStatusFilters, setExplorerStatusFilters] = useState([])
   const [productsTabSelectedProduct, setProductsTabSelectedProduct] = useState(null)
@@ -6152,25 +6154,6 @@ export default function ScheduleDetailPage() {
                   </ul>
                 </>
               )}
-            </div>
-            <div className="flex items-center gap-2 shrink-0">
-              <span className="text-[14px] text-[#4b535c] whitespace-nowrap">Include zero transfers</span>
-              <button
-                type="button"
-                role="switch"
-                aria-checked={includeZeroTransfers}
-                aria-label="Include zero transfers"
-                onClick={() => setIncludeZeroTransfers((on) => !on)}
-                className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${
-                  includeZeroTransfers ? 'bg-[#1d4ed8]' : 'bg-[#d1d5db]'
-                }`}
-              >
-                <span
-                  className={`inline-block size-4 rounded-full bg-white shadow transition-transform ${
-                    includeZeroTransfers ? 'translate-x-[18px]' : 'translate-x-0.5'
-                  }`}
-                />
-              </button>
             </div>
           </div>
         </div>
