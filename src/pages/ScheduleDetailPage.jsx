@@ -444,16 +444,22 @@ const LOCATIONS_TABLE_DATA = [
 // Mock products for trip drilldown (keyed by trip id)
 const PRODUCTS_BY_TRIP = {
   1: [
-    { id: 1, name: 'Croi-sac zip l', sku: 'A1398810', colour: 'Noir', movementType: ["rebalancing"], transfers: 3, transfersSub: 1, approvedTransfers: 3, unapprovedTransfers: 0, revenue: '€1.48K', recommended: 1, recommendedBadges: ['REV'], recommendedSub: 2, confidence: 'high', coverage: 'All SKUs in target', coverageWeeks: 5.2, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 1, salesL30: 2, forecast: 1.87, stockouts: '0 → 0', locations: '2 → 2', overstocks: '4 → 1', understocks: '8 → 5', depth: '5.0 → 5.0',     status: 'approved_by_system', currentUnits: 12, currentUnitsInTransit: 3, warehouseAllocateLine: '52 → 48', warehouseSellLine: '68 → 62' },
-    { id: 2, name: 'Pre-sac seau m', sku: 'A101080', colour: 'Bleu petrole', movementType: ["rebalancing"], transfers: 2, transfersSub: 1, approvedTransfers: 0, unapprovedTransfers: 2, revenue: '€1.12K', recommended: 2, recommendedBadges: ['VIS'], recommendedSub: 1, confidence: 'high', coverage: '2% below target', coverageWeeks: 3.8, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 2, salesL30: 3, forecast: 0.54, stockouts: '0 → 1', locations: '2 → 1', overstocks: '3 → 0', understocks: '2 → 0', depth: '3.0 → 6.0', currentUnits: 8, currentUnitsInTransit: 0, warehouseAllocateLine: '58 → 51', warehouseSellLine: '72 → 65' },
-    { id: 3, name: 'Ang-sac pte main m', sku: 'A1252810', colour: 'Figue', movementType: ["rebalancing"], transfers: 3, transfersSub: 2, approvedTransfers: 2, unapprovedTransfers: 1, revenue: '€1.89K', recommended: 3, recommendedBadges: ['REV', 'VIS'], recommendedSub: 1, confidence: 'high', coverage: '5% below target', coverageWeeks: 3.1, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 1, salesL30: 4, forecast: 2.1, stockouts: '1 → 0', locations: '2 → 2', overstocks: '5 → 2', understocks: '6 → 3', depth: '4.2 → 4.8',     status: 'last_edited_by_user', editedByUser: 'Csabi Toth', currentUnits: 25, currentUnitsInTransit: 5, warehouseAllocateLine: '48 → 42', warehouseSellLine: '65 → 58' },
-    { id: 4, name: 'Croi-sac zip s', sku: 'A1398811', colour: 'Noir', movementType: ["rebalancing"], transfers: 1, transfersSub: 2, approvedTransfers: 1, unapprovedTransfers: 0, revenue: '€0.98K', recommended: 1, recommendedBadges: ['REV'], recommendedSub: 2, confidence: 'high', coverage: 'All SKUs in target', coverageWeeks: 6.1, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 0, salesL30: 1, forecast: 0.32, stockouts: '0 → 0', locations: '1 → 2', overstocks: '2 → 1', understocks: '4 → 2', depth: '5.0 → 5.0', status: 'approved_by_user', approvedByUser: 'Jess Briggs', currentUnits: 3, currentUnitsInTransit: 1, warehouseAllocateLine: '55 → 50', warehouseSellLine: '70 → 63' },
-    { id: 5, name: 'Pre-sac seau s', sku: 'A101081', colour: 'Bleu petrole', movementType: ["replenishment"], transfers: 2, transfersSub: 1, approvedTransfers: 1, unapprovedTransfers: 1, revenue: '€0.76K', recommended: 2, recommendedBadges: ['VIS'], recommendedSub: 1, confidence: 'low', coverage: '8% below target', coverageWeeks: 2.9, coverageTarget: 6, nextEvent: { name: 'UK weekly replenishment', date: '16/06/2026' }, salesL7: 1, salesL30: 2, forecast: 0.54, stockouts: '0 → 1', locations: '2 → 1', overstocks: '3 → 0', understocks: '2 → 0', depth: '3.0 → 6.0', status: 'needs_review_from_user', currentUnits: 15, currentUnitsInTransit: 2, warehouseAllocateLine: '50 → 45', warehouseSellLine: '68 → 61' },
-    { id: 6, name: 'Ang-sac pte main s', sku: 'A1252811', colour: 'Figue', movementType: ["replenishment","rebalancing"], transfers: 4, transfersSub: 1, replenTransfers: 2, rebalTransfers: 2, approvedTransfers: 2, unapprovedTransfers: 2, revenue: '€0.65K', recommended: 1, recommendedBadges: ['REV'], recommendedSub: 1, confidence: 'low', coverage: '67% below target', coverageWeeks: 1.4, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 0, salesL30: 1, forecast: 0.21, stockouts: '0 → 0', locations: '2 → 2', overstocks: '4 → 1', understocks: '3 → 1', depth: '4.0 → 4.5', status: 'partially_approved', currentUnits: 7, currentUnitsInTransit: 0, warehouseAllocateLine: '57 → 44', warehouseSellLine: '57 → 51' },
+    { id: 1, name: 'Croi-sac zip l', sku: 'A1398810', colour: 'Noir', movementType: ["rebalancing"], transfers: 3, transfersSub: 1, approvedTransfers: 3, unapprovedTransfers: 0, revenue: '€1.48K', recommended: 1, recommendedBadges: ['REV'], recommendedSub: 2, confidence: 'high', coverage: 'All SKUs in target', coverageWeeks: 5.2, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 1, salesL30: 2, forecast: 1.87, stockouts: '0 → 0', locations: '2 → 2', overstocks: '4 → 1', understocks: '8 → 5', depth: '5.0 → 5.0',     status: 'approved_by_system', currentUnits: 12, currentUnitsInTransit: 3, warehouseAllocateLine: '52 → 48', warehouseSellLine: '68 → 62', packMultiple: null, skuCount: 1 },
+    { id: 2, name: 'Pre-sac seau m', sku: 'A101080', colour: 'Bleu petrole', movementType: ["rebalancing"], transfers: 2, transfersSub: 1, approvedTransfers: 0, unapprovedTransfers: 2, revenue: '€1.12K', recommended: 2, recommendedBadges: ['VIS'], recommendedSub: 1, confidence: 'high', coverage: '2% below target', coverageWeeks: 3.8, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 2, salesL30: 3, forecast: 0.54, stockouts: '0 → 1', locations: '2 → 1', overstocks: '3 → 0', understocks: '2 → 0', depth: '3.0 → 6.0', currentUnits: 8, currentUnitsInTransit: 0, warehouseAllocateLine: '58 → 51', warehouseSellLine: '72 → 65', packMultiple: null, skuCount: 1 },
+    { id: 3, name: 'Ang-sac pte main m', sku: 'A1252810', colour: 'Figue', movementType: ["rebalancing"], transfers: 3, transfersSub: 2, approvedTransfers: 2, unapprovedTransfers: 1, revenue: '€1.89K', recommended: 3, recommendedBadges: ['REV', 'VIS'], recommendedSub: 1, confidence: 'high', coverage: '5% below target', coverageWeeks: 3.1, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 1, salesL30: 4, forecast: 2.1, stockouts: '1 → 0', locations: '2 → 2', overstocks: '5 → 2', understocks: '6 → 3', depth: '4.2 → 4.8',     status: 'last_edited_by_user', editedByUser: 'Csabi Toth', currentUnits: 25, currentUnitsInTransit: 5, warehouseAllocateLine: '48 → 42', warehouseSellLine: '65 → 58', packMultiple: null, skuCount: 2 },
+    { id: 4, name: 'Croi-sac zip s', sku: 'A1398811', colour: 'Noir', movementType: ["rebalancing"], transfers: 1, transfersSub: 2, approvedTransfers: 1, unapprovedTransfers: 0, revenue: '€0.98K', recommended: 1, recommendedBadges: ['REV'], recommendedSub: 2, confidence: 'high', coverage: 'All SKUs in target', coverageWeeks: 6.1, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 0, salesL30: 1, forecast: 0.32, stockouts: '0 → 0', locations: '1 → 2', overstocks: '2 → 1', understocks: '4 → 2', depth: '5.0 → 5.0', status: 'approved_by_user', approvedByUser: 'Jess Briggs', currentUnits: 3, currentUnitsInTransit: 1, warehouseAllocateLine: '55 → 50', warehouseSellLine: '70 → 63', packMultiple: null, skuCount: 1 },
+    // COIN: single-SKU pack-constrained replen — inline-editable
+    { id: 5, name: 'Pre-sac seau s', sku: 'A101081', colour: 'Bleu petrole', movementType: ["replenishment"], transfers: 20, transfersSub: 1, approvedTransfers: 10, unapprovedTransfers: 10, revenue: '€0.76K', recommended: 20, recommendedBadges: ['VIS'], recommendedSub: 1, confidence: 'low', coverage: '8% below target', coverageWeeks: 2.9, coverageTarget: 6, nextEvent: { name: 'UK weekly replenishment', date: '16/06/2026' }, salesL7: 1, salesL30: 2, forecast: 0.54, stockouts: '0 → 1', locations: '2 → 1', overstocks: '3 → 0', understocks: '2 → 0', depth: '3.0 → 6.0', status: 'needs_review_from_user', currentUnits: 15, currentUnitsInTransit: 2, warehouseAllocateLine: '50 → 45', warehouseSellLine: '68 → 61', packMultiple: 10, skuCount: 1 },
+    // Mixed replen+rebal — pack rules apply to replen portion in hover
+    { id: 6, name: 'Ang-sac pte main s', sku: 'A1252811', colour: 'Figue', movementType: ["replenishment","rebalancing"], transfers: 22, transfersSub: 1, replenTransfers: 20, rebalTransfers: 2, approvedTransfers: 12, unapprovedTransfers: 10, revenue: '€0.65K', recommended: 1, recommendedBadges: ['REV'], recommendedSub: 1, confidence: 'low', coverage: '67% below target', coverageWeeks: 1.4, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 0, salesL30: 1, forecast: 0.21, stockouts: '0 → 0', locations: '2 → 2', overstocks: '4 → 1', understocks: '3 → 1', depth: '4.0 → 4.5', status: 'partially_approved', currentUnits: 7, currentUnitsInTransit: 0, warehouseAllocateLine: '57 → 44', warehouseSellLine: '57 → 51', packMultiple: 10, skuCount: 1 },
+    // Multi-SKU pack-constrained replen — read-only on Products row
+    { id: 9, name: 'Coin-pack tote m', sku: 'C900010', colour: 'Noir', movementType: ["replenishment"], transfers: 40, transfersSub: 2, approvedTransfers: 20, unapprovedTransfers: 20, revenue: '€1.10K', recommended: 40, recommendedBadges: ['VIS'], recommendedSub: 2, confidence: 'high', coverage: '4% below target', coverageWeeks: 4.2, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 2, salesL30: 8, forecast: 1.2, stockouts: '0 → 0', locations: '3 → 3', overstocks: '2 → 1', understocks: '6 → 4', depth: '4.0 → 4.8', status: 'unapproved', currentUnits: 22, currentUnitsInTransit: 4, warehouseAllocateLine: '60 → 52', warehouseSellLine: '70 → 62', packMultiple: 10, skuCount: 4 },
+    // Unconstrained replen — baseline non-pack path
+    { id: 10, name: 'Mini sac band', sku: 'C900020', colour: 'Rouge', movementType: ["replenishment"], transfers: 3, transfersSub: 1, approvedTransfers: 2, unapprovedTransfers: 1, revenue: '€0.42K', recommended: 3, recommendedBadges: ['REV'], recommendedSub: 1, confidence: 'low', coverage: 'All SKUs in target', coverageWeeks: 6.0, coverageTarget: 6, nextEvent: { name: 'UK weekly replenishment', date: '16/06/2026' }, salesL7: 1, salesL30: 3, forecast: 0.6, stockouts: '0 → 0', locations: '1 → 1', overstocks: '1 → 0', understocks: '2 → 1', depth: '5.0 → 5.5', status: 'approved_by_system', currentUnits: 9, currentUnitsInTransit: 0, warehouseAllocateLine: '30 → 27', warehouseSellLine: '40 → 36', packMultiple: null, skuCount: 1 },
   ],
   2: [
-    { id: 7, name: 'Sac zip l', sku: 'B200001', colour: 'Noir', movementType: ["rebalancing"], transfers: 2, transfersSub: 1, approvedTransfers: 2, unapprovedTransfers: 0, revenue: '€0.89K', recommended: 2, recommendedBadges: ['REV'], recommendedSub: 1, confidence: 'high', coverage: '3% below target', coverageWeeks: 4.8, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 1, salesL30: 2, forecast: 0.45, stockouts: '0 → 0', locations: '2 → 2', overstocks: '2 → 1', understocks: '5 → 3', depth: '4.5 → 5.0', status: 'approved_by_user', approvedByUser: 'Jess Briggs', currentUnits: 18, currentUnitsInTransit: 4, warehouseAllocateLine: '40 → 36', warehouseSellLine: '50 → 45' },
-    { id: 8, name: 'Sac seau m', sku: 'B200002', colour: 'Noir', movementType: ["rebalancing"], transfers: 1, transfersSub: 2, approvedTransfers: 0, unapprovedTransfers: 1, revenue: '€0.52K', recommended: 1, recommendedBadges: ['VIS'], recommendedSub: 2, confidence: 'high', coverage: 'All SKUs in target', coverageWeeks: 6.3, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 0, salesL30: 1, forecast: 0.28, stockouts: '0 → 1', locations: '1 → 2', overstocks: '1 → 0', understocks: '3 → 1', depth: '3.6 → 4.3', status: 'last_edited_by_user', editedByUser: 'Csabi Toth', currentUnits: 11, currentUnitsInTransit: 2, warehouseAllocateLine: '35 → 30', warehouseSellLine: '42 → 38' },
+    { id: 7, name: 'Sac zip l', sku: 'B200001', colour: 'Noir', movementType: ["rebalancing"], transfers: 2, transfersSub: 1, approvedTransfers: 2, unapprovedTransfers: 0, revenue: '€0.89K', recommended: 2, recommendedBadges: ['REV'], recommendedSub: 1, confidence: 'high', coverage: '3% below target', coverageWeeks: 4.8, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 1, salesL30: 2, forecast: 0.45, stockouts: '0 → 0', locations: '2 → 2', overstocks: '2 → 1', understocks: '5 → 3', depth: '4.5 → 5.0', status: 'approved_by_user', approvedByUser: 'Jess Briggs', currentUnits: 18, currentUnitsInTransit: 4, warehouseAllocateLine: '40 → 36', warehouseSellLine: '50 → 45', packMultiple: null, skuCount: 1 },
+    { id: 8, name: 'Sac seau m', sku: 'B200002', colour: 'Noir', movementType: ["rebalancing"], transfers: 1, transfersSub: 2, approvedTransfers: 0, unapprovedTransfers: 1, revenue: '€0.52K', recommended: 1, recommendedBadges: ['VIS'], recommendedSub: 2, confidence: 'high', coverage: 'All SKUs in target', coverageWeeks: 6.3, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 0, salesL30: 1, forecast: 0.28, stockouts: '0 → 1', locations: '1 → 2', overstocks: '1 → 0', understocks: '3 → 1', depth: '3.6 → 4.3', status: 'last_edited_by_user', editedByUser: 'Csabi Toth', currentUnits: 11, currentUnitsInTransit: 2, warehouseAllocateLine: '35 → 30', warehouseSellLine: '42 → 38', packMultiple: null, skuCount: 1 },
   ] }
 
 // Default products when trip not in PRODUCTS_BY_TRIP
@@ -2301,6 +2307,34 @@ function StockAnalysisDrilldown({
   )
 }
 
+function productHasPackConstraint(p) {
+  return p?.packMultiple != null && p.packMultiple > 0
+}
+
+function productIsReplenOnly(p) {
+  return Array.isArray(p?.movementType) && p.movementType.length === 1 && p.movementType[0] === 'replenishment'
+}
+
+function productHasTransferSplit(p) {
+  return p?.replenTransfers != null && p?.rebalTransfers != null
+}
+
+function productIsSingleSkuPackEditable(p) {
+  return productHasPackConstraint(p) && p.skuCount === 1 && productIsReplenOnly(p)
+}
+
+function formatPackLabel(packCount) {
+  const noun = packCount === 1 ? 'pack' : 'packs'
+  return `${packCount} ${noun}`
+}
+
+function isPackMultipleValue(value, packMultiple) {
+  const n = Number(value)
+  if (!Number.isFinite(n) || n < 0) return false
+  if (!packMultiple) return true
+  return n % packMultiple === 0
+}
+
 function ProductsDrilldown({
   trip,
   onBack,
@@ -2333,19 +2367,87 @@ function ProductsDrilldown({
   )
   const [hoveredTransferProductId, setHoveredTransferProductId] = useState(null)
   const [replenTransferOverrides, setReplenTransferOverrides] = useState({})
+  const [packInputError, setPackInputError] = useState(false)
 
   useEffect(() => {
     onDrawerFiltersActiveChange?.(statusFilters.length > 0)
   }, [statusFilters, onDrawerFiltersActiveChange])
 
   const baseProducts = PRODUCTS_BY_TRIP[trip.id] || DEFAULT_PRODUCTS
-  const transferApprovalTotals = baseProducts.reduce(
-    (acc, p) => ({
-      transfers: acc.transfers + (p.transfers ?? 0),
-      approved: acc.approved + (p.approvedTransfers ?? 0),
-      unapproved: acc.unapproved + (p.unapprovedTransfers ?? 0) }),
-    { transfers: 0, approved: 0, unapproved: 0 }
-  )
+
+  const getEffectiveReplenTransfers = (p) => {
+    if (!productHasTransferSplit(p)) return null
+    if (Object.prototype.hasOwnProperty.call(replenTransferOverrides, p.id)) {
+      return Number(replenTransferOverrides[p.id]) || 0
+    }
+    return Number(p.replenTransfers) || 0
+  }
+
+  const getEffectiveTransfers = (p) => {
+    if (productHasTransferSplit(p)) {
+      return getEffectiveReplenTransfers(p) + (Number(p.rebalTransfers) || 0)
+    }
+    if (Object.prototype.hasOwnProperty.call(productTransfersOverrides, p.id)) {
+      return Number(productTransfersOverrides[p.id]) || 0
+    }
+    return Number(p.transfers) || 0
+  }
+
+  const getReplenPackCount = (p) => {
+    if (!productHasPackConstraint(p)) return 0
+    if (productHasTransferSplit(p)) {
+      return getEffectiveReplenTransfers(p) / p.packMultiple
+    }
+    if (productIsReplenOnly(p)) {
+      return getEffectiveTransfers(p) / p.packMultiple
+    }
+    return 0
+  }
+
+  const transferApprovalTotals = useMemo(() => {
+    return baseProducts.reduce(
+      (acc, p) => {
+        const units = getEffectiveTransfers(p)
+        const packs = getReplenPackCount(p)
+        return {
+          transfers: acc.transfers + units,
+          packs: acc.packs + packs,
+          approved: acc.approved + (p.approvedTransfers ?? 0),
+          unapproved: acc.unapproved + (p.unapprovedTransfers ?? 0),
+        }
+      },
+      { transfers: 0, packs: 0, approved: 0, unapproved: 0 }
+    )
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- helpers close over override maps
+  }, [baseProducts, productTransfersOverrides, replenTransferOverrides])
+
+  const beginTransfersEdit = (p, currentValue) => {
+    setEditingTransfersProductId(p.id)
+    setEditingTransfersValue(String(currentValue ?? 0))
+    setPackInputError(false)
+  }
+
+  const commitPackConstrainedEdit = (p) => {
+    const packMultiple = p.packMultiple
+    const raw = editingTransfersValue
+    if (raw === '' || !isPackMultipleValue(raw, packMultiple)) {
+      setPackInputError(true)
+      return false
+    }
+    const next = Number(raw)
+    setProductTransfersOverrides((prev) => ({ ...prev, [p.id]: next }))
+    setEditingTransfersProductId(null)
+    setEditingTransfersValue('')
+    setPackInputError(false)
+    return true
+  }
+
+  const cancelTransfersEdit = () => {
+    setEditingTransfersProductId(null)
+    setEditingTransfersValue('')
+    setPackInputError(false)
+  }
+
   const products = (() => {
     let list = baseProducts
     if (statusFilters.length > 0) {
@@ -2400,13 +2502,21 @@ function ProductsDrilldown({
     const eligibleIds = []
     selectedProductIds.forEach((id) => {
       const p = baseProducts.find((row) => row.id === id)
-      const hasReplenSplit = p != null && p.replenTransfers != null && p.rebalTransfers != null
-      const hasOverride = Object.prototype.hasOwnProperty.call(replenTransferOverrides, id)
-      if (hasReplenSplit || hasOverride) eligibleIds.push(id)
+      const hasReplenSplit = productHasTransferSplit(p)
+      const hasReplenOverride = Object.prototype.hasOwnProperty.call(replenTransferOverrides, id)
+      const hasTransfersOverride = Object.prototype.hasOwnProperty.call(productTransfersOverrides, id)
+      if (hasReplenSplit || hasReplenOverride || hasTransfersOverride) eligibleIds.push(id)
     })
 
     if (eligibleIds.length > 0) {
       setReplenTransferOverrides((prev) => {
+        const next = { ...prev }
+        eligibleIds.forEach((id) => {
+          delete next[id]
+        })
+        return next
+      })
+      setProductTransfersOverrides((prev) => {
         const next = { ...prev }
         eligibleIds.forEach((id) => {
           delete next[id]
@@ -2422,6 +2532,7 @@ function ProductsDrilldown({
       })
     }
 
+    cancelTransfersEdit()
     setBulkChangeUnitsOpen(false)
   }
 
@@ -2791,7 +2902,7 @@ function ProductsDrilldown({
         return (
           <th
             key={logicalIdx}
-            className={`${productThPin(isFirst, isLast)}h-[62px] min-h-[62px] px-4 font-medium text-[#00050A] text-right align-middle box-border`}
+            className={`${productThPin(isFirst, isLast)}h-[62px] min-h-[62px] px-4 font-medium text-[#00050A] text-right align-middle box-border min-w-[140px]`}
             {...d}
           >
             <span className="inline-flex w-full min-w-0 items-center justify-end gap-2">
@@ -2821,14 +2932,11 @@ function ProductsDrilldown({
       case 2:
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
-            <div className="flex flex-col items-end">
-              <span>{transferApprovalTotals.transfers}</span>
-              <span className="text-[12px] font-medium text-[#166534]">
-                {transferApprovalTotals.approved} approved
-              </span>
-              {transferApprovalTotals.unapproved > 0 && (
-                <span className="text-[12px] font-medium text-[#4b535c]">
-                  {transferApprovalTotals.unapproved} unapproved
+            <div className="flex flex-col items-end gap-0.5">
+              <span>{transferApprovalTotals.transfers} units</span>
+              {transferApprovalTotals.packs > 0 && (
+                <span className="text-[12px] text-[#4b535c]">
+                  {formatPackLabel(transferApprovalTotals.packs)}
                 </span>
               )}
             </div>
@@ -2927,7 +3035,16 @@ function ProductsDrilldown({
           </th>
         )
       case 17:
-        return <th key={logicalIdx} className={`${pin}py-2 px-4 text-right`} />
+        return (
+          <th key={logicalIdx} className={`${pin}py-2 px-4 text-right min-w-[140px]`}>
+            <div className="flex flex-col items-end gap-0.5 text-[12px] font-medium">
+              <span className="text-[#166534]">{transferApprovalTotals.approved} approved</span>
+              {transferApprovalTotals.unapproved > 0 && (
+                <span className="text-[#4b535c]">{transferApprovalTotals.unapproved} unapproved</span>
+              )}
+            </div>
+          </th>
+        )
       default:
         return null
     }
@@ -2961,23 +3078,89 @@ function ProductsDrilldown({
           </td>
         )
       case 2: {
-        const transferSubLines = (
+        const effectiveTransfers = getEffectiveTransfers(p)
+        const hasTransferSplit = productHasTransferSplit(p)
+        const hasPack = productHasPackConstraint(p)
+        const isReplenOnly = productIsReplenOnly(p)
+        const isSingleSkuEditable = productIsSingleSkuPackEditable(p)
+        const packCount = getReplenPackCount(p)
+        const isEditingInline = editingTransfersProductId === p.id
+        const effectiveReplen = hasTransferSplit ? getEffectiveReplenTransfers(p) : null
+
+        const packSecondary =
+          hasPack && (isReplenOnly || hasTransferSplit) && packCount > 0 ? (
+            <span className="text-[12px] text-[#4b535c]">{formatPackLabel(packCount)}</span>
+          ) : null
+
+        const unitsPrimary = isSingleSkuEditable ? (
           <div className="flex flex-col items-end gap-0.5">
-            <span className="text-[14px] text-[#0a0a0a]">{p.transfers}</span>
-            <span className="text-[12px] font-medium text-[#166534]">{p.approvedTransfers} approved</span>
-            {p.unapprovedTransfers > 0 && (
-              <span className="text-[12px] font-medium text-[#4b535c]">{p.unapprovedTransfers} unapproved</span>
+            {isEditingInline ? (
+              <input
+                type="number"
+                min="0"
+                step={p.packMultiple}
+                value={editingTransfersValue}
+                onChange={(e) => {
+                  setEditingTransfersValue(e.target.value)
+                  setPackInputError(false)
+                }}
+                onBlur={() => {
+                  if (!commitPackConstrainedEdit(p)) {
+                    /* keep editing with error */
+                  }
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.currentTarget.blur()
+                  }
+                  if (e.key === 'Escape') {
+                    cancelTransfersEdit()
+                  }
+                }}
+                onClick={(e) => e.stopPropagation()}
+                className={`w-16 h-7 px-2 rounded-[4px] border text-[12px] text-[#0a0a0a] text-right ${
+                  packInputError ? 'border-[#E30D3C]' : 'border-[#e9eaeb]'
+                }`}
+                autoFocus
+              />
+            ) : (
+              <button
+                type="button"
+                className="text-[14px] text-[#0a0a0a] underline-offset-2 hover:underline"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  beginTransfersEdit(p, effectiveTransfers)
+                }}
+              >
+                {effectiveTransfers}
+              </button>
             )}
+            {isEditingInline && packInputError && (
+              <span className="text-[11px] text-[#E30D3C]">
+                Must be a multiple of {p.packMultiple}
+              </span>
+            )}
+            {packSecondary}
+          </div>
+        ) : (
+          <div className="flex flex-col items-end gap-0.5">
+            <span className="text-[14px] text-[#0a0a0a]">{effectiveTransfers}</span>
+            {packSecondary}
           </div>
         )
-        const hasTransferSplit = p.replenTransfers != null && p.rebalTransfers != null
+
         if (!hasTransferSplit) {
           return (
-            <td key={logicalIdx} className={`${pin}py-3 px-4 text-right align-top`} onClick={(e) => e.stopPropagation()}>
-              {transferSubLines}
+            <td
+              key={logicalIdx}
+              className={`${pin}py-3 px-4 text-right align-top`}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {unitsPrimary}
             </td>
           )
         }
+
         return (
           <td
             key={logicalIdx}
@@ -2986,7 +3169,7 @@ function ProductsDrilldown({
             onMouseLeave={() => setHoveredTransferProductId(null)}
             onClick={(e) => e.stopPropagation()}
           >
-            {transferSubLines}
+            {unitsPrimary}
             {hoveredTransferProductId === p.id && (
               <div className="absolute bottom-full mb-1 left-0 z-50 bg-white border border-[#e5e7eb] rounded-[6px] shadow-md p-3 min-w-[200px]">
                 <div className="text-[12px] font-medium text-[#0a0a0a] mb-2">Transfer split</div>
@@ -2996,17 +3179,21 @@ function ProductsDrilldown({
                 </div>
                 <div className="flex items-center justify-between gap-4">
                   <span className="text-[12px] text-[#4b535c]">Replenishment</span>
-                  <input
-                    type="number"
-                    min="0"
-                    value={replenTransferOverrides[p.id] ?? p.replenTransfers}
-                    onChange={(e) => {
-                      const next = e.target.value === '' ? '' : Number(e.target.value)
-                      setReplenTransferOverrides((prev) => ({ ...prev, [p.id]: next }))
-                    }}
-                    onClick={(e) => e.stopPropagation()}
-                    className="w-16 h-7 px-2 rounded-[4px] border border-[#e9eaeb] text-[12px] text-[#0a0a0a] text-right"
-                  />
+                  {hasPack ? (
+                    <span className="text-[12px] text-[#0a0a0a] font-medium">{effectiveReplen}</span>
+                  ) : (
+                    <input
+                      type="number"
+                      min="0"
+                      value={effectiveReplen ?? 0}
+                      onChange={(e) => {
+                        const next = e.target.value === '' ? '' : Number(e.target.value)
+                        setReplenTransferOverrides((prev) => ({ ...prev, [p.id]: next }))
+                      }}
+                      onClick={(e) => e.stopPropagation()}
+                      className="w-16 h-7 px-2 rounded-[4px] border border-[#e9eaeb] text-[12px] text-[#0a0a0a] text-right"
+                    />
+                  )}
                 </div>
                 <p className="text-[11px] text-[#4b535c] italic mt-2">
                   Rebalancing quantity is set by the solver and cannot be edited at this level.
@@ -3144,16 +3331,26 @@ function ProductsDrilldown({
         return (
           <td
             key={logicalIdx}
-            className={`${pin}py-3 px-4 min-w-0 align-top text-right`}
+            className={`${pin}py-3 px-4 min-w-[140px] align-top text-right`}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex justify-end">
+            <div className="flex flex-col items-end gap-1">
               <StatusDropdown
                 rowId={`product-${p.id}`}
                 value={productStatusOverrides[p.id] ?? getRowStatus(p)}
                 userName={p.approvedByUser || p.editedByUser}
                 onChange={(statusId) => setProductStatusOverrides((prev) => ({ ...prev, [p.id]: statusId }))}
               />
+              <div className="flex flex-col items-end gap-0.5">
+                <span className="text-[12px] font-medium text-[#166534]">
+                  {p.approvedTransfers} approved
+                </span>
+                {p.unapprovedTransfers > 0 && (
+                  <span className="text-[12px] font-medium text-[#4b535c]">
+                    {p.unapprovedTransfers} unapproved
+                  </span>
+                )}
+              </div>
             </div>
           </td>
         )
