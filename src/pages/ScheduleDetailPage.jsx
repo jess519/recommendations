@@ -3084,7 +3084,6 @@ function ProductsDrilldown({
         const isReplenOnly = productIsReplenOnly(p)
         const isSingleSkuEditable = productIsSingleSkuPackEditable(p)
         const packCount = getReplenPackCount(p)
-        const isEditingInline = editingTransfersProductId === p.id
         const effectiveReplen = hasTransferSplit ? getEffectiveReplenTransfers(p) : null
 
         const packSecondary =
@@ -3094,48 +3093,42 @@ function ProductsDrilldown({
 
         const unitsPrimary = isSingleSkuEditable ? (
           <div className="flex flex-col items-end gap-0.5">
-            {isEditingInline ? (
-              <input
-                type="number"
-                min="0"
-                step={p.packMultiple}
-                value={editingTransfersValue}
-                onChange={(e) => {
-                  setEditingTransfersValue(e.target.value)
-                  setPackInputError(false)
-                }}
-                onBlur={() => {
-                  if (!commitPackConstrainedEdit(p)) {
-                    /* keep editing with error */
-                  }
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.currentTarget.blur()
-                  }
-                  if (e.key === 'Escape') {
-                    cancelTransfersEdit()
-                  }
-                }}
-                onClick={(e) => e.stopPropagation()}
-                className={`w-16 h-7 px-2 rounded-[4px] border text-[12px] text-[#0a0a0a] text-right ${
-                  packInputError ? 'border-[#E30D3C]' : 'border-[#e9eaeb]'
-                }`}
-                autoFocus
-              />
-            ) : (
-              <button
-                type="button"
-                className="text-[14px] text-[#0a0a0a] underline-offset-2 hover:underline"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  beginTransfersEdit(p, effectiveTransfers)
-                }}
-              >
-                {effectiveTransfers}
-              </button>
-            )}
-            {isEditingInline && packInputError && (
+            <input
+              type="number"
+              min="0"
+              step={p.packMultiple}
+              value={
+                editingTransfersProductId === p.id
+                  ? editingTransfersValue
+                  : String(effectiveTransfers)
+              }
+              onFocus={() => beginTransfersEdit(p, effectiveTransfers)}
+              onChange={(e) => {
+                setEditingTransfersValue(e.target.value)
+                setPackInputError(false)
+              }}
+              onBlur={() => {
+                if (!commitPackConstrainedEdit(p)) {
+                  /* keep editing with error */
+                }
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.currentTarget.blur()
+                }
+                if (e.key === 'Escape') {
+                  cancelTransfersEdit()
+                  e.currentTarget.blur()
+                }
+              }}
+              onClick={(e) => e.stopPropagation()}
+              className={`w-16 h-7 px-2 rounded-[4px] border text-[12px] text-[#0a0a0a] text-right ${
+                editingTransfersProductId === p.id && packInputError
+                  ? 'border-[#E30D3C]'
+                  : 'border-[#e9eaeb]'
+              }`}
+            />
+            {editingTransfersProductId === p.id && packInputError && (
               <span className="text-[11px] text-[#E30D3C]">
                 Must be a multiple of {p.packMultiple}
               </span>
