@@ -525,7 +525,8 @@ const EXPLORER_WAREHOUSE = 'Log01 entrepot logtex'
 
 /** Hardcoded sending-location capacity for Explorer overcommit detection (prototype) */
 const SENDING_LOCATION_CAPACITY = {
-  'Log01 entrepot logtex': 250,
+  // Raised so seeded pack replen (single-SKU + multi-SKU) leaves headroom for "available to send"
+  'Log01 entrepot logtex': 2000,
   Opéra: 50,
   'G.L. Haussmann Maro': 50,
   'La Défense': 50,
@@ -4553,6 +4554,7 @@ function filterExplorerRows(
 /**
  * Inject packBanner rows above visible multi-SKU pack members.
  * Banners are display-only — never present in EXPLORER_DATA / source `allSkuRows`.
+ * Pack content (single-SKU + multi-SKU clusters) is sorted to the top for demo.
  */
 function buildExplorerDisplayRows(filteredSkuRows, allSkuRows) {
   const packTotalCounts = new Map()
@@ -4583,7 +4585,8 @@ function buildExplorerDisplayRows(filteredSkuRows, allSkuRows) {
   }
 
   const emittedGroups = new Set()
-  const displayRows = []
+  const packRows = []
+  const nonPackRows = []
 
   for (const row of filteredSkuRows) {
     if (row.isPackMember && row.packGroupId) {
@@ -4596,7 +4599,7 @@ function buildExplorerDisplayRows(filteredSkuRows, allSkuRows) {
         .filter((r) => r.packGroupId === row.packGroupId)
         .map((r) => r.id)
 
-      displayRows.push({
+      packRows.push({
         rowKind: 'packBanner',
         id: `pack-banner-${row.packGroupId}`,
         packGroupId: row.packGroupId,
@@ -4613,15 +4616,21 @@ function buildExplorerDisplayRows(filteredSkuRows, allSkuRows) {
       })
 
       for (const member of members) {
-        displayRows.push({ rowKind: 'sku', ...member })
+        packRows.push({ rowKind: 'sku', ...member })
       }
       continue
     }
 
-    displayRows.push({ rowKind: 'sku', ...row })
+    const isSingleSkuPack =
+      row.packMultiple != null && row.packMultiple > 0 && !row.isPackMember
+    if (isSingleSkuPack) {
+      packRows.push({ rowKind: 'sku', ...row })
+    } else {
+      nonPackRows.push({ rowKind: 'sku', ...row })
+    }
   }
 
-  return displayRows
+  return [...packRows, ...nonPackRows]
 }
 
 const EXPLORER_TABLE_COLUMN_COUNT = EXPLORER_TABLE_COLUMNS.length
@@ -5870,10 +5879,6 @@ function ExplorerTable({
                         <span className="text-[13px] text-[#0a0a0a] tabular-nums">
                           {totalUnits} units
                         </span>
-                        <span className="text-[13px] text-[#4b535c]">
-                          {row.from} → {row.to}
-                        </span>
-                        <MovementTypePills movementType={[row.movementType]} />
                         {showPartialNote && (
                           <span className="text-[11px] text-[#878d94]">
                             {row.shownSkuCount} of {row.totalSkuCount} SKUs shown
