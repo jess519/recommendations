@@ -634,8 +634,38 @@ const EXPLORER_PRODUCTS = [
     ic: '€15',
     seasonAndEvent: 'AW25 · Continuity',
     sizes: ['S'],
-    movementTypes: ['rebalancing'] },
+    // Replen rows are single-SKU packs (packMultiple: 10); rebal stays unconstrained
+    movementTypes: ['replenishment', 'rebalancing'],
+    packMultiple: 10 },
+  {
+    id: 'exp-p-coin',
+    name: 'Coin-pack tote',
+    baseSku: 'C900010',
+    colour: 'Noir',
+    department: 'Handbags',
+    subDepartment: 'Sac à main',
+    material: 'Cuir',
+    gender: 'Femme',
+    rrp: '€320',
+    ws: '€0',
+    ic: '€28',
+    seasonAndEvent: 'Winter 26 · Vague 1',
+    sizes: ['S', 'M', 'L'],
+    movementTypes: ['replenishment'] },
 ]
+
+/** Multi-SKU pack: Log01 → Opéra replen rows for Coin-pack sizes (not in EXPLORER_DATA as banner rows) */
+const EXPLORER_MULTI_SKU_PACK = {
+  packGroupId: 'pack-coin-p1',
+  packId: 'Coin-pack P1',
+  packCount: 4,
+  toLocation: 'Opéra',
+  packRatio: {
+    'C900010-S': 2,
+    'C900010-M': 3,
+    'C900010-L': 2,
+  },
+}
 
 const DEPARTMENT_FILTER_OPTIONS = ['Handbags', 'Crossbody', 'Bucket bags']
 
@@ -713,7 +743,17 @@ function buildExplorerRow(rowIndex, product, size, fromLoc, toLoc, movementType)
       : rowIndex % 5 === 0
         ? 45 + (rowIndex % 10)
         : 8 + (rowIndex % 8)
-  const stockAfter = stockBefore + transfers + (stockFromOtherStores ?? 0)
+  // Single-SKU pack: only Log01 → store replen; seed transfers as a pack multiple
+  const isSingleSkuPackReplen =
+    movementType === 'replenishment' &&
+    fromLoc === EXPLORER_WAREHOUSE &&
+    product.packMultiple != null &&
+    product.packMultiple > 0
+  const packMultiple = isSingleSkuPackReplen ? product.packMultiple : null
+  const alignedTransfers = packMultiple
+    ? Math.max(packMultiple, Math.round(transfers / packMultiple) * packMultiple)
+    : transfers
+  const stockAfter = stockBefore + alignedTransfers + (stockFromOtherStores ?? 0)
   return {
     id: `exp-row-${rowIndex}`,
     productId: product.id,
@@ -732,7 +772,8 @@ function buildExplorerRow(rowIndex, product, size, fromLoc, toLoc, movementType)
     fromLocation: fromLoc,
     toLocation: toLoc,
     movementType,
-    transfers,
+    transfers: alignedTransfers,
+    packMultiple,
     availableToSend,
     visibilityBefore: rowIndex % 11 === 0 ? 2 : rowIndex % 5 === 0 ? 1 : 0,
     visibilityAfter: rowIndex % 11 === 0 ? 3 : rowIndex % 5 === 0 ? 2 : 1,
@@ -792,6 +833,27 @@ function buildExplorerData() {
       })
     })
   })
+
+  // Annotate multi-SKU pack members (Log01 → Opéra replen only). Banners are never stored here.
+  for (const row of rows) {
+    const unitsPerPack = EXPLORER_MULTI_SKU_PACK.packRatio[row.sku]
+    if (
+      unitsPerPack == null ||
+      row.movementType !== 'replenishment' ||
+      row.fromLocation !== EXPLORER_WAREHOUSE ||
+      row.toLocation !== EXPLORER_MULTI_SKU_PACK.toLocation
+    ) {
+      continue
+    }
+    row.packGroupId = EXPLORER_MULTI_SKU_PACK.packGroupId
+    row.packId = EXPLORER_MULTI_SKU_PACK.packId
+    row.packRatio = EXPLORER_MULTI_SKU_PACK.packRatio
+    row.packCount = EXPLORER_MULTI_SKU_PACK.packCount
+    row.isPackMember = true
+    row.packMultiple = null
+    row.transfers = unitsPerPack * EXPLORER_MULTI_SKU_PACK.packCount
+    row.stockAfter = row.stockBefore + row.transfers + (row.stockFromOtherStores ?? 0)
+  }
 
   return rows
 }
@@ -4488,16 +4550,94 @@ function filterExplorerRows(
   })
 }
 
+/**
+ * Inject packBanner rows above visible multi-SKU pack members.
+ * Banners are display-only — never present in EXPLORER_DATA / source `allSkuRows`.
+ */
+function buildExplorerDisplayRows(filteredSkuRows, allSkuRows) {
+  const packTotalCounts = new Map()
+  const packMetaByGroup = new Map()
+  for (const row of allSkuRows) {
+    if (!row.isPackMember || !row.packGroupId) continue
+    packTotalCounts.set(row.packGroupId, (packTotalCounts.get(row.packGroupId) ?? 0) + 1)
+    if (!packMetaByGroup.has(row.packGroupId)) {
+      packMetaByGroup.set(row.packGroupId, {
+        packGroupId: row.packGroupId,
+        packId: row.packId,
+        packRatio: row.packRatio,
+        packCount: row.packCount,
+        from: row.fromLocation,
+        to: row.toLocation,
+        movementType: row.movementType,
+      })
+    }
+  }
+
+  const filteredMembersByGroup = new Map()
+  for (const row of filteredSkuRows) {
+    if (!row.isPackMember || !row.packGroupId) continue
+    if (!filteredMembersByGroup.has(row.packGroupId)) {
+      filteredMembersByGroup.set(row.packGroupId, [])
+    }
+    filteredMembersByGroup.get(row.packGroupId).push(row)
+  }
+
+  const emittedGroups = new Set()
+  const displayRows = []
+
+  for (const row of filteredSkuRows) {
+    if (row.isPackMember && row.packGroupId) {
+      if (emittedGroups.has(row.packGroupId)) continue
+      emittedGroups.add(row.packGroupId)
+
+      const members = filteredMembersByGroup.get(row.packGroupId) ?? []
+      const meta = packMetaByGroup.get(row.packGroupId)
+      const allMemberIds = allSkuRows
+        .filter((r) => r.packGroupId === row.packGroupId)
+        .map((r) => r.id)
+
+      displayRows.push({
+        rowKind: 'packBanner',
+        id: `pack-banner-${row.packGroupId}`,
+        packGroupId: row.packGroupId,
+        packId: meta?.packId ?? row.packId,
+        packCount: meta?.packCount ?? row.packCount,
+        packRatio: meta?.packRatio ?? row.packRatio,
+        from: meta?.from ?? row.fromLocation,
+        to: meta?.to ?? row.toLocation,
+        movementType: meta?.movementType ?? row.movementType,
+        shownSkuCount: members.length,
+        totalSkuCount: packTotalCounts.get(row.packGroupId) ?? members.length,
+        memberIds: members.map((m) => m.id),
+        allMemberIds,
+      })
+
+      for (const member of members) {
+        displayRows.push({ rowKind: 'sku', ...member })
+      }
+      continue
+    }
+
+    displayRows.push({ rowKind: 'sku', ...row })
+  }
+
+  return displayRows
+}
+
 const EXPLORER_TABLE_COLUMN_COUNT = EXPLORER_TABLE_COLUMNS.length
 const EXPLORER_TABLE_TOTAL_COLUMN_COUNT = EXPLORER_TABLE_COLUMN_COUNT + 1
 
-function ExplorerTransfersInput({ value, onChange, className = '' }) {
+function ExplorerTransfersInput({ value, onChange, className = '', step, onFocus, onBlur, onKeyDown }) {
   return (
     <input
       type="number"
       min={0}
+      step={step}
       value={value}
       onChange={(e) => onChange(e.target.value)}
+      onFocus={onFocus}
+      onBlur={onBlur}
+      onKeyDown={onKeyDown}
       onClick={(e) => e.stopPropagation()}
       className={`w-16 h-7 px-2 rounded-[4px] border text-[14px] text-[#0a0a0a] text-right focus:outline-none ${
         className || 'border-[#e9eaeb]'
@@ -4548,7 +4688,15 @@ function renderExplorerBodyCell(row, col, {
   onOpenProductTransfers,
   getAvailableToSend,
   isLocationOvercommitted,
-  explorerTransferOverrides }) {
+  explorerTransferOverrides,
+  editingTransfersRowId,
+  editingTransfersValue,
+  packInputError,
+  beginTransfersEdit,
+  setEditingTransfersValue,
+  setPackInputError,
+  commitTransfersEdit,
+  cancelTransfersEdit }) {
   const alignClass = col.alignment === 'right' ? 'text-right' : ''
 
   switch (col.id) {
@@ -4587,12 +4735,100 @@ function renderExplorerBodyCell(row, col, {
       )
     case 'transfers': {
       const effectiveTransfers = getEffectiveTransfers(row)
+
+      // Multi-SKU pack children: display-only units + pack membership label
+      if (row.isPackMember) {
+        return (
+          <td key={col.id} className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}>
+            <div className="flex flex-col items-end gap-0.5">
+              <span className="text-[14px] text-[#0a0a0a]">{effectiveTransfers}</span>
+              <span className="text-[11px] text-[#878d94]">Part of {row.packId}</span>
+            </div>
+          </td>
+        )
+      }
+
       const availableToSend = getAvailableToSend?.(row) ?? 0
       const isOvercommitted = isLocationOvercommitted?.(row.fromLocation) ?? false
       const isEditedRow =
         explorerTransferOverrides?.[row.id] !== undefined &&
         explorerTransferOverrides[row.id] !== row.transfers
       const availableConstrained = !isOvercommitted && availableToSend <= 0
+      const isSingleSkuPack =
+        row.packMultiple != null && row.packMultiple > 0 && !row.isPackMember
+      const isEditingThis = editingTransfersRowId === row.id
+      const packCount = isSingleSkuPack
+        ? Math.ceil(effectiveTransfers / row.packMultiple)
+        : 0
+
+      if (isSingleSkuPack) {
+        return (
+          <td
+            key={col.id}
+            className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <TuHoverPopover
+              panel={
+                <ExplorerTransfersHoverCard
+                  row={row}
+                  transferUnits={effectiveTransfers}
+                  availableToSend={Math.max(0, availableToSend)}
+                  isOvercommitted={isOvercommitted}
+                  onOpenProductTransfers={onOpenProductTransfers}
+                />
+              }
+            >
+              <div className="flex flex-col items-end gap-0.5">
+                <ExplorerTransfersInput
+                  value={isEditingThis ? editingTransfersValue : String(effectiveTransfers)}
+                  step={row.packMultiple}
+                  onFocus={() => beginTransfersEdit?.(row, effectiveTransfers)}
+                  onChange={(newValue) => {
+                    setEditingTransfersValue?.(newValue)
+                    setPackInputError?.(false)
+                  }}
+                  onBlur={() => {
+                    commitTransfersEdit?.(row)
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') e.currentTarget.blur()
+                    if (e.key === 'Escape') {
+                      cancelTransfersEdit?.()
+                      e.currentTarget.blur()
+                    }
+                  }}
+                  className={
+                    isEditingThis && packInputError
+                      ? 'border-[#E30D3C]'
+                      : isOvercommitted && isEditedRow
+                        ? 'border-[#DC2626]'
+                        : undefined
+                  }
+                />
+                {isEditingThis && packInputError && (
+                  <span className="text-[11px] text-[#E30D3C]">Multiple of {row.packMultiple}</span>
+                )}
+                {packCount > 0 && (
+                  <span className="text-[12px] text-[#4b535c]">{formatPackLabel(packCount)}</span>
+                )}
+                {isOvercommitted ? (
+                  <span className="text-[12px] text-[#B45309]">availability exceeded</span>
+                ) : (
+                  <span
+                    className={`text-[12px] ${
+                      availableConstrained ? 'text-[#B45309]' : 'text-[#166534]'
+                    }`}
+                  >
+                    {availableToSend} available to send
+                  </span>
+                )}
+              </div>
+            </TuHoverPopover>
+          </td>
+        )
+      }
+
       return (
         <td
           key={col.id}
@@ -4863,6 +5099,9 @@ function ExplorerTable({
   const [explorerBulkChangeUnitsOpen, setExplorerBulkChangeUnitsOpen] = useState(false)
   const [explorerReducedColumns, setExplorerReducedColumns] = useState(true)
   const [explorerBulkActionError, setExplorerBulkActionError] = useState(null)
+  const [editingTransfersRowId, setEditingTransfersRowId] = useState(null)
+  const [editingTransfersValue, setEditingTransfersValue] = useState('')
+  const [packInputError, setPackInputError] = useState(false)
   const explorerSelectAllRef = useRef(null)
   const explorerBulkErrorTimeoutRef = useRef(null)
 
@@ -4909,12 +5148,82 @@ function ExplorerTable({
     setExplorerStatusOverrides((prev) => ({ ...prev, [rowId]: 'last_edited_by_user' }))
   }
 
+  const beginTransfersEdit = (row, currentValue) => {
+    setEditingTransfersRowId(row.id)
+    setEditingTransfersValue(String(currentValue ?? 0))
+    setPackInputError(false)
+  }
+
+  const cancelTransfersEdit = () => {
+    setEditingTransfersRowId(null)
+    setEditingTransfersValue('')
+    setPackInputError(false)
+  }
+
+  const commitTransfersEdit = (row) => {
+    const raw = editingTransfersValue
+    if (row.packMultiple != null && row.packMultiple > 0 && !row.isPackMember) {
+      if (raw === '' || !isPackMultipleValue(raw, row.packMultiple)) {
+        setPackInputError(true)
+        return false
+      }
+    }
+    const next = Number(raw)
+    if (!Number.isFinite(next) || next < 0) {
+      cancelTransfersEdit()
+      return false
+    }
+    handleTransfersEdit(row.id, next)
+    cancelTransfersEdit()
+    return true
+  }
+
+  const handlePackBannerCountEdit = (banner, newValue) => {
+    const newPackCount = Number.isFinite(parseInt(newValue, 10))
+      ? Math.max(0, parseInt(newValue, 10))
+      : 0
+    const memberIds = banner.allMemberIds?.length ? banner.allMemberIds : banner.memberIds
+    const transferUpdates = {}
+    const statusUpdates = {}
+    for (const memberId of memberIds) {
+      const member = data.find((r) => r.id === memberId)
+      if (!member || member.rowKind === 'packBanner') continue
+      const ratio = member.packRatio?.[member.sku]
+      if (ratio == null) continue
+      transferUpdates[memberId] = newPackCount * ratio
+      statusUpdates[memberId] = 'last_edited_by_user'
+    }
+    if (Object.keys(transferUpdates).length === 0) return
+    setExplorerTransferOverrides((prev) => ({ ...prev, ...transferUpdates }))
+    setExplorerStatusOverrides((prev) => ({ ...prev, ...statusUpdates }))
+  }
+
   const getEffectiveTransfers = (row) =>
     explorerTransferOverrides[row.id] !== undefined ? explorerTransferOverrides[row.id] : row.transfers
+
+  const getEffectivePackCountForBanner = (banner) => {
+    const memberId = banner.allMemberIds?.[0] ?? banner.memberIds?.[0]
+    const member = data.find((r) => r.id === memberId)
+    if (!member) return banner.packCount ?? 0
+    const ratio = member.packRatio?.[member.sku]
+    if (!ratio) return banner.packCount ?? 0
+    return Math.round(getEffectiveTransfers(member) / ratio)
+  }
+
+  const getBannerTotalUnits = (banner) => {
+    const memberIds = banner.allMemberIds?.length ? banner.allMemberIds : banner.memberIds
+    return memberIds.reduce((sum, id) => {
+      const member = data.find((r) => r.id === id)
+      if (!member || member.rowKind === 'packBanner') return sum
+      return sum + getEffectiveTransfers(member)
+    }, 0)
+  }
 
   const locationCapacityStats = useMemo(() => {
     const stats = new Map()
     for (const row of data) {
+      // Capacity is SKU-row only; banners are never in source data
+      if (row.rowKind === 'packBanner') continue
       const from = row.fromLocation
       const capacity = SENDING_LOCATION_CAPACITY[from]
       if (capacity === undefined) continue
@@ -4999,7 +5308,8 @@ function ExplorerTable({
 
     explorerSelectedRowIds.forEach((rowId) => {
       const row = data.find((r) => r.id === rowId)
-      if (!row) return
+      // Skip banners (never selected) and multi-SKU pack members (banner is sole edit point)
+      if (!row || row.rowKind === 'packBanner' || row.isPackMember) return
       const effectiveCurrent = getEffectiveTransfers(row)
       const newValue =
         action === 'set_zero' ? 0 : Math.max(0, effectiveCurrent + action)
@@ -5116,8 +5426,16 @@ function ExplorerTable({
     ]
   )
 
+  const displayRows = useMemo(
+    () => buildExplorerDisplayRows(filteredData, data),
+    [filteredData, data]
+  )
+
   const toggleAllExplorerRows = () => {
-    const allIds = filteredData.map((r) => r.id)
+    // Select-all: SKU rows only — never packBanner ids
+    const allIds = filteredData
+      .filter((r) => r.rowKind !== 'packBanner')
+      .map((r) => r.id)
     const allSelected = allIds.length > 0 && allIds.every((id) => explorerSelectedRowIds.has(id))
     setExplorerSelectedRowIds(allSelected ? new Set() : new Set(allIds))
   }
@@ -5136,22 +5454,24 @@ function ExplorerTable({
   }, [someExplorerRowsSelected])
 
   const totals = useMemo(() => {
-    const sumTransfers = filteredData.reduce((sum, row) => {
+    // Totals: SKU rows only — banners never inflate counts
+    const skuRows = filteredData.filter((row) => row.rowKind !== 'packBanner')
+    const sumTransfers = skuRows.reduce((sum, row) => {
       const transfers =
         explorerTransferOverrides[row.id] !== undefined
           ? explorerTransferOverrides[row.id]
           : row.transfers
       return sum + transfers
     }, 0)
-    const sumRevenueK = filteredData.reduce((sum, row) => sum + parseExplorerRevenueK(row.revenue), 0)
-    const sumRecommended = filteredData.reduce((sum, row) => sum + parseInt(row.recommended, 10), 0)
-    const sumSalesL7 = filteredData.reduce((sum, row) => sum + row.salesL7, 0)
-    const sumSalesL30 = filteredData.reduce((sum, row) => sum + row.salesL30, 0)
-    const sumStockBefore = filteredData.reduce((sum, row) => sum + row.stockBefore, 0)
-    const sumStockAfter = filteredData.reduce((sum, row) => sum + row.stockAfter, 0)
-    const sumInTransitAndPfp = filteredData.reduce((sum, row) => sum + row.stockInTransitAndPfp, 0)
+    const sumRevenueK = skuRows.reduce((sum, row) => sum + parseExplorerRevenueK(row.revenue), 0)
+    const sumRecommended = skuRows.reduce((sum, row) => sum + parseInt(row.recommended, 10), 0)
+    const sumSalesL7 = skuRows.reduce((sum, row) => sum + row.salesL7, 0)
+    const sumSalesL30 = skuRows.reduce((sum, row) => sum + row.salesL30, 0)
+    const sumStockBefore = skuRows.reduce((sum, row) => sum + row.stockBefore, 0)
+    const sumStockAfter = skuRows.reduce((sum, row) => sum + row.stockAfter, 0)
+    const sumInTransitAndPfp = skuRows.reduce((sum, row) => sum + row.stockInTransitAndPfp, 0)
     return {
-      skuLocations: `${filteredData.length} SKU-locations`,
+      skuLocations: `${skuRows.length} SKU-locations`,
       transfers: `${sumTransfers}`,
       revenue: `€${sumRevenueK.toFixed(1)}K`,
       recommended: `${sumRecommended}`,
@@ -5517,35 +5837,100 @@ function ExplorerTable({
             </tr>
           </thead>
           <tbody>
-            {filteredData.map((row) => (
-              <tr key={row.id} className="group border-b border-[#E9EAEB] bg-white hover:bg-[#f9fafb]">
-                <td
-                  className={explorerCheckboxTdClass}
-                  onClick={(e) => e.stopPropagation()}
+            {displayRows.map((row) => {
+              if (row.rowKind === 'packBanner') {
+                const effectivePackCount = getEffectivePackCountForBanner(row)
+                const totalUnits = getBannerTotalUnits(row)
+                const showPartialNote = row.shownSkuCount < row.totalSkuCount
+                return (
+                  <tr
+                    key={row.id}
+                    className="border-b border-[#E9EAEB] bg-[#f9fafb]"
+                  >
+                    <td className={explorerCheckboxTdClass} aria-hidden />
+                    <td
+                      colSpan={visibleColumns.length}
+                      className={`${explorerTdClass} align-middle`}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                        <span className="text-[14px] font-semibold text-[#0a0a0a]">
+                          {row.packId}
+                        </span>
+                        <div className="flex items-center gap-2">
+                          <ExplorerTransfersInput
+                            value={effectivePackCount}
+                            step={1}
+                            onChange={(newValue) => handlePackBannerCountEdit(row, newValue)}
+                          />
+                          <span className="text-[12px] text-[#4b535c]">
+                            {formatPackLabel(effectivePackCount)}
+                          </span>
+                        </div>
+                        <span className="text-[13px] text-[#0a0a0a] tabular-nums">
+                          {totalUnits} units
+                        </span>
+                        <span className="text-[13px] text-[#4b535c]">
+                          {row.from} → {row.to}
+                        </span>
+                        <MovementTypePills movementType={[row.movementType]} />
+                        {showPartialNote && (
+                          <span className="text-[11px] text-[#878d94]">
+                            {row.shownSkuCount} of {row.totalSkuCount} SKUs shown
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                )
+              }
+
+              const isPackChild = Boolean(row.isPackMember)
+              return (
+                <tr
+                  key={row.id}
+                  className={`group border-b border-[#E9EAEB] hover:bg-[#f9fafb] ${
+                    isPackChild ? 'bg-[#fafafa]' : 'bg-white'
+                  }`}
                 >
-                  <input
-                    type="checkbox"
-                    className={explorerCheckboxInputClass}
-                    aria-label={`Select ${row.productName}`}
-                    checked={explorerSelectedRowIds.has(row.id)}
-                    onChange={() => toggleExplorerRowSelection(row.id)}
-                  />
-                </td>
-                {visibleColumns.map((col) =>
-                  renderExplorerBodyCell(row, col, {
-                    explorerTdClass,
-                    explorerStatusTdClass,
-                    getEffectiveStatus,
-                    handleExplorerStatusChange,
-                    getEffectiveTransfers,
-                    handleTransfersEdit,
-                    onOpenProductTransfers,
-                    getAvailableToSend,
-                    isLocationOvercommitted,
-                    explorerTransferOverrides })
-                )}
-              </tr>
-            ))}
+                  <td
+                    className={`${explorerCheckboxTdClass}${
+                      isPackChild ? ' border-l-2 border-l-[#e5e7eb]' : ''
+                    }`}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <input
+                      type="checkbox"
+                      className={explorerCheckboxInputClass}
+                      aria-label={`Select ${row.productName}`}
+                      checked={explorerSelectedRowIds.has(row.id)}
+                      onChange={() => toggleExplorerRowSelection(row.id)}
+                    />
+                  </td>
+                  {visibleColumns.map((col) =>
+                    renderExplorerBodyCell(row, col, {
+                      explorerTdClass,
+                      explorerStatusTdClass,
+                      getEffectiveStatus,
+                      handleExplorerStatusChange,
+                      getEffectiveTransfers,
+                      handleTransfersEdit,
+                      onOpenProductTransfers,
+                      getAvailableToSend,
+                      isLocationOvercommitted,
+                      explorerTransferOverrides,
+                      editingTransfersRowId,
+                      editingTransfersValue,
+                      packInputError,
+                      beginTransfersEdit,
+                      setEditingTransfersValue,
+                      setPackInputError,
+                      commitTransfersEdit,
+                      cancelTransfersEdit })
+                  )}
+                </tr>
+              )
+            })}
           </tbody>
         </table>
       </div>
