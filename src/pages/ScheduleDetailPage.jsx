@@ -2323,6 +2323,10 @@ function productIsSingleSkuPackEditable(p) {
   return productHasPackConstraint(p) && p.skuCount === 1 && productIsReplenOnly(p)
 }
 
+function productIsNonPackReplenEditable(p) {
+  return productIsReplenOnly(p) && !productHasPackConstraint(p)
+}
+
 function formatPackLabel(packCount) {
   const noun = packCount === 1 ? 'pack' : 'packs'
   return `${packCount} ${noun}`
@@ -2427,12 +2431,19 @@ function ProductsDrilldown({
     setPackInputError(false)
   }
 
-  const commitPackConstrainedEdit = (p) => {
-    const packMultiple = p.packMultiple
+  const commitTransfersEdit = (p) => {
     const raw = editingTransfersValue
-    if (raw === '' || !isPackMultipleValue(raw, packMultiple)) {
-      setPackInputError(true)
-      return false
+    if (productHasPackConstraint(p)) {
+      if (raw === '' || !isPackMultipleValue(raw, p.packMultiple)) {
+        setPackInputError(true)
+        return false
+      }
+    } else {
+      const n = Number(raw)
+      if (raw === '' || !Number.isFinite(n) || n < 0 || !Number.isInteger(n)) {
+        cancelTransfersEdit()
+        return false
+      }
     }
     const next = Number(raw)
     setProductTransfersOverrides((prev) => ({ ...prev, [p.id]: next }))
@@ -3083,33 +3094,32 @@ function ProductsDrilldown({
         const hasPack = productHasPackConstraint(p)
         const isReplenOnly = productIsReplenOnly(p)
         const isSingleSkuEditable = productIsSingleSkuPackEditable(p)
+        const isNonPackReplenEditable = productIsNonPackReplenEditable(p)
+        const isInlineEditable = isSingleSkuEditable || isNonPackReplenEditable
         const packCount = getReplenPackCount(p)
         const effectiveReplen = hasTransferSplit ? getEffectiveReplenTransfers(p) : null
+        const isEditingThis = editingTransfersProductId === p.id
 
         const packSecondary =
           hasPack && (isReplenOnly || hasTransferSplit) && packCount > 0 ? (
             <span className="text-[12px] text-[#4b535c]">{formatPackLabel(packCount)}</span>
           ) : null
 
-        const unitsPrimary = isSingleSkuEditable ? (
+        const unitsPrimary = isInlineEditable ? (
           <div className="flex flex-col items-end gap-0.5">
             <input
               type="number"
               min="0"
-              step={p.packMultiple}
-              value={
-                editingTransfersProductId === p.id
-                  ? editingTransfersValue
-                  : String(effectiveTransfers)
-              }
+              step={isSingleSkuEditable ? p.packMultiple : 1}
+              value={isEditingThis ? editingTransfersValue : String(effectiveTransfers)}
               onFocus={() => beginTransfersEdit(p, effectiveTransfers)}
               onChange={(e) => {
                 setEditingTransfersValue(e.target.value)
                 setPackInputError(false)
               }}
               onBlur={() => {
-                if (!commitPackConstrainedEdit(p)) {
-                  /* keep editing with error */
+                if (!commitTransfersEdit(p)) {
+                  /* pack: keep editing with error; non-pack: reverted */
                 }
               }}
               onKeyDown={(e) => {
@@ -3123,15 +3133,11 @@ function ProductsDrilldown({
               }}
               onClick={(e) => e.stopPropagation()}
               className={`w-16 h-7 px-2 rounded-[4px] border text-[12px] text-[#0a0a0a] text-right ${
-                editingTransfersProductId === p.id && packInputError
-                  ? 'border-[#E30D3C]'
-                  : 'border-[#e9eaeb]'
+                isEditingThis && packInputError ? 'border-[#E30D3C]' : 'border-[#e9eaeb]'
               }`}
             />
-            {editingTransfersProductId === p.id && packInputError && (
-              <span className="text-[11px] text-[#E30D3C]">
-                Must be a multiple of {p.packMultiple}
-              </span>
+            {isEditingThis && packInputError && isSingleSkuEditable && (
+              <span className="text-[11px] text-[#E30D3C]">Multiple of {p.packMultiple}</span>
             )}
             {packSecondary}
           </div>
@@ -3144,11 +3150,7 @@ function ProductsDrilldown({
 
         if (!hasTransferSplit) {
           return (
-            <td
-              key={logicalIdx}
-              className={`${pin}py-3 px-4 text-right align-top`}
-              onClick={(e) => e.stopPropagation()}
-            >
+            <td key={logicalIdx} className={`${pin}py-3 px-4 text-right align-top`}>
               {unitsPrimary}
             </td>
           )
@@ -3160,11 +3162,13 @@ function ProductsDrilldown({
             className={`${pin}py-3 px-4 text-right align-top relative`}
             onMouseEnter={() => setHoveredTransferProductId(p.id)}
             onMouseLeave={() => setHoveredTransferProductId(null)}
-            onClick={(e) => e.stopPropagation()}
           >
             {unitsPrimary}
             {hoveredTransferProductId === p.id && (
-              <div className="absolute bottom-full mb-1 left-0 z-50 bg-white border border-[#e5e7eb] rounded-[6px] shadow-md p-3 min-w-[200px]">
+              <div
+                className="absolute bottom-full mb-1 left-0 z-50 bg-white border border-[#e5e7eb] rounded-[6px] shadow-md p-3 min-w-[200px]"
+                onClick={(e) => e.stopPropagation()}
+              >
                 <div className="text-[12px] font-medium text-[#0a0a0a] mb-2">Transfer split</div>
                 <div className="flex items-center justify-between gap-4 mb-2">
                   <span className="text-[12px] text-[#4b535c]">Rebalancing</span>
