@@ -6561,7 +6561,7 @@ function ExplorerTable({
                 </>
               )}
             </div>
-            <div className="relative flex flex-col items-start">
+            <div className="relative">
               <button
                 type="button"
                 disabled={changeUnitsDisabled}
@@ -6578,11 +6578,6 @@ function ExplorerTable({
               >
                 Change units
               </button>
-              {hasMixedPackSelection && (
-                <span className="px-4 text-[11px] leading-tight text-white/50">
-                  Doesn&apos;t apply to pack rows
-                </span>
-              )}
               {explorerBulkChangeUnitsOpen && !changeUnitsDisabled && (
                 <>
                   <div
@@ -6594,6 +6589,11 @@ function ExplorerTable({
                     className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 z-[70] min-w-[280px] rounded-[6px] border border-[#e5e7eb] bg-white py-1 shadow-lg"
                     style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}
                   >
+                    {hasMixedPackSelection && (
+                      <div className="border-b border-[#e5e7eb] px-3 py-2 text-[11px] leading-snug text-[#6b7280]">
+                        Doesn&apos;t apply to pack rows
+                      </div>
+                    )}
                     <div className="px-3 py-2 text-[12px] font-medium text-[#4b535c]">Adjust by</div>
                     {[
                       { action: 1, label: '+1' },
