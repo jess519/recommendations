@@ -656,7 +656,7 @@ const EXPLORER_PRODUCTS = [
     movementTypes: ['replenishment'] },
 ]
 
-/** Multi-SKU pack: Log01 → Opéra replen rows for Coin-pack sizes (not in EXPLORER_DATA as banner rows) */
+/** Multi-SKU pack: Log01 → Opéra replen rows for Coin-pack sizes (pack rows are display-only) */
 const EXPLORER_MULTI_SKU_PACK = {
   packGroupId: 'pack-coin-p1',
   packId: 'Coin-pack P1',
@@ -668,6 +668,17 @@ const EXPLORER_MULTI_SKU_PACK = {
     'C900010-M': 3,
     'C900010-L': 2,
   },
+  // Pack-level KPIs (solver-shaped); units/packCount stay derived from children + overrides
+  packRevenue: '+€1,420',
+  packRecommended: 4,
+  packRecommendedBadges: ['REV'],
+  packConfidence: 'high',
+  packCoverageWeeksBefore: 1.2,
+  packCoverageWeeksAfter: 3.4,
+  packCoverageTarget: 4,
+  packCoverageLabel: 'weeks of cover',
+  packStorageCapacity: 'available',
+  packStatus: 'unapproved',
 }
 
 const DEPARTMENT_FILTER_OPTIONS = ['Handbags', 'Crossbody', 'Bucket bags']
@@ -839,7 +850,7 @@ function buildExplorerData() {
     })
   })
 
-  // Annotate multi-SKU pack members (Log01 → Opéra replen only). Banners are never stored here.
+  // Annotate multi-SKU pack members (Log01 → Opéra replen only). Pack rows are display-only.
   for (const row of rows) {
     const unitsPerPack = EXPLORER_MULTI_SKU_PACK.packRatio[row.sku]
     if (
@@ -862,6 +873,32 @@ function buildExplorerData() {
   }
 
   return rows
+}
+
+function isExplorerPackRowId(rowId) {
+  return typeof rowId === 'string' && rowId.startsWith('pack-row-')
+}
+
+/** Resolve member SKU-row ids for a pack-row-* selection id from source EXPLORER_DATA. */
+function getPackMemberIds(packRowId, skuRows = []) {
+  if (!isExplorerPackRowId(packRowId)) return []
+  const packGroupId = packRowId.slice('pack-row-'.length)
+  if (packGroupId.startsWith('single-')) {
+    return [packGroupId.slice('single-'.length)]
+  }
+  return skuRows.filter((r) => r.packGroupId === packGroupId).map((r) => r.id)
+}
+
+/** True if any pack member has an active transfer override ≠ original. */
+function packRowHasOverride(packRow, explorerTransferOverrides = {}, skuRows = []) {
+  const ids = packRow?.allMemberIds?.length ? packRow.allMemberIds : packRow?.memberIds ?? []
+  if (!ids.length) return false
+  const byId = new Map(skuRows.map((r) => [r.id, r]))
+  return ids.some((id) => {
+    const member = byId.get(id)
+    if (!member) return false
+    return explorerRowHasPackUnitOverride(member, explorerTransferOverrides)
+  })
 }
 
 const EXPLORER_DATA = buildExplorerData()
@@ -4671,13 +4708,15 @@ function filterExplorerRows(
 }
 
 /**
- * Inject packBanner rows above visible multi-SKU pack members.
- * Banners are display-only — never present in EXPLORER_DATA / source `allSkuRows`.
- * Pack content (single-SKU + multi-SKU clusters) is sorted to the top for demo.
+ * Build Explorer display rows: collapsed packRow (+ optional packChild when expanded),
+ * then non-pack sku rows. Pack rows are display-only — never in EXPLORER_DATA.
+ * Pack content sorts to the top for the prototype.
  */
-function buildExplorerDisplayRows(filteredSkuRows, allSkuRows) {
+function buildExplorerDisplayRows(filteredSkuRows, allSkuRows, expandedPackGroupIds = new Set()) {
   const packTotalCounts = new Map()
   const packMetaByGroup = new Map()
+  const packMock = EXPLORER_MULTI_SKU_PACK
+
   for (const row of allSkuRows) {
     if (!row.isPackMember || !row.packGroupId) continue
     packTotalCounts.set(row.packGroupId, (packTotalCounts.get(row.packGroupId) ?? 0) + 1)
@@ -4688,9 +4727,19 @@ function buildExplorerDisplayRows(filteredSkuRows, allSkuRows) {
         packRatio: row.packRatio,
         packCount: row.packCount,
         isVirtualPack: row.isVirtualPack,
-        from: row.fromLocation,
-        to: row.toLocation,
+        fromLocation: row.fromLocation,
+        toLocation: row.toLocation,
         movementType: row.movementType,
+        packRevenue: packMock.packRevenue,
+        packRecommended: packMock.packRecommended,
+        packRecommendedBadges: packMock.packRecommendedBadges,
+        packConfidence: packMock.packConfidence,
+        packCoverageWeeksBefore: packMock.packCoverageWeeksBefore,
+        packCoverageWeeksAfter: packMock.packCoverageWeeksAfter,
+        packCoverageTarget: packMock.packCoverageTarget,
+        packCoverageLabel: packMock.packCoverageLabel,
+        packStorageCapacity: packMock.packStorageCapacity,
+        packStatus: packMock.packStatus,
       })
     }
   }
@@ -4705,7 +4754,7 @@ function buildExplorerDisplayRows(filteredSkuRows, allSkuRows) {
   }
 
   const emittedGroups = new Set()
-  const packRows = []
+  const packSection = []
   const nonPackRows = []
 
   for (const row of filteredSkuRows) {
@@ -4718,26 +4767,41 @@ function buildExplorerDisplayRows(filteredSkuRows, allSkuRows) {
       const allMemberIds = allSkuRows
         .filter((r) => r.packGroupId === row.packGroupId)
         .map((r) => r.id)
-
-      packRows.push({
-        rowKind: 'packBanner',
-        id: `pack-banner-${row.packGroupId}`,
-        packGroupId: row.packGroupId,
+      const packGroupId = row.packGroupId
+      const packRow = {
+        rowKind: 'packRow',
+        id: `pack-row-${packGroupId}`,
+        packGroupId,
         packId: meta?.packId ?? row.packId,
         packCount: meta?.packCount ?? row.packCount,
         packRatio: meta?.packRatio ?? row.packRatio,
         isVirtualPack: meta?.isVirtualPack ?? row.isVirtualPack,
-        from: meta?.from ?? row.fromLocation,
-        to: meta?.to ?? row.toLocation,
+        isSingleSkuPack: false,
+        fromLocation: meta?.fromLocation ?? row.fromLocation,
+        toLocation: meta?.toLocation ?? row.toLocation,
         movementType: meta?.movementType ?? row.movementType,
+        packRevenue: meta?.packRevenue,
+        packRecommended: meta?.packRecommended,
+        packRecommendedBadges: meta?.packRecommendedBadges,
+        packConfidence: meta?.packConfidence,
+        packCoverageWeeksBefore: meta?.packCoverageWeeksBefore,
+        packCoverageWeeksAfter: meta?.packCoverageWeeksAfter,
+        packCoverageTarget: meta?.packCoverageTarget,
+        packCoverageLabel: meta?.packCoverageLabel,
+        packStorageCapacity: meta?.packStorageCapacity,
+        packStatus: meta?.packStatus,
+        status: meta?.packStatus,
         shownSkuCount: members.length,
-        totalSkuCount: packTotalCounts.get(row.packGroupId) ?? members.length,
+        totalSkuCount: packTotalCounts.get(packGroupId) ?? members.length,
         memberIds: members.map((m) => m.id),
         allMemberIds,
-      })
+      }
+      packSection.push(packRow)
 
-      for (const member of members) {
-        packRows.push({ rowKind: 'sku', ...member })
+      if (expandedPackGroupIds.has(packGroupId)) {
+        for (const member of members) {
+          packSection.push({ rowKind: 'packChild', ...member })
+        }
       }
       continue
     }
@@ -4745,13 +4809,47 @@ function buildExplorerDisplayRows(filteredSkuRows, allSkuRows) {
     const isSingleSkuPack =
       row.packMultiple != null && row.packMultiple > 0 && !row.isPackMember
     if (isSingleSkuPack) {
-      packRows.push({ rowKind: 'sku', ...row })
-    } else {
-      nonPackRows.push({ rowKind: 'sku', ...row })
+      const packGroupId = `single-${row.id}`
+      const packRow = {
+        rowKind: 'packRow',
+        id: `pack-row-${packGroupId}`,
+        packGroupId,
+        packId: row.productName,
+        packCount: Math.round(row.transfers / row.packMultiple),
+        packRatio: { [row.sku]: row.packMultiple },
+        packMultiple: row.packMultiple,
+        isVirtualPack: Boolean(row.isVirtualPack),
+        isSingleSkuPack: true,
+        fromLocation: row.fromLocation,
+        toLocation: row.toLocation,
+        movementType: row.movementType,
+        packRevenue: row.revenue,
+        packRecommended: row.recommended,
+        packRecommendedBadges: row.recommendedBadges,
+        packConfidence: row.confidence,
+        packCoverageWeeksBefore: row.coverageWeeksBefore,
+        packCoverageWeeksAfter: row.coverageWeeksAfter,
+        packCoverageTarget: row.coverageTarget,
+        packCoverageLabel: row.coverageLabel,
+        packStorageCapacity: row.storageCapacity,
+        packStatus: row.status,
+        status: row.status,
+        shownSkuCount: 1,
+        totalSkuCount: 1,
+        memberIds: [row.id],
+        allMemberIds: [row.id],
+      }
+      packSection.push(packRow)
+      if (expandedPackGroupIds.has(packGroupId)) {
+        packSection.push({ rowKind: 'packChild', ...row, isPackMember: true })
+      }
+      continue
     }
+
+    nonPackRows.push({ rowKind: 'sku', ...row })
   }
 
-  return [...packRows, ...nonPackRows]
+  return [...packSection, ...nonPackRows]
 }
 
 const EXPLORER_TABLE_COLUMN_COUNT = EXPLORER_TABLE_COLUMNS.length
@@ -5217,6 +5315,222 @@ function renderExplorerTotalsCell(col, totals, { explorerTotalsThClass, explorer
   }
 }
 
+const EXPLORER_PACK_MUTED_DASH = (
+  <span className="text-[14px] text-[#9ca3af]">—</span>
+)
+
+function renderExplorerPackRowCell(packRow, col, {
+  explorerTdClass,
+  explorerStatusTdClass,
+  getEffectiveStatus,
+  handlePackRowStatusChange,
+  effectivePackCount,
+  totalUnits,
+  packStale,
+  handlePackRowCountEdit,
+}) {
+  const alignClass = col.alignment === 'right' ? 'text-right' : ''
+
+  switch (col.id) {
+    case 'productDetails': {
+      const showPartialNote = packRow.shownSkuCount < packRow.totalSkuCount
+      return (
+        <td key={col.id} className={`${explorerTdClass} ${col.minWidth}`}>
+          <div className="flex min-w-0 flex-col gap-0.5">
+            <span className="inline-flex min-w-0 items-center gap-1.5 text-[14px] font-medium text-[#0a0a0a]">
+              <span className="truncate">{packRow.packId}</span>
+              {packRow.isVirtualPack ? <VirtualPackIndicator showTooltip={false} /> : null}
+            </span>
+            {showPartialNote && (
+              <span className="text-[11px] text-[#878d94]">
+                {packRow.shownSkuCount} of {packRow.totalSkuCount} SKUs shown
+              </span>
+            )}
+          </div>
+        </td>
+      )
+    }
+    case 'fromLocation':
+      return (
+        <td key={col.id} className={`${explorerTdClass} ${col.minWidth} text-[#0a0a0a]`}>
+          {packRow.fromLocation}
+        </td>
+      )
+    case 'toLocation':
+      return (
+        <td key={col.id} className={`${explorerTdClass} ${col.minWidth} text-[#0a0a0a]`}>
+          {packRow.toLocation}
+        </td>
+      )
+    case 'movementType':
+      return (
+        <td key={col.id} className={`${explorerTdClass} ${col.minWidth}`}>
+          <MovementTypePills movementType={[packRow.movementType]} />
+        </td>
+      )
+    case 'transfers':
+      return (
+        <td
+          key={col.id}
+          className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="flex flex-col items-end gap-0.5">
+            <ExplorerTransfersInput
+              value={effectivePackCount}
+              step={1}
+              onChange={(newValue) => handlePackRowCountEdit(packRow, newValue)}
+              className={packStale ? 'border-[#e9eaeb] text-[#9ca3af]' : undefined}
+            />
+            <span className={`text-[12px] ${packStale ? 'text-[#9ca3af]' : 'text-[#4b535c]'}`}>
+              {formatPackLabel(effectivePackCount)}
+            </span>
+            <span className={`text-[12px] tabular-nums ${packStale ? 'text-[#9ca3af]' : 'text-[#0a0a0a]'}`}>
+              {totalUnits} units
+            </span>
+          </div>
+        </td>
+      )
+    case 'revenue':
+      return (
+        <td key={col.id} className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}>
+          <span className={`text-[14px] ${packStale ? 'text-[#9ca3af]' : 'text-[#0a0a0a]'}`}>
+            {packRow.packRevenue}
+          </span>
+        </td>
+      )
+    case 'recommended':
+      return (
+        <td key={col.id} className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}>
+          <div className="flex flex-col items-end gap-1">
+            <span className="inline-flex flex-wrap items-center justify-end gap-1 text-[14px] text-[#0a0a0a]">
+              {packRow.packRecommended}
+              {packRow.packRecommendedBadges?.map((badge) => (
+                <span
+                  key={badge}
+                  className="bg-[#f8f8f8] text-[11px] font-medium text-[#0267ff] px-1.5 py-0.5 rounded"
+                >
+                  {badge}
+                </span>
+              ))}
+            </span>
+          </div>
+        </td>
+      )
+    case 'confidence':
+      return (
+        <td key={col.id} className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}>
+          <div className="flex justify-end">
+            <ConfidencePill value={packRow.packConfidence} />
+          </div>
+        </td>
+      )
+    case 'coverage':
+      return (
+        <td key={col.id} className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}>
+          <span className={`text-[14px] ${packStale ? 'text-[#9ca3af]' : 'text-[#0a0a0a]'}`}>
+            {packRow.packCoverageWeeksBefore} → {packRow.packCoverageWeeksAfter} wks
+          </span>
+        </td>
+      )
+    case 'storageCapacity':
+      return (
+        <td key={col.id} className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}>
+          <div className="flex justify-end">
+            <StorageCapacityPill value={packRow.packStorageCapacity} stale={packStale} />
+          </div>
+        </td>
+      )
+    case 'status':
+      return (
+        <td
+          key={col.id}
+          className={`${explorerStatusTdClass} ${col.minWidth}`}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="flex justify-end">
+            <StatusDropdown
+              rowId={`explorer-${packRow.id}`}
+              value={getEffectiveStatus(packRow)}
+              onChange={(statusId) => handlePackRowStatusChange(packRow, statusId)}
+            />
+          </div>
+        </td>
+      )
+    default:
+      return (
+        <td key={col.id} className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}>
+          {EXPLORER_PACK_MUTED_DASH}
+        </td>
+      )
+  }
+}
+
+function renderExplorerPackChildCell(child, col, {
+  explorerTdClass,
+  explorerStatusTdClass,
+  getEffectiveTransfers,
+  explorerTransferOverrides,
+}) {
+  const alignClass = col.alignment === 'right' ? 'text-right' : ''
+  const childTdClass = `${explorerTdClass} text-[13px] leading-snug`
+
+  switch (col.id) {
+    case 'productDetails':
+      return (
+        <td key={col.id} className={`${childTdClass} ${col.minWidth}`}>
+          <div className="flex min-w-0 flex-col gap-0.5 pl-6">
+            <span className="truncate text-[13px] font-medium text-[#0a0a0a]">{child.sku}</span>
+            <span className="text-[12px] text-[#4b535c]">{child.size}</span>
+          </div>
+        </td>
+      )
+    case 'stockInCirculation':
+      return (
+        <td key={col.id} className={`${childTdClass} ${col.minWidth} ${alignClass}`}>
+          <div className="flex flex-col items-end gap-0.5">
+            <span className="inline-flex items-baseline gap-1 text-[13px] text-[#0a0a0a]">
+              <span>
+                {child.stockBefore} → {child.stockAfter}
+              </span>
+              <span>SOH</span>
+            </span>
+          </div>
+        </td>
+      )
+    case 'transfers': {
+      const effectiveTransfers = getEffectiveTransfers(child)
+      return (
+        <td key={col.id} className={`${childTdClass} ${col.minWidth} ${alignClass}`}>
+          <span className="text-[13px] text-[#0a0a0a] tabular-nums">{effectiveTransfers}</span>
+        </td>
+      )
+    }
+    case 'revenue': {
+      const revenueStale = explorerRowHasPackUnitOverride(child, explorerTransferOverrides)
+      return (
+        <td key={col.id} className={`${childTdClass} ${col.minWidth} ${alignClass}`}>
+          <span className={`text-[13px] ${revenueStale ? 'text-[#9ca3af]' : 'text-[#0a0a0a]'}`}>
+            {child.revenue}
+          </span>
+        </td>
+      )
+    }
+    case 'status':
+      return (
+        <td key={col.id} className={`${explorerStatusTdClass} ${col.minWidth}`}>
+          {EXPLORER_PACK_MUTED_DASH}
+        </td>
+      )
+    default:
+      return (
+        <td key={col.id} className={`${childTdClass} ${col.minWidth} ${alignClass}`}>
+          {EXPLORER_PACK_MUTED_DASH}
+        </td>
+      )
+  }
+}
+
 function ExplorerTable({
   data,
   onDrawerFiltersActiveChange,
@@ -5245,8 +5559,18 @@ function ExplorerTable({
   const [editingTransfersRowId, setEditingTransfersRowId] = useState(null)
   const [editingTransfersValue, setEditingTransfersValue] = useState('')
   const [packInputError, setPackInputError] = useState(false)
+  const [expandedPackGroupIds, setExpandedPackGroupIds] = useState(() => new Set())
   const explorerSelectAllRef = useRef(null)
   const explorerBulkErrorTimeoutRef = useRef(null)
+
+  const togglePackExpanded = (packGroupId) => {
+    setExpandedPackGroupIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(packGroupId)) next.delete(packGroupId)
+      else next.add(packGroupId)
+      return next
+    })
+  }
 
   const dismissExplorerBulkActionError = () => {
     if (explorerBulkErrorTimeoutRef.current) {
@@ -5321,17 +5645,20 @@ function ExplorerTable({
     return true
   }
 
-  const handlePackBannerCountEdit = (banner, newValue) => {
+  const handlePackRowCountEdit = (packRow, newValue) => {
     const newPackCount = Number.isFinite(parseInt(newValue, 10))
       ? Math.max(0, parseInt(newValue, 10))
       : 0
-    const memberIds = banner.allMemberIds?.length ? banner.allMemberIds : banner.memberIds
+    const memberIds = packRow.allMemberIds?.length ? packRow.allMemberIds : packRow.memberIds
     const transferUpdates = {}
     const statusUpdates = {}
     for (const memberId of memberIds) {
       const member = data.find((r) => r.id === memberId)
-      if (!member || member.rowKind === 'packBanner') continue
-      const ratio = member.packRatio?.[member.sku]
+      if (!member) continue
+      const ratio =
+        packRow.packRatio?.[member.sku] ??
+        member.packRatio?.[member.sku] ??
+        (packRow.isSingleSkuPack ? packRow.packMultiple : null)
       if (ratio == null) continue
       transferUpdates[memberId] = newPackCount * ratio
       statusUpdates[memberId] = 'last_edited_by_user'
@@ -5341,23 +5668,37 @@ function ExplorerTable({
     setExplorerStatusOverrides((prev) => ({ ...prev, ...statusUpdates }))
   }
 
+  const handlePackRowStatusChange = (packRow, statusId) => {
+    const memberIds = packRow.allMemberIds?.length ? packRow.allMemberIds : packRow.memberIds ?? []
+    setExplorerStatusOverrides((prev) => {
+      const next = { ...prev, [packRow.id]: statusId }
+      for (const memberId of memberIds) {
+        next[memberId] = statusId
+      }
+      return next
+    })
+  }
+
   const getEffectiveTransfers = (row) =>
     explorerTransferOverrides[row.id] !== undefined ? explorerTransferOverrides[row.id] : row.transfers
 
-  const getEffectivePackCountForBanner = (banner) => {
-    const memberId = banner.allMemberIds?.[0] ?? banner.memberIds?.[0]
+  const getEffectivePackCountForPackRow = (packRow) => {
+    const memberId = packRow.allMemberIds?.[0] ?? packRow.memberIds?.[0]
     const member = data.find((r) => r.id === memberId)
-    if (!member) return banner.packCount ?? 0
-    const ratio = member.packRatio?.[member.sku]
-    if (!ratio) return banner.packCount ?? 0
+    if (!member) return packRow.packCount ?? 0
+    const ratio =
+      packRow.packRatio?.[member.sku] ??
+      member.packRatio?.[member.sku] ??
+      (packRow.isSingleSkuPack ? packRow.packMultiple : null)
+    if (!ratio) return packRow.packCount ?? 0
     return Math.round(getEffectiveTransfers(member) / ratio)
   }
 
-  const getBannerTotalUnits = (banner) => {
-    const memberIds = banner.allMemberIds?.length ? banner.allMemberIds : banner.memberIds
+  const getPackRowTotalUnits = (packRow) => {
+    const memberIds = packRow.allMemberIds?.length ? packRow.allMemberIds : packRow.memberIds
     return memberIds.reduce((sum, id) => {
       const member = data.find((r) => r.id === id)
-      if (!member || member.rowKind === 'packBanner') return sum
+      if (!member) return sum
       return sum + getEffectiveTransfers(member)
     }, 0)
   }
@@ -5365,8 +5706,7 @@ function ExplorerTable({
   const locationCapacityStats = useMemo(() => {
     const stats = new Map()
     for (const row of data) {
-      // Capacity is SKU-row only; banners are never in source data
-      if (row.rowKind === 'packBanner') continue
+      // Capacity is SKU-row only; pack display rows are never in source data
       const from = row.fromLocation
       const capacity = SENDING_LOCATION_CAPACITY[from]
       if (capacity === undefined) continue
@@ -5436,6 +5776,11 @@ function ExplorerTable({
       const next = { ...prev }
       explorerSelectedRowIds.forEach((rowId) => {
         next[rowId] = newStatus
+        if (isExplorerPackRowId(rowId)) {
+          for (const memberId of getPackMemberIds(rowId, data)) {
+            next[memberId] = newStatus
+          }
+        }
       })
       return next
     })
@@ -5450,9 +5795,10 @@ function ExplorerTable({
     const statusUpdates = {}
 
     explorerSelectedRowIds.forEach((rowId) => {
+      if (isExplorerPackRowId(rowId)) return
       const row = data.find((r) => r.id === rowId)
-      // Skip banners (never selected) and multi-SKU pack members (banner is sole edit point)
-      if (!row || row.rowKind === 'packBanner' || row.isPackMember) return
+      // Pack members are not atomic selection targets; pack row is the edit point
+      if (!row || row.isPackMember) return
       const effectiveCurrent = getEffectiveTransfers(row)
       const newValue =
         action === 'set_zero' ? 0 : Math.max(0, effectiveCurrent + action)
@@ -5504,7 +5850,13 @@ function ExplorerTable({
     setExplorerTransferOverrides((prev) => {
       const next = { ...prev }
       explorerSelectedRowIds.forEach((rowId) => {
-        delete next[rowId]
+        if (isExplorerPackRowId(rowId)) {
+          for (const memberId of getPackMemberIds(rowId, data)) {
+            delete next[memberId]
+          }
+        } else {
+          delete next[rowId]
+        }
       })
       return next
     })
@@ -5513,6 +5865,11 @@ function ExplorerTable({
       const next = { ...prev }
       explorerSelectedRowIds.forEach((rowId) => {
         delete next[rowId]
+        if (isExplorerPackRowId(rowId)) {
+          for (const memberId of getPackMemberIds(rowId, data)) {
+            delete next[memberId]
+          }
+        }
       })
       return next
     })
@@ -5520,7 +5877,9 @@ function ExplorerTable({
     setExplorerBulkChangeUnitsOpen(false)
   }
 
-  const getEffectiveStatus = (row) => explorerStatusOverrides[row.id] ?? getRowStatus(row)
+  const getEffectiveStatus = (row) =>
+    explorerStatusOverrides[row.id] ??
+    (row.rowKind === 'packRow' ? row.packStatus ?? row.status : getRowStatus(row))
 
   const explorerFilterCount =
     explorerDepartmentFilters.length +
@@ -5569,25 +5928,41 @@ function ExplorerTable({
     ]
   )
 
+  // Reset pack expand state when filter chips change (not on override/edit updates)
+  useEffect(() => {
+    setExpandedPackGroupIds(new Set())
+  }, [
+    explorerDepartmentFilters,
+    explorerProductNameFilters,
+    explorerConfidenceFilters,
+    explorerStatusFilters,
+  ])
+
   const displayRows = useMemo(
-    () => buildExplorerDisplayRows(filteredData, data),
-    [filteredData, data]
+    () => buildExplorerDisplayRows(filteredData, data, expandedPackGroupIds),
+    [filteredData, data, expandedPackGroupIds]
+  )
+
+  const atomicSelectableIds = useMemo(
+    () =>
+      displayRows
+        .filter((r) => r.rowKind === 'packRow' || r.rowKind === 'sku')
+        .map((r) => r.id),
+    [displayRows]
   )
 
   const toggleAllExplorerRows = () => {
-    // Select-all: SKU rows only — never packBanner ids
-    const allIds = filteredData
-      .filter((r) => r.rowKind !== 'packBanner')
-      .map((r) => r.id)
+    // Select-all: pack rows + non-pack SKUs — never packChild ids
+    const allIds = atomicSelectableIds
     const allSelected = allIds.length > 0 && allIds.every((id) => explorerSelectedRowIds.has(id))
     setExplorerSelectedRowIds(allSelected ? new Set() : new Set(allIds))
   }
 
   const allExplorerRowsSelected =
-    filteredData.length > 0 &&
-    filteredData.every((row) => explorerSelectedRowIds.has(row.id))
+    atomicSelectableIds.length > 0 &&
+    atomicSelectableIds.every((id) => explorerSelectedRowIds.has(id))
   const someExplorerRowsSelected =
-    filteredData.some((row) => explorerSelectedRowIds.has(row.id)) &&
+    atomicSelectableIds.some((id) => explorerSelectedRowIds.has(id)) &&
     !allExplorerRowsSelected
 
   useEffect(() => {
@@ -5597,8 +5972,11 @@ function ExplorerTable({
   }, [someExplorerRowsSelected])
 
   const totals = useMemo(() => {
-    // Totals: SKU rows only — banners never inflate counts
-    const skuRows = filteredData.filter((row) => row.rowKind !== 'packBanner')
+    // Metric sums: underlying filtered SKU rows (children). Display count: packs as 1 + non-pack SKUs.
+    const skuRows = filteredData
+    const atomicCount = displayRows.filter(
+      (r) => r.rowKind === 'packRow' || r.rowKind === 'sku'
+    ).length
     const sumTransfers = skuRows.reduce((sum, row) => {
       const transfers =
         explorerTransferOverrides[row.id] !== undefined
@@ -5614,7 +5992,7 @@ function ExplorerTable({
     const sumStockAfter = skuRows.reduce((sum, row) => sum + row.stockAfter, 0)
     const sumInTransitAndPfp = skuRows.reduce((sum, row) => sum + row.stockInTransitAndPfp, 0)
     return {
-      skuLocations: `${skuRows.length} SKU-locations`,
+      skuLocations: `${atomicCount} SKU-locations`,
       transfers: `${sumTransfers}`,
       revenue: `€${sumRevenueK.toFixed(1)}K`,
       recommended: `${sumRecommended}`,
@@ -5623,7 +6001,7 @@ function ExplorerTable({
       stockBeforeAfter: `${sumStockBefore} → ${sumStockAfter}`,
       inTransit:
         sumInTransitAndPfp > 0 ? `${sumInTransitAndPfp} in transit & PFP` : null }
-  }, [filteredData, explorerTransferOverrides])
+  }, [filteredData, displayRows, explorerTransferOverrides])
 
   const explorerThClass =
     'sticky top-0 z-20 bg-white h-[62px] min-h-[62px] px-4 text-left align-middle font-medium text-[#00050A] box-border'
@@ -5981,64 +6359,83 @@ function ExplorerTable({
           </thead>
           <tbody>
             {displayRows.map((row) => {
-              if (row.rowKind === 'packBanner') {
-                const effectivePackCount = getEffectivePackCountForBanner(row)
-                const totalUnits = getBannerTotalUnits(row)
-                const showPartialNote = row.shownSkuCount < row.totalSkuCount
+              if (row.rowKind === 'packRow') {
+                const isExpanded = expandedPackGroupIds.has(row.packGroupId)
+                const effectivePackCount = getEffectivePackCountForPackRow(row)
+                const totalUnits = getPackRowTotalUnits(row)
+                const packStale = packRowHasOverride(row, explorerTransferOverrides, data)
                 return (
                   <tr
                     key={row.id}
-                    className="border-b border-[#E9EAEB] bg-[#f9fafb]"
+                    className="group border-b border-[#E9EAEB] bg-[#f9fafb] hover:bg-[#f3f4f6]"
                   >
-                    <td className={explorerCheckboxTdClass} aria-hidden />
                     <td
-                      colSpan={visibleColumns.length}
-                      className={`${explorerTdClass} align-middle`}
+                      className={explorerCheckboxTdClass}
                       onClick={(e) => e.stopPropagation()}
                     >
-                      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-                        <span className="inline-flex items-center gap-1.5 text-[14px] font-semibold text-[#0a0a0a]">
-                          {row.packId}
-                          {row.isVirtualPack ? (
-                            <VirtualPackIndicator showTooltip={false} />
-                          ) : null}
-                        </span>
-                        <div className="flex items-center gap-2">
-                          <ExplorerTransfersInput
-                            value={effectivePackCount}
-                            step={1}
-                            onChange={(newValue) => handlePackBannerCountEdit(row, newValue)}
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          className="flex size-6 items-center justify-center rounded-[4px] text-[#4b535c] hover:bg-[#e5e7eb]"
+                          aria-label={isExpanded ? 'Collapse pack' : 'Expand pack'}
+                          aria-expanded={isExpanded}
+                          onClick={() => togglePackExpanded(row.packGroupId)}
+                        >
+                          <IconChevronRight
+                            className={`size-4 ${isExpanded ? 'rotate-90' : ''}`}
                           />
-                          <span className="text-[12px] text-[#4b535c]">
-                            {formatPackLabel(effectivePackCount)}
-                          </span>
-                        </div>
-                        <span className="text-[13px] text-[#0a0a0a] tabular-nums">
-                          {totalUnits} units
-                        </span>
-                        {showPartialNote && (
-                          <span className="text-[11px] text-[#878d94]">
-                            {row.shownSkuCount} of {row.totalSkuCount} SKUs shown
-                          </span>
-                        )}
+                        </button>
+                        <input
+                          type="checkbox"
+                          className={explorerCheckboxInputClass}
+                          aria-label={`Select pack ${row.packId}`}
+                          checked={explorerSelectedRowIds.has(row.id)}
+                          onChange={() => toggleExplorerRowSelection(row.id)}
+                        />
                       </div>
                     </td>
+                    {visibleColumns.map((col) =>
+                      renderExplorerPackRowCell(row, col, {
+                        explorerTdClass,
+                        explorerStatusTdClass,
+                        getEffectiveStatus,
+                        handlePackRowStatusChange,
+                        effectivePackCount,
+                        totalUnits,
+                        packStale,
+                        handlePackRowCountEdit,
+                      })
+                    )}
                   </tr>
                 )
               }
 
-              const isPackChild = Boolean(row.isPackMember)
+              if (row.rowKind === 'packChild') {
+                return (
+                  <tr
+                    key={`pack-child-${row.id}`}
+                    className="border-b border-[#E9EAEB] bg-[#fafafa]"
+                  >
+                    <td className={explorerCheckboxTdClass} aria-hidden />
+                    {visibleColumns.map((col) =>
+                      renderExplorerPackChildCell(row, col, {
+                        explorerTdClass,
+                        explorerStatusTdClass,
+                        getEffectiveTransfers,
+                        explorerTransferOverrides,
+                      })
+                    )}
+                  </tr>
+                )
+              }
+
               return (
                 <tr
                   key={row.id}
-                  className={`group border-b border-[#E9EAEB] hover:bg-[#f9fafb] ${
-                    isPackChild ? 'bg-[#fafafa]' : 'bg-white'
-                  }`}
+                  className="group border-b border-[#E9EAEB] bg-white hover:bg-[#f9fafb]"
                 >
                   <td
-                    className={`${explorerCheckboxTdClass}${
-                      isPackChild ? ' border-l-2 border-l-[#e5e7eb]' : ''
-                    }`}
+                    className={explorerCheckboxTdClass}
                     onClick={(e) => e.stopPropagation()}
                   >
                     <input
@@ -6080,14 +6477,17 @@ function ExplorerTable({
 
       {explorerSelectedRowIds.size > 0 && (() => {
         let packSelected = 0
-        let nonPackSelected = 0
         explorerSelectedRowIds.forEach((id) => {
+          if (isExplorerPackRowId(id)) {
+            packSelected += 1
+            return
+          }
           const row = data.find((r) => r.id === id)
           if (rowIsPackConstrained(row)) packSelected += 1
-          else nonPackSelected += 1
         })
         const hasPackInSelection = packSelected > 0
-        const onlyPackRowsSelected = hasPackInSelection && nonPackSelected === 0
+        // Bulk change units disabled whenever any pack row is selected
+        const changeUnitsDisabled = hasPackInSelection
         return (
         <div
           className="fixed bottom-6 left-1/2 z-50 flex w-max max-w-[min(920px,calc(100vw-2rem))] -translate-x-1/2 flex-col gap-2 rounded-[8px] px-6 py-3"
@@ -6145,21 +6545,21 @@ function ExplorerTable({
             <div className="relative">
               <button
                 type="button"
-                disabled={onlyPackRowsSelected}
+                disabled={changeUnitsDisabled}
                 onClick={() => {
-                  if (onlyPackRowsSelected) return
+                  if (changeUnitsDisabled) return
                   setExplorerBulkChangeStatusOpen(false)
                   setExplorerBulkChangeUnitsOpen((o) => !o)
                 }}
                 className={`px-4 py-2 rounded-[4px] text-[14px] font-medium ${
-                  onlyPackRowsSelected
+                  changeUnitsDisabled
                     ? 'cursor-not-allowed text-white/40'
                     : 'text-white hover:bg-white/10'
                 }`}
               >
                 Change units
               </button>
-              {explorerBulkChangeUnitsOpen && !onlyPackRowsSelected && (
+              {explorerBulkChangeUnitsOpen && !changeUnitsDisabled && (
                 <>
                   <div
                     className="fixed inset-0 z-[60]"
@@ -6206,7 +6606,7 @@ function ExplorerTable({
                 </>
               )}
             </div>
-            {onlyPackRowsSelected && (
+            {changeUnitsDisabled && (
               <button
                 type="button"
                 onClick={handleBulkUndoEdits}
