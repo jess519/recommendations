@@ -2547,6 +2547,23 @@ function formatPackLabel(packCount) {
   return `${packCount} ${formatPackNoun(packCount)}`
 }
 
+/** Muted unit label for "pack" / "packs" — recedes so the number reads as the value. */
+function PackUnitLabel({ count }) {
+  return (
+    <span className="text-[11px] font-normal text-[#9ca3af]">{formatPackNoun(count)}</span>
+  )
+}
+
+/** Pack count with muted unit label on the same line. */
+function PackCountDisplay({ count, numberClassName = 'text-[14px] text-[#0a0a0a]' }) {
+  return (
+    <span className="inline-flex items-center gap-1">
+      <span className={numberClassName}>{count}</span>
+      <PackUnitLabel count={count} />
+    </span>
+  )
+}
+
 /** Units in one pack for Explorer pack rows (single-SKU multiple or multi-SKU ratio sum). */
 function getExplorerPackUnitsPerPack(packRow) {
   if (packRow?.isSingleSkuPack && packRow.packMultiple > 0) return packRow.packMultiple
@@ -3363,7 +3380,7 @@ function ProductsDrilldown({
           </div>
         ) : showPackPrimary ? (
           <div className="flex flex-col items-end gap-0.5">
-            <span className="text-[14px] text-[#0a0a0a]">{formatPackLabel(packCount)}</span>
+            <PackCountDisplay count={packCount} />
             <span className="text-[12px] text-[#4b535c]">{effectiveTransfers} units</span>
           </div>
         ) : (
@@ -3462,8 +3479,8 @@ function ProductsDrilldown({
             <div className="flex flex-col items-end gap-1 line-clamp-2 min-w-0">
               {showPackRecommended ? (
                 <>
-                  <span className="inline-flex flex-wrap items-center justify-end gap-1 text-[14px] text-[#0a0a0a]">
-                    {formatPackLabel(recommendedPackCount)}
+                  <span className="inline-flex flex-wrap items-center justify-end gap-1">
+                    <PackCountDisplay count={recommendedPackCount} />
                     {p.recommendedBadges?.map((b) => (
                       <span
                         key={b}
@@ -4971,7 +4988,16 @@ function buildExplorerDisplayRows(filteredSkuRows, allSkuRows, expandedPackGroup
 const EXPLORER_TABLE_COLUMN_COUNT = EXPLORER_TABLE_COLUMNS.length
 const EXPLORER_TABLE_TOTAL_COLUMN_COUNT = EXPLORER_TABLE_COLUMN_COUNT + 1
 
-function ExplorerTransfersInput({ value, onChange, className = '', step, onFocus, onBlur, onKeyDown }) {
+function ExplorerTransfersInput({
+  value,
+  onChange,
+  className = '',
+  widthClass = 'w-16',
+  step,
+  onFocus,
+  onBlur,
+  onKeyDown,
+}) {
   return (
     <input
       type="number"
@@ -4983,7 +5009,7 @@ function ExplorerTransfersInput({ value, onChange, className = '', step, onFocus
       onBlur={onBlur}
       onKeyDown={onKeyDown}
       onClick={(e) => e.stopPropagation()}
-      className={`w-16 h-7 px-2 rounded-[4px] border text-[14px] text-[#0a0a0a] text-right focus:outline-none ${
+      className={`${widthClass} h-7 px-2 rounded-[4px] border text-[14px] text-[#0a0a0a] text-right focus:outline-none ${
         className || 'border-[#e9eaeb]'
       }`}
     />
@@ -5449,6 +5475,8 @@ function renderExplorerPackRowCell(packRow, col, {
   totalUnits,
   packStale,
   handlePackRowCountEdit,
+  getAvailableToSend,
+  isLocationOvercommitted,
 }) {
   const alignClass = col.alignment === 'right' ? 'text-right' : ''
 
@@ -5489,9 +5517,16 @@ function renderExplorerPackRowCell(packRow, col, {
           <MovementTypePills movementType={[packRow.movementType]} />
         </td>
       )
-    case 'transfers':
+    case 'transfers': {
       // Transfers is the edited value — never apply Batch B stale muting here
-      // Packs primary (input + label), units secondary
+      // Packs primary (input + muted unit), units secondary, packs available tertiary
+      // Multi-SKU: units-per-pack = sum of packRatio (same as getExplorerPackUnitsPerPack)
+      const availableUnits = getAvailableToSend?.(packRow) ?? 0
+      const unitsPerPack = getExplorerPackUnitsPerPack(packRow)
+      const packsAvailable =
+        unitsPerPack > 0 ? Math.max(0, Math.floor(availableUnits / unitsPerPack)) : 0
+      const isOvercommitted = isLocationOvercommitted?.(packRow.fromLocation) ?? false
+      const availableConstrained = !isOvercommitted && packsAvailable <= 0
       return (
         <td
           key={col.id}
@@ -5503,18 +5538,31 @@ function renderExplorerPackRowCell(packRow, col, {
               <ExplorerTransfersInput
                 value={effectivePackCount}
                 step={1}
+                widthClass="w-12"
                 onChange={(newValue) => handlePackRowCountEdit(packRow, newValue)}
               />
-              <span className="text-[12px] text-[#4b535c]">
-                {formatPackNoun(effectivePackCount)}
-              </span>
+              <PackUnitLabel count={effectivePackCount} />
             </div>
             <span className="text-[12px] tabular-nums text-[#4b535c]">
               {totalUnits} units
             </span>
+            {isOvercommitted ? (
+              <span className="text-[12px] text-[#B45309]">availability exceeded</span>
+            ) : (
+              <span
+                className={`inline-flex items-center gap-1 text-[12px] ${
+                  availableConstrained ? 'text-[#B45309]' : 'text-[#166534]'
+                }`}
+              >
+                <span>{packsAvailable}</span>
+                <PackUnitLabel count={packsAvailable} />
+                <span>available to send</span>
+              </span>
+            )}
           </div>
         </td>
       )
+    }
     case 'revenue':
       return (
         <td key={col.id} className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}>
@@ -5530,8 +5578,8 @@ function renderExplorerPackRowCell(packRow, col, {
       return (
         <td key={col.id} className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}>
           <div className="flex flex-col items-end gap-1">
-            <span className="inline-flex flex-wrap items-center justify-end gap-1 text-[14px] text-[#0a0a0a]">
-              {formatPackLabel(recommendedPackCount)}
+            <span className="inline-flex flex-wrap items-center justify-end gap-1">
+              <PackCountDisplay count={recommendedPackCount} />
               {packRow.packRecommendedBadges?.map((badge) => (
                 <span
                   key={badge}
@@ -6447,7 +6495,8 @@ function ExplorerTable({
       <ExplorerOvercommitBanner overcommittedLocations={overcommittedLocations} />
 
     <div className="border border-[#e5e7eb] rounded-[8px] overflow-hidden bg-white">
-      <div className="max-h-[min(65vh,800px)] overflow-x-auto overflow-y-auto">
+      {/* Fill remaining viewport below filters/chips; sticky header + internal scroll */}
+      <div className="max-h-[calc(100vh-220px)] overflow-x-auto overflow-y-auto">
         <table className="w-full text-[14px] bg-white">
           <thead className="bg-white">
             <tr className="border-b border-[#E9EAEB]">
@@ -6544,6 +6593,8 @@ function ExplorerTable({
                         totalUnits,
                         packStale,
                         handlePackRowCountEdit,
+                        getAvailableToSend,
+                        isLocationOvercommitted,
                       })
                     )}
                   </tr>
