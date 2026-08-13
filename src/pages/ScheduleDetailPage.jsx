@@ -2409,12 +2409,12 @@ function isPackMultipleValue(value, packMultiple) {
 
 const VIRTUAL_PACK_TOOLTIP = 'Auto-generated pack — not from customer ERP'
 
-function VirtualPackIndicator({ className = '' }) {
+function VirtualPackIndicator({ className = '', showTooltip = true }) {
   return (
     <span
       className={`inline-flex shrink-0 items-center px-1.5 py-0.5 rounded-[6px] border border-transparent bg-[#eef2ff] text-[11px] font-medium leading-none text-[#4338ca] ${className}`}
-      title={VIRTUAL_PACK_TOOLTIP}
-      aria-label={VIRTUAL_PACK_TOOLTIP}
+      title={showTooltip ? VIRTUAL_PACK_TOOLTIP : undefined}
+      aria-label={showTooltip ? VIRTUAL_PACK_TOOLTIP : undefined}
     >
       Pack
     </span>
@@ -3168,13 +3168,13 @@ function ProductsDrilldown({
           >
             <div className="flex items-center gap-4 min-w-0">
               <div className="w-12 h-12 rounded-[4px] bg-[#f3f4f6] shrink-0" />
-              <div className="flex min-w-0 items-start gap-1">
-                <div className="flex min-w-0 flex-col gap-0.5 line-clamp-2">
-                  <span className="truncate font-medium text-[#0a0a0a]">{p.name}</span>
-                  <span className="text-[12px] text-[#4b535c]">{p.sku}</span>
-                  <span className="text-[12px] text-[#4b535c]">{p.colour}</span>
-                </div>
-                {p.isVirtualPack ? <VirtualPackIndicator /> : null}
+              <div className="flex min-w-0 flex-col gap-0.5 line-clamp-2">
+                <span className="truncate font-medium text-[#0a0a0a]">{p.name}</span>
+                <span className="inline-flex min-w-0 items-center gap-1.5 text-[12px] text-[#4b535c]">
+                  <span className="truncate">{p.sku}</span>
+                  {p.isVirtualPack ? <VirtualPackIndicator /> : null}
+                </span>
+                <span className="text-[12px] text-[#4b535c]">{p.colour}</span>
               </div>
             </div>
           </td>
@@ -4788,7 +4788,9 @@ function renderExplorerBodyCell(row, col, {
                 <span className="text-[14px] font-medium text-[#0a0a0a]">{row.productName}</span>
                 <span className="inline-flex min-w-0 items-center gap-1 text-[12px] text-[#4b535c]">
                   <span className="truncate">{row.sku}</span>
-                  {row.isVirtualPack && !row.isPackMember ? <VirtualPackIndicator /> : null}
+                  {row.isVirtualPack && !row.isPackMember ? (
+                    <VirtualPackIndicator showTooltip={false} />
+                  ) : null}
                 </span>
                 <span className="text-[12px] text-[#4b535c]">{row.colour}</span>
               </div>
@@ -5937,7 +5939,9 @@ function ExplorerTable({
                       <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
                         <span className="inline-flex items-center gap-1.5 text-[14px] font-semibold text-[#0a0a0a]">
                           {row.packId}
-                          {row.isVirtualPack ? <VirtualPackIndicator /> : null}
+                          {row.isVirtualPack ? (
+                            <VirtualPackIndicator showTooltip={false} />
+                          ) : null}
                         </span>
                         <div className="flex items-center gap-2">
                           <ExplorerTransfersInput
