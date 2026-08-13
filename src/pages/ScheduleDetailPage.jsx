@@ -659,7 +659,8 @@ const EXPLORER_PRODUCTS = [
 /** Multi-SKU pack: Log01 → Opéra replen rows for Coin-pack sizes (pack rows are display-only) */
 const EXPLORER_MULTI_SKU_PACK = {
   packGroupId: 'pack-coin-p1',
-  packId: 'Coin-pack P1',
+  packName: 'Coin-pack P1',
+  packId: 'PACK-COIN-P1',
   packCount: 4,
   toLocation: 'Opéra',
   isVirtualPack: true,
@@ -862,6 +863,7 @@ function buildExplorerData() {
       continue
     }
     row.packGroupId = EXPLORER_MULTI_SKU_PACK.packGroupId
+    row.packName = EXPLORER_MULTI_SKU_PACK.packName
     row.packId = EXPLORER_MULTI_SKU_PACK.packId
     row.packRatio = EXPLORER_MULTI_SKU_PACK.packRatio
     row.packCount = EXPLORER_MULTI_SKU_PACK.packCount
@@ -4723,7 +4725,8 @@ function buildExplorerDisplayRows(filteredSkuRows, allSkuRows, expandedPackGroup
     if (!packMetaByGroup.has(row.packGroupId)) {
       packMetaByGroup.set(row.packGroupId, {
         packGroupId: row.packGroupId,
-        packId: row.packId,
+        packName: row.packName ?? packMock.packName,
+        packId: row.packId ?? packMock.packId,
         packRatio: row.packRatio,
         packCount: row.packCount,
         isVirtualPack: row.isVirtualPack,
@@ -4772,6 +4775,7 @@ function buildExplorerDisplayRows(filteredSkuRows, allSkuRows, expandedPackGroup
         rowKind: 'packRow',
         id: `pack-row-${packGroupId}`,
         packGroupId,
+        packName: meta?.packName ?? row.packName ?? row.packId,
         packId: meta?.packId ?? row.packId,
         packCount: meta?.packCount ?? row.packCount,
         packRatio: meta?.packRatio ?? row.packRatio,
@@ -4814,7 +4818,8 @@ function buildExplorerDisplayRows(filteredSkuRows, allSkuRows, expandedPackGroup
         rowKind: 'packRow',
         id: `pack-row-${packGroupId}`,
         packGroupId,
-        packId: row.productName,
+        packName: row.productName,
+        packId: row.sku,
         packCount: Math.round(row.transfers / row.packMultiple),
         packRatio: { [row.sku]: row.packMultiple },
         packMultiple: row.packMultiple,
@@ -4931,21 +4936,10 @@ function renderExplorerBodyCell(row, col, {
     case 'productDetails':
       return (
         <td key={col.id} className={`${explorerTdClass} ${col.minWidth}`}>
-          <TuHoverPopover panel={<SkuDetailsHoverCard row={row} />}>
-            <div className="flex min-w-0 items-start gap-4">
-              <div className="h-12 w-12 shrink-0 rounded-[4px] bg-[#f3f4f6]" />
-              <div className="flex min-w-0 flex-col gap-0.5">
-                <span className="text-[14px] font-medium text-[#0a0a0a]">{row.productName}</span>
-                <span className="inline-flex min-w-0 items-center gap-1 text-[12px] text-[#4b535c]">
-                  <span className="truncate">{row.sku}</span>
-                  {row.isVirtualPack && !row.isPackMember ? (
-                    <VirtualPackIndicator showTooltip={false} />
-                  ) : null}
-                </span>
-                <span className="text-[12px] text-[#4b535c]">{row.colour}</span>
-              </div>
-            </div>
-          </TuHoverPopover>
+          <ExplorerSkuProductDetailsContent
+            row={row}
+            showPackBadge={Boolean(row.isVirtualPack && !row.isPackMember)}
+          />
         </td>
       )
     case 'fromLocation':
@@ -5319,6 +5313,29 @@ const EXPLORER_PACK_MUTED_DASH = (
   <span className="text-[14px] text-[#9ca3af]">—</span>
 )
 
+/** Shared Explorer SKU / product-details cell content (picture, name, ID, colour). */
+function ExplorerSkuProductDetailsContent({
+  row,
+  showPackBadge = false,
+  wrapperClassName = '',
+}) {
+  return (
+    <TuHoverPopover panel={<SkuDetailsHoverCard row={row} />}>
+      <div className={`flex min-w-0 items-start gap-4 ${wrapperClassName}`}>
+        <div className="h-12 w-12 shrink-0 rounded-[4px] bg-[#f3f4f6]" />
+        <div className="flex min-w-0 flex-col gap-0.5">
+          <span className="text-[14px] font-medium text-[#0a0a0a]">{row.productName}</span>
+          <span className="inline-flex min-w-0 items-center gap-1 text-[12px] text-[#4b535c]">
+            <span className="truncate">{row.sku}</span>
+            {showPackBadge ? <VirtualPackIndicator showTooltip={false} /> : null}
+          </span>
+          <span className="text-[12px] text-[#4b535c]">{row.colour}</span>
+        </div>
+      </div>
+    </TuHoverPopover>
+  )
+}
+
 function renderExplorerPackRowCell(packRow, col, {
   explorerTdClass,
   explorerStatusTdClass,
@@ -5337,7 +5354,10 @@ function renderExplorerPackRowCell(packRow, col, {
       return (
         <td key={col.id} className={`${explorerTdClass} ${col.minWidth}`}>
           <div className="flex min-w-0 flex-col gap-0.5">
-            <span className="inline-flex min-w-0 items-center gap-1.5 text-[14px] font-medium text-[#0a0a0a]">
+            <span className="truncate text-[14px] font-medium text-[#0a0a0a]">
+              {packRow.packName ?? packRow.packId}
+            </span>
+            <span className="inline-flex min-w-0 items-center gap-1 text-[12px] text-[#4b535c]">
               <span className="truncate">{packRow.packId}</span>
               {packRow.isVirtualPack ? <VirtualPackIndicator showTooltip={false} /> : null}
             </span>
@@ -5369,6 +5389,7 @@ function renderExplorerPackRowCell(packRow, col, {
         </td>
       )
     case 'transfers':
+      // Transfers is the edited value — never apply Batch B stale muting here
       return (
         <td
           key={col.id}
@@ -5380,12 +5401,11 @@ function renderExplorerPackRowCell(packRow, col, {
               value={effectivePackCount}
               step={1}
               onChange={(newValue) => handlePackRowCountEdit(packRow, newValue)}
-              className={packStale ? 'border-[#e9eaeb] text-[#9ca3af]' : undefined}
             />
-            <span className={`text-[12px] ${packStale ? 'text-[#9ca3af]' : 'text-[#4b535c]'}`}>
+            <span className="text-[12px] text-[#4b535c]">
               {formatPackLabel(effectivePackCount)}
             </span>
-            <span className={`text-[12px] tabular-nums ${packStale ? 'text-[#9ca3af]' : 'text-[#0a0a0a]'}`}>
+            <span className="text-[12px] tabular-nums text-[#0a0a0a]">
               {totalUnits} units
             </span>
           </div>
@@ -5478,11 +5498,12 @@ function renderExplorerPackChildCell(child, col, {
   switch (col.id) {
     case 'productDetails':
       return (
-        <td key={col.id} className={`${childTdClass} ${col.minWidth}`}>
-          <div className="flex min-w-0 flex-col gap-0.5 pl-6">
-            <span className="truncate text-[13px] font-medium text-[#0a0a0a]">{child.sku}</span>
-            <span className="text-[12px] text-[#4b535c]">{child.size}</span>
-          </div>
+        <td key={col.id} className={`${explorerTdClass} ${col.minWidth}`}>
+          <ExplorerSkuProductDetailsContent
+            row={child}
+            showPackBadge={false}
+            wrapperClassName="pl-6"
+          />
         </td>
       )
     case 'stockInCirculation':
@@ -6019,7 +6040,7 @@ function ExplorerTable({
   const explorerCheckboxTotalsThClass =
     'sticky left-0 z-30 w-14 min-w-14 max-w-14 box-border py-2 px-4 bg-white shadow-[4px_0_12px_-6px_rgba(15,23,42,0.12)]'
   const explorerCheckboxTdClass =
-    'sticky left-0 z-30 min-h-[86px] w-14 min-w-14 max-w-14 box-border bg-white px-4 py-3 align-middle shadow-[4px_0_12px_-6px_rgba(15,23,42,0.12)] group-hover:bg-[#f9fafb]'
+    'sticky left-0 z-30 min-h-[86px] w-14 min-w-14 max-w-14 box-border bg-white px-4 py-3 align-top shadow-[4px_0_12px_-6px_rgba(15,23,42,0.12)] group-hover:bg-[#f9fafb]'
   const explorerCheckboxInputClass =
     'h-4 w-4 rounded border-2 border-[#e9eaeb] bg-white text-sky-600 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-0'
 
@@ -6373,7 +6394,7 @@ function ExplorerTable({
                       className={explorerCheckboxTdClass}
                       onClick={(e) => e.stopPropagation()}
                     >
-                      <div className="flex items-center gap-1">
+                      <div className="flex items-start gap-1">
                         <button
                           type="button"
                           className="flex size-6 items-center justify-center rounded-[4px] text-[#4b535c] hover:bg-[#e5e7eb]"
@@ -6381,14 +6402,15 @@ function ExplorerTable({
                           aria-expanded={isExpanded}
                           onClick={() => togglePackExpanded(row.packGroupId)}
                         >
-                          <IconChevronRight
-                            className={`size-4 ${isExpanded ? 'rotate-90' : ''}`}
-                          />
+                          {/* IconChevronRight ignores className — wrap for rotate */}
+                          <span className={`inline-flex ${isExpanded ? 'rotate-90' : ''}`}>
+                            <IconChevronRight />
+                          </span>
                         </button>
                         <input
                           type="checkbox"
                           className={explorerCheckboxInputClass}
-                          aria-label={`Select pack ${row.packId}`}
+                          aria-label={`Select pack ${row.packName ?? row.packId}`}
                           checked={explorerSelectedRowIds.has(row.id)}
                           onChange={() => toggleExplorerRowSelection(row.id)}
                         />
@@ -6477,17 +6499,14 @@ function ExplorerTable({
 
       {explorerSelectedRowIds.size > 0 && (() => {
         let packSelected = 0
+        let nonPackSelected = 0
         explorerSelectedRowIds.forEach((id) => {
-          if (isExplorerPackRowId(id)) {
-            packSelected += 1
-            return
-          }
-          const row = data.find((r) => r.id === id)
-          if (rowIsPackConstrained(row)) packSelected += 1
+          if (isExplorerPackRowId(id)) packSelected += 1
+          else nonPackSelected += 1
         })
-        const hasPackInSelection = packSelected > 0
-        // Bulk change units disabled whenever any pack row is selected
-        const changeUnitsDisabled = hasPackInSelection
+        const onlyPackRowsSelected = packSelected > 0 && nonPackSelected === 0
+        const hasMixedPackSelection = packSelected > 0 && nonPackSelected > 0
+        const changeUnitsDisabled = onlyPackRowsSelected
         return (
         <div
           className="fixed bottom-6 left-1/2 z-50 flex w-max max-w-[min(920px,calc(100vw-2rem))] -translate-x-1/2 flex-col gap-2 rounded-[8px] px-6 py-3"
@@ -6542,7 +6561,7 @@ function ExplorerTable({
                 </>
               )}
             </div>
-            <div className="relative">
+            <div className="relative flex flex-col items-start">
               <button
                 type="button"
                 disabled={changeUnitsDisabled}
@@ -6559,6 +6578,11 @@ function ExplorerTable({
               >
                 Change units
               </button>
+              {hasMixedPackSelection && (
+                <span className="px-4 text-[11px] leading-tight text-white/50">
+                  Doesn&apos;t apply to pack rows
+                </span>
+              )}
               {explorerBulkChangeUnitsOpen && !changeUnitsDisabled && (
                 <>
                   <div
@@ -6616,11 +6640,6 @@ function ExplorerTable({
               </button>
             )}
           </div>
-          {hasPackInSelection && (
-            <p className="text-[12px] leading-snug text-white/70">
-              Change units doesn&apos;t apply to pack rows — status and undo will apply
-            </p>
-          )}
         </div>
         )
       })()}
