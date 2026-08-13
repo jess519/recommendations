@@ -2539,9 +2539,21 @@ function productIsNonPackReplenEditable(p) {
   return productIsReplenOnly(p) && !productHasPackConstraint(p)
 }
 
+function formatPackNoun(packCount) {
+  return Number(packCount) === 1 ? 'pack' : 'packs'
+}
+
 function formatPackLabel(packCount) {
-  const noun = packCount === 1 ? 'pack' : 'packs'
-  return `${packCount} ${noun}`
+  return `${packCount} ${formatPackNoun(packCount)}`
+}
+
+/** Units in one pack for Explorer pack rows (single-SKU multiple or multi-SKU ratio sum). */
+function getExplorerPackUnitsPerPack(packRow) {
+  if (packRow?.isSingleSkuPack && packRow.packMultiple > 0) return packRow.packMultiple
+  if (packRow?.packRatio && typeof packRow.packRatio === 'object') {
+    return Object.values(packRow.packRatio).reduce((sum, n) => sum + (Number(n) || 0), 0)
+  }
+  return 0
 }
 
 function isPackMultipleValue(value, packMultiple) {
@@ -3319,13 +3331,10 @@ function ProductsDrilldown({
         const packCount = getReplenPackCount(p)
         const effectiveReplen = hasTransferSplit ? getEffectiveReplenTransfers(p) : null
         const isEditingThis = editingTransfersProductId === p.id
+        const showPackPrimary =
+          hasPack && (isReplenOnly || hasTransferSplit) && packCount > 0
 
-        const packSecondary =
-          hasPack && (isReplenOnly || hasTransferSplit) && packCount > 0 ? (
-            <span className="text-[12px] text-[#4b535c]">{formatPackLabel(packCount)}</span>
-          ) : null
-
-        const unitsPrimary = isInlineEditable ? (
+        const transfersCellContent = isInlineEditable ? (
           <div className="flex flex-col items-end gap-0.5">
             <input
               type="number"
@@ -3351,19 +3360,22 @@ function ProductsDrilldown({
               onClick={(e) => e.stopPropagation()}
               className="w-16 h-7 px-2 rounded-[4px] border border-[#e9eaeb] text-[12px] text-[#0a0a0a] text-right"
             />
-            {packSecondary}
+          </div>
+        ) : showPackPrimary ? (
+          <div className="flex flex-col items-end gap-0.5">
+            <span className="text-[14px] text-[#0a0a0a]">{formatPackLabel(packCount)}</span>
+            <span className="text-[12px] text-[#4b535c]">{effectiveTransfers} units</span>
           </div>
         ) : (
           <div className="flex flex-col items-end gap-0.5">
             <span className="text-[14px] text-[#0a0a0a]">{effectiveTransfers}</span>
-            {packSecondary}
           </div>
         )
 
         if (!hasTransferSplit) {
           return (
             <td key={logicalIdx} className={`${pin}py-3 px-4 text-right align-top`}>
-              {unitsPrimary}
+              {transfersCellContent}
             </td>
           )
         }
@@ -3375,7 +3387,7 @@ function ProductsDrilldown({
             onMouseEnter={() => setHoveredTransferProductId(p.id)}
             onMouseLeave={() => setHoveredTransferProductId(null)}
           >
-            {unitsPrimary}
+            {transfersCellContent}
             {hoveredTransferProductId === p.id && (
               <div
                 className="absolute bottom-full mb-1 left-0 z-50 bg-white border border-[#e5e7eb] rounded-[6px] shadow-md p-3 min-w-[200px]"
@@ -3430,25 +3442,59 @@ function ProductsDrilldown({
           </td>
         )
       }
-      case 4:
+      case 4: {
+        const hasPack = productHasPackConstraint(p)
+        const recommendedUnits = Number(p.recommended) || 0
+        const packUnitsForRecommended =
+          hasPack && p.packMultiple > 0
+            ? p.packTransfers != null
+              ? Number(p.packTransfers) || 0
+              : productHasTransferSplit(p)
+                ? Number(p.replenTransfers) || 0
+                : recommendedUnits
+            : 0
+        const recommendedPackCount =
+          hasPack && p.packMultiple > 0 ? packUnitsForRecommended / p.packMultiple : 0
+        const showPackRecommended = hasPack && recommendedPackCount > 0
+
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right align-top`}>
             <div className="flex flex-col items-end gap-1 line-clamp-2 min-w-0">
-              <span className="text-[#0a0a0a]">
-                {p.recommended}
-                {p.recommendedBadges?.map((b) => (
-                  <span
-                    key={b}
-                    className="ml-1 inline-flex items-center px-2 py-0.5 rounded-[4px] bg-[#f8f8f8] text-[11px] font-medium text-[#0267ff]"
-                  >
-                    {b === 'VIS' ? 'VS' : b}
+              {showPackRecommended ? (
+                <>
+                  <span className="inline-flex flex-wrap items-center justify-end gap-1 text-[14px] text-[#0a0a0a]">
+                    {formatPackLabel(recommendedPackCount)}
+                    {p.recommendedBadges?.map((b) => (
+                      <span
+                        key={b}
+                        className="inline-flex items-center px-2 py-0.5 rounded-[4px] bg-[#f8f8f8] text-[11px] font-medium text-[#0267ff]"
+                      >
+                        {b === 'VIS' ? 'VS' : b}
+                      </span>
+                    ))}
                   </span>
-                ))}
-              </span>
-              <span className="text-[12px] text-[#4b535c]">{p.recommendedSub}</span>
+                  <span className="text-[12px] text-[#4b535c]">{recommendedUnits} units</span>
+                </>
+              ) : (
+                <>
+                  <span className="text-[#0a0a0a]">
+                    {p.recommended}
+                    {p.recommendedBadges?.map((b) => (
+                      <span
+                        key={b}
+                        className="ml-1 inline-flex items-center px-2 py-0.5 rounded-[4px] bg-[#f8f8f8] text-[11px] font-medium text-[#0267ff]"
+                      >
+                        {b === 'VIS' ? 'VS' : b}
+                      </span>
+                    ))}
+                  </span>
+                  <span className="text-[12px] text-[#4b535c]">{p.recommendedSub}</span>
+                </>
+              )}
             </div>
           </td>
         )
+      }
       case 5:
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right align-top`}>
@@ -5001,10 +5047,7 @@ function renderExplorerBodyCell(row, col, {
     case 'productDetails':
       return (
         <td key={col.id} className={`${explorerTdClass} ${col.minWidth}`}>
-          <ExplorerSkuProductDetailsContent
-            row={row}
-            showPackBadge={Boolean(row.isVirtualPack && !row.isPackMember)}
-          />
+          <ExplorerSkuProductDetailsContent row={row} />
         </td>
       )
     case 'fromLocation':
@@ -5329,7 +5372,7 @@ function renderExplorerTotalsCell(col, totals, { explorerTotalsThClass, explorer
     case 'transfers':
       return (
         <th key={col.id} className={`${baseClass} ${col.minWidth} text-right`}>
-          {totals.transfers}
+          {totals.transfers} units
         </th>
       )
     case 'revenue':
@@ -5381,7 +5424,6 @@ const EXPLORER_PACK_MUTED_DASH = (
 /** Shared Explorer SKU / product-details cell content (picture, name, ID, colour). */
 function ExplorerSkuProductDetailsContent({
   row,
-  showPackBadge = false,
   wrapperClassName = '',
 }) {
   return (
@@ -5390,10 +5432,7 @@ function ExplorerSkuProductDetailsContent({
         <div className="h-12 w-12 shrink-0 rounded-[4px] bg-[#f3f4f6]" />
         <div className="flex min-w-0 flex-col gap-0.5">
           <span className="text-[14px] font-medium text-[#0a0a0a]">{row.productName}</span>
-          <span className="inline-flex min-w-0 items-center gap-1 text-[12px] text-[#4b535c]">
-            <span className="truncate">{row.sku}</span>
-            {showPackBadge ? <VirtualPackIndicator showTooltip={false} /> : null}
-          </span>
+          <span className="truncate text-[12px] text-[#4b535c]">{row.sku}</span>
           <span className="text-[12px] text-[#4b535c]">{row.colour}</span>
         </div>
       </div>
@@ -5422,10 +5461,7 @@ function renderExplorerPackRowCell(packRow, col, {
             <span className="truncate text-[14px] font-medium text-[#0a0a0a]">
               {packRow.packName ?? packRow.packId}
             </span>
-            <span className="inline-flex min-w-0 items-center gap-1 text-[12px] text-[#4b535c]">
-              <span className="truncate">{packRow.packId}</span>
-              {packRow.isVirtualPack ? <VirtualPackIndicator showTooltip={false} /> : null}
-            </span>
+            <span className="truncate text-[12px] text-[#4b535c]">{packRow.packId}</span>
             {showPartialNote && (
               <span className="text-[11px] text-[#878d94]">
                 {packRow.shownSkuCount} of {packRow.totalSkuCount} SKUs shown
@@ -5455,6 +5491,7 @@ function renderExplorerPackRowCell(packRow, col, {
       )
     case 'transfers':
       // Transfers is the edited value — never apply Batch B stale muting here
+      // Packs primary (input + label), units secondary
       return (
         <td
           key={col.id}
@@ -5462,15 +5499,17 @@ function renderExplorerPackRowCell(packRow, col, {
           onClick={(e) => e.stopPropagation()}
         >
           <div className="flex flex-col items-end gap-0.5">
-            <ExplorerTransfersInput
-              value={effectivePackCount}
-              step={1}
-              onChange={(newValue) => handlePackRowCountEdit(packRow, newValue)}
-            />
-            <span className="text-[12px] text-[#4b535c]">
-              {formatPackLabel(effectivePackCount)}
-            </span>
-            <span className="text-[12px] tabular-nums text-[#0a0a0a]">
+            <div className="inline-flex items-center gap-1">
+              <ExplorerTransfersInput
+                value={effectivePackCount}
+                step={1}
+                onChange={(newValue) => handlePackRowCountEdit(packRow, newValue)}
+              />
+              <span className="text-[12px] text-[#4b535c]">
+                {formatPackNoun(effectivePackCount)}
+              </span>
+            </div>
+            <span className="text-[12px] tabular-nums text-[#4b535c]">
               {totalUnits} units
             </span>
           </div>
@@ -5484,12 +5523,15 @@ function renderExplorerPackRowCell(packRow, col, {
           </span>
         </td>
       )
-    case 'recommended':
+    case 'recommended': {
+      const recommendedPackCount = Number(packRow.packRecommended) || 0
+      const unitsPerPack = getExplorerPackUnitsPerPack(packRow)
+      const recommendedUnits = recommendedPackCount * unitsPerPack
       return (
         <td key={col.id} className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}>
           <div className="flex flex-col items-end gap-1">
             <span className="inline-flex flex-wrap items-center justify-end gap-1 text-[14px] text-[#0a0a0a]">
-              {packRow.packRecommended}
+              {formatPackLabel(recommendedPackCount)}
               {packRow.packRecommendedBadges?.map((badge) => (
                 <span
                   key={badge}
@@ -5499,9 +5541,13 @@ function renderExplorerPackRowCell(packRow, col, {
                 </span>
               ))}
             </span>
+            {recommendedUnits > 0 && (
+              <span className="text-[12px] text-[#4b535c]">{recommendedUnits} units</span>
+            )}
           </div>
         </td>
       )
+    }
     case 'confidence':
       return (
         <td key={col.id} className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}>
@@ -5566,7 +5612,6 @@ function renderExplorerPackChildCell(child, col, {
         <td key={col.id} className={`${explorerTdClass} ${col.minWidth}`}>
           <ExplorerSkuProductDetailsContent
             row={child}
-            showPackBadge={false}
             wrapperClassName="pl-6"
           />
         </td>
