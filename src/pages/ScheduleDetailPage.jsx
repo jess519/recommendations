@@ -920,7 +920,14 @@ function ConfidencePill({ value }) {
   )
 }
 
-function StorageCapacityPill({ value }) {
+function StorageCapacityPill({ value, stale = false }) {
+  if (stale) {
+    return (
+      <span className="inline-flex max-w-full items-center justify-center rounded-full bg-[#F2F4F7] px-2.5 py-1 text-[12px] font-medium text-[#9ca3af]">
+        {value === 'full' ? 'Full' : 'Available'}
+      </span>
+    )
+  }
   if (value === 'full') {
     return (
       <span className="inline-flex max-w-full items-center justify-center rounded-full bg-[#FEE4E2] px-2.5 py-1 text-[12px] font-medium text-[#B42318]">
@@ -935,19 +942,25 @@ function StorageCapacityPill({ value }) {
   )
 }
 
-function ProductCoverageText({ coverageWeeks, coverageTarget, coverage }) {
+function ProductCoverageText({ coverageWeeks, coverageTarget, coverage, stale = false }) {
   if (coverageWeeks == null || coverageTarget == null) {
-    return <span className="text-[14px] text-[#4b535c]">N/A</span>
+    return <span className={`text-[14px] ${stale ? 'text-[#9ca3af]' : 'text-[#4b535c]'}`}>N/A</span>
   }
   const isBelowTarget = coverage?.includes('below target')
   const badgeText = isBelowTarget ? coverage.replace(' below target', ' of SKUs below target') : coverage
   return (
     <div className="flex flex-col items-end gap-1">
-      <span className="text-[14px] text-[#0a0a0a] font-medium">{coverageWeeks} wks</span>
+      <span className={`text-[14px] font-medium ${stale ? 'text-[#9ca3af]' : 'text-[#0a0a0a]'}`}>
+        {coverageWeeks} wks
+      </span>
       {coverage && (
         <span
           className={`px-1.5 py-0.5 rounded-[4px] text-[11px] font-medium ${
-            isBelowTarget ? 'bg-[#fee2e2] text-[#E30D3C]' : 'bg-[#dcfce7] text-[#166534]'
+            stale
+              ? 'bg-[#f3f4f6] text-[#9ca3af]'
+              : isBelowTarget
+                ? 'bg-[#fee2e2] text-[#E30D3C]'
+                : 'bg-[#dcfce7] text-[#166534]'
           }`}
         >
           {badgeText}
@@ -2379,6 +2392,26 @@ function productHasPackConstraint(p) {
   return p?.packMultiple != null && p.packMultiple > 0
 }
 
+/** Pack row with a unit override that differs from the original mock value. */
+function productHasPackUnitOverride(p, productTransfersOverrides = {}, replenTransferOverrides = {}) {
+  if (!productHasPackConstraint(p)) return false
+  if (productHasTransferSplit(p)) {
+    if (!Object.prototype.hasOwnProperty.call(replenTransferOverrides, p.id)) return false
+    return (Number(replenTransferOverrides[p.id]) || 0) !== (Number(p.replenTransfers) || 0)
+  }
+  if (!Object.prototype.hasOwnProperty.call(productTransfersOverrides, p.id)) return false
+  return (Number(productTransfersOverrides[p.id]) || 0) !== (Number(p.transfers) || 0)
+}
+
+/** Explorer pack / pack-member row with a transfer override that differs from original. */
+function explorerRowHasPackUnitOverride(row, explorerTransferOverrides = {}) {
+  const isPackRow =
+    (row?.packMultiple != null && row.packMultiple > 0) || Boolean(row?.isPackMember)
+  if (!isPackRow) return false
+  if (explorerTransferOverrides?.[row.id] === undefined) return false
+  return explorerTransferOverrides[row.id] !== row.transfers
+}
+
 function productIsReplenOnly(p) {
   return Array.isArray(p?.movementType) && p.movementType.length === 1 && p.movementType[0] === 'replenishment'
 }
@@ -3297,12 +3330,24 @@ function ProductsDrilldown({
           </td>
         )
       }
-      case 3:
+      case 3: {
+        const revenueStale = productHasPackUnitOverride(
+          p,
+          productTransfersOverrides,
+          replenTransferOverrides
+        )
         return (
-          <td key={logicalIdx} className={`${pin}py-3 px-4 text-right text-[#0a0a0a] align-top`}>
-            <div className="line-clamp-2 min-w-0 w-full text-right">{p.revenue}</div>
+          <td key={logicalIdx} className={`${pin}py-3 px-4 text-right align-top`}>
+            <div
+              className={`line-clamp-2 min-w-0 w-full text-right ${
+                revenueStale ? 'text-[#9ca3af]' : 'text-[#0a0a0a]'
+              }`}
+            >
+              {p.revenue}
+            </div>
           </td>
         )
+      }
       case 4:
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right align-top`}>
@@ -3331,7 +3376,12 @@ function ProductsDrilldown({
           </td>
         )
 
-      case 6:
+      case 6: {
+        const coverageStale = productHasPackUnitOverride(
+          p,
+          productTransfersOverrides,
+          replenTransferOverrides
+        )
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right align-top`}>
             <div className="flex justify-end line-clamp-2 min-w-0">
@@ -3339,10 +3389,12 @@ function ProductsDrilldown({
                 coverageWeeks={p.coverageWeeks}
                 coverageTarget={p.coverageTarget}
                 coverage={p.coverage}
+                stale={coverageStale}
               />
             </div>
           </td>
         )
+      }
       case 7:
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right align-top`}>
@@ -4953,12 +5005,16 @@ function renderExplorerBodyCell(row, col, {
         </td>
       )
     }
-    case 'revenue':
+    case 'revenue': {
+      const revenueStale = explorerRowHasPackUnitOverride(row, explorerTransferOverrides)
       return (
         <td key={col.id} className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}>
-          <span className="text-[14px] text-[#0a0a0a]">{row.revenue}</span>
+          <span className={`text-[14px] ${revenueStale ? 'text-[#9ca3af]' : 'text-[#0a0a0a]'}`}>
+            {row.revenue}
+          </span>
         </td>
       )
+    }
     case 'recommended':
       return (
         <td key={col.id} className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}>
@@ -4988,14 +5044,16 @@ function renderExplorerBodyCell(row, col, {
           </div>
         </td>
       )
-    case 'coverage':
+    case 'coverage': {
+      const coverageStale = explorerRowHasPackUnitOverride(row, explorerTransferOverrides)
       return (
         <td key={col.id} className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}>
-          <span className="text-[14px] text-[#0a0a0a]">
+          <span className={`text-[14px] ${coverageStale ? 'text-[#9ca3af]' : 'text-[#0a0a0a]'}`}>
             {row.coverageWeeksBefore} → {row.coverageWeeksAfter} wks
           </span>
         </td>
       )
+    }
     case 'nextEvent':
       return (
         <td key={col.id} className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}>
@@ -5040,14 +5098,16 @@ function renderExplorerBodyCell(row, col, {
           </div>
         </td>
       )
-    case 'storageCapacity':
+    case 'storageCapacity': {
+      const storageStale = explorerRowHasPackUnitOverride(row, explorerTransferOverrides)
       return (
         <td key={col.id} className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}>
           <div className="flex justify-end">
-            <StorageCapacityPill value={row.storageCapacity} />
+            <StorageCapacityPill value={row.storageCapacity} stale={storageStale} />
           </div>
         </td>
       )
+    }
     case 'warehouseUnits':
       return (
         <td key={col.id} className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}>
