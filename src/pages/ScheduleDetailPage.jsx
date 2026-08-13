@@ -3164,17 +3164,17 @@ function ProductsDrilldown({
         return (
           <td
             key={logicalIdx}
-            className={`${pin}py-3 px-4 max-w-[200px] min-w-[200px] align-top`}
+            className={`${pin}py-3 px-4 max-w-[220px] min-w-[220px] align-top`}
           >
             <div className="flex items-center gap-4 min-w-0">
               <div className="w-12 h-12 rounded-[4px] bg-[#f3f4f6] shrink-0" />
-              <div className="flex flex-col gap-0.5 min-w-0 line-clamp-2">
-                <span className="inline-flex min-w-0 items-center gap-1 font-medium text-[#0a0a0a]">
-                  <span className="truncate">{p.name}</span>
-                  {p.isVirtualPack ? <VirtualPackIndicator /> : null}
-                </span>
-                <span className="text-[12px] text-[#4b535c]">{p.sku}</span>
-                <span className="text-[12px] text-[#4b535c]">{p.colour}</span>
+              <div className="flex min-w-0 items-start gap-1">
+                <div className="flex min-w-0 flex-col gap-0.5 line-clamp-2">
+                  <span className="truncate font-medium text-[#0a0a0a]">{p.name}</span>
+                  <span className="text-[12px] text-[#4b535c]">{p.sku}</span>
+                  <span className="text-[12px] text-[#4b535c]">{p.colour}</span>
+                </div>
+                {p.isVirtualPack ? <VirtualPackIndicator /> : null}
               </div>
             </div>
           </td>
