@@ -456,6 +456,8 @@ const PRODUCTS_BY_TRIP = {
     { id: 9, name: 'Coin-pack tote m', sku: 'C900010', colour: 'Noir', movementType: ["replenishment"], transfers: 40, transfersSub: 2, approvedTransfers: 20, unapprovedTransfers: 20, revenue: '€1.10K', recommended: 40, recommendedBadges: ['VIS'], recommendedSub: 2, confidence: 'high', coverage: '4% below target', coverageWeeks: 4.2, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 2, salesL30: 8, forecast: 1.2, stockouts: '0 → 0', locations: '3 → 3', overstocks: '2 → 1', understocks: '6 → 4', depth: '4.0 → 4.8', status: 'unapproved', currentUnits: 22, currentUnitsInTransit: 4, warehouseAllocateLine: '60 → 52', warehouseSellLine: '70 → 62', packMultiple: 10, skuCount: 4, isVirtualPack: true },
     // Unconstrained replen — baseline non-pack path
     { id: 10, name: 'Mini sac band', sku: 'C900020', colour: 'Rouge', movementType: ["replenishment"], transfers: 3, transfersSub: 1, approvedTransfers: 2, unapprovedTransfers: 1, revenue: '€0.42K', recommended: 3, recommendedBadges: ['REV'], recommendedSub: 1, confidence: 'low', coverage: 'All SKUs in target', coverageWeeks: 6.0, coverageTarget: 6, nextEvent: { name: 'UK weekly replenishment', date: '16/06/2026' }, salesL7: 1, salesL30: 3, forecast: 0.6, stockouts: '0 → 0', locations: '1 → 1', overstocks: '1 → 0', understocks: '2 → 1', depth: '5.0 → 5.5', status: 'approved_by_system', currentUnits: 9, currentUnitsInTransit: 0, warehouseAllocateLine: '30 → 27', warehouseSellLine: '40 → 36', packMultiple: null, skuCount: 1 },
+    // Mixed fulfilment (pack + loose) — packTransfers drives pack subtext; total = pack + loose
+    { id: 11, name: 'Gémo LOT tote', sku: 'G900100', colour: 'Camel', movementType: ["replenishment"], transfers: 58, packTransfers: 50, looseTransfers: 8, transfersSub: 2, approvedTransfers: 30, unapprovedTransfers: 28, revenue: '€0.94K', recommended: 58, recommendedBadges: ['VIS'], recommendedSub: 1, confidence: 'high', coverage: '3% below target', coverageWeeks: 3.6, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 2, salesL30: 7, forecast: 1.1, stockouts: '0 → 0', locations: '2 → 2', overstocks: '2 → 1', understocks: '5 → 3', depth: '3.8 → 4.6', status: 'unapproved', currentUnits: 14, currentUnitsInTransit: 2, warehouseAllocateLine: '62 → 54', warehouseSellLine: '74 → 66', packMultiple: 10, skuCount: 1, isVirtualPack: false },
   ],
   2: [
     { id: 7, name: 'Sac zip l', sku: 'B200001', colour: 'Noir', movementType: ["rebalancing"], transfers: 2, transfersSub: 1, approvedTransfers: 2, unapprovedTransfers: 0, revenue: '€0.89K', recommended: 2, recommendedBadges: ['REV'], recommendedSub: 1, confidence: 'high', coverage: '3% below target', coverageWeeks: 4.8, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 1, salesL30: 2, forecast: 0.45, stockouts: '0 → 0', locations: '2 → 2', overstocks: '2 → 1', understocks: '5 → 3', depth: '4.5 → 5.0', status: 'approved_by_user', approvedByUser: 'Jess Briggs', currentUnits: 18, currentUnitsInTransit: 4, warehouseAllocateLine: '40 → 36', warehouseSellLine: '50 → 45', packMultiple: null, skuCount: 1 },
@@ -654,6 +656,29 @@ const EXPLORER_PRODUCTS = [
     seasonAndEvent: 'Winter 26 · Vague 1',
     sizes: ['S', 'M', 'L'],
     movementTypes: ['replenishment'] },
+  {
+    id: 'exp-p-gemo',
+    name: 'Gémo LOT tote',
+    baseSku: 'G900100',
+    colour: 'Camel',
+    department: 'Handbags',
+    subDepartment: 'Sac à main',
+    material: 'Cuir',
+    gender: 'Femme',
+    rrp: '€280',
+    ws: '€0',
+    ic: '€24',
+    seasonAndEvent: 'Winter 26 · Vague 1',
+    sizes: ['S'],
+    movementTypes: ['replenishment'],
+    packMultiple: 10,
+    isVirtualPack: false,
+    // Mixed fulfilment demo: same SKU×from×to×movement splits into pack + loose rows
+    mixedFulfilmentByStore: {
+      Opéra: { pack: 20, loose: 3 },
+      'Cap 3000': { pack: 30, loose: 5 },
+    },
+  },
 ]
 
 /** Multi-SKU pack: Log01 → Opéra replen rows for Coin-pack sizes (pack rows are display-only) */
@@ -705,11 +730,11 @@ const STATUS_CYCLE = [
 const CONFIDENCE_CYCLE = ['high', 'high', 'high', 'low']
 const BADGE_CYCLE = [['REV'], ['VIS'], ['REV', 'VIS'], ['REV'], ['VIS']]
 
-function buildExplorerRow(rowIndex, product, size, fromLoc, toLoc, movementType) {
+function buildExplorerRow(rowIndex, product, size, fromLoc, toLoc, movementType, options = {}) {
   const coverageWeeksBefore = Number((1 + (rowIndex * 1.3) % 5).toFixed(1))
   const coverageWeeksAfter = Number((coverageWeeksBefore + 0.5 + (rowIndex % 4) * 0.8).toFixed(1))
   const salesL7 = ((rowIndex * 2) % 15) + 1
-  const transfers = 1 + (rowIndex * 3) % 15
+  const transfers = options.transfers != null ? options.transfers : 1 + (rowIndex * 3) % 15
   // Usually headroom (green); every 7th row is constrained (orange by default).
   const availableToSend =
     rowIndex % 7 === 0 ? Math.max(0, transfers - 2 - (rowIndex % 3)) : transfers + 2 + (rowIndex % 5)
@@ -758,16 +783,21 @@ function buildExplorerRow(rowIndex, product, size, fromLoc, toLoc, movementType)
       : rowIndex % 5 === 0
         ? 45 + (rowIndex % 10)
         : 8 + (rowIndex % 8)
-  // Single-SKU pack: only Log01 → store replen; seed transfers as a pack multiple
-  const isSingleSkuPackReplen =
+  // Single-SKU pack: only Log01 → store replen; pack fulfilment only (explicit or inferred)
+  const canBePackFulfilment =
     movementType === 'replenishment' &&
     fromLoc === EXPLORER_WAREHOUSE &&
     product.packMultiple != null &&
     product.packMultiple > 0
-  const packMultiple = isSingleSkuPackReplen ? product.packMultiple : null
-  const isVirtualPack = isSingleSkuPackReplen ? Boolean(product.isVirtualPack) : false
+  // Default: pack when product can pack (preserves Pre-sac / Coin-pack); explicit 'loose' for mixed companions
+  const fulfilmentType = options.fulfilmentType ?? (canBePackFulfilment ? 'pack' : 'loose')
+  const isPackFulfilment = canBePackFulfilment && fulfilmentType === 'pack'
+  const packMultiple = isPackFulfilment ? product.packMultiple : null
+  const isVirtualPack = isPackFulfilment ? Boolean(product.isVirtualPack) : false
   const alignedTransfers = packMultiple
-    ? Math.max(packMultiple, Math.round(transfers / packMultiple) * packMultiple)
+    ? options.transfers != null
+      ? options.transfers
+      : Math.max(packMultiple, Math.round(transfers / packMultiple) * packMultiple)
     : transfers
   const stockAfter = stockBefore + alignedTransfers + (stockFromOtherStores ?? 0)
   return {
@@ -788,6 +818,7 @@ function buildExplorerRow(rowIndex, product, size, fromLoc, toLoc, movementType)
     fromLocation: fromLoc,
     toLocation: toLoc,
     movementType,
+    fulfilmentType,
     transfers: alignedTransfers,
     packMultiple,
     isVirtualPack,
@@ -827,6 +858,11 @@ function buildExplorerRow(rowIndex, product, size, fromLoc, toLoc, movementType)
   }
 }
 
+/** Pair key for mixed pack+loose fulfilment lanes (SKU × from × to × movement). */
+function explorerMixedFulfilmentPairKey(row) {
+  return `${row.productId}|${row.sku}|${row.fromLocation}|${row.toLocation}|${row.movementType}`
+}
+
 function buildExplorerData() {
   const rows = []
   let rowIndex = 0
@@ -834,7 +870,47 @@ function buildExplorerData() {
   EXPLORER_PRODUCTS.forEach((product) => {
     product.sizes.forEach((size) => {
       product.movementTypes.forEach((movementType) => {
-        if (movementType === 'replenishment') {
+        if (movementType === 'replenishment' && product.mixedFulfilmentByStore) {
+          // Mixed-fulfilment products: only seeded stores; pack + loose as separate rows
+          const mixedByStore = product.mixedFulfilmentByStore
+          const packOnlyStores = product.packOnlyStores ?? {}
+          const looseOnlyStores = product.looseOnlyStores ?? {}
+          EXPLORER_STORES.forEach((store) => {
+            const mixed = mixedByStore[store]
+            if (mixed) {
+              rows.push(
+                buildExplorerRow(rowIndex++, product, size, EXPLORER_WAREHOUSE, store, 'replenishment', {
+                  fulfilmentType: 'pack',
+                  transfers: mixed.pack,
+                })
+              )
+              rows.push(
+                buildExplorerRow(rowIndex++, product, size, EXPLORER_WAREHOUSE, store, 'replenishment', {
+                  fulfilmentType: 'loose',
+                  transfers: mixed.loose,
+                })
+              )
+              return
+            }
+            if (packOnlyStores[store] != null) {
+              rows.push(
+                buildExplorerRow(rowIndex++, product, size, EXPLORER_WAREHOUSE, store, 'replenishment', {
+                  fulfilmentType: 'pack',
+                  transfers: packOnlyStores[store],
+                })
+              )
+              return
+            }
+            if (looseOnlyStores[store] != null) {
+              rows.push(
+                buildExplorerRow(rowIndex++, product, size, EXPLORER_WAREHOUSE, store, 'replenishment', {
+                  fulfilmentType: 'loose',
+                  transfers: looseOnlyStores[store],
+                })
+              )
+            }
+          })
+        } else if (movementType === 'replenishment') {
           EXPLORER_STORES.forEach((store) => {
             rows.push(buildExplorerRow(rowIndex++, product, size, EXPLORER_WAREHOUSE, store, 'replenishment'))
           })
@@ -2560,6 +2636,10 @@ function ProductsDrilldown({
 
   const getReplenPackCount = (p) => {
     if (!productHasPackConstraint(p)) return 0
+    // Mixed fulfilment: pack subtext from pack-fulfilled units only (not pack+loose total)
+    if (p.packTransfers != null && p.packMultiple > 0) {
+      return p.packTransfers / p.packMultiple
+    }
     if (productHasTransferSplit(p)) {
       return getEffectiveReplenTransfers(p) / p.packMultiple
     }
@@ -4722,8 +4802,19 @@ function buildExplorerDisplayRows(filteredSkuRows, allSkuRows, expandedPackGroup
   const emittedGroups = new Set()
   const packSection = []
   const nonPackRows = []
+  // Loose companions for mixed fulfilment: keyed by SKU×from×to×movement
+  const looseCompanionByPairKey = new Map()
+  for (const row of filteredSkuRows) {
+    if (row.isPackMember) continue
+    if ((row.fulfilmentType ?? 'loose') !== 'loose') continue
+    if (row.packMultiple != null && row.packMultiple > 0) continue
+    looseCompanionByPairKey.set(explorerMixedFulfilmentPairKey(row), row)
+  }
+  const emittedLooseCompanionIds = new Set()
 
   for (const row of filteredSkuRows) {
+    if (emittedLooseCompanionIds.has(row.id)) continue
+
     if (row.isPackMember && row.packGroupId) {
       if (emittedGroups.has(row.packGroupId)) continue
       emittedGroups.add(row.packGroupId)
@@ -4777,6 +4868,7 @@ function buildExplorerDisplayRows(filteredSkuRows, allSkuRows, expandedPackGroup
       row.packMultiple != null && row.packMultiple > 0 && !row.isPackMember
     if (isSingleSkuPack) {
       const packGroupId = `single-${row.id}`
+      const looseTwin = looseCompanionByPairKey.get(explorerMixedFulfilmentPairKey(row))
       const packRow = {
         rowKind: 'packRow',
         id: `pack-row-${packGroupId}`,
@@ -4806,10 +4898,20 @@ function buildExplorerDisplayRows(filteredSkuRows, allSkuRows, expandedPackGroup
         totalSkuCount: 1,
         memberIds: [row.id],
         allMemberIds: [row.id],
+        // Mixed fulfilment: pair key for SKU-locations dedupe
+        pairedLooseRowId: looseTwin?.id ?? null,
       }
       packSection.push(packRow)
       if (expandedPackGroupIds.has(packGroupId)) {
         packSection.push({ rowKind: 'packChild', ...row, isPackMember: true })
+      }
+      if (looseTwin) {
+        packSection.push({
+          rowKind: 'sku',
+          ...looseTwin,
+          pairedPackMemberId: row.id,
+        })
+        emittedLooseCompanionIds.add(looseTwin.id)
       }
       continue
     }
@@ -5957,10 +6059,18 @@ function ExplorerTable({
 
   const totals = useMemo(() => {
     // Metric sums: underlying filtered SKU rows (children). Display count: packs as 1 + non-pack SKUs.
+    // Mixed fulfilment: pack+loose pair counts as 1 SKU-location (skip paired loose companions).
     const skuRows = filteredData
-    const atomicCount = displayRows.filter(
-      (r) => r.rowKind === 'packRow' || r.rowKind === 'sku'
-    ).length
+    const pairedLooseIds = new Set(
+      displayRows
+        .filter((r) => r.rowKind === 'packRow' && r.pairedLooseRowId)
+        .map((r) => r.pairedLooseRowId)
+    )
+    const atomicCount = displayRows.filter((r) => {
+      if (r.rowKind === 'packRow') return true
+      if (r.rowKind === 'sku') return !pairedLooseIds.has(r.id)
+      return false
+    }).length
     const sumTransfers = skuRows.reduce((sum, row) => {
       const transfers =
         explorerTransferOverrides[row.id] !== undefined
