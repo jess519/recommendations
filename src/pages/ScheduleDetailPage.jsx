@@ -2547,18 +2547,18 @@ function formatPackLabel(packCount) {
   return `${packCount} ${formatPackNoun(packCount)}`
 }
 
-/** Muted unit label for "pack" / "packs" — recedes so the number reads as the value. */
+/** Smaller unit label for "pack" / "packs" — colour inherits from adjacent/parent text. */
 function PackUnitLabel({ count }) {
   return (
-    <span className="text-[11px] font-normal text-[#9ca3af]">{formatPackNoun(count)}</span>
+    <span className="text-[11px] font-normal">{formatPackNoun(count)}</span>
   )
 }
 
-/** Pack count with muted unit label on the same line. */
+/** Pack count with smaller unit label on the same line (colour from numberClassName). */
 function PackCountDisplay({ count, numberClassName = 'text-[14px] text-[#0a0a0a]' }) {
   return (
-    <span className="inline-flex items-center gap-1">
-      <span className={numberClassName}>{count}</span>
+    <span className={`inline-flex items-center gap-1 ${numberClassName}`}>
+      <span>{count}</span>
       <PackUnitLabel count={count} />
     </span>
   )
@@ -5534,7 +5534,7 @@ function renderExplorerPackRowCell(packRow, col, {
           onClick={(e) => e.stopPropagation()}
         >
           <div className="flex flex-col items-end gap-0.5">
-            <div className="inline-flex items-center gap-1">
+            <div className="inline-flex items-center gap-1 text-[#0a0a0a]">
               <ExplorerTransfersInput
                 value={effectivePackCount}
                 step={1}
