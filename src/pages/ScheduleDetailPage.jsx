@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useLayoutEffect, useMemo } from 'react'
 import { createPortal } from 'react-dom'
-import { Plus, Copy } from 'lucide-react'
+import { Plus, Copy, Sparkles } from 'lucide-react'
 import { ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts'
 import { IconSearch, IconChevronDown, IconChevronRight, IconShare, IconDocument, IconClose, IconArrowLeft, IconGears, IconTruckTu, IconPackageTu, IconRebalancing, IconReplenishment, IconCalendarNote, IconTrendUp, IconFilterFunnel, IconColumnSettings, IconSortOrder, IconWarning, IconLightbulb } from '../components/icons'
 function IconInfo() {
@@ -449,11 +449,11 @@ const PRODUCTS_BY_TRIP = {
     { id: 3, name: 'Ang-sac pte main m', sku: 'A1252810', colour: 'Figue', movementType: ["rebalancing"], transfers: 3, transfersSub: 2, approvedTransfers: 2, unapprovedTransfers: 1, revenue: '€1.89K', recommended: 3, recommendedBadges: ['REV', 'VIS'], recommendedSub: 1, confidence: 'high', coverage: '5% below target', coverageWeeks: 3.1, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 1, salesL30: 4, forecast: 2.1, stockouts: '1 → 0', locations: '2 → 2', overstocks: '5 → 2', understocks: '6 → 3', depth: '4.2 → 4.8',     status: 'last_edited_by_user', editedByUser: 'Csabi Toth', currentUnits: 25, currentUnitsInTransit: 5, warehouseAllocateLine: '48 → 42', warehouseSellLine: '65 → 58', packMultiple: null, skuCount: 2 },
     { id: 4, name: 'Croi-sac zip s', sku: 'A1398811', colour: 'Noir', movementType: ["rebalancing"], transfers: 1, transfersSub: 2, approvedTransfers: 1, unapprovedTransfers: 0, revenue: '€0.98K', recommended: 1, recommendedBadges: ['REV'], recommendedSub: 2, confidence: 'high', coverage: 'All SKUs in target', coverageWeeks: 6.1, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 0, salesL30: 1, forecast: 0.32, stockouts: '0 → 0', locations: '1 → 2', overstocks: '2 → 1', understocks: '4 → 2', depth: '5.0 → 5.0', status: 'approved_by_user', approvedByUser: 'Jess Briggs', currentUnits: 3, currentUnitsInTransit: 1, warehouseAllocateLine: '55 → 50', warehouseSellLine: '70 → 63', packMultiple: null, skuCount: 1 },
     // COIN: single-SKU pack-constrained replen — inline-editable
-    { id: 5, name: 'Pre-sac seau s', sku: 'A101081', colour: 'Bleu petrole', movementType: ["replenishment"], transfers: 20, transfersSub: 1, approvedTransfers: 10, unapprovedTransfers: 10, revenue: '€0.76K', recommended: 20, recommendedBadges: ['VIS'], recommendedSub: 1, confidence: 'low', coverage: '8% below target', coverageWeeks: 2.9, coverageTarget: 6, nextEvent: { name: 'UK weekly replenishment', date: '16/06/2026' }, salesL7: 1, salesL30: 2, forecast: 0.54, stockouts: '0 → 1', locations: '2 → 1', overstocks: '3 → 0', understocks: '2 → 0', depth: '3.0 → 6.0', status: 'needs_review_from_user', currentUnits: 15, currentUnitsInTransit: 2, warehouseAllocateLine: '50 → 45', warehouseSellLine: '68 → 61', packMultiple: 10, skuCount: 1 },
+    { id: 5, name: 'Pre-sac seau s', sku: 'A101081', colour: 'Bleu petrole', movementType: ["replenishment"], transfers: 20, transfersSub: 1, approvedTransfers: 10, unapprovedTransfers: 10, revenue: '€0.76K', recommended: 20, recommendedBadges: ['VIS'], recommendedSub: 1, confidence: 'low', coverage: '8% below target', coverageWeeks: 2.9, coverageTarget: 6, nextEvent: { name: 'UK weekly replenishment', date: '16/06/2026' }, salesL7: 1, salesL30: 2, forecast: 0.54, stockouts: '0 → 1', locations: '2 → 1', overstocks: '3 → 0', understocks: '2 → 0', depth: '3.0 → 6.0', status: 'needs_review_from_user', currentUnits: 15, currentUnitsInTransit: 2, warehouseAllocateLine: '50 → 45', warehouseSellLine: '68 → 61', packMultiple: 10, skuCount: 1, isVirtualPack: true },
     // Mixed replen+rebal — pack rules apply to replen portion in hover
-    { id: 6, name: 'Ang-sac pte main s', sku: 'A1252811', colour: 'Figue', movementType: ["replenishment","rebalancing"], transfers: 22, transfersSub: 1, replenTransfers: 20, rebalTransfers: 2, approvedTransfers: 12, unapprovedTransfers: 10, revenue: '€0.65K', recommended: 1, recommendedBadges: ['REV'], recommendedSub: 1, confidence: 'low', coverage: '67% below target', coverageWeeks: 1.4, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 0, salesL30: 1, forecast: 0.21, stockouts: '0 → 0', locations: '2 → 2', overstocks: '4 → 1', understocks: '3 → 1', depth: '4.0 → 4.5', status: 'partially_approved', currentUnits: 7, currentUnitsInTransit: 0, warehouseAllocateLine: '57 → 44', warehouseSellLine: '57 → 51', packMultiple: 10, skuCount: 1 },
+    { id: 6, name: 'Ang-sac pte main s', sku: 'A1252811', colour: 'Figue', movementType: ["replenishment","rebalancing"], transfers: 22, transfersSub: 1, replenTransfers: 20, rebalTransfers: 2, approvedTransfers: 12, unapprovedTransfers: 10, revenue: '€0.65K', recommended: 1, recommendedBadges: ['REV'], recommendedSub: 1, confidence: 'low', coverage: '67% below target', coverageWeeks: 1.4, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 0, salesL30: 1, forecast: 0.21, stockouts: '0 → 0', locations: '2 → 2', overstocks: '4 → 1', understocks: '3 → 1', depth: '4.0 → 4.5', status: 'partially_approved', currentUnits: 7, currentUnitsInTransit: 0, warehouseAllocateLine: '57 → 44', warehouseSellLine: '57 → 51', packMultiple: 10, skuCount: 1, isVirtualPack: false },
     // Multi-SKU pack-constrained replen — read-only on Products row
-    { id: 9, name: 'Coin-pack tote m', sku: 'C900010', colour: 'Noir', movementType: ["replenishment"], transfers: 40, transfersSub: 2, approvedTransfers: 20, unapprovedTransfers: 20, revenue: '€1.10K', recommended: 40, recommendedBadges: ['VIS'], recommendedSub: 2, confidence: 'high', coverage: '4% below target', coverageWeeks: 4.2, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 2, salesL30: 8, forecast: 1.2, stockouts: '0 → 0', locations: '3 → 3', overstocks: '2 → 1', understocks: '6 → 4', depth: '4.0 → 4.8', status: 'unapproved', currentUnits: 22, currentUnitsInTransit: 4, warehouseAllocateLine: '60 → 52', warehouseSellLine: '70 → 62', packMultiple: 10, skuCount: 4 },
+    { id: 9, name: 'Coin-pack tote m', sku: 'C900010', colour: 'Noir', movementType: ["replenishment"], transfers: 40, transfersSub: 2, approvedTransfers: 20, unapprovedTransfers: 20, revenue: '€1.10K', recommended: 40, recommendedBadges: ['VIS'], recommendedSub: 2, confidence: 'high', coverage: '4% below target', coverageWeeks: 4.2, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 2, salesL30: 8, forecast: 1.2, stockouts: '0 → 0', locations: '3 → 3', overstocks: '2 → 1', understocks: '6 → 4', depth: '4.0 → 4.8', status: 'unapproved', currentUnits: 22, currentUnitsInTransit: 4, warehouseAllocateLine: '60 → 52', warehouseSellLine: '70 → 62', packMultiple: 10, skuCount: 4, isVirtualPack: true },
     // Unconstrained replen — baseline non-pack path
     { id: 10, name: 'Mini sac band', sku: 'C900020', colour: 'Rouge', movementType: ["replenishment"], transfers: 3, transfersSub: 1, approvedTransfers: 2, unapprovedTransfers: 1, revenue: '€0.42K', recommended: 3, recommendedBadges: ['REV'], recommendedSub: 1, confidence: 'low', coverage: 'All SKUs in target', coverageWeeks: 6.0, coverageTarget: 6, nextEvent: { name: 'UK weekly replenishment', date: '16/06/2026' }, salesL7: 1, salesL30: 3, forecast: 0.6, stockouts: '0 → 0', locations: '1 → 1', overstocks: '1 → 0', understocks: '2 → 1', depth: '5.0 → 5.5', status: 'approved_by_system', currentUnits: 9, currentUnitsInTransit: 0, warehouseAllocateLine: '30 → 27', warehouseSellLine: '40 → 36', packMultiple: null, skuCount: 1 },
   ],
@@ -637,7 +637,8 @@ const EXPLORER_PRODUCTS = [
     sizes: ['S'],
     // Replen rows are single-SKU packs (packMultiple: 10); rebal stays unconstrained
     movementTypes: ['replenishment', 'rebalancing'],
-    packMultiple: 10 },
+    packMultiple: 10,
+    isVirtualPack: true },
   {
     id: 'exp-p-coin',
     name: 'Coin-pack tote',
@@ -661,6 +662,7 @@ const EXPLORER_MULTI_SKU_PACK = {
   packId: 'Coin-pack P1',
   packCount: 4,
   toLocation: 'Opéra',
+  isVirtualPack: true,
   packRatio: {
     'C900010-S': 2,
     'C900010-M': 3,
@@ -751,6 +753,7 @@ function buildExplorerRow(rowIndex, product, size, fromLoc, toLoc, movementType)
     product.packMultiple != null &&
     product.packMultiple > 0
   const packMultiple = isSingleSkuPackReplen ? product.packMultiple : null
+  const isVirtualPack = isSingleSkuPackReplen ? Boolean(product.isVirtualPack) : false
   const alignedTransfers = packMultiple
     ? Math.max(packMultiple, Math.round(transfers / packMultiple) * packMultiple)
     : transfers
@@ -775,6 +778,7 @@ function buildExplorerRow(rowIndex, product, size, fromLoc, toLoc, movementType)
     movementType,
     transfers: alignedTransfers,
     packMultiple,
+    isVirtualPack,
     availableToSend,
     visibilityBefore: rowIndex % 11 === 0 ? 2 : rowIndex % 5 === 0 ? 1 : 0,
     visibilityAfter: rowIndex % 11 === 0 ? 3 : rowIndex % 5 === 0 ? 2 : 1,
@@ -850,6 +854,7 @@ function buildExplorerData() {
     row.packId = EXPLORER_MULTI_SKU_PACK.packId
     row.packRatio = EXPLORER_MULTI_SKU_PACK.packRatio
     row.packCount = EXPLORER_MULTI_SKU_PACK.packCount
+    row.isVirtualPack = Boolean(EXPLORER_MULTI_SKU_PACK.isVirtualPack)
     row.isPackMember = true
     row.packMultiple = null
     row.transfers = unitsPerPack * EXPLORER_MULTI_SKU_PACK.packCount
@@ -2402,6 +2407,32 @@ function isPackMultipleValue(value, packMultiple) {
   return n % packMultiple === 0
 }
 
+const VIRTUAL_PACK_TOOLTIP = 'Auto-generated pack — not from customer ERP'
+
+function VirtualPackIndicator({ className = '' }) {
+  return (
+    <span
+      className={`inline-flex shrink-0 items-center text-[#6366f1] ${className}`}
+      title={VIRTUAL_PACK_TOOLTIP}
+      aria-label={VIRTUAL_PACK_TOOLTIP}
+    >
+      <Sparkles className="size-3.5" aria-hidden />
+    </span>
+  )
+}
+
+function rowIsPackConstrained(row) {
+  return (
+    (row?.packMultiple != null && row.packMultiple > 0) ||
+    Boolean(row?.packGroupId) ||
+    Boolean(row?.isPackMember)
+  )
+}
+
+function productIsPackConstrained(p) {
+  return p?.packMultiple != null && p.packMultiple > 0
+}
+
 function ProductsDrilldown({
   trip,
   onBack,
@@ -3138,7 +3169,10 @@ function ProductsDrilldown({
             <div className="flex items-center gap-4 min-w-0">
               <div className="w-12 h-12 rounded-[4px] bg-[#f3f4f6] shrink-0" />
               <div className="flex flex-col gap-0.5 min-w-0 line-clamp-2">
-                <span className="font-medium text-[#0a0a0a]">{p.name}</span>
+                <span className="inline-flex min-w-0 items-center gap-1 font-medium text-[#0a0a0a]">
+                  <span className="truncate">{p.name}</span>
+                  {p.isVirtualPack ? <VirtualPackIndicator /> : null}
+                </span>
                 <span className="text-[12px] text-[#4b535c]">{p.sku}</span>
                 <span className="text-[12px] text-[#4b535c]">{p.colour}</span>
               </div>
@@ -3621,86 +3655,119 @@ function ProductsDrilldown({
         </div>
       </div>
 
-      {selectedProductIds.size > 0 && (
+      {selectedProductIds.size > 0 && (() => {
+        let packSelected = 0
+        let nonPackSelected = 0
+        selectedProductIds.forEach((id) => {
+          const p = baseProducts.find((row) => row.id === id)
+          if (productIsPackConstrained(p)) packSelected += 1
+          else nonPackSelected += 1
+        })
+        const hasPackInSelection = packSelected > 0
+        const onlyPackRowsSelected = hasPackInSelection && nonPackSelected === 0
+        return (
         <div
-          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-4 rounded-[8px] px-6 py-3"
+          className="fixed bottom-6 left-1/2 z-50 flex w-max max-w-[min(920px,calc(100vw-2rem))] -translate-x-1/2 flex-col gap-2 rounded-[8px] px-6 py-3"
           style={{ background: '#1A1A2E', boxShadow: '0 4px 12px rgba(0,0,0,0.25)' }}
         >
-          <button
-            type="button"
-            onClick={clearProductSelection}
-            className="flex items-center justify-center size-8 rounded-[4px] text-white hover:bg-white/10"
-            aria-label="Close"
-          >
-            <IconClose className="size-4" />
-          </button>
-          <span className="text-[14px] font-medium text-white">
-            {selectedProductIds.size} selected
-          </span>
-          <div className="relative">
+          <div className="flex items-center gap-4">
             <button
               type="button"
-              onClick={() => {
-                setBulkChangeUnitsOpen(false)
-                setBulkChangeStatusOpen((o) => !o)
-              }}
-              className="px-4 py-2 rounded-[4px] text-[14px] font-medium text-white hover:bg-white/10"
+              onClick={clearProductSelection}
+              className="flex items-center justify-center size-8 rounded-[4px] text-white hover:bg-white/10"
+              aria-label="Close"
             >
-              Change status
+              <IconClose className="size-4" />
             </button>
-            {bulkChangeStatusOpen && (
-              <>
-                <div className="fixed inset-0 z-[60]" aria-hidden onClick={() => setBulkChangeStatusOpen(false)} />
-                <div
-                  className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 z-[70] min-w-[180px] rounded-[6px] border border-[#e5e7eb] bg-white py-1 shadow-lg"
-                  style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}
-                >
-                  {STATUS_DROPDOWN_OPTIONS.map((o) => (
+            <span className="text-[14px] font-medium text-white">
+              {selectedProductIds.size} selected
+            </span>
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => {
+                  setBulkChangeUnitsOpen(false)
+                  setBulkChangeStatusOpen((o) => !o)
+                }}
+                className="px-4 py-2 rounded-[4px] text-[14px] font-medium text-white hover:bg-white/10"
+              >
+                Change status
+              </button>
+              {bulkChangeStatusOpen && (
+                <>
+                  <div className="fixed inset-0 z-[60]" aria-hidden onClick={() => setBulkChangeStatusOpen(false)} />
+                  <div
+                    className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 z-[70] min-w-[180px] rounded-[6px] border border-[#e5e7eb] bg-white py-1 shadow-lg"
+                    style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}
+                  >
+                    {STATUS_DROPDOWN_OPTIONS.map((o) => (
+                      <button
+                        key={o.id}
+                        type="button"
+                        onClick={() => handleBulkStatusChangeProducts(o.id)}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-left text-[13px] font-medium text-[#0a0a0a] hover:bg-[#f3f4f6]"
+                      >
+                        <span className={`size-2 rounded-full shrink-0 ${o.dotClass}`} aria-hidden />
+                        <span>{o.dropdownLabel}</span>
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+            <div className="relative">
+              <button
+                type="button"
+                disabled={onlyPackRowsSelected}
+                onClick={() => {
+                  if (onlyPackRowsSelected) return
+                  setBulkChangeStatusOpen(false)
+                  setBulkChangeUnitsOpen((o) => !o)
+                }}
+                className={`px-4 py-2 rounded-[4px] text-[14px] font-medium ${
+                  onlyPackRowsSelected
+                    ? 'cursor-not-allowed text-white/40'
+                    : 'text-white hover:bg-white/10'
+                }`}
+              >
+                Change units
+              </button>
+              {bulkChangeUnitsOpen && !onlyPackRowsSelected && (
+                <>
+                  <div className="fixed inset-0 z-[60]" aria-hidden onClick={() => setBulkChangeUnitsOpen(false)} />
+                  <div
+                    className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 z-[70] min-w-[180px] rounded-[6px] border border-[#e5e7eb] bg-white py-1 shadow-lg"
+                    style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}
+                  >
                     <button
-                      key={o.id}
                       type="button"
-                      onClick={() => handleBulkStatusChangeProducts(o.id)}
+                      onClick={handleBulkUndoEditsProducts}
                       className="w-full flex items-center gap-2 px-3 py-2 text-left text-[13px] font-medium text-[#0a0a0a] hover:bg-[#f3f4f6]"
                     >
-                      <span className={`size-2 rounded-full shrink-0 ${o.dotClass}`} aria-hidden />
-                      <span>{o.dropdownLabel}</span>
+                      Undo edits
                     </button>
-                  ))}
-                </div>
-              </>
+                  </div>
+                </>
+              )}
+            </div>
+            {onlyPackRowsSelected && (
+              <button
+                type="button"
+                onClick={handleBulkUndoEditsProducts}
+                className="px-4 py-2 rounded-[4px] text-[14px] font-medium text-white hover:bg-white/10"
+              >
+                Undo edits
+              </button>
             )}
           </div>
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => {
-                setBulkChangeStatusOpen(false)
-                setBulkChangeUnitsOpen((o) => !o)
-              }}
-              className="px-4 py-2 rounded-[4px] text-[14px] font-medium text-white hover:bg-white/10"
-            >
-              Change units
-            </button>
-            {bulkChangeUnitsOpen && (
-              <>
-                <div className="fixed inset-0 z-[60]" aria-hidden onClick={() => setBulkChangeUnitsOpen(false)} />
-                <div
-                  className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 z-[70] min-w-[180px] rounded-[6px] border border-[#e5e7eb] bg-white py-1 shadow-lg"
-                  style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}
-                >
-                  <button
-                    type="button"
-                    onClick={handleBulkUndoEditsProducts}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-left text-[13px] font-medium text-[#0a0a0a] hover:bg-[#f3f4f6]"
-                  >
-                    Undo edits
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
+          {hasPackInSelection && (
+            <p className="text-[12px] leading-snug text-white/70">
+              Change units doesn&apos;t apply to pack rows — status and undo will apply
+            </p>
+          )}
         </div>
-      )}
+        )
+      })()}
     </div>
   )
 }
@@ -4568,6 +4635,7 @@ function buildExplorerDisplayRows(filteredSkuRows, allSkuRows) {
         packId: row.packId,
         packRatio: row.packRatio,
         packCount: row.packCount,
+        isVirtualPack: row.isVirtualPack,
         from: row.fromLocation,
         to: row.toLocation,
         movementType: row.movementType,
@@ -4606,6 +4674,7 @@ function buildExplorerDisplayRows(filteredSkuRows, allSkuRows) {
         packId: meta?.packId ?? row.packId,
         packCount: meta?.packCount ?? row.packCount,
         packRatio: meta?.packRatio ?? row.packRatio,
+        isVirtualPack: meta?.isVirtualPack ?? row.isVirtualPack,
         from: meta?.from ?? row.fromLocation,
         to: meta?.to ?? row.toLocation,
         movementType: meta?.movementType ?? row.movementType,
@@ -4717,7 +4786,10 @@ function renderExplorerBodyCell(row, col, {
               <div className="h-12 w-12 shrink-0 rounded-[4px] bg-[#f3f4f6]" />
               <div className="flex min-w-0 flex-col gap-0.5">
                 <span className="text-[14px] font-medium text-[#0a0a0a]">{row.productName}</span>
-                <span className="text-[12px] text-[#4b535c]">{row.sku}</span>
+                <span className="inline-flex min-w-0 items-center gap-1 text-[12px] text-[#4b535c]">
+                  <span className="truncate">{row.sku}</span>
+                  {row.isVirtualPack && !row.isPackMember ? <VirtualPackIndicator /> : null}
+                </span>
                 <span className="text-[12px] text-[#4b535c]">{row.colour}</span>
               </div>
             </div>
@@ -5863,8 +5935,9 @@ function ExplorerTable({
                       onClick={(e) => e.stopPropagation()}
                     >
                       <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-                        <span className="text-[14px] font-semibold text-[#0a0a0a]">
+                        <span className="inline-flex items-center gap-1.5 text-[14px] font-semibold text-[#0a0a0a]">
                           {row.packId}
+                          {row.isVirtualPack ? <VirtualPackIndicator /> : null}
                         </span>
                         <div className="flex items-center gap-2">
                           <ExplorerTransfersInput
@@ -5941,119 +6014,152 @@ function ExplorerTable({
       </div>
     </div>
 
-      {explorerSelectedRowIds.size > 0 && (
+      {explorerSelectedRowIds.size > 0 && (() => {
+        let packSelected = 0
+        let nonPackSelected = 0
+        explorerSelectedRowIds.forEach((id) => {
+          const row = data.find((r) => r.id === id)
+          if (rowIsPackConstrained(row)) packSelected += 1
+          else nonPackSelected += 1
+        })
+        const hasPackInSelection = packSelected > 0
+        const onlyPackRowsSelected = hasPackInSelection && nonPackSelected === 0
+        return (
         <div
-          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-4 rounded-[8px] px-6 py-3"
+          className="fixed bottom-6 left-1/2 z-50 flex w-max max-w-[min(920px,calc(100vw-2rem))] -translate-x-1/2 flex-col gap-2 rounded-[8px] px-6 py-3"
           style={{ background: '#1A1A2E', boxShadow: '0 4px 12px rgba(0,0,0,0.25)' }}
         >
-          <button
-            type="button"
-            onClick={clearExplorerSelection}
-            className="flex items-center justify-center size-8 rounded-[4px] text-white hover:bg-white/10"
-            aria-label="Close"
-          >
-            <IconClose className="size-4" />
-          </button>
-          <span className="text-[14px] font-medium text-white">
-            {explorerSelectedRowIds.size} selected
-          </span>
-          <div className="relative">
+          <div className="flex items-center gap-4">
             <button
               type="button"
-              onClick={() => {
-                setExplorerBulkChangeUnitsOpen(false)
-                setExplorerBulkChangeStatusOpen((o) => !o)
-              }}
-              className="px-4 py-2 rounded-[4px] text-[14px] font-medium text-white hover:bg-white/10"
+              onClick={clearExplorerSelection}
+              className="flex items-center justify-center size-8 rounded-[4px] text-white hover:bg-white/10"
+              aria-label="Close"
             >
-              Change status
+              <IconClose className="size-4" />
             </button>
-            {explorerBulkChangeStatusOpen && (
-              <>
-                <div
-                  className="fixed inset-0 z-[60]"
-                  aria-hidden
-                  onClick={() => setExplorerBulkChangeStatusOpen(false)}
-                />
-                <div
-                  className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 z-[70] min-w-[180px] rounded-[6px] border border-[#e5e7eb] bg-white py-1 shadow-lg"
-                  style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}
-                >
-                  {STATUS_DROPDOWN_OPTIONS.map((o) => (
+            <span className="text-[14px] font-medium text-white">
+              {explorerSelectedRowIds.size} selected
+            </span>
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => {
+                  setExplorerBulkChangeUnitsOpen(false)
+                  setExplorerBulkChangeStatusOpen((o) => !o)
+                }}
+                className="px-4 py-2 rounded-[4px] text-[14px] font-medium text-white hover:bg-white/10"
+              >
+                Change status
+              </button>
+              {explorerBulkChangeStatusOpen && (
+                <>
+                  <div
+                    className="fixed inset-0 z-[60]"
+                    aria-hidden
+                    onClick={() => setExplorerBulkChangeStatusOpen(false)}
+                  />
+                  <div
+                    className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 z-[70] min-w-[180px] rounded-[6px] border border-[#e5e7eb] bg-white py-1 shadow-lg"
+                    style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}
+                  >
+                    {STATUS_DROPDOWN_OPTIONS.map((o) => (
+                      <button
+                        key={o.id}
+                        type="button"
+                        onClick={() => handleBulkStatusChange(o.id)}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-left text-[13px] font-medium text-[#0a0a0a] hover:bg-[#f3f4f6]"
+                      >
+                        <span className={`size-2 rounded-full shrink-0 ${o.dotClass}`} aria-hidden />
+                        <span>{o.dropdownLabel}</span>
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+            <div className="relative">
+              <button
+                type="button"
+                disabled={onlyPackRowsSelected}
+                onClick={() => {
+                  if (onlyPackRowsSelected) return
+                  setExplorerBulkChangeStatusOpen(false)
+                  setExplorerBulkChangeUnitsOpen((o) => !o)
+                }}
+                className={`px-4 py-2 rounded-[4px] text-[14px] font-medium ${
+                  onlyPackRowsSelected
+                    ? 'cursor-not-allowed text-white/40'
+                    : 'text-white hover:bg-white/10'
+                }`}
+              >
+                Change units
+              </button>
+              {explorerBulkChangeUnitsOpen && !onlyPackRowsSelected && (
+                <>
+                  <div
+                    className="fixed inset-0 z-[60]"
+                    aria-hidden
+                    onClick={() => setExplorerBulkChangeUnitsOpen(false)}
+                  />
+                  <div
+                    className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 z-[70] min-w-[280px] rounded-[6px] border border-[#e5e7eb] bg-white py-1 shadow-lg"
+                    style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}
+                  >
+                    <div className="px-3 py-2 text-[12px] font-medium text-[#4b535c]">Adjust by</div>
+                    {[
+                      { action: 1, label: '+1' },
+                      { action: 2, label: '+2' },
+                      { action: -1, label: '−1' },
+                      { action: -2, label: '−2' },
+                    ].map(({ action, label }) => (
+                      <button
+                        key={label}
+                        type="button"
+                        onClick={() => handleBulkUnitsChange(action)}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-left text-[13px] font-medium text-[#0a0a0a] hover:bg-[#f3f4f6]"
+                      >
+                        {label}
+                      </button>
+                    ))}
+                    <div className="border-t border-[#e5e7eb] my-1" role="separator" />
                     <button
-                      key={o.id}
                       type="button"
-                      onClick={() => handleBulkStatusChange(o.id)}
+                      onClick={() => handleBulkUnitsChange('set_zero')}
                       className="w-full flex items-center gap-2 px-3 py-2 text-left text-[13px] font-medium text-[#0a0a0a] hover:bg-[#f3f4f6]"
                     >
-                      <span className={`size-2 rounded-full shrink-0 ${o.dotClass}`} aria-hidden />
-                      <span>{o.dropdownLabel}</span>
+                      Set all to 0
                     </button>
-                  ))}
-                </div>
-              </>
-            )}
-          </div>
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => {
-                setExplorerBulkChangeStatusOpen(false)
-                setExplorerBulkChangeUnitsOpen((o) => !o)
-              }}
-              className="px-4 py-2 rounded-[4px] text-[14px] font-medium text-white hover:bg-white/10"
-            >
-              Change units
-            </button>
-            {explorerBulkChangeUnitsOpen && (
-              <>
-                <div
-                  className="fixed inset-0 z-[60]"
-                  aria-hidden
-                  onClick={() => setExplorerBulkChangeUnitsOpen(false)}
-                />
-                <div
-                  className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 z-[70] min-w-[280px] rounded-[6px] border border-[#e5e7eb] bg-white py-1 shadow-lg"
-                  style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}
-                >
-                  <div className="px-3 py-2 text-[12px] font-medium text-[#4b535c]">Adjust by</div>
-                  {[
-                    { action: 1, label: '+1' },
-                    { action: 2, label: '+2' },
-                    { action: -1, label: '−1' },
-                    { action: -2, label: '−2' },
-                  ].map(({ action, label }) => (
+                    <div className="border-t border-[#e5e7eb] my-1" role="separator" />
                     <button
-                      key={label}
                       type="button"
-                      onClick={() => handleBulkUnitsChange(action)}
+                      onClick={handleBulkUndoEdits}
                       className="w-full flex items-center gap-2 px-3 py-2 text-left text-[13px] font-medium text-[#0a0a0a] hover:bg-[#f3f4f6]"
                     >
-                      {label}
+                      Undo edits
                     </button>
-                  ))}
-                  <div className="border-t border-[#e5e7eb] my-1" role="separator" />
-                  <button
-                    type="button"
-                    onClick={() => handleBulkUnitsChange('set_zero')}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-left text-[13px] font-medium text-[#0a0a0a] hover:bg-[#f3f4f6]"
-                  >
-                    Set all to 0
-                  </button>
-                  <div className="border-t border-[#e5e7eb] my-1" role="separator" />
-                  <button
-                    type="button"
-                    onClick={handleBulkUndoEdits}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-left text-[13px] font-medium text-[#0a0a0a] hover:bg-[#f3f4f6]"
-                  >
-                    Undo edits
-                  </button>
-                </div>
-              </>
+                  </div>
+                </>
+              )}
+            </div>
+            {onlyPackRowsSelected && (
+              <button
+                type="button"
+                onClick={handleBulkUndoEdits}
+                className="px-4 py-2 rounded-[4px] text-[14px] font-medium text-white hover:bg-white/10"
+              >
+                Undo edits
+              </button>
             )}
           </div>
+          {hasPackInSelection && (
+            <p className="text-[12px] leading-snug text-white/70">
+              Change units doesn&apos;t apply to pack rows — status and undo will apply
+            </p>
+          )}
         </div>
-      )}
+        )
+      })()}
     </div>
   )
 }
