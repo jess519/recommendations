@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useLayoutEffect, useMemo } from 'react'
 import { createPortal } from 'react-dom'
-import { Plus, Copy, Sparkles } from 'lucide-react'
+import { Plus, Copy } from 'lucide-react'
 import { ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts'
 import { IconSearch, IconChevronDown, IconChevronRight, IconShare, IconDocument, IconClose, IconArrowLeft, IconGears, IconTruckTu, IconPackageTu, IconRebalancing, IconReplenishment, IconCalendarNote, IconTrendUp, IconFilterFunnel, IconColumnSettings, IconSortOrder, IconWarning, IconLightbulb } from '../components/icons'
 function IconInfo() {
@@ -2412,11 +2412,11 @@ const VIRTUAL_PACK_TOOLTIP = 'Auto-generated pack — not from customer ERP'
 function VirtualPackIndicator({ className = '' }) {
   return (
     <span
-      className={`inline-flex shrink-0 items-center text-[#6366f1] ${className}`}
+      className={`inline-flex shrink-0 items-center px-1.5 py-0.5 rounded-[6px] border border-transparent bg-[#eef2ff] text-[11px] font-medium leading-none text-[#4338ca] ${className}`}
       title={VIRTUAL_PACK_TOOLTIP}
       aria-label={VIRTUAL_PACK_TOOLTIP}
     >
-      <Sparkles className="size-3.5" aria-hidden />
+      Pack
     </span>
   )
 }
