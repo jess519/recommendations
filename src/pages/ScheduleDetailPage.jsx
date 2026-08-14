@@ -1299,7 +1299,7 @@ function StorageCapacityPill({ value, stale = false }) {
   if (stale) {
     return (
       <span className="inline-flex max-w-full items-center justify-center rounded-full bg-[#F2F4F7] px-2.5 py-1 text-[12px] font-medium text-[#9ca3af]">
-        {value === 'full' ? 'Full' : 'Available'}
+        {value === 'full' ? 'Full' : value === 'saturated' ? 'Saturated' : 'Available'}
       </span>
     )
   }
@@ -1310,10 +1310,54 @@ function StorageCapacityPill({ value, stale = false }) {
       </span>
     )
   }
+  if (value === 'saturated') {
+    return (
+      <span className="inline-flex max-w-full items-center justify-center rounded-full bg-[#FEF0C7] px-2.5 py-1 text-[12px] font-medium text-[#B54708]">
+        Saturated
+      </span>
+    )
+  }
   return (
     <span className="inline-flex max-w-full items-center justify-center rounded-full bg-[#F2F4F7] px-2.5 py-1 text-[12px] font-medium text-[#101828]">
       Available
     </span>
+  )
+}
+
+/** True when a "before → after" string represents an active move (values differ). */
+function isActiveMoveValue(value) {
+  if (value == null) return false
+  const parts = String(value).split(/\s*→\s*/)
+  if (parts.length !== 2) return false
+  return parts[0].trim() !== parts[1].trim()
+}
+
+/** Renders before→after in bold when active-move; regular weight when static. */
+function BeforeAfterText({ value, className = '' }) {
+  if (value == null || value === '') {
+    return <span className={`text-[#4b535c] ${className}`}>—</span>
+  }
+  const active = isActiveMoveValue(value)
+  return (
+    <span
+      className={`${active ? 'font-bold' : 'font-normal'} text-[#0a0a0a] ${className}`.trim()}
+    >
+      {value}
+    </span>
+  )
+}
+
+/** Coverage primary (% before→after) + muted target-weeks subcopy. */
+function DrilldownCoverageCell({ coverage, targetWeeks }) {
+  return (
+    <div className="flex flex-col items-end gap-0.5">
+      <BeforeAfterText value={coverage} className="text-[14px]" />
+      {targetWeeks != null && targetWeeks !== '' ? (
+        <span className="text-[12px] font-normal text-[#4b535c]">
+          {targetWeeks} target weeks
+        </span>
+      ) : null}
+    </div>
   )
 }
 
@@ -2804,33 +2848,6 @@ function StockAnalysisDrilldown({
         </button>
       </div>
 
-      {drilldownTripTypeFilters.length > 0 && (
-        <div className="flex flex-wrap items-center gap-2 mb-3">
-          {drilldownTripTypeFilters.map((id) => {
-            const label = MOVEMENT_TYPE_FILTER_OPTIONS.find((o) => o.id === id)?.label ?? id
-            return (
-              <span
-                key={`trip-type-${id}`}
-                className="inline-flex items-center gap-1.5 pl-3 pr-1.5 py-1.5 rounded-[4px] bg-[#f3f4f6] text-[#4b535c] border border-[#e5e7eb]"
-              >
-                <span>Trip type: {label}</span>
-                <button
-                  type="button"
-                  onClick={() =>
-                    setDrilldownTripTypeFilters((prev) => prev.filter((x) => x !== id))
-                  }
-                  className="p-0.5 rounded-[4px] text-[#6b7280] hover:bg-[#e5e7eb] hover:text-[#374151]"
-                  aria-label={`Remove filter: Trip type ${label}`}
-                >
-                  <IconClose className="size-3.5" />
-                </button>
-              </span>
-            )
-          })}
-        </div>
-      )}
-
-
       <div className="border border-[#e5e7eb] rounded-[4px] overflow-hidden bg-white">
         <div className="max-h-[min(65vh,800px)] overflow-x-auto overflow-y-auto">
         {usePackDrilldownLayout ? (
@@ -2876,7 +2893,12 @@ function StockAnalysisDrilldown({
                 </span>
               </th>
               <th className="sticky top-0 z-20 bg-white text-right py-3 px-4 font-medium text-[#00050A]">Stockouts</th>
-              <th className="sticky top-0 z-20 bg-white text-right py-3 px-4 font-medium text-[#00050A]">Coverage</th>
+              <th className="sticky top-0 z-20 bg-white text-right py-3 px-4 font-medium text-[#00050A]">
+                <span className="flex flex-col items-end">
+                  Coverage
+                  <span className="text-[11px] font-normal text-[#4b535c]">target weeks</span>
+                </span>
+              </th>
               <th className="sticky top-0 z-20 bg-white text-right py-3 px-4 font-medium text-[#00050A]">
                 <span className="inline-flex items-center gap-1 justify-end">
                   Storage capacity{' '}
@@ -2893,25 +2915,25 @@ function StockAnalysisDrilldown({
               <th className="w-10 max-w-[40px] bg-white py-2 px-2" />
               <th className="bg-white py-2 px-4" />
               <th className="bg-white py-2 px-4" />
-              <th className="bg-white py-2 px-4 text-right text-[12px] font-medium text-[#0a0a0a]">
+              <th className="bg-white py-2 px-4 text-right text-[12px] font-bold text-[#0a0a0a]">
                 {summaryStock.before} → {summaryStock.after}
               </th>
-              <th className="bg-white py-2 px-4 text-right text-[12px] font-medium text-[#0a0a0a]">
+              <th className="bg-white py-2 px-4 text-right text-[12px] font-bold text-[#0a0a0a]">
                 {packLayoutPackCountTotal}
               </th>
               {packDrilldownSizes.map((size) => (
                 <th
                   key={`size-t-${size}`}
-                  className="bg-white py-2 px-4 text-right text-[12px] font-medium text-[#0a0a0a]"
+                  className="bg-white py-2 px-4 text-right text-[12px] font-bold text-[#0a0a0a]"
                 >
                   {packLayoutLooseTotalsBySize[size] ?? 0}
                 </th>
               ))}
-              <th className="bg-white py-2 px-4 text-right text-[12px] font-normal text-[#4b535c]">—</th>
-              <th className="bg-white py-2 px-4 text-right text-[12px] font-normal text-[#4b535c]">7.01 per wk</th>
-              <th className="bg-white py-2 px-4 text-right text-[12px] font-normal text-[#4b535c]">—</th>
-              <th className="bg-white py-2 px-4 text-right text-[12px] font-normal text-[#4b535c]">—</th>
-              <th className="bg-white py-2 px-4 text-right text-[12px] font-normal text-[#4b535c]">—</th>
+              <th className="bg-white py-2 px-4 text-right text-[12px] font-bold text-[#4b535c]">—</th>
+              <th className="bg-white py-2 px-4 text-right text-[12px] font-bold text-[#4b535c]">7.01 per wk</th>
+              <th className="bg-white py-2 px-4 text-right text-[12px] font-bold text-[#4b535c]">—</th>
+              <th className="bg-white py-2 px-4 text-right text-[12px] font-bold text-[#4b535c]">—</th>
+              <th className="bg-white py-2 px-4 text-right text-[12px] font-bold text-[#4b535c]">—</th>
             </tr>
           </thead>
           <tbody>
@@ -2927,7 +2949,7 @@ function StockAnalysisDrilldown({
                       <span className="text-[12px] text-[#4b535c]">{wh.code}</span>
                     </div>
                   </td>
-                  <td className="py-3 px-4 text-right text-[#0a0a0a]">{wh.stock}</td>
+                  <td className="py-3 px-4 text-right text-[#0a0a0a] font-normal">{wh.stock}</td>
                   <td className="py-3 px-4 text-right text-[#4b535c]">—</td>
                   {packDrilldownSizes.map((size) => {
                     const soh = wh.sohBySize?.[size]
@@ -3004,7 +3026,9 @@ function StockAnalysisDrilldown({
                       <span className="text-[12px] text-[#4b535c]">{loc.code}</span>
                     </div>
                   </td>
-                  <td className="py-3 px-4 text-right text-[#0a0a0a]">{loc.stock}</td>
+                  <td className="py-3 px-4 text-right">
+                    <BeforeAfterText value={loc.stock} />
+                  </td>
                   <td
                     className="py-3 px-4 text-right cursor-pointer"
                     onClick={() => {
@@ -3171,12 +3195,11 @@ function StockAnalysisDrilldown({
                     </div>
                   </td>
                   <td className="py-3 px-4 text-right text-[#0a0a0a]">{loc.forecast}</td>
-                  <td className="py-3 px-4 text-right text-[#0a0a0a]">{loc.stockouts}</td>
                   <td className="py-3 px-4 text-right">
-                    <div className="flex flex-col items-end">
-                      <span className="text-[#0a0a0a]">{loc.coverage}</span>
-                      <span className="text-[12px] text-[#4b535c]">{loc.targetWeeks}</span>
-                    </div>
+                    <BeforeAfterText value={loc.stockouts} />
+                  </td>
+                  <td className="py-3 px-4 text-right">
+                    <DrilldownCoverageCell coverage={loc.coverage} targetWeeks={loc.targetWeeks} />
                   </td>
                   <td className="py-3 px-4 text-right">
                     <div className="flex justify-end">
@@ -3225,7 +3248,12 @@ function StockAnalysisDrilldown({
                 </span>
               </th>
               <th className="sticky top-0 z-20 bg-white text-right py-3 px-4 font-medium text-[#00050A]">Stockouts</th>
-              <th className="sticky top-0 z-20 bg-white text-right py-3 px-4 font-medium text-[#00050A]">Coverage</th>
+              <th className="sticky top-0 z-20 bg-white text-right py-3 px-4 font-medium text-[#00050A]">
+                <span className="flex flex-col items-end">
+                  Coverage
+                  <span className="text-[11px] font-normal text-[#4b535c]">target weeks</span>
+                </span>
+              </th>
               <th className="sticky top-0 z-20 bg-white text-right py-3 px-4 font-medium text-[#00050A]">
                 <span className="inline-flex items-center gap-1 justify-end">
                   Storage capacity{' '}
@@ -3242,17 +3270,17 @@ function StockAnalysisDrilldown({
               <th className="w-10 max-w-[40px] bg-white py-2 px-2" />
               <th className="bg-white py-2 px-4" />
               <th className="bg-white py-2 px-4" />
-              <th className="bg-white py-2 px-4 text-right text-[12px] font-medium text-[#0a0a0a]">
+              <th className="bg-white py-2 px-4 text-right text-[12px] font-bold text-[#0a0a0a]">
                 {summaryStock.before} → {summaryStock.after}
               </th>
-              <th className="bg-white py-2 px-4 text-right text-[12px] font-medium text-[#0a0a0a]">
+              <th className="bg-white py-2 px-4 text-right text-[12px] font-bold text-[#0a0a0a]">
                 {summaryTU.before} → {summaryTU.after}
               </th>
-              <th className="bg-white py-2 px-4 text-right text-[12px] font-normal text-[#4b535c]">—</th>
-              <th className="bg-white py-2 px-4 text-right text-[12px] font-normal text-[#4b535c]">7.01 per wk</th>
-              <th className="bg-white py-2 px-4 text-right text-[12px] font-normal text-[#4b535c]">—</th>
-              <th className="bg-white py-2 px-4 text-right text-[12px] font-normal text-[#4b535c]">—</th>
-              <th className="bg-white py-2 px-4 text-right text-[12px] font-normal text-[#4b535c]">—</th>
+              <th className="bg-white py-2 px-4 text-right text-[12px] font-bold text-[#4b535c]">—</th>
+              <th className="bg-white py-2 px-4 text-right text-[12px] font-bold text-[#4b535c]">7.01 per wk</th>
+              <th className="bg-white py-2 px-4 text-right text-[12px] font-bold text-[#4b535c]">—</th>
+              <th className="bg-white py-2 px-4 text-right text-[12px] font-bold text-[#4b535c]">—</th>
+              <th className="bg-white py-2 px-4 text-right text-[12px] font-bold text-[#4b535c]">—</th>
             </tr>
           </thead>
           <tbody>
@@ -3283,10 +3311,12 @@ function StockAnalysisDrilldown({
                     <span className="text-[12px] text-[#4b535c]">{loc.code}</span>
                   </div>
                 </td>
-                <td className="py-3 px-4 text-right text-[#0a0a0a]">{loc.stock}</td>
+                <td className="py-3 px-4 text-right">
+                  <BeforeAfterText value={loc.stock} />
+                </td>
                 <td className="py-3 px-4 text-right">
                   <div className="flex flex-col items-end gap-1">
-                    <span className="text-[#0a0a0a]">{getLocationTuDisplay(loc)}</span>
+                    <BeforeAfterText value={getLocationTuDisplay(loc)} />
                     <div className="flex flex-wrap gap-1 justify-end">
                       {loc.tuWarehouse != null && (
                         <TuHoverPopover
@@ -3492,12 +3522,11 @@ function StockAnalysisDrilldown({
                   </div>
                 </td>
                 <td className="py-3 px-4 text-right text-[#0a0a0a]">{loc.forecast}</td>
-                <td className="py-3 px-4 text-right text-[#0a0a0a]">{loc.stockouts}</td>
                 <td className="py-3 px-4 text-right">
-                  <div className="flex flex-col items-end">
-                    <span className="text-[#0a0a0a]">{loc.coverage}</span>
-                    <span className="text-[12px] text-[#4b535c]">{loc.targetWeeks}</span>
-                  </div>
+                  <BeforeAfterText value={loc.stockouts} />
+                </td>
+                <td className="py-3 px-4 text-right">
+                  <DrilldownCoverageCell coverage={loc.coverage} targetWeeks={loc.targetWeeks} />
                 </td>
                 <td className="py-3 px-4 text-right">
                   <div className="flex justify-end">
