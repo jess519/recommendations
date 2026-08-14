@@ -2352,8 +2352,8 @@ function StockAnalysisDrilldown({
     'replenishment',
   ])
   const [drilldownFiltersOpen, setDrilldownFiltersOpen] = useState(false)
-  // G.3a: click-to-reveal keys for pack layout cells (`${locId}-pack` | `${locId}-size-${size}`)
-  const [revealedTransferCells, setRevealedTransferCells] = useState(() => new Set())
+  // G.3a.1: single active click-to-reveal cell (`${locId}-pack` | `${locId}-size-${size}` | null)
+  const [activeTransferCell, setActiveTransferCell] = useState(null)
   const locations = LOCATIONS_BY_PRODUCT[product.id] || DEFAULT_LOCATIONS
   const breadcrumbFrom = `${trip.from} [${trip.fromCode}]`
   const packMultiple =
@@ -2381,16 +2381,11 @@ function StockAnalysisDrilldown({
     setTuBoxOverrides({})
     setEditingTuBoxKey(null)
     setPackInputError(false)
-    setRevealedTransferCells(new Set())
+    setActiveTransferCell(null)
   }, [product.id])
 
   const toggleTransferCellReveal = (cellKey) => {
-    setRevealedTransferCells((prev) => {
-      const next = new Set(prev)
-      if (next.has(cellKey)) next.delete(cellKey)
-      else next.add(cellKey)
-      return next
-    })
+    setActiveTransferCell((prev) => (prev === cellKey ? null : cellKey))
   }
 
   const showRebalancing = drilldownTripTypeFilters.includes('rebalancing')
@@ -2937,7 +2932,7 @@ function StockAnalysisDrilldown({
                   {packDrilldownSizes.map((size) => {
                     const soh = wh.sohBySize?.[size]
                     const cellKey = `${wh.id}-size-${size}`
-                    const revealed = revealedTransferCells.has(cellKey)
+                    const revealed = activeTransferCell === cellKey
                     return (
                       <td
                         key={cellKey}
@@ -2950,7 +2945,7 @@ function StockAnalysisDrilldown({
                         {soh == null ? (
                           <span className="text-[#4b535c]">—</span>
                         ) : revealed ? (
-                          <div className="flex flex-wrap gap-1 justify-end" onClick={(e) => e.stopPropagation()}>
+                          <div className="flex flex-wrap gap-1 justify-end">
                             <span className="inline-flex h-[26px] min-w-[50px] w-fit shrink-0 items-center justify-center gap-1.5 rounded-[2px] bg-[#A234DA] px-[6px] py-[2px] text-[12px] font-medium text-white">
                               <IconPackageTu />
                               {soh}
@@ -2978,7 +2973,7 @@ function StockAnalysisDrilldown({
               const packBoxes = getLocationPackBoxes(loc)
               const packCount = packBoxes.length
               const packCellKey = `${loc.id}-pack`
-              const packRevealed = revealedTransferCells.has(packCellKey)
+              const packRevealed = activeTransferCell === packCellKey
               const locPm = getLocPackMultiple(loc)
               const packEditKey = packCountEditKey(loc.id)
               const isEditingPack = editingTuBoxKey === packEditKey
@@ -3078,7 +3073,7 @@ function StockAnalysisDrilldown({
                   {packDrilldownSizes.map((size) => {
                     const looseBoxes = getLocationLooseBoxesForSize(loc, size)
                     const cellKey = `${loc.id}-size-${size}`
-                    const revealed = revealedTransferCells.has(cellKey)
+                    const revealed = activeTransferCell === cellKey
                     const hasLoose = looseBoxes.length > 0
                     const hasRebal =
                       showRebalancing && (loc.tuTruck?.length ?? 0) > 0 && packDrilldownSizes[0] === size
