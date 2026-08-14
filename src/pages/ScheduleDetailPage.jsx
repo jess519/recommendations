@@ -495,7 +495,142 @@ const LOCATIONS_BY_PRODUCT = {
   3: [
     { id: 1, name: 'Opéra', code: 'A1A', movementType: ["rebalancing"], stock: '6 → 6', tu: '6 → 6', tuWarehouse: 6, tuTruck: [], salesL7: 1, salesL30: 4, forecast: 2.1, stockouts: '0 → 0', coverage: '100% → 100%', targetWeeks: 6, receivingWeeksCoverage: '2.9 → 2.9 (6 target)', recommendationReason: 'Increase revenue', revenueIncrease: '€445', availableToSend: 6, sendingStock: '12 → 6', sendingCoverage: '2.8 → 1.4 (6 target)', storageCapacity: 'available' },
     { id: 2, name: 'G.L. Haussmann Maro', code: 'AIA', movementType: ["rebalancing"], stock: '5 → 5', tu: '5 → 5', tuWarehouse: 5, tuTruck: [], salesL7: 0, salesL30: 0, forecast: 0, stockouts: '0 → 0', coverage: '0% → 0%', targetWeeks: 5, receivingWeeksCoverage: 'N/A (0 forecast)', recommendationReason: 'Improve coverage', revenueIncrease: '€0', availableToSend: 5, sendingStock: '10 → 5', sendingCoverage: 'N/A (0 forecast)', approvalStatus: 'approved_by_system', storageCapacity: 'full' },
-  ] }
+  ],
+  // G.1 stubs — structural pack shapes; G.2 reconciles exact Products/Explorer totals
+  5: [
+    {
+      id: 1,
+      name: 'Opéra',
+      code: 'A1A',
+      movementType: ['replenishment'],
+      stock: '8 → 28',
+      tu: '0 → 20',
+      tuWarehouse: 12,
+      tuTruck: [],
+      tuReplen: [10, 10],
+      salesL7: 1,
+      salesL30: 2,
+      forecast: 0.54,
+      stockouts: '0 → 0',
+      coverage: '40% → 100%',
+      targetWeeks: 6,
+      receivingWeeksCoverage: '2.1 → 5.8 (6 target)',
+      recommendationReason: 'Improve coverage',
+      revenueIncrease: '€210',
+      availableToSend: 8,
+      sendingStock: '40 → 20',
+      sendingCoverage: '3.0 → 1.5 (4 target)',
+      approvalStatus: 'needs_review_from_user',
+      storageCapacity: 'available',
+    },
+    {
+      id: 2,
+      name: 'Cap 3000',
+      code: 'A3E',
+      movementType: ['replenishment'],
+      stock: '4 → 14',
+      tu: '0 → 10',
+      tuWarehouse: 6,
+      tuTruck: [],
+      tuReplen: [10],
+      salesL7: 0,
+      salesL30: 1,
+      forecast: 0.32,
+      stockouts: '0 → 0',
+      coverage: '20% → 80%',
+      targetWeeks: 4,
+      receivingWeeksCoverage: '1.0 → 3.5 (4 target)',
+      recommendationReason: 'Improve coverage',
+      revenueIncrease: '€95',
+      availableToSend: 5,
+      sendingStock: '30 → 20',
+      sendingCoverage: '2.0 → 1.2 (4 target)',
+      approvalStatus: 'unapproved',
+      storageCapacity: 'available',
+    },
+  ],
+  9: [
+    {
+      id: 1,
+      name: 'Opéra',
+      code: 'A1A',
+      movementType: ['replenishment'],
+      stock: '10 → 38',
+      tu: '0 → 40',
+      tuWarehouse: 18,
+      tuTruck: [],
+      tuReplen: [10, 10, 10, 10],
+      salesL7: 2,
+      salesL30: 8,
+      forecast: 1.2,
+      stockouts: '0 → 0',
+      coverage: '50% → 100%',
+      targetWeeks: 6,
+      receivingWeeksCoverage: '2.0 → 5.5 (6 target)',
+      recommendationReason: 'Increase revenue',
+      revenueIncrease: '€420',
+      availableToSend: 12,
+      sendingStock: '60 → 20',
+      sendingCoverage: '4.0 → 1.5 (6 target)',
+      approvalStatus: 'unapproved',
+      storageCapacity: 'available',
+    },
+  ],
+  11: [
+    {
+      id: 1,
+      name: 'Opéra',
+      code: 'A1A',
+      movementType: ['replenishment'],
+      stock: '6 → 29',
+      tu: '0 → 23',
+      tuWarehouse: 10,
+      tuTruck: [],
+      tuReplen: [10, 10],
+      tuReplenLoose: [3],
+      salesL7: 2,
+      salesL30: 7,
+      forecast: 1.1,
+      stockouts: '0 → 0',
+      coverage: '35% → 95%',
+      targetWeeks: 6,
+      receivingWeeksCoverage: '1.8 → 5.2 (6 target)',
+      recommendationReason: 'Improve coverage',
+      revenueIncrease: '€310',
+      availableToSend: 9,
+      sendingStock: '55 → 32',
+      sendingCoverage: '3.5 → 2.0 (6 target)',
+      approvalStatus: 'unapproved',
+      storageCapacity: 'available',
+    },
+    {
+      id: 2,
+      name: 'Cap 3000',
+      code: 'A3E',
+      movementType: ['replenishment'],
+      stock: '5 → 40',
+      tu: '0 → 35',
+      tuWarehouse: 8,
+      tuTruck: [],
+      tuReplen: [10, 10, 10],
+      tuReplenLoose: [5],
+      salesL7: 1,
+      salesL30: 4,
+      forecast: 0.9,
+      stockouts: '0 → 0',
+      coverage: '30% → 90%',
+      targetWeeks: 6,
+      receivingWeeksCoverage: '1.5 → 5.0 (6 target)',
+      recommendationReason: 'Improve coverage',
+      revenueIncrease: '€280',
+      availableToSend: 7,
+      sendingStock: '50 → 15',
+      sendingCoverage: '3.0 → 1.0 (6 target)',
+      approvalStatus: 'unapproved',
+      storageCapacity: 'available',
+    },
+  ],
+}
 
 const DEFAULT_LOCATIONS = LOCATIONS_BY_PRODUCT[1]
 
@@ -1901,29 +2036,41 @@ function EditableTuTransferBadge({
   onCancel,
   bgClassName,
   icon,
-  hoverPanel }) {
+  hoverPanel,
+  inputError = false,
+  errorMessage = null,
+  inputStep,
+}) {
   if (isEditing) {
     return (
-      <input
-        type="number"
-        min={0}
-        autoFocus
-        value={editingValue}
-        onChange={(e) => onEditingValueChange(e.target.value)}
-        onBlur={onCommit}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') {
-            e.preventDefault()
-            onCommit()
-          }
-          if (e.key === 'Escape') {
-            e.preventDefault()
-            onCancel()
-          }
-        }}
-        onClick={(e) => e.stopPropagation()}
-        className="h-[26px] min-w-[50px] w-[50px] rounded-[2px] border border-[#e9eaeb] px-[6px] py-[2px] text-[12px] font-medium text-[#0a0a0a] text-center focus:outline-none"
-      />
+      <div className="flex flex-col items-end gap-0.5">
+        <input
+          type="number"
+          min={0}
+          step={inputStep}
+          autoFocus
+          value={editingValue}
+          onChange={(e) => onEditingValueChange(e.target.value)}
+          onBlur={onCommit}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault()
+              onCommit()
+            }
+            if (e.key === 'Escape') {
+              e.preventDefault()
+              onCancel()
+            }
+          }}
+          onClick={(e) => e.stopPropagation()}
+          className={`h-[26px] min-w-[50px] w-[50px] rounded-[2px] border px-[6px] py-[2px] text-[12px] font-medium text-[#0a0a0a] text-center focus:outline-none ${
+            inputError ? 'border-[#E30D3C]' : 'border-[#e9eaeb]'
+          }`}
+        />
+        {inputError && errorMessage ? (
+          <span className="text-[11px] text-[#E30D3C]">{errorMessage}</span>
+        ) : null}
+      </div>
     )
   }
 
@@ -1957,11 +2104,96 @@ function locationVisibleForTripTypeFilters(loc, tripTypeFilters) {
   const showRebal = tripTypeFilters.includes('rebalancing')
   const showReplen = tripTypeFilters.includes('replenishment')
   const truckCount = loc.tuTruck?.length ?? 0
-  const replenCount = loc.tuReplen?.length ?? 0
+  const replenCount = (loc.tuReplen?.length ?? 0) + (loc.tuReplenLoose?.length ?? 0)
   if (showReplen && replenCount > 0) return true
   if (showRebal && truckCount > 0) return true
   if (showRebal && truckCount === 0 && replenCount === 0) return true
   return false
+}
+
+/** Expand total units into one box per pack (each box displays packMultiple). */
+function expandUnitsToPackBoxes(totalUnits, packMultiple) {
+  if (!packMultiple || packMultiple <= 0) return []
+  const n = Math.max(0, Math.floor((Number(totalUnits) || 0) / packMultiple))
+  return Array.from({ length: n }, () => packMultiple)
+}
+
+function sumBoxUnits(boxes) {
+  return (boxes ?? []).reduce((sum, n) => sum + (Number(n) || 0), 0)
+}
+
+function productHasMixedFulfilment(p) {
+  return p?.packTransfers != null && p?.looseTransfers != null
+}
+
+/**
+ * Parse drilldown pack-count input: integer pack count, or units that are a pack multiple.
+ * Returns { packCount } or { error: true }.
+ */
+function parseDrilldownPackCountInput(raw, packMultiple) {
+  const n = Number(raw)
+  if (!Number.isFinite(n) || n < 0) return { error: true }
+  if (packMultiple > 0 && isPackMultipleValue(raw, packMultiple)) {
+    return { packCount: Math.round(n / packMultiple) }
+  }
+  if (Number.isInteger(n)) return { packCount: n }
+  return { error: true }
+}
+
+/** Write Explorer transfer overrides for a product×location pack or loose edit. */
+function syncExplorerFromDrilldownLocationEdit({
+  product,
+  locationName,
+  fulfilmentType,
+  units,
+  packCount,
+  packMultiple,
+  setExplorerTransferOverrides,
+}) {
+  if (!setExplorerTransferOverrides) return
+  const updates = {}
+  const statusSkip = {}
+
+  if (fulfilmentType === 'pack' && product.id === 9) {
+    // Multi-SKU Coin-pack members at this location
+    const members = EXPLORER_DATA.filter(
+      (r) =>
+        r.isPackMember &&
+        r.packGroupId === EXPLORER_MULTI_SKU_PACK.packGroupId &&
+        r.toLocation === locationName &&
+        r.movementType === 'replenishment'
+    )
+    const ratio = EXPLORER_MULTI_SKU_PACK.packRatio
+    const count = packCount ?? Math.floor((units || 0) / (packMultiple || 10))
+    for (const member of members) {
+      const perPack = ratio[member.sku]
+      if (perPack == null) continue
+      updates[member.id] = count * perPack
+    }
+  } else {
+    const rows = EXPLORER_DATA.filter(
+      (r) =>
+        r.productName === product.name &&
+        r.toLocation === locationName &&
+        r.movementType === 'replenishment' &&
+        !r.isPackMember &&
+        (fulfilmentType === 'pack'
+          ? r.packMultiple != null && r.packMultiple > 0
+          : (r.fulfilmentType ?? 'loose') === 'loose' && !(r.packMultiple > 0))
+    )
+    for (const row of rows) {
+      if (fulfilmentType === 'pack') {
+        const pm = row.packMultiple || packMultiple
+        updates[row.id] = (packCount ?? Math.floor((units || 0) / pm)) * pm
+      } else {
+        updates[row.id] = units
+      }
+    }
+  }
+
+  if (Object.keys(updates).length === 0) return
+  setExplorerTransferOverrides((prev) => ({ ...prev, ...updates }))
+  void statusSkip
 }
 
 function StockAnalysisDrilldown({
@@ -1971,13 +2203,21 @@ function StockAnalysisDrilldown({
   setExplorerProductNameFilters,
   setActiveTab,
   productStatusOverrides,
-  setProductStatusOverrides }) {
+  setProductStatusOverrides,
+  setProductTransfersOverrides,
+  setProductPackTransfersOverrides,
+  setProductLooseTransfersOverrides,
+  setExplorerTransferOverrides,
+}) {
   const [selectedTransferDetail, setSelectedTransferDetail] = useState(null)
   const [approvedLocations, setApprovedLocations] = useState({})
   const [selectedLocationIds, setSelectedLocationIds] = useState(new Set())
+  // Pack/loose box arrays per location: { [locId]: { pack?: number[], loose?: number[] } }
+  const [locationReplenOverrides, setLocationReplenOverrides] = useState({})
   const [tuBoxOverrides, setTuBoxOverrides] = useState({})
   const [editingTuBoxKey, setEditingTuBoxKey] = useState(null)
   const [editingTuBoxValue, setEditingTuBoxValue] = useState('')
+  const [packInputError, setPackInputError] = useState(false)
   const [drilldownTripTypeFilters, setDrilldownTripTypeFilters] = useState([
     'rebalancing',
     'replenishment',
@@ -1985,9 +2225,17 @@ function StockAnalysisDrilldown({
   const [drilldownFiltersOpen, setDrilldownFiltersOpen] = useState(false)
   const locations = LOCATIONS_BY_PRODUCT[product.id] || DEFAULT_LOCATIONS
   const breadcrumbFrom = `${trip.from} [${trip.fromCode}]`
+  const packMultiple =
+    product.packMultiple != null && product.packMultiple > 0 ? product.packMultiple : null
+  const isPackProduct = packMultiple != null
+  const isMixedPackProduct = isPackProduct && productHasMixedFulfilment(product)
 
   useEffect(() => {
     setDrilldownTripTypeFilters(['rebalancing', 'replenishment'])
+    setLocationReplenOverrides({})
+    setTuBoxOverrides({})
+    setEditingTuBoxKey(null)
+    setPackInputError(false)
   }, [product.id])
 
   const showRebalancing = drilldownTripTypeFilters.includes('rebalancing')
@@ -1999,27 +2247,164 @@ function StockAnalysisDrilldown({
   )
 
   const tuBoxKey = (locId, type, index) => `${product.id}-${locId}-${type}-${index}`
+  const packCountEditKey = (locId) => `${product.id}-${locId}-pack-count`
 
   const getEffectiveTuBoxValue = (key, baseValue) =>
     tuBoxOverrides[key] !== undefined ? tuBoxOverrides[key] : baseValue
 
+  const getLocationPackBoxes = (loc) => {
+    const override = locationReplenOverrides[loc.id]
+    if (override?.pack) return override.pack
+    if (isPackProduct) {
+      const base = loc.tuReplen ?? []
+      // Already one-box-per-pack stubs, or expand a single total
+      if (base.length > 0 && base.every((n) => n === packMultiple)) return [...base]
+      return expandUnitsToPackBoxes(sumBoxUnits(base), packMultiple)
+    }
+    return loc.tuReplen ?? []
+  }
+
+  const getLocationLooseBoxes = (loc) => {
+    const override = locationReplenOverrides[loc.id]
+    if (override?.loose) return override.loose
+    return loc.tuReplenLoose ?? []
+  }
+
+  const syncProductTotalsFromLocations = (nextLocationOverrides) => {
+    if (!setProductTransfersOverrides) return
+    let packUnits = 0
+    let looseUnits = 0
+    for (const loc of locations) {
+      const ov = nextLocationOverrides[loc.id]
+      const packBoxes =
+        ov?.pack ??
+        (isPackProduct
+          ? loc.tuReplen?.every((n) => n === packMultiple)
+            ? loc.tuReplen
+            : expandUnitsToPackBoxes(sumBoxUnits(loc.tuReplen), packMultiple)
+          : [])
+      const looseBoxes = ov?.loose ?? loc.tuReplenLoose ?? []
+      if (isPackProduct) {
+        packUnits += sumBoxUnits(packBoxes)
+        looseUnits += sumBoxUnits(looseBoxes)
+        if (!isMixedPackProduct && !loc.tuReplenLoose) {
+          // non-mixed: all replen is pack
+        }
+      } else {
+        packUnits += sumBoxUnits(loc.tuReplen)
+      }
+    }
+    // Non-pack products: don't rewrite product totals from location stubs
+    if (!isPackProduct) return
+
+    const total = packUnits + looseUnits
+    setProductTransfersOverrides((prev) => ({ ...prev, [product.id]: total }))
+    if (isMixedPackProduct) {
+      setProductPackTransfersOverrides?.((prev) => ({ ...prev, [product.id]: packUnits }))
+      setProductLooseTransfersOverrides?.((prev) => ({ ...prev, [product.id]: looseUnits }))
+    }
+  }
+
   const startEditTuBox = (key, currentValue) => {
     setEditingTuBoxKey(key)
     setEditingTuBoxValue(String(currentValue))
+    setPackInputError(false)
   }
 
   const commitTuBoxEdit = () => {
     if (!editingTuBoxKey) return
+
+    // Pack-count edit for a location: key = `${product.id}-${locId}-pack-count`
+    if (isPackProduct && editingTuBoxKey.endsWith('-pack-count')) {
+      const locationId = Number(
+        editingTuBoxKey.slice(String(product.id).length + 1).replace(/-pack-count$/, '')
+      )
+      const loc = locations.find((l) => l.id === locationId)
+      const parsed = parseDrilldownPackCountInput(editingTuBoxValue, packMultiple)
+      if (parsed.error) {
+        setPackInputError(true)
+        return
+      }
+      const newBoxes = expandUnitsToPackBoxes(parsed.packCount * packMultiple, packMultiple)
+      setLocationReplenOverrides((prev) => {
+        const next = {
+          ...prev,
+          [locationId]: {
+            pack: newBoxes,
+            loose: prev[locationId]?.loose ?? (loc?.tuReplenLoose ? [...loc.tuReplenLoose] : []),
+          },
+        }
+        queueMicrotask(() => syncProductTotalsFromLocations(next))
+        return next
+      })
+      syncExplorerFromDrilldownLocationEdit({
+        product,
+        locationName: loc?.name,
+        fulfilmentType: 'pack',
+        packCount: parsed.packCount,
+        packMultiple,
+        setExplorerTransferOverrides,
+      })
+      setEditingTuBoxKey(null)
+      setEditingTuBoxValue('')
+      setPackInputError(false)
+      return
+    }
+
+    // Loose replen box: `${product.id}-${locId}-replen-loose-${index}`
+    if (isPackProduct && editingTuBoxKey.includes('-replen-loose-')) {
+      const withoutPrefix = editingTuBoxKey.slice(String(product.id).length + 1)
+      const match = withoutPrefix.match(/^(\d+)-replen-loose-(\d+)$/)
+      if (!match) {
+        setEditingTuBoxKey(null)
+        setEditingTuBoxValue('')
+        return
+      }
+      const locationId = Number(match[1])
+      const index = Number(match[2])
+      const loc = locations.find((l) => l.id === locationId)
+      const parsed = parseInt(editingTuBoxValue, 10)
+      const value = Number.isFinite(parsed) ? Math.max(0, parsed) : 0
+      setLocationReplenOverrides((prev) => {
+        const pack =
+          prev[locationId]?.pack ??
+          (loc ? getLocationPackBoxes(loc) : [])
+        const loose = [...(prev[locationId]?.loose ?? loc?.tuReplenLoose ?? [])]
+        while (loose.length <= index) loose.push(0)
+        loose[index] = value
+        const next = { ...prev, [locationId]: { pack, loose } }
+        queueMicrotask(() => {
+          syncProductTotalsFromLocations(next)
+          syncExplorerFromDrilldownLocationEdit({
+            product,
+            locationName: loc?.name,
+            fulfilmentType: 'loose',
+            units: sumBoxUnits(loose),
+            packMultiple,
+            setExplorerTransferOverrides,
+          })
+        })
+        return next
+      })
+      setTuBoxOverrides((prev) => ({ ...prev, [editingTuBoxKey]: value }))
+      setEditingTuBoxKey(null)
+      setEditingTuBoxValue('')
+      setPackInputError(false)
+      return
+    }
+
     const parsed = parseInt(editingTuBoxValue, 10)
     const value = Number.isFinite(parsed) ? Math.max(0, parsed) : 0
     setTuBoxOverrides((prev) => ({ ...prev, [editingTuBoxKey]: value }))
     setEditingTuBoxKey(null)
     setEditingTuBoxValue('')
+    setPackInputError(false)
   }
 
   const cancelTuBoxEdit = () => {
     setEditingTuBoxKey(null)
     setEditingTuBoxValue('')
+    setPackInputError(false)
   }
 
   const toggleLocationSelection = (id) => {
@@ -2376,7 +2761,10 @@ function StockAnalysisDrilldown({
                             isEditing={editingTuBoxKey === key}
                             editingValue={editingTuBoxValue}
                             onStartEdit={() => startEditTuBox(key, effectiveValue)}
-                            onEditingValueChange={setEditingTuBoxValue}
+                            onEditingValueChange={(v) => {
+                              setPackInputError(false)
+                              setEditingTuBoxValue(v)
+                            }}
                             onCommit={commitTuBoxEdit}
                             onCancel={cancelTuBoxEdit}
                             bgClassName="bg-[#0267FF]"
@@ -2393,6 +2781,104 @@ function StockAnalysisDrilldown({
                         )
                       })}
                       {showReplenishment &&
+                        isPackProduct &&
+                        (() => {
+                          const packBoxes = getLocationPackBoxes(loc)
+                          const looseBoxes = getLocationLooseBoxes(loc)
+                          const packCount = packBoxes.length
+                          const packEditKey = packCountEditKey(loc.id)
+                          const isEditingPack = editingTuBoxKey === packEditKey
+                          return (
+                            <>
+                              {isEditingPack ? (
+                                <EditableTuTransferBadge
+                                  key={packEditKey}
+                                  value={packMultiple}
+                                  isEditing
+                                  editingValue={editingTuBoxValue}
+                                  onStartEdit={() => {}}
+                                  onEditingValueChange={(v) => {
+                                    setPackInputError(false)
+                                    setEditingTuBoxValue(v)
+                                  }}
+                                  onCommit={commitTuBoxEdit}
+                                  onCancel={cancelTuBoxEdit}
+                                  bgClassName="bg-[#EC4899]"
+                                  icon={<IconReplenishment />}
+                                  hoverPanel={null}
+                                  inputError={packInputError}
+                                  errorMessage={
+                                    packInputError
+                                      ? `Multiple of ${packMultiple}`
+                                      : null
+                                  }
+                                  inputStep={1}
+                                />
+                              ) : (
+                                packBoxes.map((n, i) => {
+                                  const key = tuBoxKey(loc.id, 'replen-pack', i)
+                                  return (
+                                    <EditableTuTransferBadge
+                                      key={key}
+                                      value={n}
+                                      isEditing={false}
+                                      editingValue=""
+                                      onStartEdit={() =>
+                                        startEditTuBox(packEditKey, packCount)
+                                      }
+                                      onEditingValueChange={setEditingTuBoxValue}
+                                      onCommit={commitTuBoxEdit}
+                                      onCancel={cancelTuBoxEdit}
+                                      bgClassName="bg-[#EC4899]"
+                                      icon={<IconReplenishment />}
+                                      hoverPanel={
+                                        <TuTruckTransferHoverCard
+                                          trip={trip}
+                                          loc={loc}
+                                          truckUnits={n}
+                                          borderClassName="border-[#EC4899]"
+                                        />
+                                      }
+                                    />
+                                  )
+                                })
+                              )}
+                              {looseBoxes.map((n, i) => {
+                                const key = tuBoxKey(loc.id, 'replen-loose', i)
+                                const effectiveValue = getEffectiveTuBoxValue(key, n)
+                                return (
+                                  <EditableTuTransferBadge
+                                    key={key}
+                                    value={effectiveValue}
+                                    isEditing={editingTuBoxKey === key}
+                                    editingValue={editingTuBoxValue}
+                                    onStartEdit={() =>
+                                      startEditTuBox(key, effectiveValue)
+                                    }
+                                    onEditingValueChange={(v) => {
+                                      setPackInputError(false)
+                                      setEditingTuBoxValue(v)
+                                    }}
+                                    onCommit={commitTuBoxEdit}
+                                    onCancel={cancelTuBoxEdit}
+                                    bgClassName="bg-[#EC4899]"
+                                    icon={<IconReplenishment />}
+                                    hoverPanel={
+                                      <TuTruckTransferHoverCard
+                                        trip={trip}
+                                        loc={loc}
+                                        truckUnits={effectiveValue}
+                                        borderClassName="border-[#EC4899]"
+                                      />
+                                    }
+                                  />
+                                )
+                              })}
+                            </>
+                          )
+                        })()}
+                      {showReplenishment &&
+                        !isPackProduct &&
                         loc.tuReplen?.map((n, i) => {
                         const key = tuBoxKey(loc.id, 'replen', i)
                         const effectiveValue = getEffectiveTuBoxValue(key, n)
@@ -2614,7 +3100,9 @@ function ProductsDrilldown({
   setExplorerProductNameFilters,
   setActiveTab,
   selectedProduct: controlledSelectedProduct,
-  onSelectedProductChange }) {
+  onSelectedProductChange,
+  setExplorerTransferOverrides,
+}) {
   const [localSelectedProduct, setLocalSelectedProduct] = useState(null)
   const isSelectedProductControlled = typeof onSelectedProductChange === 'function'
   const selectedProduct = isSelectedProductControlled
@@ -2625,6 +3113,8 @@ function ProductsDrilldown({
     : setLocalSelectedProduct
   const [productStatusOverrides, setProductStatusOverrides] = useState({})
   const [productTransfersOverrides, setProductTransfersOverrides] = useState({})
+  const [productPackTransfersOverrides, setProductPackTransfersOverrides] = useState({})
+  const [productLooseTransfersOverrides, setProductLooseTransfersOverrides] = useState({})
   const [editingTransfersProductId, setEditingTransfersProductId] = useState(null)
   const [editingTransfersValue, setEditingTransfersValue] = useState('')
   const [selectedProductIds, setSelectedProductIds] = useState(new Set())
@@ -2657,6 +3147,18 @@ function ProductsDrilldown({
     if (productHasTransferSplit(p)) {
       return getEffectiveReplenTransfers(p) + (Number(p.rebalTransfers) || 0)
     }
+    if (productHasMixedFulfilment(p)) {
+      if (Object.prototype.hasOwnProperty.call(productTransfersOverrides, p.id)) {
+        return Number(productTransfersOverrides[p.id]) || 0
+      }
+      const packU = Object.prototype.hasOwnProperty.call(productPackTransfersOverrides, p.id)
+        ? Number(productPackTransfersOverrides[p.id]) || 0
+        : Number(p.packTransfers) || 0
+      const looseU = Object.prototype.hasOwnProperty.call(productLooseTransfersOverrides, p.id)
+        ? Number(productLooseTransfersOverrides[p.id]) || 0
+        : Number(p.looseTransfers) || 0
+      return packU + looseU
+    }
     if (Object.prototype.hasOwnProperty.call(productTransfersOverrides, p.id)) {
       return Number(productTransfersOverrides[p.id]) || 0
     }
@@ -2667,7 +3169,10 @@ function ProductsDrilldown({
     if (!productHasPackConstraint(p)) return 0
     // Mixed fulfilment: pack subtext from pack-fulfilled units only (not pack+loose total)
     if (p.packTransfers != null && p.packMultiple > 0) {
-      return p.packTransfers / p.packMultiple
+      const packUnits = Object.prototype.hasOwnProperty.call(productPackTransfersOverrides, p.id)
+        ? Number(productPackTransfersOverrides[p.id]) || 0
+        : Number(p.packTransfers) || 0
+      return packUnits / p.packMultiple
     }
     if (productHasTransferSplit(p)) {
       return getEffectiveReplenTransfers(p) / p.packMultiple
@@ -2857,6 +3362,10 @@ function ProductsDrilldown({
         setActiveTab={setActiveTab}
         productStatusOverrides={productStatusOverrides}
         setProductStatusOverrides={setProductStatusOverrides}
+        setProductTransfersOverrides={setProductTransfersOverrides}
+        setProductPackTransfersOverrides={setProductPackTransfersOverrides}
+        setProductLooseTransfersOverrides={setProductLooseTransfersOverrides}
+        setExplorerTransferOverrides={setExplorerTransferOverrides}
       />
     )
   }
@@ -7432,6 +7941,7 @@ export default function ScheduleDetailPage() {
             setActiveTab={setActiveTab}
             selectedProduct={productsTabSelectedProduct}
             onSelectedProductChange={setProductsTabSelectedProduct}
+            setExplorerTransferOverrides={setExplorerTransferOverrides}
           />
         ) : activeTab === 'locations' ? (
           <LocationsTab
@@ -7464,6 +7974,7 @@ export default function ScheduleDetailPage() {
               onDrawerFiltersActiveChange={setProductsDrawerFiltersActive}
               setExplorerProductNameFilters={setExplorerProductNameFilters}
               setActiveTab={setActiveTab}
+              setExplorerTransferOverrides={setExplorerTransferOverrides}
             />
           ) : (
           <div className="flex flex-col gap-[15px]">
