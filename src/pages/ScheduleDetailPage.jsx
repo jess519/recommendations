@@ -663,6 +663,47 @@ const LOCATIONS_BY_PRODUCT = {
 
 const DEFAULT_LOCATIONS = LOCATIONS_BY_PRODUCT[1]
 
+/**
+ * G.3a pack-product drilldown layout meta (ids 5 / 9 / 11 only).
+ * Non-pack products and Ang-sac (id 6) keep the classic TU-column layout.
+ */
+const PACK_DRILLDOWN_META = {
+  5: {
+    sizes: ['S'],
+    warehouse: {
+      id: 'log01',
+      name: 'Log01 entrepot logtex',
+      code: 'LOG01',
+      stock: '—',
+      sohBySize: { S: 48 },
+      storageCapacity: 'available',
+    },
+  },
+  9: {
+    sizes: ['XS', 'S', 'M', 'L', 'XL'],
+    warehouse: {
+      id: 'log01',
+      name: 'Log01 entrepot logtex',
+      code: 'LOG01',
+      stock: '—',
+      // Enough SOH to cover P1 (28) + P2 (27) outgoing by size
+      sohBySize: { XS: 12, S: 40, M: 50, L: 40, XL: 12 },
+      storageCapacity: 'available',
+    },
+  },
+  11: {
+    sizes: ['S'],
+    warehouse: {
+      id: 'log01',
+      name: 'Log01 entrepot logtex',
+      code: 'LOG01',
+      stock: '—',
+      sohBySize: { S: 80 },
+      storageCapacity: 'available',
+    },
+  },
+}
+
 // Mock chart data for Transfer detail view (22 days, values 0–8)
 const CHART_DATA = Array.from({ length: 22 }, (_, i) => {
   const day = String(i + 1).padStart(2, '0')
@@ -2311,12 +2352,17 @@ function StockAnalysisDrilldown({
     'replenishment',
   ])
   const [drilldownFiltersOpen, setDrilldownFiltersOpen] = useState(false)
+  // G.3a: click-to-reveal keys for pack layout cells (`${locId}-pack` | `${locId}-size-${size}`)
+  const [revealedTransferCells, setRevealedTransferCells] = useState(() => new Set())
   const locations = LOCATIONS_BY_PRODUCT[product.id] || DEFAULT_LOCATIONS
   const breadcrumbFrom = `${trip.from} [${trip.fromCode}]`
   const packMultiple =
     product.packMultiple != null && product.packMultiple > 0 ? product.packMultiple : null
   const isPackProduct = packMultiple != null
   const isMixedPackProduct = isPackProduct && productHasMixedFulfilment(product)
+  const packDrilldownMeta = PACK_DRILLDOWN_META[product.id] ?? null
+  const usePackDrilldownLayout = Boolean(packDrilldownMeta)
+  const packDrilldownSizes = packDrilldownMeta?.sizes ?? []
 
   /** Additive: location / pack-group multiple takes precedence; else product-level packMultiple. */
   const getLocPackMultiple = (loc) => {
@@ -2335,7 +2381,17 @@ function StockAnalysisDrilldown({
     setTuBoxOverrides({})
     setEditingTuBoxKey(null)
     setPackInputError(false)
+    setRevealedTransferCells(new Set())
   }, [product.id])
+
+  const toggleTransferCellReveal = (cellKey) => {
+    setRevealedTransferCells((prev) => {
+      const next = new Set(prev)
+      if (next.has(cellKey)) next.delete(cellKey)
+      else next.add(cellKey)
+      return next
+    })
+  }
 
   const showRebalancing = drilldownTripTypeFilters.includes('rebalancing')
   const showReplenishment = drilldownTripTypeFilters.includes('replenishment')
@@ -2372,6 +2428,18 @@ function StockAnalysisDrilldown({
     return loc.tuReplenLoose ?? []
   }
 
+  /** Loose units for a size column (Option C: excludes pack contributions). */
+  const getLocationLooseBoxesForSize = (loc, size) => {
+    if (!usePackDrilldownLayout) return []
+    // Single-size pack products: all loose maps to that size
+    if (packDrilldownSizes.length === 1 && packDrilldownSizes[0] === size) {
+      return getLocationLooseBoxes(loc)
+    }
+    const override = locationReplenOverrides[loc.id]
+    if (override?.looseBySize?.[size]) return override.looseBySize[size]
+    return loc.looseBySize?.[size] ?? []
+  }
+
   /** Per-row TU label: for pack products, after = sum of rendered pack + loose boxes. */
   const getLocationTuDisplay = (loc) => {
     if (!isPackProduct) return loc.tu
@@ -2380,6 +2448,27 @@ function StockAnalysisDrilldown({
       sumBoxUnits(getLocationPackBoxes(loc)) + sumBoxUnits(getLocationLooseBoxes(loc))
     return `${before} → ${after}`
   }
+
+  const packLayoutPackCountTotal = useMemo(() => {
+    if (!usePackDrilldownLayout) return 0
+    return filteredLocations.reduce(
+      (sum, loc) => sum + getLocationPackBoxes(loc).length,
+      0
+    )
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filteredLocations, usePackDrilldownLayout, locationReplenOverrides, packMultiple])
+
+  const packLayoutLooseTotalsBySize = useMemo(() => {
+    const totals = {}
+    for (const size of packDrilldownSizes) {
+      totals[size] = filteredLocations.reduce(
+        (sum, loc) => sum + sumBoxUnits(getLocationLooseBoxesForSize(loc, size)),
+        0
+      )
+    }
+    return totals
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filteredLocations, packDrilldownSizes, locationReplenOverrides, usePackDrilldownLayout])
 
   const syncProductTotalsFromLocations = (nextLocationOverrides) => {
     if (!setProductTransfersOverrides) return
@@ -2746,9 +2835,366 @@ function StockAnalysisDrilldown({
         </div>
       )}
 
+
       <div className="border border-[#e5e7eb] rounded-[4px] overflow-hidden bg-white">
         <div className="max-h-[min(65vh,800px)] overflow-x-auto overflow-y-auto">
+        {usePackDrilldownLayout ? (
         <table className="w-full text-[14px]">
+          <thead className="bg-white">
+            <tr className="border-b border-[#E9EAEB]">
+              <th className="sticky top-0 z-20 w-10 max-w-[40px] bg-white py-3 px-2 text-left" />
+              <th className="sticky top-0 z-20 w-12 bg-white py-3 px-4 text-left">
+                <input
+                  type="checkbox"
+                  className="size-4 rounded border-[#E9EAEB] text-[#0267ff]"
+                  aria-label="Select all"
+                  checked={
+                    filteredLocations.length > 0 &&
+                    filteredLocations.every((loc) => selectedLocationIds.has(loc.id))
+                  }
+                  onChange={toggleAllLocationsSelection}
+                />
+              </th>
+              <th className="sticky top-0 z-20 bg-white text-left py-3 px-4 font-medium text-[#00050A]">Locations</th>
+              <th className="sticky top-0 z-20 bg-white text-right py-3 px-4 font-medium text-[#00050A]">
+                <span className="inline-flex items-center gap-1">Stock <IconSortDown /></span>
+              </th>
+              <th className="sticky top-0 z-20 bg-white text-right py-3 px-4 font-medium text-[#00050A]">Pack</th>
+              {packDrilldownSizes.map((size) => (
+                <th
+                  key={`size-h-${size}`}
+                  className="sticky top-0 z-20 bg-white text-right py-3 px-4 font-medium text-[#00050A]"
+                >
+                  {size}
+                </th>
+              ))}
+              <th className="sticky top-0 z-20 bg-white text-right py-3 px-4 font-medium text-[#00050A]">
+                <span className="flex flex-col items-end">
+                  Sales
+                  <span className="text-[11px] font-normal text-[#4b535c]">L7D / L30D</span>
+                </span>
+              </th>
+              <th className="sticky top-0 z-20 bg-white text-right py-3 px-4 font-medium text-[#00050A]">
+                <span className="flex flex-col items-end">
+                  <span className="inline-flex items-center gap-1">Forecast <IconInfo /></span>
+                  <span className="text-[11px] font-normal text-[#4b535c]">per wk</span>
+                </span>
+              </th>
+              <th className="sticky top-0 z-20 bg-white text-right py-3 px-4 font-medium text-[#00050A]">Stockouts</th>
+              <th className="sticky top-0 z-20 bg-white text-right py-3 px-4 font-medium text-[#00050A]">Coverage</th>
+              <th className="sticky top-0 z-20 bg-white text-right py-3 px-4 font-medium text-[#00050A]">
+                <span className="inline-flex items-center gap-1 justify-end">
+                  Storage capacity{' '}
+                  <span
+                    className="inline-flex cursor-help"
+                    title="The storage capacity status of the location after the recommended transfers"
+                  >
+                    <IconInfo />
+                  </span>
+                </span>
+              </th>
+            </tr>
+            <tr className="border-b border-[#E9EAEB] bg-white">
+              <th className="w-10 max-w-[40px] bg-white py-2 px-2" />
+              <th className="bg-white py-2 px-4" />
+              <th className="bg-white py-2 px-4" />
+              <th className="bg-white py-2 px-4 text-right text-[12px] font-medium text-[#0a0a0a]">
+                {summaryStock.before} → {summaryStock.after}
+              </th>
+              <th className="bg-white py-2 px-4 text-right text-[12px] font-medium text-[#0a0a0a]">
+                {packLayoutPackCountTotal}
+              </th>
+              {packDrilldownSizes.map((size) => (
+                <th
+                  key={`size-t-${size}`}
+                  className="bg-white py-2 px-4 text-right text-[12px] font-medium text-[#0a0a0a]"
+                >
+                  {packLayoutLooseTotalsBySize[size] ?? 0}
+                </th>
+              ))}
+              <th className="bg-white py-2 px-4 text-right text-[12px] font-normal text-[#4b535c]">—</th>
+              <th className="bg-white py-2 px-4 text-right text-[12px] font-normal text-[#4b535c]">7.01 per wk</th>
+              <th className="bg-white py-2 px-4 text-right text-[12px] font-normal text-[#4b535c]">—</th>
+              <th className="bg-white py-2 px-4 text-right text-[12px] font-normal text-[#4b535c]">—</th>
+              <th className="bg-white py-2 px-4 text-right text-[12px] font-normal text-[#4b535c]">—</th>
+            </tr>
+          </thead>
+          <tbody>
+            {(() => {
+              const wh = packDrilldownMeta.warehouse
+              return (
+                <tr key={wh.id} className="border-b border-[#E9EAEB] bg-white hover:bg-white">
+                  <td className="w-10 max-w-[40px] py-3 px-2" />
+                  <td className="py-3 px-4" />
+                  <td className="py-3 px-4">
+                    <div className="flex flex-col gap-0.5">
+                      <span className="font-medium text-[#0a0a0a]">{wh.name}</span>
+                      <span className="text-[12px] text-[#4b535c]">{wh.code}</span>
+                    </div>
+                  </td>
+                  <td className="py-3 px-4 text-right text-[#0a0a0a]">{wh.stock}</td>
+                  <td className="py-3 px-4 text-right text-[#4b535c]">—</td>
+                  {packDrilldownSizes.map((size) => {
+                    const soh = wh.sohBySize?.[size]
+                    const cellKey = `${wh.id}-size-${size}`
+                    const revealed = revealedTransferCells.has(cellKey)
+                    return (
+                      <td
+                        key={cellKey}
+                        className="py-3 px-4 text-right cursor-pointer"
+                        onClick={() => {
+                          if (soh == null) return
+                          toggleTransferCellReveal(cellKey)
+                        }}
+                      >
+                        {soh == null ? (
+                          <span className="text-[#4b535c]">—</span>
+                        ) : revealed ? (
+                          <div className="flex flex-wrap gap-1 justify-end" onClick={(e) => e.stopPropagation()}>
+                            <span className="inline-flex h-[26px] min-w-[50px] w-fit shrink-0 items-center justify-center gap-1.5 rounded-[2px] bg-[#A234DA] px-[6px] py-[2px] text-[12px] font-medium text-white">
+                              <IconPackageTu />
+                              {soh}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-[#0a0a0a]">{soh}</span>
+                        )}
+                      </td>
+                    )
+                  })}
+                  <td className="py-3 px-4 text-right text-[#4b535c]">—</td>
+                  <td className="py-3 px-4 text-right text-[#4b535c]">—</td>
+                  <td className="py-3 px-4 text-right text-[#4b535c]">—</td>
+                  <td className="py-3 px-4 text-right text-[#4b535c]">—</td>
+                  <td className="py-3 px-4 text-right">
+                    <div className="flex justify-end">
+                      <StorageCapacityPill value={wh.storageCapacity ?? 'available'} />
+                    </div>
+                  </td>
+                </tr>
+              )
+            })()}
+            {filteredLocations.map((loc) => {
+              const packBoxes = getLocationPackBoxes(loc)
+              const packCount = packBoxes.length
+              const packCellKey = `${loc.id}-pack`
+              const packRevealed = revealedTransferCells.has(packCellKey)
+              const locPm = getLocPackMultiple(loc)
+              const packEditKey = packCountEditKey(loc.id)
+              const isEditingPack = editingTuBoxKey === packEditKey
+              return (
+                <tr key={loc.id} className="border-b border-[#E9EAEB] bg-white hover:bg-white">
+                  <td className="w-10 max-w-[40px] py-3 px-2">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedTransferDetail(loc)}
+                      className="p-1 rounded-[4px] text-[#4B535C] hover:text-[#00050A] cursor-pointer transition-colors"
+                      aria-label={`View transfer detail for ${loc.name}`}
+                    >
+                      <IconChevronRight className="size-4" />
+                    </button>
+                  </td>
+                  <td className="py-3 px-4" onClick={(e) => e.stopPropagation()}>
+                    <input
+                      type="checkbox"
+                      className="size-4 rounded border-[#E9EAEB] text-[#0267ff]"
+                      aria-label={`Select ${loc.name}`}
+                      checked={selectedLocationIds.has(loc.id)}
+                      onChange={() => toggleLocationSelection(loc.id)}
+                    />
+                  </td>
+                  <td className="py-3 px-4">
+                    <div className="flex flex-col gap-0.5">
+                      <span className="font-medium text-[#0a0a0a]">{loc.name}</span>
+                      <span className="text-[12px] text-[#4b535c]">{loc.code}</span>
+                    </div>
+                  </td>
+                  <td className="py-3 px-4 text-right text-[#0a0a0a]">{loc.stock}</td>
+                  <td
+                    className="py-3 px-4 text-right cursor-pointer"
+                    onClick={() => {
+                      if (packCount === 0 || isEditingPack) return
+                      toggleTransferCellReveal(packCellKey)
+                    }}
+                  >
+                    {packCount === 0 ? (
+                      <span className="text-[#4b535c]">—</span>
+                    ) : packRevealed || isEditingPack ? (
+                      <div
+                        className="flex flex-wrap gap-1 justify-end"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {isEditingPack ? (
+                          <EditableTuTransferBadge
+                            key={packEditKey}
+                            value={locPm}
+                            isEditing
+                            editingValue={editingTuBoxValue}
+                            onStartEdit={() => {}}
+                            onEditingValueChange={(v) => {
+                              setPackInputError(false)
+                              setEditingTuBoxValue(v)
+                            }}
+                            onCommit={commitTuBoxEdit}
+                            onCancel={cancelTuBoxEdit}
+                            bgClassName="bg-[#BE185D]"
+                            icon={<IconReplenishment />}
+                            hoverPanel={null}
+                            inputError={packInputError}
+                            errorMessage={
+                              packInputError ? `Multiple of ${locPm}` : null
+                            }
+                            inputStep={1}
+                          />
+                        ) : (
+                          packBoxes.map((n, i) => (
+                            <EditableTuTransferBadge
+                              key={tuBoxKey(loc.id, 'replen-pack', i)}
+                              value={n}
+                              isEditing={false}
+                              editingValue=""
+                              onStartEdit={() => startEditTuBox(packEditKey, packCount)}
+                              onEditingValueChange={setEditingTuBoxValue}
+                              onCommit={commitTuBoxEdit}
+                              onCancel={cancelTuBoxEdit}
+                              bgClassName="bg-[#BE185D]"
+                              icon={<IconReplenishment />}
+                              hoverPanel={
+                                <TuTruckTransferHoverCard
+                                  trip={trip}
+                                  loc={loc}
+                                  truckUnits={n}
+                                  borderClassName="border-[#BE185D]"
+                                />
+                              }
+                            />
+                          ))
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-[#0a0a0a]">{formatPackLabel(packCount)}</span>
+                    )}
+                  </td>
+                  {packDrilldownSizes.map((size) => {
+                    const looseBoxes = getLocationLooseBoxesForSize(loc, size)
+                    const cellKey = `${loc.id}-size-${size}`
+                    const revealed = revealedTransferCells.has(cellKey)
+                    const hasLoose = looseBoxes.length > 0
+                    const hasRebal =
+                      showRebalancing && (loc.tuTruck?.length ?? 0) > 0 && packDrilldownSizes[0] === size
+                    const hasContent = hasLoose || hasRebal
+                    return (
+                      <td
+                        key={cellKey}
+                        className="py-3 px-4 text-right cursor-pointer"
+                        onClick={() => {
+                          if (!hasContent) return
+                          toggleTransferCellReveal(cellKey)
+                        }}
+                      >
+                        {!hasContent ? (
+                          <span className="text-[#4b535c]">—</span>
+                        ) : revealed ? (
+                          <div
+                            className="flex flex-wrap gap-1 justify-end"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            {showReplenishment &&
+                              looseBoxes.map((n, i) => {
+                                const key = tuBoxKey(loc.id, 'replen-loose', i)
+                                const effectiveValue = getEffectiveTuBoxValue(key, n)
+                                return (
+                                  <EditableTuTransferBadge
+                                    key={key}
+                                    value={effectiveValue}
+                                    isEditing={editingTuBoxKey === key}
+                                    editingValue={editingTuBoxValue}
+                                    onStartEdit={() => startEditTuBox(key, effectiveValue)}
+                                    onEditingValueChange={(v) => {
+                                      setPackInputError(false)
+                                      setEditingTuBoxValue(v)
+                                    }}
+                                    onCommit={commitTuBoxEdit}
+                                    onCancel={cancelTuBoxEdit}
+                                    bgClassName="bg-[#EC4899]"
+                                    icon={<IconReplenishment />}
+                                    hoverPanel={
+                                      <TuTruckTransferHoverCard
+                                        trip={trip}
+                                        loc={loc}
+                                        truckUnits={effectiveValue}
+                                        borderClassName="border-[#EC4899]"
+                                      />
+                                    }
+                                  />
+                                )
+                              })}
+                            {hasRebal &&
+                              loc.tuTruck.map((n, i) => {
+                                const key = tuBoxKey(loc.id, 'truck', i)
+                                const effectiveValue = getEffectiveTuBoxValue(key, n)
+                                return (
+                                  <EditableTuTransferBadge
+                                    key={key}
+                                    value={effectiveValue}
+                                    isEditing={editingTuBoxKey === key}
+                                    editingValue={editingTuBoxValue}
+                                    onStartEdit={() => startEditTuBox(key, effectiveValue)}
+                                    onEditingValueChange={(v) => {
+                                      setPackInputError(false)
+                                      setEditingTuBoxValue(v)
+                                    }}
+                                    onCommit={commitTuBoxEdit}
+                                    onCancel={cancelTuBoxEdit}
+                                    bgClassName="bg-[#0267FF]"
+                                    icon={<IconTruckTu />}
+                                    hoverPanel={
+                                      <TuTruckTransferHoverCard
+                                        trip={trip}
+                                        loc={loc}
+                                        truckUnits={effectiveValue}
+                                        borderClassName="border-[#0267FF]"
+                                      />
+                                    }
+                                  />
+                                )
+                              })}
+                          </div>
+                        ) : (
+                          <span className="text-[#0a0a0a]">
+                            {sumBoxUnits(looseBoxes) +
+                              (hasRebal ? sumBoxUnits(loc.tuTruck) : 0)}
+                          </span>
+                        )}
+                      </td>
+                    )
+                  })}
+                  <td className="py-3 px-4 text-right">
+                    <div className="flex flex-col items-end">
+                      <span className="text-[#0a0a0a]">{loc.salesL7}</span>
+                      <span className="text-[12px] text-[#4b535c]">{loc.salesL30}</span>
+                    </div>
+                  </td>
+                  <td className="py-3 px-4 text-right text-[#0a0a0a]">{loc.forecast}</td>
+                  <td className="py-3 px-4 text-right text-[#0a0a0a]">{loc.stockouts}</td>
+                  <td className="py-3 px-4 text-right">
+                    <div className="flex flex-col items-end">
+                      <span className="text-[#0a0a0a]">{loc.coverage}</span>
+                      <span className="text-[12px] text-[#4b535c]">{loc.targetWeeks}</span>
+                    </div>
+                  </td>
+                  <td className="py-3 px-4 text-right">
+                    <div className="flex justify-end">
+                      <StorageCapacityPill value={loc.storageCapacity ?? 'available'} />
+                    </div>
+                  </td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+        ) : (
+<table className="w-full text-[14px]">
           <thead className="bg-white">
             <tr className="border-b border-[#E9EAEB]">
               <th className="sticky top-0 z-20 w-10 max-w-[40px] bg-white py-3 px-2 text-left" />
@@ -3067,6 +3513,7 @@ function StockAnalysisDrilldown({
             ))}
           </tbody>
         </table>
+        )}
         </div>
       </div>
 
