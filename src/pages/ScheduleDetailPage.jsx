@@ -453,7 +453,7 @@ const PRODUCTS_BY_TRIP = {
     // Mixed replen+rebal — pack rules apply to replen portion in hover
     { id: 6, name: 'Ang-sac pte main s', sku: 'A1252811', colour: 'Figue', movementType: ["replenishment","rebalancing"], transfers: 22, transfersSub: 1, replenTransfers: 20, rebalTransfers: 2, approvedTransfers: 12, unapprovedTransfers: 10, revenue: '€0.65K', recommended: 1, recommendedBadges: ['REV'], recommendedSub: 1, confidence: 'low', coverage: '67% below target', coverageWeeks: 1.4, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 0, salesL30: 1, forecast: 0.21, stockouts: '0 → 0', locations: '2 → 2', overstocks: '4 → 1', understocks: '3 → 1', depth: '4.0 → 4.5', status: 'partially_approved', currentUnits: 7, currentUnitsInTransit: 0, warehouseAllocateLine: '57 → 44', warehouseSellLine: '57 → 51', packMultiple: 10, skuCount: 1, isVirtualPack: false },
     // Multi-SKU pack-constrained replen — read-only on Products row
-    { id: 9, name: 'Coin-pack tote m', sku: 'C900010', colour: 'Noir', movementType: ["replenishment"], transfers: 40, transfersSub: 2, approvedTransfers: 20, unapprovedTransfers: 20, revenue: '€1.10K', recommended: 40, recommendedBadges: ['VIS'], recommendedSub: 2, confidence: 'high', coverage: '4% below target', coverageWeeks: 4.2, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 2, salesL30: 8, forecast: 1.2, stockouts: '0 → 0', locations: '3 → 3', overstocks: '2 → 1', understocks: '6 → 4', depth: '4.0 → 4.8', status: 'unapproved', currentUnits: 22, currentUnitsInTransit: 4, warehouseAllocateLine: '60 → 52', warehouseSellLine: '70 → 62', packMultiple: 10, skuCount: 4, isVirtualPack: true },
+    { id: 9, name: 'Coin-pack tote m', sku: 'C900010', colour: 'Noir', movementType: ["replenishment"], transfers: 55, transfersSub: 2, approvedTransfers: 28, unapprovedTransfers: 27, revenue: '€1.10K', recommended: 55, recommendedBadges: ['VIS'], recommendedSub: 2, confidence: 'high', coverage: '4% below target', coverageWeeks: 4.2, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 2, salesL30: 8, forecast: 1.2, stockouts: '0 → 0', locations: '2 → 2', overstocks: '2 → 1', understocks: '6 → 4', depth: '4.0 → 4.8', status: 'unapproved', currentUnits: 22, currentUnitsInTransit: 4, warehouseAllocateLine: '60 → 52', warehouseSellLine: '70 → 62', packMultiple: 10, skuCount: 5, isVirtualPack: true },
     // Unconstrained replen — baseline non-pack path
     { id: 10, name: 'Mini sac band', sku: 'C900020', colour: 'Rouge', movementType: ["replenishment"], transfers: 3, transfersSub: 1, approvedTransfers: 2, unapprovedTransfers: 1, revenue: '€0.42K', recommended: 3, recommendedBadges: ['REV'], recommendedSub: 1, confidence: 'low', coverage: 'All SKUs in target', coverageWeeks: 6.0, coverageTarget: 6, nextEvent: { name: 'UK weekly replenishment', date: '16/06/2026' }, salesL7: 1, salesL30: 3, forecast: 0.6, stockouts: '0 → 0', locations: '1 → 1', overstocks: '1 → 0', understocks: '2 → 1', depth: '5.0 → 5.5', status: 'approved_by_system', currentUnits: 9, currentUnitsInTransit: 0, warehouseAllocateLine: '30 → 27', warehouseSellLine: '40 → 36', packMultiple: null, skuCount: 1 },
     // Mixed fulfilment (pack + loose) — packTransfers drives pack subtext; total = pack + loose
@@ -556,10 +556,12 @@ const LOCATIONS_BY_PRODUCT = {
       code: 'A1A',
       movementType: ['replenishment'],
       stock: '10 → 38',
-      tu: '0 → 40',
+      tu: '0 → 28',
       tuWarehouse: 18,
       tuTruck: [],
-      tuReplen: [10, 10, 10, 10],
+      // PACK-COIN-P1: 4 packs × 7 units (S/M/L ratio 2/3/2)
+      packMultiple: 7,
+      tuReplen: [7, 7, 7, 7],
       salesL7: 2,
       salesL30: 8,
       forecast: 1.2,
@@ -570,8 +572,35 @@ const LOCATIONS_BY_PRODUCT = {
       recommendationReason: 'Increase revenue',
       revenueIncrease: '€420',
       availableToSend: 12,
-      sendingStock: '60 → 20',
-      sendingCoverage: '4.0 → 1.5 (6 target)',
+      sendingStock: '60 → 32',
+      sendingCoverage: '4.0 → 2.0 (6 target)',
+      approvalStatus: 'unapproved',
+      storageCapacity: 'available',
+    },
+    {
+      id: 2,
+      name: 'Cap 3000',
+      code: 'A3E',
+      movementType: ['replenishment'],
+      stock: '8 → 35',
+      tu: '0 → 27',
+      tuWarehouse: 14,
+      tuTruck: [],
+      // PACK-COIN-P2: 3 packs × 9 units (XS/S/M/L/XL ratio 1/2/3/2/1)
+      packMultiple: 9,
+      tuReplen: [9, 9, 9],
+      salesL7: 1,
+      salesL30: 5,
+      forecast: 0.9,
+      stockouts: '0 → 0',
+      coverage: '40% → 95%',
+      targetWeeks: 6,
+      receivingWeeksCoverage: '1.8 → 5.0 (6 target)',
+      recommendationReason: 'Improve coverage',
+      revenueIncrease: '€310',
+      availableToSend: 10,
+      sendingStock: '55 → 28',
+      sendingCoverage: '3.5 → 1.8 (6 target)',
       approvalStatus: 'unapproved',
       storageCapacity: 'available',
     },
@@ -789,7 +818,7 @@ const EXPLORER_PRODUCTS = [
     ws: '€0',
     ic: '€28',
     seasonAndEvent: 'Winter 26 · Vague 1',
-    sizes: ['S', 'M', 'L'],
+    sizes: ['XS', 'S', 'M', 'L', 'XL'],
     movementTypes: ['replenishment'] },
   {
     id: 'exp-p-gemo',
@@ -816,30 +845,81 @@ const EXPLORER_PRODUCTS = [
   },
 ]
 
-/** Multi-SKU pack: Log01 → Opéra replen rows for Coin-pack sizes (pack rows are display-only) */
-const EXPLORER_MULTI_SKU_PACK = {
-  packGroupId: 'pack-coin-p1',
-  packName: 'Coin-pack P1',
-  packId: 'PACK-COIN-P1',
-  packCount: 4,
-  toLocation: 'Opéra',
-  isVirtualPack: true,
-  packRatio: {
-    'C900010-S': 2,
-    'C900010-M': 3,
-    'C900010-L': 2,
+/**
+ * Multi-SKU pack groups for Coin-pack (C900010).
+ * packMultiple is pack-group-specific (P1=7, P2=9); product-level packMultiple stays 10 for single-SKU fallback.
+ */
+const EXPLORER_MULTI_SKU_PACKS = [
+  {
+    packGroupId: 'pack-coin-p1',
+    packName: 'Coin-pack P1',
+    packId: 'PACK-COIN-P1',
+    packCount: 4,
+    packMultiple: 7,
+    toLocation: 'Opéra',
+    isVirtualPack: true,
+    packRatio: {
+      'C900010-S': 2,
+      'C900010-M': 3,
+      'C900010-L': 2,
+    },
+    packRevenue: '+€1,420',
+    packRecommended: 4,
+    packRecommendedBadges: ['REV'],
+    packConfidence: 'high',
+    packCoverageWeeksBefore: 1.2,
+    packCoverageWeeksAfter: 3.4,
+    packCoverageTarget: 4,
+    packCoverageLabel: 'weeks of cover',
+    packStorageCapacity: 'available',
+    packStatus: 'unapproved',
   },
-  // Pack-level KPIs (solver-shaped); units/packCount stay derived from children + overrides
-  packRevenue: '+€1,420',
-  packRecommended: 4,
-  packRecommendedBadges: ['REV'],
-  packConfidence: 'high',
-  packCoverageWeeksBefore: 1.2,
-  packCoverageWeeksAfter: 3.4,
-  packCoverageTarget: 4,
-  packCoverageLabel: 'weeks of cover',
-  packStorageCapacity: 'available',
-  packStatus: 'unapproved',
+  {
+    packGroupId: 'pack-coin-p2',
+    packName: 'Coin-pack P2',
+    packId: 'PACK-COIN-P2',
+    packCount: 3,
+    packMultiple: 9,
+    toLocation: 'Cap 3000',
+    isVirtualPack: true,
+    packRatio: {
+      'C900010-XS': 1,
+      'C900010-S': 2,
+      'C900010-M': 3,
+      'C900010-L': 2,
+      'C900010-XL': 1,
+    },
+    packRevenue: '+€980',
+    packRecommended: 3,
+    packRecommendedBadges: ['VIS'],
+    packConfidence: 'high',
+    packCoverageWeeksBefore: 1.0,
+    packCoverageWeeksAfter: 3.1,
+    packCoverageTarget: 4,
+    packCoverageLabel: 'weeks of cover',
+    packStorageCapacity: 'available',
+    packStatus: 'unapproved',
+  },
+]
+
+/** @deprecated Prefer EXPLORER_MULTI_SKU_PACKS — kept as P1 alias for any residual single-pack reads */
+const EXPLORER_MULTI_SKU_PACK = EXPLORER_MULTI_SKU_PACKS[0]
+
+function getMultiSkuPacksForProduct(product) {
+  if (!product) return []
+  const sku = product.sku || product.baseSku
+  if (product.id === 9 || product.id === 'exp-p-coin' || sku === 'C900010') {
+    return EXPLORER_MULTI_SKU_PACKS
+  }
+  return []
+}
+
+function findMultiSkuPackByLocation(locationName) {
+  return EXPLORER_MULTI_SKU_PACKS.find((p) => p.toLocation === locationName) ?? null
+}
+
+function findMultiSkuPackByGroupId(packGroupId) {
+  return EXPLORER_MULTI_SKU_PACKS.find((p) => p.packGroupId === packGroupId) ?? null
 }
 
 const DEPARTMENT_FILTER_OPTIONS = ['Handbags', 'Crossbody', 'Bucket bags']
@@ -1062,30 +1142,34 @@ function buildExplorerData() {
     })
   })
 
-  // Annotate multi-SKU pack members (Log01 → Opéra replen only). Pack rows are display-only.
+  // Annotate multi-SKU pack members (Log01 → pack destination). Pack rows are display-only.
   for (const row of rows) {
-    const unitsPerPack = EXPLORER_MULTI_SKU_PACK.packRatio[row.sku]
-    if (
-      unitsPerPack == null ||
-      row.movementType !== 'replenishment' ||
-      row.fromLocation !== EXPLORER_WAREHOUSE ||
-      row.toLocation !== EXPLORER_MULTI_SKU_PACK.toLocation
-    ) {
-      continue
-    }
-    row.packGroupId = EXPLORER_MULTI_SKU_PACK.packGroupId
-    row.packName = EXPLORER_MULTI_SKU_PACK.packName
-    row.packId = EXPLORER_MULTI_SKU_PACK.packId
-    row.packRatio = EXPLORER_MULTI_SKU_PACK.packRatio
-    row.packCount = EXPLORER_MULTI_SKU_PACK.packCount
-    row.isVirtualPack = Boolean(EXPLORER_MULTI_SKU_PACK.isVirtualPack)
+    if (row.movementType !== 'replenishment' || row.fromLocation !== EXPLORER_WAREHOUSE) continue
+    const packDef = EXPLORER_MULTI_SKU_PACKS.find(
+      (p) => p.toLocation === row.toLocation && p.packRatio[row.sku] != null
+    )
+    if (!packDef) continue
+    const unitsPerPack = packDef.packRatio[row.sku]
+    row.packGroupId = packDef.packGroupId
+    row.packName = packDef.packName
+    row.packId = packDef.packId
+    row.packRatio = packDef.packRatio
+    row.packCount = packDef.packCount
+    row.packGroupMultiple = packDef.packMultiple
+    row.isVirtualPack = Boolean(packDef.isVirtualPack)
     row.isPackMember = true
     row.packMultiple = null
-    row.transfers = unitsPerPack * EXPLORER_MULTI_SKU_PACK.packCount
+    row.transfers = unitsPerPack * packDef.packCount
     row.stockAfter = row.stockBefore + row.transfers + (row.stockFromOtherStores ?? 0)
   }
 
-  return rows
+  // Coin-pack: only show annotated pack-member replen rows (drop stray size×store noise)
+  return rows.filter((row) => {
+    if (row.productId === 'exp-p-coin' && row.movementType === 'replenishment') {
+      return Boolean(row.isPackMember)
+    }
+    return true
+  })
 }
 
 function isExplorerPackRowId(rowId) {
@@ -2155,16 +2239,19 @@ function syncExplorerFromDrilldownLocationEdit({
   const statusSkip = {}
 
   if (fulfilmentType === 'pack' && product.id === 9) {
-    // Multi-SKU Coin-pack members at this location
+    // Multi-SKU Coin-pack: resolve pack group by destination location (P1 Opéra / P2 Cap 3000)
+    const packDef = findMultiSkuPackByLocation(locationName)
+    if (!packDef) return
     const members = EXPLORER_DATA.filter(
       (r) =>
         r.isPackMember &&
-        r.packGroupId === EXPLORER_MULTI_SKU_PACK.packGroupId &&
+        r.packGroupId === packDef.packGroupId &&
         r.toLocation === locationName &&
         r.movementType === 'replenishment'
     )
-    const ratio = EXPLORER_MULTI_SKU_PACK.packRatio
-    const count = packCount ?? Math.floor((units || 0) / (packMultiple || 10))
+    const ratio = packDef.packRatio
+    const unitsPerPack = packDef.packMultiple
+    const count = packCount ?? Math.floor((units || 0) / (unitsPerPack || packMultiple || 1))
     for (const member of members) {
       const perPack = ratio[member.sku]
       if (perPack == null) continue
@@ -2207,6 +2294,7 @@ function StockAnalysisDrilldown({
   setProductTransfersOverrides,
   setProductPackTransfersOverrides,
   setProductLooseTransfersOverrides,
+  setProductPackCountOverrides,
   setExplorerTransferOverrides,
 }) {
   const [selectedTransferDetail, setSelectedTransferDetail] = useState(null)
@@ -2229,6 +2317,17 @@ function StockAnalysisDrilldown({
     product.packMultiple != null && product.packMultiple > 0 ? product.packMultiple : null
   const isPackProduct = packMultiple != null
   const isMixedPackProduct = isPackProduct && productHasMixedFulfilment(product)
+
+  /** Additive: location / pack-group multiple takes precedence; else product-level packMultiple. */
+  const getLocPackMultiple = (loc) => {
+    if (loc?.packMultiple != null && loc.packMultiple > 0) return loc.packMultiple
+    // Only resolve pack-group multiples for multi-SKU products (Coin); never bleed onto Pre-sac/Gémo
+    if (getMultiSkuPacksForProduct(product).length > 0) {
+      const packDef = findMultiSkuPackByLocation(loc?.name)
+      if (packDef?.packMultiple > 0) return packDef.packMultiple
+    }
+    return packMultiple
+  }
 
   useEffect(() => {
     setDrilldownTripTypeFilters(['rebalancing', 'replenishment'])
@@ -2256,10 +2355,11 @@ function StockAnalysisDrilldown({
     const override = locationReplenOverrides[loc.id]
     if (override?.pack) return override.pack
     if (isPackProduct) {
+      const locPm = getLocPackMultiple(loc)
       const base = loc.tuReplen ?? []
       // Already one-box-per-pack stubs, or expand a single total
-      if (base.length > 0 && base.every((n) => n === packMultiple)) return [...base]
-      return expandUnitsToPackBoxes(sumBoxUnits(base), packMultiple)
+      if (base.length > 0 && locPm > 0 && base.every((n) => n === locPm)) return [...base]
+      return expandUnitsToPackBoxes(sumBoxUnits(base), locPm)
     }
     return loc.tuReplen ?? []
   }
@@ -2285,22 +2385,22 @@ function StockAnalysisDrilldown({
     if (!setProductTransfersOverrides) return
     let packUnits = 0
     let looseUnits = 0
+    let packCountTotal = 0
     for (const loc of locations) {
       const ov = nextLocationOverrides[loc.id]
+      const locPm = getLocPackMultiple(loc)
       const packBoxes =
         ov?.pack ??
         (isPackProduct
-          ? loc.tuReplen?.every((n) => n === packMultiple)
+          ? loc.tuReplen?.every((n) => n === locPm)
             ? loc.tuReplen
-            : expandUnitsToPackBoxes(sumBoxUnits(loc.tuReplen), packMultiple)
+            : expandUnitsToPackBoxes(sumBoxUnits(loc.tuReplen), locPm)
           : [])
       const looseBoxes = ov?.loose ?? loc.tuReplenLoose ?? []
       if (isPackProduct) {
         packUnits += sumBoxUnits(packBoxes)
         looseUnits += sumBoxUnits(looseBoxes)
-        if (!isMixedPackProduct && !loc.tuReplenLoose) {
-          // non-mixed: all replen is pack
-        }
+        packCountTotal += (packBoxes ?? []).length
       } else {
         packUnits += sumBoxUnits(loc.tuReplen)
       }
@@ -2310,6 +2410,7 @@ function StockAnalysisDrilldown({
 
     const total = packUnits + looseUnits
     setProductTransfersOverrides((prev) => ({ ...prev, [product.id]: total }))
+    setProductPackCountOverrides?.((prev) => ({ ...prev, [product.id]: packCountTotal }))
     if (isMixedPackProduct) {
       setProductPackTransfersOverrides?.((prev) => ({ ...prev, [product.id]: packUnits }))
       setProductLooseTransfersOverrides?.((prev) => ({ ...prev, [product.id]: looseUnits }))
@@ -2331,12 +2432,13 @@ function StockAnalysisDrilldown({
         editingTuBoxKey.slice(String(product.id).length + 1).replace(/-pack-count$/, '')
       )
       const loc = locations.find((l) => l.id === locationId)
-      const parsed = parseDrilldownPackCountInput(editingTuBoxValue, packMultiple)
+      const locPm = getLocPackMultiple(loc)
+      const parsed = parseDrilldownPackCountInput(editingTuBoxValue, locPm)
       if (parsed.error) {
         setPackInputError(true)
         return
       }
-      const newBoxes = expandUnitsToPackBoxes(parsed.packCount * packMultiple, packMultiple)
+      const newBoxes = expandUnitsToPackBoxes(parsed.packCount * locPm, locPm)
       setLocationReplenOverrides((prev) => {
         const next = {
           ...prev,
@@ -2353,7 +2455,7 @@ function StockAnalysisDrilldown({
         locationName: loc?.name,
         fulfilmentType: 'pack',
         packCount: parsed.packCount,
-        packMultiple,
+        packMultiple: locPm,
         setExplorerTransferOverrides,
       })
       setEditingTuBoxKey(null)
@@ -2798,6 +2900,7 @@ function StockAnalysisDrilldown({
                         (() => {
                           const packBoxes = getLocationPackBoxes(loc)
                           const looseBoxes = getLocationLooseBoxes(loc)
+                          const locPm = getLocPackMultiple(loc)
                           const packCount = packBoxes.length
                           const packEditKey = packCountEditKey(loc.id)
                           const isEditingPack = editingTuBoxKey === packEditKey
@@ -2806,7 +2909,7 @@ function StockAnalysisDrilldown({
                               {isEditingPack ? (
                                 <EditableTuTransferBadge
                                   key={packEditKey}
-                                  value={packMultiple}
+                                  value={locPm}
                                   isEditing
                                   editingValue={editingTuBoxValue}
                                   onStartEdit={() => {}}
@@ -2822,7 +2925,7 @@ function StockAnalysisDrilldown({
                                   inputError={packInputError}
                                   errorMessage={
                                     packInputError
-                                      ? `Multiple of ${packMultiple}`
+                                      ? `Multiple of ${locPm}`
                                       : null
                                   }
                                   inputStep={1}
@@ -3129,6 +3232,7 @@ function ProductsDrilldown({
   const [productTransfersOverrides, setProductTransfersOverrides] = useState({})
   const [productPackTransfersOverrides, setProductPackTransfersOverrides] = useState({})
   const [productLooseTransfersOverrides, setProductLooseTransfersOverrides] = useState({})
+  const [productPackCountOverrides, setProductPackCountOverrides] = useState({})
   const [editingTransfersProductId, setEditingTransfersProductId] = useState(null)
   const [editingTransfersValue, setEditingTransfersValue] = useState('')
   const [selectedProductIds, setSelectedProductIds] = useState(new Set())
@@ -3181,6 +3285,14 @@ function ProductsDrilldown({
 
   const getReplenPackCount = (p) => {
     if (!productHasPackConstraint(p)) return 0
+    if (Object.prototype.hasOwnProperty.call(productPackCountOverrides, p.id)) {
+      return Number(productPackCountOverrides[p.id]) || 0
+    }
+    // Multi-SKU Coin-pack: sum pack-group counts (P1 + P2), not transfers / product packMultiple
+    const multiPacks = getMultiSkuPacksForProduct(p)
+    if (multiPacks.length > 0) {
+      return multiPacks.reduce((sum, pack) => sum + (Number(pack.packCount) || 0), 0)
+    }
     // Mixed fulfilment: pack subtext from pack-fulfilled units only (not pack+loose total)
     if (p.packTransfers != null && p.packMultiple > 0) {
       const packUnits = Object.prototype.hasOwnProperty.call(productPackTransfersOverrides, p.id)
@@ -3379,6 +3491,7 @@ function ProductsDrilldown({
         setProductTransfersOverrides={setProductTransfersOverrides}
         setProductPackTransfersOverrides={setProductPackTransfersOverrides}
         setProductLooseTransfersOverrides={setProductLooseTransfersOverrides}
+        setProductPackCountOverrides={setProductPackCountOverrides}
         setExplorerTransferOverrides={setExplorerTransferOverrides}
       />
     )
@@ -3985,6 +4098,7 @@ function ProductsDrilldown({
       case 4: {
         const hasPack = productHasPackConstraint(p)
         const recommendedUnits = Number(p.recommended) || 0
+        const multiPacks = getMultiSkuPacksForProduct(p)
         const packUnitsForRecommended =
           hasPack && p.packMultiple > 0
             ? p.packTransfers != null
@@ -3994,7 +4108,11 @@ function ProductsDrilldown({
                 : recommendedUnits
             : 0
         const recommendedPackCount =
-          hasPack && p.packMultiple > 0 ? packUnitsForRecommended / p.packMultiple : 0
+          multiPacks.length > 0
+            ? multiPacks.reduce((sum, pack) => sum + (Number(pack.packCount) || 0), 0)
+            : hasPack && p.packMultiple > 0
+              ? packUnitsForRecommended / p.packMultiple
+              : 0
         const showPackRecommended = hasPack && recommendedPackCount > 0
 
         return (
@@ -5346,32 +5464,33 @@ function filterExplorerRows(
 function buildExplorerDisplayRows(filteredSkuRows, allSkuRows, expandedPackGroupIds = new Set()) {
   const packTotalCounts = new Map()
   const packMetaByGroup = new Map()
-  const packMock = EXPLORER_MULTI_SKU_PACK
 
   for (const row of allSkuRows) {
     if (!row.isPackMember || !row.packGroupId) continue
     packTotalCounts.set(row.packGroupId, (packTotalCounts.get(row.packGroupId) ?? 0) + 1)
     if (!packMetaByGroup.has(row.packGroupId)) {
+      const packDef = findMultiSkuPackByGroupId(row.packGroupId) ?? EXPLORER_MULTI_SKU_PACK
       packMetaByGroup.set(row.packGroupId, {
         packGroupId: row.packGroupId,
-        packName: row.packName ?? packMock.packName,
-        packId: row.packId ?? packMock.packId,
+        packName: row.packName ?? packDef.packName,
+        packId: row.packId ?? packDef.packId,
         packRatio: row.packRatio,
         packCount: row.packCount,
+        packMultiple: row.packGroupMultiple ?? packDef.packMultiple,
         isVirtualPack: row.isVirtualPack,
         fromLocation: row.fromLocation,
         toLocation: row.toLocation,
         movementType: row.movementType,
-        packRevenue: packMock.packRevenue,
-        packRecommended: packMock.packRecommended,
-        packRecommendedBadges: packMock.packRecommendedBadges,
-        packConfidence: packMock.packConfidence,
-        packCoverageWeeksBefore: packMock.packCoverageWeeksBefore,
-        packCoverageWeeksAfter: packMock.packCoverageWeeksAfter,
-        packCoverageTarget: packMock.packCoverageTarget,
-        packCoverageLabel: packMock.packCoverageLabel,
-        packStorageCapacity: packMock.packStorageCapacity,
-        packStatus: packMock.packStatus,
+        packRevenue: packDef.packRevenue,
+        packRecommended: packDef.packRecommended,
+        packRecommendedBadges: packDef.packRecommendedBadges,
+        packConfidence: packDef.packConfidence,
+        packCoverageWeeksBefore: packDef.packCoverageWeeksBefore,
+        packCoverageWeeksAfter: packDef.packCoverageWeeksAfter,
+        packCoverageTarget: packDef.packCoverageTarget,
+        packCoverageLabel: packDef.packCoverageLabel,
+        packStorageCapacity: packDef.packStorageCapacity,
+        packStatus: packDef.packStatus,
       })
     }
   }
