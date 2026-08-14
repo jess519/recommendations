@@ -2816,7 +2816,7 @@ function StockAnalysisDrilldown({
                                   }}
                                   onCommit={commitTuBoxEdit}
                                   onCancel={cancelTuBoxEdit}
-                                  bgClassName="bg-[#E11D48]"
+                                  bgClassName="bg-[#BE185D]"
                                   icon={<IconReplenishment />}
                                   hoverPanel={null}
                                   inputError={packInputError}
@@ -2842,14 +2842,14 @@ function StockAnalysisDrilldown({
                                       onEditingValueChange={setEditingTuBoxValue}
                                       onCommit={commitTuBoxEdit}
                                       onCancel={cancelTuBoxEdit}
-                                      bgClassName="bg-[#E11D48]"
+                                      bgClassName="bg-[#BE185D]"
                                       icon={<IconReplenishment />}
                                       hoverPanel={
                                         <TuTruckTransferHoverCard
                                           trip={trip}
                                           loc={loc}
                                           truckUnits={n}
-                                          borderClassName="border-[#E11D48]"
+                                          borderClassName="border-[#BE185D]"
                                         />
                                       }
                                     />
