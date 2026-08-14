@@ -1347,14 +1347,14 @@ function BeforeAfterText({ value, className = '' }) {
   )
 }
 
-/** Coverage primary (% before→after) + muted target-weeks subcopy. */
+/** Coverage primary (% SKUs at/above target before→after) + muted weeks-target subcopy. */
 function DrilldownCoverageCell({ coverage, targetWeeks }) {
   return (
     <div className="flex flex-col items-end gap-0.5">
       <BeforeAfterText value={coverage} className="text-[14px]" />
       {targetWeeks != null && targetWeeks !== '' ? (
         <span className="text-[12px] font-normal text-[#4b535c]">
-          {targetWeeks} target weeks
+          {targetWeeks} wks target
         </span>
       ) : null}
     </div>
@@ -2269,6 +2269,8 @@ function EditableTuTransferBadge({
 }
 
 function locationVisibleForTripTypeFilters(loc, tripTypeFilters) {
+  // Empty filters = no trip-type filter applied (show all locations)
+  if (!tripTypeFilters?.length) return true
   if (loc.tuWarehouse != null) return true
   const showRebal = tripTypeFilters.includes('rebalancing')
   const showReplen = tripTypeFilters.includes('replenishment')
@@ -2278,6 +2280,39 @@ function locationVisibleForTripTypeFilters(loc, tripTypeFilters) {
   if (showRebal && truckCount > 0) return true
   if (showRebal && truckCount === 0 && replenCount === 0) return true
   return false
+}
+
+/**
+ * Approximate "% of SKUs at/above coverage target" from location weeks-of-cover vs target.
+ * Mock has no per-SKU coverage-vs-target rows — receivingWeeksCoverage is the closest proxy.
+ * Returns { pctLine: '0% → 100%', targetWeeks } or null.
+ */
+function getDrilldownSkuCoverageAtTarget(loc) {
+  const target = Number(loc?.targetWeeks)
+  const raw = String(loc?.receivingWeeksCoverage ?? '')
+  // e.g. "3.2 → 6.4 (6 target)" or "N/A (0 forecast)"
+  const match = raw.match(/^([\d.]+)\s*→\s*([\d.]+)/)
+  if (match && Number.isFinite(target) && target > 0) {
+    const beforeW = Number(match[1])
+    const afterW = Number(match[2])
+    const beforePct = beforeW >= target ? 100 : 0
+    const afterPct = afterW >= target ? 100 : 0
+    return {
+      pctLine: `${beforePct}% → ${afterPct}%`,
+      targetWeeks: target,
+    }
+  }
+  // Fallback: loc.coverage when already a % → % string
+  if (loc?.coverage && String(loc.coverage).includes('%') && String(loc.coverage).includes('→')) {
+    return {
+      pctLine: loc.coverage,
+      targetWeeks: Number.isFinite(target) ? target : loc.targetWeeks,
+    }
+  }
+  return {
+    pctLine: '—',
+    targetWeeks: Number.isFinite(target) ? target : loc?.targetWeeks,
+  }
 }
 
 /** Expand total units into one box per pack (each box displays packMultiple). */
@@ -2391,10 +2426,7 @@ function StockAnalysisDrilldown({
   const [editingTuBoxKey, setEditingTuBoxKey] = useState(null)
   const [editingTuBoxValue, setEditingTuBoxValue] = useState('')
   const [packInputError, setPackInputError] = useState(false)
-  const [drilldownTripTypeFilters, setDrilldownTripTypeFilters] = useState([
-    'rebalancing',
-    'replenishment',
-  ])
+  const [drilldownTripTypeFilters, setDrilldownTripTypeFilters] = useState([])
   const [drilldownFiltersOpen, setDrilldownFiltersOpen] = useState(false)
   // G.3a.1: single active click-to-reveal cell (`${locId}-pack` | `${locId}-size-${size}` | null)
   const [activeTransferCell, setActiveTransferCell] = useState(null)
@@ -2420,7 +2452,7 @@ function StockAnalysisDrilldown({
   }
 
   useEffect(() => {
-    setDrilldownTripTypeFilters(['rebalancing', 'replenishment'])
+    setDrilldownTripTypeFilters([])
     setLocationReplenOverrides({})
     setTuBoxOverrides({})
     setEditingTuBoxKey(null)
@@ -2432,8 +2464,13 @@ function StockAnalysisDrilldown({
     setActiveTransferCell((prev) => (prev === cellKey ? null : cellKey))
   }
 
-  const showRebalancing = drilldownTripTypeFilters.includes('rebalancing')
-  const showReplenishment = drilldownTripTypeFilters.includes('replenishment')
+  // Empty trip-type filters = show all movement boxes (Explorer-style default)
+  const showRebalancing =
+    drilldownTripTypeFilters.length === 0 ||
+    drilldownTripTypeFilters.includes('rebalancing')
+  const showReplenishment =
+    drilldownTripTypeFilters.length === 0 ||
+    drilldownTripTypeFilters.includes('replenishment')
 
   const filteredLocations = useMemo(
     () => locations.filter((loc) => locationVisibleForTripTypeFilters(loc, drilldownTripTypeFilters)),
@@ -2848,6 +2885,32 @@ function StockAnalysisDrilldown({
         </button>
       </div>
 
+      {drilldownTripTypeFilters.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2 mb-3">
+          {drilldownTripTypeFilters.map((id) => {
+            const label = MOVEMENT_TYPE_FILTER_OPTIONS.find((o) => o.id === id)?.label ?? id
+            return (
+              <span
+                key={`trip-type-${id}`}
+                className="inline-flex items-center gap-1.5 pl-3 pr-1.5 py-1.5 rounded-[4px] bg-[#f3f4f6] text-[#4b535c] border border-[#e5e7eb]"
+              >
+                <span>Trip type: {label}</span>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setDrilldownTripTypeFilters((prev) => prev.filter((x) => x !== id))
+                  }
+                  className="p-0.5 rounded-[4px] text-[#6b7280] hover:bg-[#e5e7eb] hover:text-[#374151]"
+                  aria-label={`Remove filter: Trip type ${label}`}
+                >
+                  <IconClose className="size-3.5" />
+                </button>
+              </span>
+            )
+          })}
+        </div>
+      )}
+
       <div className="border border-[#e5e7eb] rounded-[4px] overflow-hidden bg-white">
         <div className="max-h-[min(65vh,800px)] overflow-x-auto overflow-y-auto">
         {usePackDrilldownLayout ? (
@@ -3199,7 +3262,10 @@ function StockAnalysisDrilldown({
                     <BeforeAfterText value={loc.stockouts} />
                   </td>
                   <td className="py-3 px-4 text-right">
-                    <DrilldownCoverageCell coverage={loc.coverage} targetWeeks={loc.targetWeeks} />
+                    <DrilldownCoverageCell
+                      coverage={getDrilldownSkuCoverageAtTarget(loc).pctLine}
+                      targetWeeks={getDrilldownSkuCoverageAtTarget(loc).targetWeeks}
+                    />
                   </td>
                   <td className="py-3 px-4 text-right">
                     <div className="flex justify-end">
@@ -3526,7 +3592,10 @@ function StockAnalysisDrilldown({
                   <BeforeAfterText value={loc.stockouts} />
                 </td>
                 <td className="py-3 px-4 text-right">
-                  <DrilldownCoverageCell coverage={loc.coverage} targetWeeks={loc.targetWeeks} />
+                  <DrilldownCoverageCell
+                    coverage={getDrilldownSkuCoverageAtTarget(loc).pctLine}
+                    targetWeeks={getDrilldownSkuCoverageAtTarget(loc).targetWeeks}
+                  />
                 </td>
                 <td className="py-3 px-4 text-right">
                   <div className="flex justify-end">
