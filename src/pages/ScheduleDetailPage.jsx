@@ -2265,9 +2265,20 @@ function StockAnalysisDrilldown({
   }
 
   const getLocationLooseBoxes = (loc) => {
+    // Pure pack products never render loose replen boxes
+    if (!isMixedPackProduct) return []
     const override = locationReplenOverrides[loc.id]
     if (override?.loose) return override.loose
     return loc.tuReplenLoose ?? []
+  }
+
+  /** Per-row TU label: for pack products, after = sum of rendered pack + loose boxes. */
+  const getLocationTuDisplay = (loc) => {
+    if (!isPackProduct) return loc.tu
+    const before = String(loc.tu ?? '0 → 0').split(' → ')[0] ?? '0'
+    const after =
+      sumBoxUnits(getLocationPackBoxes(loc)) + sumBoxUnits(getLocationLooseBoxes(loc))
+    return `${before} → ${after}`
   }
 
   const syncProductTotalsFromLocations = (nextLocationOverrides) => {
@@ -2464,12 +2475,14 @@ function StockAnalysisDrilldown({
     () =>
       filteredLocations.reduce(
         (acc, loc) => {
-          const [before, after] = loc.tu.split(' → ').map(Number)
+          const label = getLocationTuDisplay(loc)
+          const [before, after] = String(label).split(' → ').map(Number)
           return { before: acc.before + (before || 0), after: acc.after + (after || 0) }
         },
         { before: 0, after: 0 }
       ),
-    [filteredLocations]
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- getLocationTuDisplay closes over pack helpers / overrides
+    [filteredLocations, isPackProduct, isMixedPackProduct, packMultiple, locationReplenOverrides]
   )
 
   if (selectedTransferDetail) {
@@ -2730,7 +2743,7 @@ function StockAnalysisDrilldown({
                 <td className="py-3 px-4 text-right text-[#0a0a0a]">{loc.stock}</td>
                 <td className="py-3 px-4 text-right">
                   <div className="flex flex-col items-end gap-1">
-                    <span className="text-[#0a0a0a]">{loc.tu}</span>
+                    <span className="text-[#0a0a0a]">{getLocationTuDisplay(loc)}</span>
                     <div className="flex flex-wrap gap-1 justify-end">
                       {loc.tuWarehouse != null && (
                         <TuHoverPopover
@@ -2803,7 +2816,7 @@ function StockAnalysisDrilldown({
                                   }}
                                   onCommit={commitTuBoxEdit}
                                   onCancel={cancelTuBoxEdit}
-                                  bgClassName="bg-[#EC4899]"
+                                  bgClassName="bg-[#E11D48]"
                                   icon={<IconReplenishment />}
                                   hoverPanel={null}
                                   inputError={packInputError}
@@ -2829,21 +2842,22 @@ function StockAnalysisDrilldown({
                                       onEditingValueChange={setEditingTuBoxValue}
                                       onCommit={commitTuBoxEdit}
                                       onCancel={cancelTuBoxEdit}
-                                      bgClassName="bg-[#EC4899]"
+                                      bgClassName="bg-[#E11D48]"
                                       icon={<IconReplenishment />}
                                       hoverPanel={
                                         <TuTruckTransferHoverCard
                                           trip={trip}
                                           loc={loc}
                                           truckUnits={n}
-                                          borderClassName="border-[#EC4899]"
+                                          borderClassName="border-[#E11D48]"
                                         />
                                       }
                                     />
                                   )
                                 })
                               )}
-                              {looseBoxes.map((n, i) => {
+                              {isMixedPackProduct &&
+                                looseBoxes.map((n, i) => {
                                 const key = tuBoxKey(loc.id, 'replen-loose', i)
                                 const effectiveValue = getEffectiveTuBoxValue(key, n)
                                 return (
