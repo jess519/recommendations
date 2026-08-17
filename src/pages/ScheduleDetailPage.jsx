@@ -8079,7 +8079,7 @@ function ExplorerTable({
                       onClick={(e) => e.stopPropagation()}
                     >
                       <div className="flex items-start gap-1">
-                        {!row.isSingleSkuPack && (
+                        {!row.isSingleSkuPack ? (
                           <button
                             type="button"
                             className="flex size-6 items-center justify-center rounded-[4px] text-[#4b535c] hover:bg-[#e5e7eb]"
@@ -8092,6 +8092,8 @@ function ExplorerTable({
                               <IconChevronRight />
                             </span>
                           </button>
+                        ) : (
+                          <span className="inline-block size-6 shrink-0" aria-hidden />
                         )}
                         <input
                           type="checkbox"
