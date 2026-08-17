@@ -2508,6 +2508,22 @@ function getPackCompositionLine(product, loc) {
   return `${size}=${units} (${units} units/pack)`
 }
 
+/** Log01 packs available from SOH units ÷ pack multiple (Coin uses min multi-SKU multiple). */
+function getLog01PacksAvailable(product, wh) {
+  if (wh?.packsAvailable != null) return wh.packsAvailable
+  const units = Object.values(wh?.sohBySize ?? {}).reduce(
+    (sum, n) => sum + (Number(n) || 0),
+    0
+  )
+  const multi = getMultiSkuPacksForProduct(product)
+  const pm =
+    multi.length > 0
+      ? Math.min(...multi.map((p) => p.packMultiple).filter((n) => n > 0))
+      : product?.packMultiple || 10
+  if (!pm || pm <= 0) return 0
+  return Math.floor(units / pm)
+}
+
 /** Expand total units into one box per pack (each box displays packMultiple). */
 function expandUnitsToPackBoxes(totalUnits, packMultiple) {
   if (!packMultiple || packMultiple <= 0) return []
@@ -2719,17 +2735,19 @@ function StockAnalysisDrilldown({
   }
 
   const packLayoutPackCountTotal = useMemo(() => {
-    if (!usePackDrilldownLayout) return 0
-    return filteredLocations.reduce(
+    if (!usePackDrilldownLayout) return { before: 0, after: 0, label: '0 → 0' }
+    const after = filteredLocations.reduce(
       (sum, loc) => sum + getLocationPackBoxes(loc).length,
       0
     )
+    return { before: 0, after, label: `0 → ${after}` }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filteredLocations, usePackDrilldownLayout, locationReplenOverrides, packMultiple])
 
   const packLayoutLooseTotalsBySize = useMemo(() => {
     const totals = {}
     for (const size of packDrilldownSizes) {
+      // Destination rows only — Log01 never contributes to size totals
       totals[size] = filteredLocations.reduce(
         (sum, loc) => sum + sumBoxUnits(getLocationLooseBoxesForSize(loc, size)),
         0
@@ -2738,6 +2756,13 @@ function StockAnalysisDrilldown({
     return totals
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filteredLocations, packDrilldownSizes, locationReplenOverrides, usePackDrilldownLayout])
+
+  const log01PacksAvailable = useMemo(() => {
+    if (!usePackDrilldownLayout || !packDrilldownMeta?.warehouse) return 0
+    return getLog01PacksAvailable(product, packDrilldownMeta.warehouse)
+  }, [usePackDrilldownLayout, packDrilldownMeta, product])
+
+  const log01SelectionId = packDrilldownMeta?.warehouse?.id ?? 'log01'
 
   const syncProductTotalsFromLocations = (nextLocationOverrides) => {
     if (!setProductTransfersOverrides) return
@@ -2888,7 +2913,10 @@ function StockAnalysisDrilldown({
   }
 
   const toggleAllLocationsSelection = () => {
-    const allIds = filteredLocations.map((loc) => loc.id)
+    const allIds = [
+      ...(usePackDrilldownLayout ? [log01SelectionId] : []),
+      ...filteredLocations.map((loc) => loc.id),
+    ]
     const allSelected = allIds.length > 0 && allIds.every((id) => selectedLocationIds.has(id))
     setSelectedLocationIds(allSelected ? new Set() : new Set(allIds))
   }
@@ -2900,6 +2928,8 @@ function StockAnalysisDrilldown({
     setApprovedLocations((prev) => {
       const next = { ...prev }
       selectedLocationIds.forEach((id) => {
+        // Log01 selection is visual-only in the prototype
+        if (id === log01SelectionId) return
         next[id] = true
       })
       return next
@@ -2913,12 +2943,6 @@ function StockAnalysisDrilldown({
   const breadcrumbTo = trip.to.length > 12 ? `${trip.to.slice(0, 10)}...` : trip.to
   const productLabel = product.name.length > 16 ? `${product.name.slice(0, 14)}...` : product.name
   const productSku = product.sku
-  const showExplorerProductLink = EXPLORER_PRODUCTS.some((p) => p.name === product.name)
-
-  const handleEditProductOnExplorer = () => {
-    setExplorerProductNameFilters([product.name])
-    setActiveTab('explorer')
-  }
 
   const summaryStock = useMemo(
     () =>
@@ -3046,15 +3070,6 @@ function StockAnalysisDrilldown({
               setProductStatusOverrides((prev) => ({ ...prev, [product.id]: statusId }))
             }
           />
-          {showExplorerProductLink && (
-            <button
-              type="button"
-              onClick={handleEditProductOnExplorer}
-              className="text-[13px] font-medium text-[#0267ff] hover:underline shrink-0"
-            >
-              Edit product on the Explorer tab
-            </button>
-          )}
         </div>
       </div>
 
@@ -3177,7 +3192,10 @@ function StockAnalysisDrilldown({
                   aria-label="Select all"
                   checked={
                     filteredLocations.length > 0 &&
-                    filteredLocations.every((loc) => selectedLocationIds.has(loc.id))
+                    [
+                      ...(usePackDrilldownLayout ? [log01SelectionId] : []),
+                      ...filteredLocations.map((loc) => loc.id),
+                    ].every((id) => selectedLocationIds.has(id))
                   }
                   onChange={toggleAllLocationsSelection}
                 />
@@ -3236,7 +3254,7 @@ function StockAnalysisDrilldown({
                 {summaryStock.before} → {summaryStock.after}
               </th>
               <th className="bg-white py-2 px-4 text-right text-[12px] font-bold text-[#0a0a0a]">
-                {packLayoutPackCountTotal}
+                {packLayoutPackCountTotal.label}
               </th>
               {packDrilldownSizes.map((size) => (
                 <th
@@ -3263,10 +3281,19 @@ function StockAnalysisDrilldown({
           <tbody>
             {(() => {
               const wh = packDrilldownMeta.warehouse
+              const packsAvailable = log01PacksAvailable
               return (
                 <tr key={wh.id} className="border-b border-[#E9EAEB] bg-white hover:bg-white">
                   <td className="w-10 max-w-[40px] py-3 px-2" />
-                  <td className="py-3 px-4" />
+                  <td className="py-3 px-4" onClick={(e) => e.stopPropagation()}>
+                    <input
+                      type="checkbox"
+                      className="size-4 rounded border-[#E9EAEB] text-[#0267ff]"
+                      aria-label={`Select ${wh.name}`}
+                      checked={selectedLocationIds.has(log01SelectionId)}
+                      onChange={() => toggleLocationSelection(log01SelectionId)}
+                    />
+                  </td>
                   <td className="py-3 px-4">
                     <div className="flex flex-col gap-0.5">
                       <span className="font-medium text-[#0a0a0a]">{wh.name}</span>
@@ -3274,62 +3301,46 @@ function StockAnalysisDrilldown({
                     </div>
                   </td>
                   <td className="py-3 px-4 text-right text-[#0a0a0a] font-normal">{wh.stock}</td>
-                  <td className="py-3 px-4 text-right text-[#4b535c]">—</td>
-                  {packDrilldownSizes.map((size) => {
-                    const soh = wh.sohBySize?.[size]
-                    const cellKey = `${wh.id}-size-${size}`
-                    const revealed = activeTransferCell === cellKey
-                    return (
-                      <td
-                        key={cellKey}
-                        className="py-3 px-4 text-right cursor-pointer"
-                        onClick={() => {
-                          if (soh == null) return
-                          toggleTransferCellReveal(cellKey)
-                        }}
+                  <td className="py-3 px-4 text-right">
+                    <div className="flex flex-wrap gap-1 justify-end">
+                      <TuHoverPopover
+                        panel={
+                          <TuTruckTransferHoverCard
+                            loc={{
+                              name: wh.name,
+                              forecast: wh.forecast,
+                              targetWeeks: wh.targetWeeks,
+                              receivingWeeksCoverage:
+                                wh.weeksCoverage != null && wh.targetWeeks != null
+                                  ? `${wh.weeksCoverage} → ${wh.weeksCoverage} (${wh.targetWeeks} target)`
+                                  : undefined,
+                            }}
+                            borderClassName="border-[#A234DA]"
+                            variant="soh"
+                            sohValue={packsAvailable}
+                            sohWeeksCoverage={
+                              wh.weeksCoverage != null && wh.targetWeeks != null
+                                ? `${wh.weeksCoverage} (${wh.targetWeeks} target)`
+                                : '—'
+                            }
+                            sohForecast={wh.forecast}
+                            sohInTransit={false}
+                            onMoreDetails={() => {}}
+                          />
+                        }
                       >
-                        {soh == null ? (
-                          <span className="text-[#4b535c]">—</span>
-                        ) : revealed ? (
-                          <div className="flex flex-wrap gap-1 justify-end" onClick={(e) => e.stopPropagation()}>
-                            <TuHoverPopover
-                              panel={
-                                <TuTruckTransferHoverCard
-                                  loc={{
-                                    name: wh.name,
-                                    forecast: wh.forecast,
-                                    targetWeeks: wh.targetWeeks,
-                                    receivingWeeksCoverage:
-                                      wh.weeksCoverage != null && wh.targetWeeks != null
-                                        ? `${wh.weeksCoverage} → ${wh.weeksCoverage} (${wh.targetWeeks} target)`
-                                        : undefined,
-                                  }}
-                                  borderClassName="border-[#A234DA]"
-                                  variant="soh"
-                                  sohValue={soh}
-                                  sohWeeksCoverage={
-                                    wh.weeksCoverage != null && wh.targetWeeks != null
-                                      ? `${wh.weeksCoverage} (${wh.targetWeeks} target)`
-                                      : '—'
-                                  }
-                                  sohForecast={wh.forecast}
-                                  sohInTransit={false}
-                                  onMoreDetails={() => {}}
-                                />
-                              }
-                            >
-                              <span className="inline-flex h-[26px] min-w-[50px] w-fit shrink-0 items-center justify-center gap-1.5 rounded-[2px] bg-[#A234DA] px-[6px] py-[2px] text-[12px] font-medium text-white cursor-pointer transition-[filter,box-shadow] hover:brightness-90 hover:shadow-[0px_2px_4px_rgba(0,0,0,0.1)]">
-                                <IconPackageTu />
-                                {soh}
-                              </span>
-                            </TuHoverPopover>
-                          </div>
-                        ) : (
-                          <span className="text-[#0a0a0a]">{soh}</span>
-                        )}
-                      </td>
-                    )
-                  })}
+                        <span className="inline-flex h-[26px] w-fit max-w-full shrink-0 items-center justify-center gap-1.5 rounded-[2px] bg-[#A234DA] px-[6px] py-[2px] text-[12px] font-medium text-white cursor-pointer transition-[filter,box-shadow] hover:brightness-90 hover:shadow-[0px_2px_4px_rgba(0,0,0,0.1)]">
+                          <IconPackageTu />
+                          {packsAvailable} packs available
+                        </span>
+                      </TuHoverPopover>
+                    </div>
+                  </td>
+                  {packDrilldownSizes.map((size) => (
+                    <td key={`${wh.id}-size-${size}`} className="py-3 px-4 text-right text-[#4b535c]">
+                      —
+                    </td>
+                  ))}
                   <td className="py-3 px-4 text-right text-[#4b535c]">—</td>
                   <td className="py-3 px-4 text-right text-[#4b535c]">—</td>
                   <td className="py-3 px-4 text-right text-[#4b535c]">—</td>
@@ -3352,16 +3363,7 @@ function StockAnalysisDrilldown({
               const isEditingPack = editingTuBoxKey === packEditKey
               return (
                 <tr key={loc.id} className="border-b border-[#E9EAEB] bg-white hover:bg-white">
-                  <td className="w-10 max-w-[40px] py-3 px-2">
-                    <button
-                      type="button"
-                      onClick={() => setSelectedTransferDetail(loc)}
-                      className="p-1 rounded-[4px] text-[#4B535C] hover:text-[#00050A] cursor-pointer transition-colors"
-                      aria-label={`View transfer detail for ${loc.name}`}
-                    >
-                      <IconChevronRight className="size-4" />
-                    </button>
-                  </td>
+                  <td className="w-10 max-w-[40px] py-3 px-2" />
                   <td className="py-3 px-4" onClick={(e) => e.stopPropagation()}>
                     <input
                       type="checkbox"
@@ -3420,7 +3422,7 @@ function StockAnalysisDrilldown({
                           packBoxes.map((n, i) => (
                             <EditableTuTransferBadge
                               key={tuBoxKey(loc.id, 'replen-pack', i)}
-                              value={n}
+                              value={1}
                               isEditing={false}
                               editingValue=""
                               onStartEdit={() => startEditTuBox(packEditKey, packCount)}
@@ -3659,16 +3661,7 @@ function StockAnalysisDrilldown({
           <tbody>
             {filteredLocations.map((loc) => (
               <tr key={loc.id} className="border-b border-[#E9EAEB] bg-white hover:bg-white">
-                <td className="w-10 max-w-[40px] py-3 px-2">
-                  <button
-                    type="button"
-                    onClick={() => setSelectedTransferDetail(loc)}
-                    className="p-1 rounded-[4px] text-[#4B535C] hover:text-[#00050A] cursor-pointer transition-colors"
-                    aria-label={`View transfer detail for ${loc.name}`}
-                  >
-                    <IconChevronRight className="size-4" />
-                  </button>
-                </td>
+                <td className="w-10 max-w-[40px] py-3 px-2" />
                 <td className="py-3 px-4" onClick={(e) => e.stopPropagation()}>
                   <input
                     type="checkbox"
@@ -3783,7 +3776,7 @@ function StockAnalysisDrilldown({
                                   return (
                                     <EditableTuTransferBadge
                                       key={key}
-                                      value={n}
+                                      value={1}
                                       isEditing={false}
                                       editingValue=""
                                       onStartEdit={() =>
