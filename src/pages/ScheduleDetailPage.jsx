@@ -414,6 +414,14 @@ const TRIPS_OTHER = [
 
 const TRIPS_ALL = [...TRIPS_OPERA, ...TRIPS_OTHER]
 
+// G.3f: minimal trip capacity seed for live-rebal hover subtitle (all Opera + Other trips).
+for (const t of TRIPS_ALL) {
+  if (t.capacityUnits == null) {
+    t.capacityUnits = Number(String(t.transfers ?? '').replace(/[^\d]/g, '')) || 0
+  }
+  if (t.maxCapacity == null) t.maxCapacity = 10000
+}
+
 const VIEW_OPTIONS = [
   'Show all recommendations',
   'Exception 1 — Transfer units lower than 10 · Location: Opéra',
@@ -691,6 +699,9 @@ const PACK_DRILLDOWN_META = {
       stock: '—',
       sohBySize: { S: 48 },
       storageCapacity: 'available',
+      forecast: 0,
+      weeksCoverage: 8.0,
+      targetWeeks: 6,
     },
   },
   9: {
@@ -703,6 +714,9 @@ const PACK_DRILLDOWN_META = {
       // Enough SOH to cover P1 (28) + P2 (27) outgoing by size
       sohBySize: { XS: 12, S: 40, M: 50, L: 40, XL: 12 },
       storageCapacity: 'available',
+      forecast: 0,
+      weeksCoverage: 12.0,
+      targetWeeks: 6,
     },
   },
   11: {
@@ -714,6 +728,9 @@ const PACK_DRILLDOWN_META = {
       stock: '—',
       sohBySize: { S: 80 },
       storageCapacity: 'available',
+      forecast: 0,
+      weeksCoverage: 10.0,
+      targetWeeks: 6,
     },
   },
 }
@@ -2138,10 +2155,42 @@ function ExplorerTransfersHoverCard({
   )
 }
 
+function TuHoverReasonBullet({ children }) {
+  return (
+    <div className="flex items-start gap-2 text-[13px]">
+      <TuHoverIconWrap>
+        <IconLightbulb />
+      </TuHoverIconWrap>
+      <span className="min-w-0 flex-1 font-medium leading-snug text-[#0a0a0a]">{children}</span>
+    </div>
+  )
+}
+
+/** Weeks coverage for SOH hover: "6.4 (6 target)". */
+function formatSohWeeksCoverageDisplay(loc, override) {
+  if (override != null && override !== '' && override !== '—') {
+    if (/\(\d+\s*target\)/.test(String(override))) return String(override)
+  }
+  const raw = String(loc?.receivingWeeksCoverage ?? '')
+  const full = raw.match(/→\s*([\d.]+)\s*\((\d+)\s*target\)/)
+  if (full) return `${full[1]} (${full[2]} target)`
+  const after = raw.match(/→\s*([\d.]+)/)
+  const target = loc?.targetWeeks
+  if (after && target != null && target !== '') return `${after[1]} (${target} target)`
+  if (target != null && target !== '') return `— (${target} target)`
+  return override ?? '—'
+}
+
+function buildTransferHoverReasonBullets(loc) {
+  const bullets = []
+  if (loc?.recommendationReason) bullets.push(String(loc.recommendationReason))
+  if (loc?.revenueIncrease) bullets.push(`Increase revenue by ${loc.revenueIncrease}`)
+  return bullets
+}
+
 /**
- * Live-rebal-aligned hover for drilldown boxes (G.3d+e).
+ * Live-rebal hover fidelity (G.3f).
  * variant: 'transfer' (rebal/loose) | 'pack' | 'soh'
- * Trip capacity shown only when trip.capacityUnits + trip.maxCapacity exist (mock gap otherwise).
  */
 function TuTruckTransferHoverCard({
   trip,
@@ -2157,47 +2206,83 @@ function TuTruckTransferHoverCard({
   sohLabel = 'Stock on-hand',
   sohValue,
   sohWeeksCoverage,
+  sohForecast,
+  sohInTransit = false,
 }) {
   const from = sendingLabel ?? trip?.from ?? '—'
   const to = receivingLabel ?? loc?.name ?? trip?.to ?? '—'
-  const tripTypeRaw = trip?.movementType
-  const tripType = Array.isArray(tripTypeRaw)
-    ? tripTypeRaw.map((t) => String(t).charAt(0).toUpperCase() + String(t).slice(1)).join(', ')
-    : tripTypeRaw || 'Rebalancing'
+  const capacityUnits = trip?.capacityUnits
+  const maxCapacity = trip?.maxCapacity
   const tripCapacity =
-    trip?.capacityUnits != null && trip?.maxCapacity != null
-      ? `Trip capacity: ${trip.capacityUnits} units (max ${Number(trip.maxCapacity).toLocaleString()})`
+    capacityUnits != null && maxCapacity != null
+      ? `Trip capacity: ${capacityUnits} units (max ${Number(maxCapacity).toLocaleString()})`
       : null
 
+  const moreDetails =
+    typeof onMoreDetails === 'function' ? (
+      <div className="pt-2.5">
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation()
+            onMoreDetails()
+          }}
+          className="pointer-events-auto text-[13px] font-medium text-[#0267ff] hover:underline"
+        >
+          More details
+        </button>
+      </div>
+    ) : null
+
   if (variant === 'soh') {
+    const weeksLine = formatSohWeeksCoverageDisplay(loc, sohWeeksCoverage)
+    const forecastLine = formatHoverForecastValue(
+      sohForecast ?? loc?.forecast,
+      { zeroForecastTag: true }
+    )
+    const contextMessage = sohInTransit
+      ? 'No transfers out recommended because stock is in transit'
+      : 'No transfer proposed'
     return (
       <div
-        className={`pointer-events-none w-[min(320px,calc(100vw-1.5rem))] max-h-[min(520px,72vh)] overflow-y-auto rounded-[6px] border bg-white p-4 shadow-[0_4px_20px_rgba(0,0,0,0.12)] ${borderClassName}`}
+        className={`pointer-events-auto w-[min(320px,calc(100vw-1.5rem))] max-h-[min(520px,72vh)] overflow-y-auto rounded-[6px] border bg-white p-4 shadow-[0_4px_20px_rgba(0,0,0,0.12)] ${borderClassName}`}
       >
         <div className="border-b border-[#E9EAEB] pb-3 text-[14px] font-semibold leading-snug text-[#0a0a0a]">
           {loc?.name ?? from}
         </div>
-        <TuHoverSection title="Stock on hand">
+        <div className="flex flex-col gap-1.5 border-b border-[#E9EAEB] py-2.5">
           <TuHoverRow
             icon={<IconPackageTu className="!size-3.5" />}
-            label={sohLabel}
+            label="Stock on-hand"
             value={sohValue}
           />
+          <TuHoverRow icon={<IconCalendarNote />} label="Weeks coverage" value={weeksLine} />
           <TuHoverRow
             icon={<IconCalendarNote />}
-            label="Weeks coverage"
-            value={sohWeeksCoverage ?? '—'}
+            label="Forecast per week"
+            value={forecastLine}
           />
-        </TuHoverSection>
-        <TuHoverSection title="Recommendation">
-          <div className="text-[13px] font-medium leading-snug text-[#0a0a0a]">No transfer proposed</div>
-        </TuHoverSection>
+        </div>
+        <div className="border-b border-[#E9EAEB] py-2.5 text-[13px] font-medium leading-snug text-[#0a0a0a]">
+          {contextMessage}
+        </div>
+        {moreDetails}
       </div>
     )
   }
 
-  const recPrimaryLabel = variant === 'pack' ? 'Transfer packs' : 'Transfer units'
-  const recPrimaryValue = variant === 'pack' ? packCount : truckUnits
+  const isPack = variant === 'pack'
+  const recPrimaryLabel = isPack ? 'Transfer packs' : 'Transfer units'
+  const recPrimaryValue = isPack ? packCount : truckUnits
+  const reasonBullets = buildTransferHoverReasonBullets(loc)
+  const packBreakdown =
+    packCompositionLine?.replace(/^Pack contents:\s*/i, '') ?? null
+  const packTransferInfoLine =
+    isPack && packCount != null && packBreakdown
+      ? `Transfer packs: ${packCount} · ${packBreakdown}`
+      : isPack && packCount != null
+        ? `Transfer packs: ${packCount}`
+        : null
 
   return (
     <div
@@ -2213,8 +2298,15 @@ function TuTruckTransferHoverCard({
       </div>
 
       <TuHoverSection title="Transfer info">
-        {variant === 'pack' && packCompositionLine ? (
-          <div className="text-[13px] font-medium leading-snug text-[#0a0a0a]">{packCompositionLine}</div>
+        {packTransferInfoLine ? (
+          <div className="flex items-start gap-2 text-[13px]">
+            <TuHoverIconWrap>
+              <IconPackageTu className="!size-3.5" />
+            </TuHoverIconWrap>
+            <span className="min-w-0 flex-1 font-medium leading-snug text-[#0a0a0a]">
+              {packTransferInfoLine}
+            </span>
+          </div>
         ) : (
           <TuHoverRow
             icon={<IconPackageTu className="!size-3.5" />}
@@ -2222,26 +2314,17 @@ function TuTruckTransferHoverCard({
             value={truckUnits}
           />
         )}
-        <TuHoverRow
-          icon={<IconPackageTu className="!size-3.5" />}
-          label="Available to send"
-          value={loc?.availableToSend}
-        />
-        <TuHoverRow icon={<IconReplenishment />} label="Trip type" value={tripType} />
       </TuHoverSection>
 
       <TuHoverSection title="Recommendation">
         <TuHoverRow
-          icon={variant === 'pack' ? <IconReplenishment /> : <IconRebalancing />}
+          icon={isPack ? <IconReplenishment /> : <IconRebalancing />}
           label={recPrimaryLabel}
           value={recPrimaryValue}
         />
-        <TuHoverRow icon={<IconTrendUp />} label="Revenue increase" value={loc?.revenueIncrease} />
-        {loc?.recommendationReason ? (
-          <div className="rounded-[4px] bg-[#f3f4f6] px-2.5 py-2 text-[12px] font-semibold leading-snug text-[#0a0a0a]">
-            {loc.recommendationReason}
-          </div>
-        ) : null}
+        {reasonBullets.map((text) => (
+          <TuHoverReasonBullet key={text}>{text}</TuHoverReasonBullet>
+        ))}
       </TuHoverSection>
 
       <TuHoverSection title="Forecast (per week)">
@@ -2257,20 +2340,7 @@ function TuTruckTransferHoverCard({
         />
       </TuHoverSection>
 
-      {typeof onMoreDetails === 'function' ? (
-        <div className="pt-2.5">
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation()
-              onMoreDetails()
-            }}
-            className="pointer-events-auto text-[13px] font-medium text-[#0267ff] hover:underline"
-          >
-            More details
-          </button>
-        </div>
-      ) : null}
+      {moreDetails}
     </div>
   )
 }
@@ -2414,7 +2484,7 @@ function getDrilldownSkuCoverageAtTarget(loc) {
   }
 }
 
-/** Build "Pack contents: S=2, M=3, L=2 (7 units/pack)" for a product×location. */
+/** Pack ratio breakdown e.g. "S=2, M=3, L=2 (7 units/pack)" (no Pack contents prefix). */
 function getPackCompositionLine(product, loc) {
   // Multi-SKU composition only for Coin (etc.); never bleed Opéra/Cap ratios onto Pre-sac/Gémo.
   if (getMultiSkuPacksForProduct(product).length > 0) {
@@ -2427,7 +2497,7 @@ function getPackCompositionLine(product, loc) {
       const units =
         packDef.packMultiple ??
         Object.values(packDef.packRatio).reduce((sum, n) => sum + (Number(n) || 0), 0)
-      return `Pack contents: ${parts.join(', ')} (${units} units/pack)`
+      return `${parts.join(', ')} (${units} units/pack)`
     }
   }
   const units =
@@ -2435,7 +2505,7 @@ function getPackCompositionLine(product, loc) {
       ? loc.packMultiple
       : product?.packMultiple) || 10
   const size = PACK_DRILLDOWN_META[product?.id]?.sizes?.[0] ?? 'S'
-  return `Pack contents: ${size}=${units} (${units} units/pack)`
+  return `${size}=${units} (${units} units/pack)`
 }
 
 /** Expand total units into one box per pack (each box displays packMultiple). */
@@ -3225,12 +3295,26 @@ function StockAnalysisDrilldown({
                             <TuHoverPopover
                               panel={
                                 <TuTruckTransferHoverCard
-                                  loc={{ name: wh.name }}
+                                  loc={{
+                                    name: wh.name,
+                                    forecast: wh.forecast,
+                                    targetWeeks: wh.targetWeeks,
+                                    receivingWeeksCoverage:
+                                      wh.weeksCoverage != null && wh.targetWeeks != null
+                                        ? `${wh.weeksCoverage} → ${wh.weeksCoverage} (${wh.targetWeeks} target)`
+                                        : undefined,
+                                  }}
                                   borderClassName="border-[#A234DA]"
                                   variant="soh"
-                                  sohLabel="Stock on-hand"
                                   sohValue={soh}
-                                  sohWeeksCoverage="—"
+                                  sohWeeksCoverage={
+                                    wh.weeksCoverage != null && wh.targetWeeks != null
+                                      ? `${wh.weeksCoverage} (${wh.targetWeeks} target)`
+                                      : '—'
+                                  }
+                                  sohForecast={wh.forecast}
+                                  sohInTransit={false}
+                                  onMoreDetails={() => {}}
                                 />
                               }
                             >
@@ -3614,9 +3698,9 @@ function StockAnalysisDrilldown({
                               loc={loc}
                               borderClassName="border-[#A234DA]"
                               variant="soh"
-                              sohLabel="Stock on-hand"
                               sohValue={loc.tuWarehouse}
-                              sohWeeksCoverage={loc.receivingWeeksCoverage ?? '—'}
+                              sohInTransit
+                              onMoreDetails={() => setSelectedTransferDetail(loc)}
                             />
                           }
                         >
