@@ -514,7 +514,7 @@ const LOCATIONS_BY_PRODUCT = {
       stockouts: '0 → 0',
       coverage: '40% → 100%',
       targetWeeks: 6,
-      receivingWeeksCoverage: '2.1 → 5.8 (6 target)',
+      receivingWeeksCoverage: '2.1 → 6.2 (6 target)',
       recommendationReason: 'Improve coverage',
       revenueIncrease: '€210',
       availableToSend: 8,
@@ -539,7 +539,7 @@ const LOCATIONS_BY_PRODUCT = {
       stockouts: '0 → 0',
       coverage: '20% → 80%',
       targetWeeks: 4,
-      receivingWeeksCoverage: '1.0 → 3.5 (4 target)',
+      receivingWeeksCoverage: '1.0 → 4.5 (4 target)',
       recommendationReason: 'Improve coverage',
       revenueIncrease: '€95',
       availableToSend: 5,
@@ -566,9 +566,15 @@ const LOCATIONS_BY_PRODUCT = {
       salesL30: 8,
       forecast: 1.2,
       stockouts: '0 → 0',
-      coverage: '50% → 100%',
+      coverage: '0% → 67%',
       targetWeeks: 6,
-      receivingWeeksCoverage: '2.0 → 5.5 (6 target)',
+      receivingWeeksCoverage: '1.6 → 6.5 (6 target)',
+      // Per-SKU weeks after pack delivery (P1). 2 of 3 sizes at/above target → ~67%.
+      skuCoverageWeeks: {
+        S: { before: 1.5, after: 6.8 },
+        M: { before: 2.0, after: 7.2 },
+        L: { before: 1.2, after: 5.4 },
+      },
       recommendationReason: 'Increase revenue',
       revenueIncrease: '€420',
       availableToSend: 12,
@@ -593,9 +599,17 @@ const LOCATIONS_BY_PRODUCT = {
       salesL30: 5,
       forecast: 0.9,
       stockouts: '0 → 0',
-      coverage: '40% → 95%',
+      coverage: '0% → 60%',
       targetWeeks: 6,
-      receivingWeeksCoverage: '1.8 → 5.0 (6 target)',
+      receivingWeeksCoverage: '1.4 → 6.3 (6 target)',
+      // Per-SKU weeks after P2 delivery. 3 of 5 sizes at/above target → 60%.
+      skuCoverageWeeks: {
+        XS: { before: 1.0, after: 6.5 },
+        S: { before: 1.5, after: 7.0 },
+        M: { before: 2.0, after: 7.5 },
+        L: { before: 1.8, after: 5.2 },
+        XL: { before: 0.8, after: 5.0 },
+      },
       recommendationReason: 'Improve coverage',
       revenueIncrease: '€310',
       availableToSend: 10,
@@ -621,9 +635,9 @@ const LOCATIONS_BY_PRODUCT = {
       salesL30: 7,
       forecast: 1.1,
       stockouts: '0 → 0',
-      coverage: '35% → 95%',
+      coverage: '0% → 100%',
       targetWeeks: 6,
-      receivingWeeksCoverage: '1.8 → 5.2 (6 target)',
+      receivingWeeksCoverage: '1.8 → 6.5 (6 target)',
       recommendationReason: 'Improve coverage',
       revenueIncrease: '€310',
       availableToSend: 9,
@@ -647,9 +661,9 @@ const LOCATIONS_BY_PRODUCT = {
       salesL30: 4,
       forecast: 0.9,
       stockouts: '0 → 0',
-      coverage: '30% → 90%',
+      coverage: '0% → 100%',
       targetWeeks: 6,
-      receivingWeeksCoverage: '1.5 → 5.0 (6 target)',
+      receivingWeeksCoverage: '1.5 → 6.2 (6 target)',
       recommendationReason: 'Improve coverage',
       revenueIncrease: '€280',
       availableToSend: 7,
@@ -1347,15 +1361,13 @@ function BeforeAfterText({ value, className = '' }) {
   )
 }
 
-/** Coverage primary (% SKUs at/above target before→after) + muted weeks-target subcopy. */
+/** Coverage primary (% SKUs at/above target before→after) + muted numeric weeks subcopy. */
 function DrilldownCoverageCell({ coverage, targetWeeks }) {
   return (
     <div className="flex flex-col items-end gap-0.5">
       <BeforeAfterText value={coverage} className="text-[14px]" />
       {targetWeeks != null && targetWeeks !== '' ? (
-        <span className="text-[12px] font-normal text-[#4b535c]">
-          {targetWeeks} wks target
-        </span>
+        <span className="text-[12px] font-normal text-[#4b535c]">{targetWeeks}</span>
       ) : null}
     </div>
   )
@@ -2283,12 +2295,29 @@ function locationVisibleForTripTypeFilters(loc, tripTypeFilters) {
 }
 
 /**
- * Approximate "% of SKUs at/above coverage target" from location weeks-of-cover vs target.
- * Mock has no per-SKU coverage-vs-target rows — receivingWeeksCoverage is the closest proxy.
- * Returns { pctLine: '0% → 100%', targetWeeks } or null.
+ * "% of SKUs at/above coverage target" for a drilldown location.
+ * Prefer per-SKU weeks (skuCoverageWeeks) when seeded; else approximate from
+ * receivingWeeksCoverage vs targetWeeks (single binary for the location).
  */
 function getDrilldownSkuCoverageAtTarget(loc) {
   const target = Number(loc?.targetWeeks)
+  const skuWeeks = loc?.skuCoverageWeeks
+  if (skuWeeks && typeof skuWeeks === 'object' && Number.isFinite(target) && target > 0) {
+    const entries = Object.values(skuWeeks)
+    if (entries.length > 0) {
+      let beforeAt = 0
+      let afterAt = 0
+      for (const entry of entries) {
+        if (Number(entry?.before) >= target) beforeAt += 1
+        if (Number(entry?.after) >= target) afterAt += 1
+      }
+      const n = entries.length
+      return {
+        pctLine: `${Math.round((beforeAt / n) * 100)}% → ${Math.round((afterAt / n) * 100)}%`,
+        targetWeeks: target,
+      }
+    }
+  }
   const raw = String(loc?.receivingWeeksCoverage ?? '')
   // e.g. "3.2 → 6.4 (6 target)" or "N/A (0 forecast)"
   const match = raw.match(/^([\d.]+)\s*→\s*([\d.]+)/)
@@ -2302,7 +2331,6 @@ function getDrilldownSkuCoverageAtTarget(loc) {
       targetWeeks: target,
     }
   }
-  // Fallback: loc.coverage when already a % → % string
   if (loc?.coverage && String(loc.coverage).includes('%') && String(loc.coverage).includes('→')) {
     return {
       pctLine: loc.coverage,
@@ -2313,6 +2341,41 @@ function getDrilldownSkuCoverageAtTarget(loc) {
     pctLine: '—',
     targetWeeks: Number.isFinite(target) ? target : loc?.targetWeeks,
   }
+}
+
+/** Minimal pack-composition hover (G.3c) — not a full transfer popover rebuild. */
+function PackCompositionHoverCard({ line, borderClassName = 'border-[#BE185D]' }) {
+  return (
+    <div
+      className={`pointer-events-none w-[min(300px,calc(100vw-1.5rem))] rounded-[6px] border bg-white p-3 shadow-[0_4px_20px_rgba(0,0,0,0.12)] ${borderClassName}`}
+    >
+      <div className="text-[13px] font-medium leading-snug text-[#0a0a0a]">{line}</div>
+    </div>
+  )
+}
+
+/** Build "Pack contents: S=2, M=3, L=2 (7 units/pack)" for a product×location. */
+function getPackCompositionLine(product, loc) {
+  // Multi-SKU composition only for Coin (etc.); never bleed Opéra/Cap ratios onto Pre-sac/Gémo.
+  if (getMultiSkuPacksForProduct(product).length > 0) {
+    const packDef = findMultiSkuPackByLocation(loc?.name)
+    if (packDef?.packRatio) {
+      const parts = Object.entries(packDef.packRatio).map(([sku, n]) => {
+        const size = String(sku).includes('-') ? String(sku).split('-').pop() : sku
+        return `${size}=${n}`
+      })
+      const units =
+        packDef.packMultiple ??
+        Object.values(packDef.packRatio).reduce((sum, n) => sum + (Number(n) || 0), 0)
+      return `Pack contents: ${parts.join(', ')} (${units} units/pack)`
+    }
+  }
+  const units =
+    (loc?.packMultiple != null && loc.packMultiple > 0
+      ? loc.packMultiple
+      : product?.packMultiple) || 10
+  const size = PACK_DRILLDOWN_META[product?.id]?.sizes?.[0] ?? 'S'
+  return `Pack contents: ${size}=${units} (${units} units/pack)`
 }
 
 /** Expand total units into one box per pack (each box displays packMultiple). */
@@ -3142,10 +3205,8 @@ function StockAnalysisDrilldown({
                               bgClassName="bg-[#BE185D]"
                               icon={<IconReplenishment />}
                               hoverPanel={
-                                <TuTruckTransferHoverCard
-                                  trip={trip}
-                                  loc={loc}
-                                  truckUnits={n}
+                                <PackCompositionHoverCard
+                                  line={getPackCompositionLine(product, loc)}
                                   borderClassName="border-[#BE185D]"
                                 />
                               }
@@ -3485,10 +3546,8 @@ function StockAnalysisDrilldown({
                                       bgClassName="bg-[#BE185D]"
                                       icon={<IconReplenishment />}
                                       hoverPanel={
-                                        <TuTruckTransferHoverCard
-                                          trip={trip}
-                                          loc={loc}
-                                          truckUnits={n}
+                                        <PackCompositionHoverCard
+                                          line={getPackCompositionLine(product, loc)}
                                           borderClassName="border-[#BE185D]"
                                         />
                                       }
