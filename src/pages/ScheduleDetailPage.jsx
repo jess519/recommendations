@@ -1420,14 +1420,13 @@ function ProductCoverageText({ coverageWeeks, coverageTarget, coverage, stale = 
   )
 }
 
-/** Products tab only — do not use for Explorer (keeps ProductNextEventCell). */
-function ProductCreationDateCell() {
+/** Products tab only — event name + batch creation date stand-in (SCHEDULE_CREATION_DATE). */
+function ProductNextEventProductsCell({ nextEvent }) {
+  if (!nextEvent?.name) return null
   return (
     <div className="flex flex-col items-end gap-1">
-      <span className="text-[13px] font-medium text-[#0a0a0a]">{SCHEDULE_CREATION_DATE}</span>
-      <span className="text-[12px] text-[#4b535c]">
-        {SCHEDULE_SUBMISSION_DEADLINE || '—'}
-      </span>
+      <span className="text-[13px] font-medium text-[#0a0a0a]">{nextEvent.name}</span>
+      <span className="text-[12px] text-[#4b535c]">{SCHEDULE_CREATION_DATE}</span>
     </div>
   )
 }
@@ -4530,11 +4529,14 @@ function ProductsDrilldown({
           >
             <span className="inline-flex w-full min-w-0 items-center justify-end gap-2">
               {grip}
-              <span
-                className="inline-flex items-center gap-1 cursor-help"
-                title="Batch creation date for this schedule. Submission deadline shown as secondary context when available."
-              >
-                Creation date <IconInfo />
+              <span className="flex flex-col items-end justify-center gap-0.5 leading-tight">
+                <span
+                  className="inline-flex items-center gap-1 cursor-help"
+                  title="The next scheduled inventory event for this product across all locations in scope"
+                >
+                  Next event <IconInfo />
+                </span>
+                <span className="text-[11px] font-normal text-[#4b535c]">Creation date</span>
               </span>
             </span>
           </th>
@@ -5061,7 +5063,7 @@ function ProductsDrilldown({
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right align-top`}>
             <div className="flex justify-end line-clamp-2 min-w-0">
-              <ProductCreationDateCell />
+              <ProductNextEventProductsCell nextEvent={p.nextEvent} />
             </div>
           </td>
         )
@@ -5212,22 +5214,6 @@ function ProductsDrilldown({
           </button>
           <button
             type="button"
-            className="h-10 px-4 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] font-medium text-[#22272f] hover:bg-[#f3f4f6] shrink-0"
-            aria-label="Save view"
-          >
-            Save
-          </button>
-          <button
-            type="button"
-            className="h-10 px-3 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#22272f] hover:bg-[#f3f4f6] shrink-0 inline-flex items-center gap-1.5"
-            aria-label="Default view"
-            aria-haspopup="listbox"
-          >
-            Default view
-            <IconChevronDown />
-          </button>
-          <button
-            type="button"
             className="h-10 w-10 flex items-center justify-center rounded-[4px] border border-[#e9eaeb] bg-white text-[#22272f] hover:bg-[#f3f4f6] shrink-0"
             aria-label="Sort order"
           >
@@ -5277,6 +5263,24 @@ function ProductsDrilldown({
               activeId={productsActiveQuickFilter}
               onChange={setProductsActiveQuickFilter}
             />
+          </div>
+          <div className="flex items-center gap-2 shrink-0 ml-auto">
+            <button
+              type="button"
+              className="h-10 px-4 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] font-medium text-[#22272f] hover:bg-[#f3f4f6] shrink-0"
+              aria-label="Save view"
+            >
+              Save
+            </button>
+            <button
+              type="button"
+              className="h-10 px-3 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#22272f] hover:bg-[#f3f4f6] shrink-0 inline-flex items-center gap-1.5"
+              aria-label="Default view"
+              aria-haspopup="listbox"
+            >
+              Default view
+              <IconChevronDown />
+            </button>
           </div>
         </div>
 
