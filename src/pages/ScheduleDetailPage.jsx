@@ -1233,6 +1233,12 @@ function buildExplorerData() {
     row.packMultiple = null
     row.transfers = unitsPerPack * packDef.packCount
     row.stockAfter = row.stockBefore + row.transfers + (row.stockFromOtherStores ?? 0)
+    // Coin pack children: end-state coverage reflects pack arrival (stock / forecast weeks)
+    if (row.productId === 'exp-p-coin') {
+      const weeklyDemand = Number(row.forecast) > 0 ? Number(row.forecast) : 0.5
+      row.coverageWeeksBefore = Number((row.stockBefore / weeklyDemand).toFixed(1))
+      row.coverageWeeksAfter = Number((row.stockAfter / weeklyDemand).toFixed(1))
+    }
   }
 
   // Coin-pack: only show annotated pack-member replen rows (drop stray size×store noise)
@@ -7059,13 +7065,11 @@ function renderExplorerPackRowCell(packRow, col, {
               <span className="text-[12px] text-[#B45309]">availability exceeded</span>
             ) : (
               <span
-                className={`inline-flex items-center gap-1 text-[12px] ${
+                className={`whitespace-normal text-right text-[12px] leading-snug ${
                   availableConstrained ? 'text-[#B45309]' : 'text-[#166534]'
                 }`}
               >
-                <span>{packsAvailable}</span>
-                <PackUnitLabel count={packsAvailable} />
-                <span>available to send</span>
+                {formatPackLabel(packsAvailable)} available to send
               </span>
             )}
           </div>
@@ -7177,7 +7181,7 @@ function renderExplorerPackChildCell(child, col, {
       return (
         <td key={col.id} className={`${childTdClass} ${col.minWidth} ${alignClass}`}>
           <div className="flex flex-col items-end gap-0.5">
-            <span className="inline-flex items-baseline gap-1 text-[13px] text-[#0a0a0a]">
+            <span className="inline-flex items-baseline gap-1 text-[13px] text-[#9ca3af]">
               <span>
                 {child.stockBefore} → {child.stockAfter}
               </span>
@@ -7194,16 +7198,20 @@ function renderExplorerPackChildCell(child, col, {
         </td>
       )
     }
-    case 'revenue': {
-      const revenueStale = explorerRowHasPackUnitOverride(child, explorerTransferOverrides)
+    case 'revenue':
       return (
         <td key={col.id} className={`${childTdClass} ${col.minWidth} ${alignClass}`}>
-          <span className={`text-[13px] ${revenueStale ? 'text-[#9ca3af]' : 'text-[#0a0a0a]'}`}>
-            {child.revenue}
+          {EXPLORER_PACK_MUTED_DASH}
+        </td>
+      )
+    case 'coverage':
+      return (
+        <td key={col.id} className={`${childTdClass} ${col.minWidth} ${alignClass}`}>
+          <span className="text-[13px] text-[#9ca3af]">
+            {child.coverageWeeksBefore} → {child.coverageWeeksAfter} wks
           </span>
         </td>
       )
-    }
     case 'status':
       return (
         <td key={col.id} className={`${explorerStatusTdClass} ${col.minWidth}`}>
@@ -8071,18 +8079,20 @@ function ExplorerTable({
                       onClick={(e) => e.stopPropagation()}
                     >
                       <div className="flex items-start gap-1">
-                        <button
-                          type="button"
-                          className="flex size-6 items-center justify-center rounded-[4px] text-[#4b535c] hover:bg-[#e5e7eb]"
-                          aria-label={isExpanded ? 'Collapse pack' : 'Expand pack'}
-                          aria-expanded={isExpanded}
-                          onClick={() => togglePackExpanded(row.packGroupId)}
-                        >
-                          {/* IconChevronRight ignores className — wrap for rotate */}
-                          <span className={`inline-flex ${isExpanded ? 'rotate-90' : ''}`}>
-                            <IconChevronRight />
-                          </span>
-                        </button>
+                        {!row.isSingleSkuPack && (
+                          <button
+                            type="button"
+                            className="flex size-6 items-center justify-center rounded-[4px] text-[#4b535c] hover:bg-[#e5e7eb]"
+                            aria-label={isExpanded ? 'Collapse pack' : 'Expand pack'}
+                            aria-expanded={isExpanded}
+                            onClick={() => togglePackExpanded(row.packGroupId)}
+                          >
+                            {/* IconChevronRight ignores className — wrap for rotate */}
+                            <span className={`inline-flex ${isExpanded ? 'rotate-90' : ''}`}>
+                              <IconChevronRight />
+                            </span>
+                          </button>
+                        )}
                         <input
                           type="checkbox"
                           className={explorerCheckboxInputClass}
