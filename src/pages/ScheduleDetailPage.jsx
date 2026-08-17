@@ -3282,6 +3282,8 @@ function StockAnalysisDrilldown({
             {(() => {
               const wh = packDrilldownMeta.warehouse
               const packsAvailable = log01PacksAvailable
+              const log01PackCellKey = `${wh.id}-pack`
+              const log01PackRevealed = activeTransferCell === log01PackCellKey
               return (
                 <tr key={wh.id} className="border-b border-[#E9EAEB] bg-white hover:bg-white">
                   <td className="w-10 max-w-[40px] py-3 px-2" />
@@ -3301,40 +3303,50 @@ function StockAnalysisDrilldown({
                     </div>
                   </td>
                   <td className="py-3 px-4 text-right text-[#0a0a0a] font-normal">{wh.stock}</td>
-                  <td className="py-3 px-4 text-right">
-                    <div className="flex flex-wrap gap-1 justify-end">
-                      <TuHoverPopover
-                        panel={
-                          <TuTruckTransferHoverCard
-                            loc={{
-                              name: wh.name,
-                              forecast: wh.forecast,
-                              targetWeeks: wh.targetWeeks,
-                              receivingWeeksCoverage:
-                                wh.weeksCoverage != null && wh.targetWeeks != null
-                                  ? `${wh.weeksCoverage} → ${wh.weeksCoverage} (${wh.targetWeeks} target)`
-                                  : undefined,
-                            }}
-                            borderClassName="border-[#A234DA]"
-                            variant="soh"
-                            sohValue={packsAvailable}
-                            sohWeeksCoverage={
-                              wh.weeksCoverage != null && wh.targetWeeks != null
-                                ? `${wh.weeksCoverage} (${wh.targetWeeks} target)`
-                                : '—'
-                            }
-                            sohForecast={wh.forecast}
-                            sohInTransit={false}
-                            onMoreDetails={() => {}}
-                          />
-                        }
+                  <td
+                    className="py-3 px-4 text-right cursor-pointer"
+                    onClick={() => toggleTransferCellReveal(log01PackCellKey)}
+                  >
+                    {log01PackRevealed ? (
+                      <div
+                        className="flex flex-wrap gap-1 justify-end"
+                        onClick={(e) => e.stopPropagation()}
                       >
-                        <span className="inline-flex h-[26px] w-fit max-w-full shrink-0 items-center justify-center gap-1.5 rounded-[2px] bg-[#A234DA] px-[6px] py-[2px] text-[12px] font-medium text-white cursor-pointer transition-[filter,box-shadow] hover:brightness-90 hover:shadow-[0px_2px_4px_rgba(0,0,0,0.1)]">
-                          <IconPackageTu />
-                          {packsAvailable} packs available
-                        </span>
-                      </TuHoverPopover>
-                    </div>
+                        <TuHoverPopover
+                          panel={
+                            <TuTruckTransferHoverCard
+                              loc={{
+                                name: wh.name,
+                                forecast: wh.forecast,
+                                targetWeeks: wh.targetWeeks,
+                                receivingWeeksCoverage:
+                                  wh.weeksCoverage != null && wh.targetWeeks != null
+                                    ? `${wh.weeksCoverage} → ${wh.weeksCoverage} (${wh.targetWeeks} target)`
+                                    : undefined,
+                              }}
+                              borderClassName="border-[#A234DA]"
+                              variant="soh"
+                              sohValue={packsAvailable}
+                              sohWeeksCoverage={
+                                wh.weeksCoverage != null && wh.targetWeeks != null
+                                  ? `${wh.weeksCoverage} (${wh.targetWeeks} target)`
+                                  : '—'
+                              }
+                              sohForecast={wh.forecast}
+                              sohInTransit={false}
+                              onMoreDetails={() => {}}
+                            />
+                          }
+                        >
+                          <span className="inline-flex h-[26px] min-w-[50px] w-fit shrink-0 items-center justify-center gap-1.5 rounded-[2px] bg-[#A234DA] px-[6px] py-[2px] text-[12px] font-medium text-white cursor-pointer transition-[filter,box-shadow] hover:brightness-90 hover:shadow-[0px_2px_4px_rgba(0,0,0,0.1)]">
+                            <IconPackageTu />
+                            {packsAvailable}
+                          </span>
+                        </TuHoverPopover>
+                      </div>
+                    ) : (
+                      <span className="text-[#0a0a0a]">{packsAvailable}</span>
+                    )}
                   </td>
                   {packDrilldownSizes.map((size) => (
                     <td key={`${wh.id}-size-${size}`} className="py-3 px-4 text-right text-[#4b535c]">
