@@ -1974,28 +1974,11 @@ function SkuDetailsHoverCard({ row }) {
   )
 }
 
-/** Hover popover for TU warehouse / truck chips (stock analysis table) */
-function TuBadgeHoverCard({ loc, borderClassName, stockLabel, stockValue, icon }) {
-  const status = loc.assortmentStatus ?? 'Unassorted'
-  return (
-    <div
-      className={`pointer-events-none w-[min(280px,calc(100vw-1.5rem))] rounded-[8px] border bg-white p-4 shadow-[0_4px_16px_rgba(0,0,0,0.1)] ${borderClassName}`}
-    >
-      <div className="border-b border-[#E9EAEB] pb-3 text-[15px] font-semibold leading-snug text-[#0a0a0a]">{loc.name}</div>
-      <div className="mt-3 flex items-center justify-between gap-3">
-        <div className="flex min-w-0 items-center gap-2 text-[14px] text-[#0a0a0a]">
-          <span className="flex shrink-0 items-center">{icon}</span>
-          <span>{stockLabel}</span>
-        </div>
-        <span className="shrink-0 rounded-[4px] bg-[#f3f4f6] px-2 py-1 text-center text-[12px] font-semibold tabular-nums text-[#0a0a0a]">
-          {stockValue}
-        </span>
-      </div>
-      <div className="mt-3">
-        <span className="inline-block rounded-[4px] bg-[#f3f4f6] px-2 py-1 text-[12px] font-semibold text-[#0a0a0a]">{status}</span>
-      </div>
-    </div>
-  )
+/** Format forecast cell for live-rebal hover (receiving / sending). */
+function formatHoverForecastValue(value, { zeroForecastTag = false } = {}) {
+  if (value == null || value === '') return '—'
+  if (zeroForecastTag && Number(value) === 0) return '0 (0 forecast)'
+  return value
 }
 
 function TuHoverIconWrap({ children }) {
@@ -2155,51 +2138,139 @@ function ExplorerTransfersHoverCard({
   )
 }
 
-/** Multi-section transfer popover for truck TU badges (matches transfer detail summary) */
-function TuTruckTransferHoverCard({ trip, loc, truckUnits, borderClassName }) {
-  const tripType = trip.movementType || 'Rebalancing'
-  const assortment = loc.assortmentStatus ?? 'Unassorted'
+/**
+ * Live-rebal-aligned hover for drilldown boxes (G.3d+e).
+ * variant: 'transfer' (rebal/loose) | 'pack' | 'soh'
+ * Trip capacity shown only when trip.capacityUnits + trip.maxCapacity exist (mock gap otherwise).
+ */
+function TuTruckTransferHoverCard({
+  trip,
+  loc,
+  truckUnits,
+  borderClassName,
+  variant = 'transfer',
+  packCompositionLine,
+  packCount,
+  sendingLabel,
+  receivingLabel,
+  onMoreDetails,
+  sohLabel = 'Stock on-hand',
+  sohValue,
+  sohWeeksCoverage,
+}) {
+  const from = sendingLabel ?? trip?.from ?? '—'
+  const to = receivingLabel ?? loc?.name ?? trip?.to ?? '—'
+  const tripTypeRaw = trip?.movementType
+  const tripType = Array.isArray(tripTypeRaw)
+    ? tripTypeRaw.map((t) => String(t).charAt(0).toUpperCase() + String(t).slice(1)).join(', ')
+    : tripTypeRaw || 'Rebalancing'
+  const tripCapacity =
+    trip?.capacityUnits != null && trip?.maxCapacity != null
+      ? `Trip capacity: ${trip.capacityUnits} units (max ${Number(trip.maxCapacity).toLocaleString()})`
+      : null
+
+  if (variant === 'soh') {
+    return (
+      <div
+        className={`pointer-events-none w-[min(320px,calc(100vw-1.5rem))] max-h-[min(520px,72vh)] overflow-y-auto rounded-[6px] border bg-white p-4 shadow-[0_4px_20px_rgba(0,0,0,0.12)] ${borderClassName}`}
+      >
+        <div className="border-b border-[#E9EAEB] pb-3 text-[14px] font-semibold leading-snug text-[#0a0a0a]">
+          {loc?.name ?? from}
+        </div>
+        <TuHoverSection title="Stock on hand">
+          <TuHoverRow
+            icon={<IconPackageTu className="!size-3.5" />}
+            label={sohLabel}
+            value={sohValue}
+          />
+          <TuHoverRow
+            icon={<IconCalendarNote />}
+            label="Weeks coverage"
+            value={sohWeeksCoverage ?? '—'}
+          />
+        </TuHoverSection>
+        <TuHoverSection title="Recommendation">
+          <div className="text-[13px] font-medium leading-snug text-[#0a0a0a]">No transfer proposed</div>
+        </TuHoverSection>
+      </div>
+    )
+  }
+
+  const recPrimaryLabel = variant === 'pack' ? 'Transfer packs' : 'Transfer units'
+  const recPrimaryValue = variant === 'pack' ? packCount : truckUnits
+
   return (
     <div
-      className={`pointer-events-none w-[min(320px,calc(100vw-1.5rem))] max-h-[min(520px,72vh)] overflow-y-auto rounded-[6px] border bg-white p-4 shadow-[0_4px_20px_rgba(0,0,0,0.12)] ${borderClassName}`}
+      className={`pointer-events-auto w-[min(320px,calc(100vw-1.5rem))] max-h-[min(520px,72vh)] overflow-y-auto rounded-[6px] border bg-white p-4 shadow-[0_4px_20px_rgba(0,0,0,0.12)] ${borderClassName}`}
     >
-      <div className="border-b border-[#E9EAEB] pb-3 text-[14px] font-semibold leading-snug text-[#0a0a0a]">
-        {trip.from} → {trip.to}
+      <div className="border-b border-[#E9EAEB] pb-3">
+        <div className="text-[14px] font-semibold leading-snug text-[#0a0a0a]">
+          {from} → {to}
+        </div>
+        {tripCapacity ? (
+          <div className="mt-1 text-[12px] font-medium text-[#4b535c]">{tripCapacity}</div>
+        ) : null}
       </div>
 
       <TuHoverSection title="Transfer info">
+        {variant === 'pack' && packCompositionLine ? (
+          <div className="text-[13px] font-medium leading-snug text-[#0a0a0a]">{packCompositionLine}</div>
+        ) : (
+          <TuHoverRow
+            icon={<IconPackageTu className="!size-3.5" />}
+            label="Transfer units"
+            value={truckUnits}
+          />
+        )}
         <TuHoverRow
-          icon={<IconTruckTu className="!size-3.5" />}
-          label="Truck units"
-          value={truckUnits}
+          icon={<IconPackageTu className="!size-3.5" />}
+          label="Available to send"
+          value={loc?.availableToSend}
         />
-        <TuHoverRow icon={<IconRebalancing />} label="Transfer units" value={loc.tu} />
-        <TuHoverRow icon={<IconPackageTu className="!size-3.5" />} label="Available to send" value={loc.availableToSend} />
         <TuHoverRow icon={<IconReplenishment />} label="Trip type" value={tripType} />
-        <TuHoverRow icon={<IconPackageTu className="!size-3.5" />} label="Assortment" value={assortment} />
       </TuHoverSection>
 
       <TuHoverSection title="Recommendation">
-        <TuHoverRow icon={<IconRebalancing />} label="Transfer units" value={loc.tu} />
-        <TuHoverRow icon={<IconTrendUp />} label="Revenue increase" value={loc.revenueIncrease} />
+        <TuHoverRow
+          icon={variant === 'pack' ? <IconReplenishment /> : <IconRebalancing />}
+          label={recPrimaryLabel}
+          value={recPrimaryValue}
+        />
+        <TuHoverRow icon={<IconTrendUp />} label="Revenue increase" value={loc?.revenueIncrease} />
+        {loc?.recommendationReason ? (
+          <div className="rounded-[4px] bg-[#f3f4f6] px-2.5 py-2 text-[12px] font-semibold leading-snug text-[#0a0a0a]">
+            {loc.recommendationReason}
+          </div>
+        ) : null}
       </TuHoverSection>
 
-      <div className="border-b border-[#E9EAEB] py-2.5">
-        <div className="mb-2 text-[10px] font-bold uppercase tracking-[0.04em] text-[#9ca3af]">Recommendation reasons</div>
-        <div className="rounded-[4px] bg-[#f3f4f6] px-2.5 py-2 text-[12px] font-semibold leading-snug text-[#0a0a0a]">
-          {loc.recommendationReason ?? '—'}
+      <TuHoverSection title="Forecast (per week)">
+        <TuHoverRow
+          icon={<IconCalendarNote />}
+          label={from}
+          value={formatHoverForecastValue(loc?.sendingForecast)}
+        />
+        <TuHoverRow
+          icon={<IconCalendarNote />}
+          label={to}
+          value={formatHoverForecastValue(loc?.forecast, { zeroForecastTag: true })}
+        />
+      </TuHoverSection>
+
+      {typeof onMoreDetails === 'function' ? (
+        <div className="pt-2.5">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation()
+              onMoreDetails()
+            }}
+            className="pointer-events-auto text-[13px] font-medium text-[#0267ff] hover:underline"
+          >
+            More details
+          </button>
         </div>
-      </div>
-
-      <TuHoverSection title="Total stock">
-        <TuHoverRow icon={<IconPackageTu className="!size-3.5" />} label={trip.from} value={loc.sendingStock} />
-        <TuHoverRow icon={<IconPackageTu className="!size-3.5" />} label={loc.name} value={loc.stock} />
-      </TuHoverSection>
-
-      <TuHoverSection title="Total weeks coverage">
-        <TuHoverRow icon={<IconCalendarNote />} label={trip.from} value={loc.sendingCoverage} />
-        <TuHoverRow icon={<IconCalendarNote />} label={loc.name} value={loc.receivingWeeksCoverage} />
-      </TuHoverSection>
+      ) : null}
     </div>
   )
 }
@@ -2341,17 +2412,6 @@ function getDrilldownSkuCoverageAtTarget(loc) {
     pctLine: '—',
     targetWeeks: Number.isFinite(target) ? target : loc?.targetWeeks,
   }
-}
-
-/** Minimal pack-composition hover (G.3c) — not a full transfer popover rebuild. */
-function PackCompositionHoverCard({ line, borderClassName = 'border-[#BE185D]' }) {
-  return (
-    <div
-      className={`pointer-events-none w-[min(300px,calc(100vw-1.5rem))] rounded-[6px] border bg-white p-3 shadow-[0_4px_20px_rgba(0,0,0,0.12)] ${borderClassName}`}
-    >
-      <div className="text-[13px] font-medium leading-snug text-[#0a0a0a]">{line}</div>
-    </div>
-  )
 }
 
 /** Build "Pack contents: S=2, M=3, L=2 (7 units/pack)" for a product×location. */
@@ -2814,6 +2874,65 @@ function StockAnalysisDrilldown({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- getLocationTuDisplay closes over pack helpers / overrides
     [filteredLocations, isPackProduct, isMixedPackProduct, packMultiple, locationReplenOverrides]
   )
+  const summarySales = useMemo(
+    () =>
+      filteredLocations.reduce(
+        (acc, loc) => ({
+          l7: acc.l7 + (Number(loc.salesL7) || 0),
+          l30: acc.l30 + (Number(loc.salesL30) || 0),
+        }),
+        { l7: 0, l30: 0 }
+      ),
+    [filteredLocations]
+  )
+  const summaryStockouts = useMemo(() => {
+    let before = 0
+    let after = 0
+    let hasArrow = false
+    for (const loc of filteredLocations) {
+      const raw = String(loc.stockouts ?? '')
+      const match = raw.match(/^([\d.]+)\s*→\s*([\d.]+)/)
+      if (match) {
+        before += Number(match[1]) || 0
+        after += Number(match[2]) || 0
+        hasArrow = true
+        continue
+      }
+      const n = Number(raw)
+      if (Number.isFinite(n)) {
+        before += n
+        after += n
+      }
+    }
+    return { before, after, hasArrow }
+  }, [filteredLocations])
+  const summaryLocations = useMemo(() => {
+    let receiving = 0
+    for (const loc of filteredLocations) {
+      const packUnits = sumBoxUnits(getLocationPackBoxes(loc))
+      const looseUnits = sumBoxUnits(getLocationLooseBoxes(loc))
+      const truckUnits = sumBoxUnits(loc.tuTruck)
+      const replenUnits = !isPackProduct ? sumBoxUnits(loc.tuReplen) : 0
+      if (packUnits + looseUnits + truckUnits + replenUnits > 0) receiving += 1
+    }
+    // Pack layout: Log01 is the sending warehouse. Non-pack: trip origin is the sender.
+    const sending =
+      receiving > 0 ? (usePackDrilldownLayout || trip?.from ? 1 : 0) : 0
+    return { sending, receiving }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- pack/loose helpers close over overrides
+  }, [
+    filteredLocations,
+    usePackDrilldownLayout,
+    trip?.from,
+    isPackProduct,
+    locationReplenOverrides,
+  ])
+  const summaryStockoutsLabel = summaryStockouts.hasArrow
+    ? `${summaryStockouts.before} → ${summaryStockouts.after}`
+    : String(summaryStockouts.after)
+  const summaryLocationsLabel = `${summaryLocations.sending} sending → ${summaryLocations.receiving} receiving`
+  const packSendingLabel =
+    packDrilldownMeta?.warehouse?.name ?? 'Log01 entrepot logtex'
 
   if (selectedTransferDetail) {
     return (
@@ -3040,7 +3159,9 @@ function StockAnalysisDrilldown({
             <tr className="border-b border-[#E9EAEB] bg-white">
               <th className="w-10 max-w-[40px] bg-white py-2 px-2" />
               <th className="bg-white py-2 px-4" />
-              <th className="bg-white py-2 px-4" />
+              <th className="bg-white py-2 px-4 text-left text-[12px] font-bold text-[#0a0a0a]">
+                {summaryLocationsLabel}
+              </th>
               <th className="bg-white py-2 px-4 text-right text-[12px] font-bold text-[#0a0a0a]">
                 {summaryStock.before} → {summaryStock.after}
               </th>
@@ -3055,9 +3176,16 @@ function StockAnalysisDrilldown({
                   {packLayoutLooseTotalsBySize[size] ?? 0}
                 </th>
               ))}
-              <th className="bg-white py-2 px-4 text-right text-[12px] font-bold text-[#4b535c]">—</th>
+              <th className="bg-white py-2 px-4 text-right text-[12px] font-bold text-[#0a0a0a]">
+                <div className="flex flex-col items-end">
+                  <span>{summarySales.l7}</span>
+                  <span className="text-[11px] font-normal text-[#4b535c]">{summarySales.l30}</span>
+                </div>
+              </th>
               <th className="bg-white py-2 px-4 text-right text-[12px] font-bold text-[#4b535c]">7.01 per wk</th>
-              <th className="bg-white py-2 px-4 text-right text-[12px] font-bold text-[#4b535c]">—</th>
+              <th className="bg-white py-2 px-4 text-right text-[12px] font-bold text-[#0a0a0a]">
+                {summaryStockoutsLabel}
+              </th>
               <th className="bg-white py-2 px-4 text-right text-[12px] font-bold text-[#4b535c]">—</th>
               <th className="bg-white py-2 px-4 text-right text-[12px] font-bold text-[#4b535c]">—</th>
             </tr>
@@ -3093,11 +3221,24 @@ function StockAnalysisDrilldown({
                         {soh == null ? (
                           <span className="text-[#4b535c]">—</span>
                         ) : revealed ? (
-                          <div className="flex flex-wrap gap-1 justify-end">
-                            <span className="inline-flex h-[26px] min-w-[50px] w-fit shrink-0 items-center justify-center gap-1.5 rounded-[2px] bg-[#A234DA] px-[6px] py-[2px] text-[12px] font-medium text-white">
-                              <IconPackageTu />
-                              {soh}
-                            </span>
+                          <div className="flex flex-wrap gap-1 justify-end" onClick={(e) => e.stopPropagation()}>
+                            <TuHoverPopover
+                              panel={
+                                <TuTruckTransferHoverCard
+                                  loc={{ name: wh.name }}
+                                  borderClassName="border-[#A234DA]"
+                                  variant="soh"
+                                  sohLabel="Stock on-hand"
+                                  sohValue={soh}
+                                  sohWeeksCoverage="—"
+                                />
+                              }
+                            >
+                              <span className="inline-flex h-[26px] min-w-[50px] w-fit shrink-0 items-center justify-center gap-1.5 rounded-[2px] bg-[#A234DA] px-[6px] py-[2px] text-[12px] font-medium text-white cursor-pointer transition-[filter,box-shadow] hover:brightness-90 hover:shadow-[0px_2px_4px_rgba(0,0,0,0.1)]">
+                                <IconPackageTu />
+                                {soh}
+                              </span>
+                            </TuHoverPopover>
                           </div>
                         ) : (
                           <span className="text-[#0a0a0a]">{soh}</span>
@@ -3205,9 +3346,17 @@ function StockAnalysisDrilldown({
                               bgClassName="bg-[#BE185D]"
                               icon={<IconReplenishment />}
                               hoverPanel={
-                                <PackCompositionHoverCard
-                                  line={getPackCompositionLine(product, loc)}
+                                <TuTruckTransferHoverCard
+                                  trip={trip}
+                                  loc={loc}
+                                  truckUnits={n}
                                   borderClassName="border-[#BE185D]"
+                                  variant="pack"
+                                  packCompositionLine={getPackCompositionLine(product, loc)}
+                                  packCount={packCount}
+                                  sendingLabel={packSendingLabel}
+                                  receivingLabel={loc.name}
+                                  onMoreDetails={() => setSelectedTransferDetail(loc)}
                                 />
                               }
                             />
@@ -3267,6 +3416,8 @@ function StockAnalysisDrilldown({
                                         loc={loc}
                                         truckUnits={effectiveValue}
                                         borderClassName="border-[#EC4899]"
+                                        receivingLabel={loc.name}
+                                        onMoreDetails={() => setSelectedTransferDetail(loc)}
                                       />
                                     }
                                   />
@@ -3297,6 +3448,8 @@ function StockAnalysisDrilldown({
                                         loc={loc}
                                         truckUnits={effectiveValue}
                                         borderClassName="border-[#0267FF]"
+                                        receivingLabel={loc.name}
+                                        onMoreDetails={() => setSelectedTransferDetail(loc)}
                                       />
                                     }
                                   />
@@ -3396,16 +3549,25 @@ function StockAnalysisDrilldown({
             <tr className="border-b border-[#E9EAEB] bg-white">
               <th className="w-10 max-w-[40px] bg-white py-2 px-2" />
               <th className="bg-white py-2 px-4" />
-              <th className="bg-white py-2 px-4" />
+              <th className="bg-white py-2 px-4 text-left text-[12px] font-bold text-[#0a0a0a]">
+                {summaryLocationsLabel}
+              </th>
               <th className="bg-white py-2 px-4 text-right text-[12px] font-bold text-[#0a0a0a]">
                 {summaryStock.before} → {summaryStock.after}
               </th>
               <th className="bg-white py-2 px-4 text-right text-[12px] font-bold text-[#0a0a0a]">
                 {summaryTU.before} → {summaryTU.after}
               </th>
-              <th className="bg-white py-2 px-4 text-right text-[12px] font-bold text-[#4b535c]">—</th>
+              <th className="bg-white py-2 px-4 text-right text-[12px] font-bold text-[#0a0a0a]">
+                <div className="flex flex-col items-end">
+                  <span>{summarySales.l7}</span>
+                  <span className="text-[11px] font-normal text-[#4b535c]">{summarySales.l30}</span>
+                </div>
+              </th>
               <th className="bg-white py-2 px-4 text-right text-[12px] font-bold text-[#4b535c]">7.01 per wk</th>
-              <th className="bg-white py-2 px-4 text-right text-[12px] font-bold text-[#4b535c]">—</th>
+              <th className="bg-white py-2 px-4 text-right text-[12px] font-bold text-[#0a0a0a]">
+                {summaryStockoutsLabel}
+              </th>
               <th className="bg-white py-2 px-4 text-right text-[12px] font-bold text-[#4b535c]">—</th>
               <th className="bg-white py-2 px-4 text-right text-[12px] font-bold text-[#4b535c]">—</th>
             </tr>
@@ -3448,12 +3610,13 @@ function StockAnalysisDrilldown({
                       {loc.tuWarehouse != null && (
                         <TuHoverPopover
                           panel={
-                            <TuBadgeHoverCard
+                            <TuTruckTransferHoverCard
                               loc={loc}
                               borderClassName="border-[#A234DA]"
-                              stockLabel="Stock on-hand"
-                              stockValue={loc.tuWarehouse}
-                              icon={<IconPackageTu className="!size-4 text-[#6b7280]" />}
+                              variant="soh"
+                              sohLabel="Stock on-hand"
+                              sohValue={loc.tuWarehouse}
+                              sohWeeksCoverage={loc.receivingWeeksCoverage ?? '—'}
                             />
                           }
                         >
@@ -3488,6 +3651,8 @@ function StockAnalysisDrilldown({
                                 loc={loc}
                                 truckUnits={effectiveValue}
                                 borderClassName="border-[#0267FF]"
+                                receivingLabel={loc.name}
+                                onMoreDetails={() => setSelectedTransferDetail(loc)}
                               />
                             }
                           />
@@ -3546,9 +3711,17 @@ function StockAnalysisDrilldown({
                                       bgClassName="bg-[#BE185D]"
                                       icon={<IconReplenishment />}
                                       hoverPanel={
-                                        <PackCompositionHoverCard
-                                          line={getPackCompositionLine(product, loc)}
+                                        <TuTruckTransferHoverCard
+                                          trip={trip}
+                                          loc={loc}
+                                          truckUnits={n}
                                           borderClassName="border-[#BE185D]"
+                                          variant="pack"
+                                          packCompositionLine={getPackCompositionLine(product, loc)}
+                                          packCount={packCount}
+                                          sendingLabel={packSendingLabel}
+                                          receivingLabel={loc.name}
+                                          onMoreDetails={() => setSelectedTransferDetail(loc)}
                                         />
                                       }
                                     />
@@ -3582,6 +3755,8 @@ function StockAnalysisDrilldown({
                                         loc={loc}
                                         truckUnits={effectiveValue}
                                         borderClassName="border-[#EC4899]"
+                                        receivingLabel={loc.name}
+                                        onMoreDetails={() => setSelectedTransferDetail(loc)}
                                       />
                                     }
                                   />
@@ -3613,6 +3788,8 @@ function StockAnalysisDrilldown({
                                 loc={loc}
                                 truckUnits={effectiveValue}
                                 borderClassName="border-[#EC4899]"
+                                receivingLabel={loc.name}
+                                onMoreDetails={() => setSelectedTransferDetail(loc)}
                               />
                             }
                           />
@@ -3628,6 +3805,8 @@ function StockAnalysisDrilldown({
                               loc={loc}
                               truckUnits={loc.tu.split(' → ')[1] || '—'}
                               borderClassName="border-[#4B535C]"
+                              receivingLabel={loc.name}
+                              onMoreDetails={() => setSelectedTransferDetail(loc)}
                             />
                           }
                         >
