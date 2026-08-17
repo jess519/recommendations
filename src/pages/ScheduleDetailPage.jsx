@@ -55,10 +55,10 @@ function TripColumnDragGrip({ visualIndex, onDragStart }) {
 const TRIPS_TABLE_DEFAULT_COL_WIDTHS = [200, 200, 140, 120, 220, 160, 100, 200]
 const TRIPS_TABLE_NUM_DATA_COLS = TRIPS_TABLE_DEFAULT_COL_WIDTHS.length
 const TRIPS_COL_DND_MIME = 'application/x-autone-trip-col'
-/** Logical product table columns are 0–17 (Status = 17). */
+/** Logical product table columns are 0–17 (Status = 17). 11 = L90D sales; Depth removed. */
 const PRODUCTS_TABLE_NUM_DATA_COLS = 18
-/** Default visual order: cols 9–13 = Stockouts, Sales, Forecast, Stock in circulation, Warehouse units. */
-const PRODUCTS_TABLE_DEFAULT_COLUMN_ORDER = [0, 1, 2, 3, 4, 5, 6, 7, 12, 10, 11, 8, 9, 13, 14, 15, 16, 17]
+/** Default visual order: stockouts, sales, L90D, forecast, units, warehouse, … Status last. */
+const PRODUCTS_TABLE_DEFAULT_COLUMN_ORDER = [0, 1, 2, 3, 4, 5, 6, 7, 13, 10, 11, 12, 8, 9, 14, 15, 16, 17]
 const PRODUCTS_COL_DND_MIME = 'application/x-autone-products-col'
 const LOCATIONS_TABLE_NUM_DATA_COLS = 14
 const LOCATIONS_COL_DND_MIME = 'application/x-autone-locations-col'
@@ -106,12 +106,12 @@ const PRODUCTS_TAB_SUMMARY_TOTALS = {
   warehouseSell: '400 → 360 to sell',
   salesL7: '138 L7D',
   salesL30: '693 L30D',
+  salesL90: '1840 L90D',
   forecast: '5.58',
   stockouts: '1 → 2',
   locations: '11 → 10',
   overstocks: '21 → 5',
-  understocks: '25 → 11',
-  depth: '4.0 → 5.2' }
+  understocks: '25 → 11' }
 
 /** Hardcoded totals for Trips tab summary row (TRIPS_ALL, default full dataset view). */
 const TRIPS_TAB_SUMMARY_TOTALS_FULL = {
@@ -452,24 +452,24 @@ const LOCATIONS_TABLE_DATA = [
 // Mock products for trip drilldown (keyed by trip id)
 const PRODUCTS_BY_TRIP = {
   1: [
-    { id: 1, name: 'Croi-sac zip l', sku: 'A1398810', colour: 'Noir', movementType: ["rebalancing"], transfers: 3, transfersSub: 1, approvedTransfers: 3, unapprovedTransfers: 0, revenue: '€1.48K', recommended: 1, recommendedBadges: ['REV'], recommendedSub: 2, confidence: 'high', coverage: 'All SKUs in target', coverageWeeks: 5.2, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 1, salesL30: 2, forecast: 1.87, stockouts: '0 → 0', locations: '2 → 2', overstocks: '4 → 1', understocks: '8 → 5', depth: '5.0 → 5.0',     status: 'approved_by_system', currentUnits: 12, currentUnitsInTransit: 3, warehouseAllocateLine: '52 → 48', warehouseSellLine: '68 → 62', packMultiple: null, skuCount: 1 },
-    { id: 2, name: 'Pre-sac seau m', sku: 'A101080', colour: 'Bleu petrole', movementType: ["rebalancing"], transfers: 2, transfersSub: 1, approvedTransfers: 0, unapprovedTransfers: 2, revenue: '€1.12K', recommended: 2, recommendedBadges: ['VIS'], recommendedSub: 1, confidence: 'high', coverage: '2% below target', coverageWeeks: 3.8, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 2, salesL30: 3, forecast: 0.54, stockouts: '0 → 1', locations: '2 → 1', overstocks: '3 → 0', understocks: '2 → 0', depth: '3.0 → 6.0', currentUnits: 8, currentUnitsInTransit: 0, warehouseAllocateLine: '58 → 51', warehouseSellLine: '72 → 65', packMultiple: null, skuCount: 1 },
-    { id: 3, name: 'Ang-sac pte main m', sku: 'A1252810', colour: 'Figue', movementType: ["rebalancing"], transfers: 3, transfersSub: 2, approvedTransfers: 2, unapprovedTransfers: 1, revenue: '€1.89K', recommended: 3, recommendedBadges: ['REV', 'VIS'], recommendedSub: 1, confidence: 'high', coverage: '5% below target', coverageWeeks: 3.1, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 1, salesL30: 4, forecast: 2.1, stockouts: '1 → 0', locations: '2 → 2', overstocks: '5 → 2', understocks: '6 → 3', depth: '4.2 → 4.8',     status: 'last_edited_by_user', editedByUser: 'Csabi Toth', currentUnits: 25, currentUnitsInTransit: 5, warehouseAllocateLine: '48 → 42', warehouseSellLine: '65 → 58', packMultiple: null, skuCount: 2 },
-    { id: 4, name: 'Croi-sac zip s', sku: 'A1398811', colour: 'Noir', movementType: ["rebalancing"], transfers: 1, transfersSub: 2, approvedTransfers: 1, unapprovedTransfers: 0, revenue: '€0.98K', recommended: 1, recommendedBadges: ['REV'], recommendedSub: 2, confidence: 'high', coverage: 'All SKUs in target', coverageWeeks: 6.1, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 0, salesL30: 1, forecast: 0.32, stockouts: '0 → 0', locations: '1 → 2', overstocks: '2 → 1', understocks: '4 → 2', depth: '5.0 → 5.0', status: 'approved_by_user', approvedByUser: 'Jess Briggs', currentUnits: 3, currentUnitsInTransit: 1, warehouseAllocateLine: '55 → 50', warehouseSellLine: '70 → 63', packMultiple: null, skuCount: 1 },
+    { id: 1, name: 'Croi-sac zip l', sku: 'A1398810', colour: 'Noir', movementType: ["rebalancing"], transfers: 3, transfersSub: 1, approvedTransfers: 3, unapprovedTransfers: 0, revenue: '€1.48K', recommended: 1, recommendedBadges: ['REV'], recommendedSub: 2, confidence: 'high', coverage: 'All SKUs in target', coverageWeeks: 5.2, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 1, salesL30: 2, salesL90: 5, forecast: 1.87, stockouts: '0 → 0', locations: '2 → 2', overstocks: '4 → 1', understocks: '8 → 5',     status: 'approved_by_system', currentUnits: 12, currentUnitsInTransit: 3, warehouseAllocateLine: '52 → 48', warehouseSellLine: '68 → 62', packMultiple: null, skuCount: 1 },
+    { id: 2, name: 'Pre-sac seau m', sku: 'A101080', colour: 'Bleu petrole', movementType: ["rebalancing"], transfers: 2, transfersSub: 1, approvedTransfers: 0, unapprovedTransfers: 2, revenue: '€1.12K', recommended: 2, recommendedBadges: ['VIS'], recommendedSub: 1, confidence: 'high', coverage: '2% below target', coverageWeeks: 3.8, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 2, salesL30: 3, salesL90: 8, forecast: 0.54, stockouts: '0 → 1', locations: '2 → 1', overstocks: '3 → 0', understocks: '2 → 0', currentUnits: 8, currentUnitsInTransit: 0, warehouseAllocateLine: '58 → 51', warehouseSellLine: '72 → 65', packMultiple: null, skuCount: 1 },
+    { id: 3, name: 'Ang-sac pte main m', sku: 'A1252810', colour: 'Figue', movementType: ["rebalancing"], transfers: 3, transfersSub: 2, approvedTransfers: 2, unapprovedTransfers: 1, revenue: '€1.89K', recommended: 3, recommendedBadges: ['REV', 'VIS'], recommendedSub: 1, confidence: 'high', coverage: '5% below target', coverageWeeks: 3.1, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 1, salesL30: 4, salesL90: 11, forecast: 2.1, stockouts: '1 → 0', locations: '2 → 2', overstocks: '5 → 2', understocks: '6 → 3',     status: 'last_edited_by_user', editedByUser: 'Csabi Toth', currentUnits: 25, currentUnitsInTransit: 5, warehouseAllocateLine: '48 → 42', warehouseSellLine: '65 → 58', packMultiple: null, skuCount: 2 },
+    { id: 4, name: 'Croi-sac zip s', sku: 'A1398811', colour: 'Noir', movementType: ["rebalancing"], transfers: 1, transfersSub: 2, approvedTransfers: 1, unapprovedTransfers: 0, revenue: '€0.98K', recommended: 1, recommendedBadges: ['REV'], recommendedSub: 2, confidence: 'high', coverage: 'All SKUs in target', coverageWeeks: 6.1, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 0, salesL30: 1, salesL90: 3, forecast: 0.32, stockouts: '0 → 0', locations: '1 → 2', overstocks: '2 → 1', understocks: '4 → 2', status: 'approved_by_user', approvedByUser: 'Jess Briggs', currentUnits: 3, currentUnitsInTransit: 1, warehouseAllocateLine: '55 → 50', warehouseSellLine: '70 → 63', packMultiple: null, skuCount: 1 },
     // COIN: single-SKU pack-constrained replen — inline-editable
-    { id: 5, name: 'Pre-sac seau s', sku: 'A101081', colour: 'Bleu petrole', movementType: ["replenishment"], transfers: 20, transfersSub: 1, approvedTransfers: 10, unapprovedTransfers: 10, revenue: '€0.76K', recommended: 20, recommendedBadges: ['VIS'], recommendedSub: 1, confidence: 'low', coverage: '8% below target', coverageWeeks: 2.9, coverageTarget: 6, nextEvent: { name: 'UK weekly replenishment', date: '16/06/2026' }, salesL7: 1, salesL30: 2, forecast: 0.54, stockouts: '0 → 1', locations: '2 → 1', overstocks: '3 → 0', understocks: '2 → 0', depth: '3.0 → 6.0', status: 'needs_review_from_user', currentUnits: 15, currentUnitsInTransit: 2, warehouseAllocateLine: '50 → 45', warehouseSellLine: '68 → 61', packMultiple: 10, skuCount: 1, isVirtualPack: true },
+    { id: 5, name: 'Pre-sac seau s', sku: 'A101081', colour: 'Bleu petrole', movementType: ["replenishment"], transfers: 20, transfersSub: 1, approvedTransfers: 10, unapprovedTransfers: 10, revenue: '€0.76K', recommended: 20, recommendedBadges: ['VIS'], recommendedSub: 1, confidence: 'low', coverage: '8% below target', coverageWeeks: 2.9, coverageTarget: 6, nextEvent: { name: 'UK weekly replenishment', date: '16/06/2026' }, salesL7: 1, salesL30: 2, salesL90: 5, forecast: 0.54, stockouts: '0 → 1', locations: '2 → 1', overstocks: '3 → 0', understocks: '2 → 0', status: 'needs_review_from_user', currentUnits: 15, currentUnitsInTransit: 2, warehouseAllocateLine: '50 → 45', warehouseSellLine: '68 → 61', packMultiple: 10, skuCount: 1, isVirtualPack: true },
     // Mixed replen+rebal — pack rules apply to replen portion in hover
-    { id: 6, name: 'Ang-sac pte main s', sku: 'A1252811', colour: 'Figue', movementType: ["replenishment","rebalancing"], transfers: 22, transfersSub: 1, replenTransfers: 20, rebalTransfers: 2, approvedTransfers: 12, unapprovedTransfers: 10, revenue: '€0.65K', recommended: 1, recommendedBadges: ['REV'], recommendedSub: 1, confidence: 'low', coverage: '67% below target', coverageWeeks: 1.4, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 0, salesL30: 1, forecast: 0.21, stockouts: '0 → 0', locations: '2 → 2', overstocks: '4 → 1', understocks: '3 → 1', depth: '4.0 → 4.5', status: 'partially_approved', currentUnits: 7, currentUnitsInTransit: 0, warehouseAllocateLine: '57 → 44', warehouseSellLine: '57 → 51', packMultiple: 10, skuCount: 1, isVirtualPack: false },
+    { id: 6, name: 'Ang-sac pte main s', sku: 'A1252811', colour: 'Figue', movementType: ["replenishment","rebalancing"], transfers: 22, transfersSub: 1, replenTransfers: 20, rebalTransfers: 2, approvedTransfers: 12, unapprovedTransfers: 10, revenue: '€0.65K', recommended: 1, recommendedBadges: ['REV'], recommendedSub: 1, confidence: 'low', coverage: '67% below target', coverageWeeks: 1.4, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 0, salesL30: 1, salesL90: 3, forecast: 0.21, stockouts: '0 → 0', locations: '2 → 2', overstocks: '4 → 1', understocks: '3 → 1', status: 'partially_approved', currentUnits: 7, currentUnitsInTransit: 0, warehouseAllocateLine: '57 → 44', warehouseSellLine: '57 → 51', packMultiple: 10, skuCount: 1, isVirtualPack: false },
     // Multi-SKU pack-constrained replen — read-only on Products row
-    { id: 9, name: 'Coin-pack tote m', sku: 'C900010', colour: 'Noir', movementType: ["replenishment"], transfers: 55, transfersSub: 2, approvedTransfers: 28, unapprovedTransfers: 27, revenue: '€1.10K', recommended: 55, recommendedBadges: ['VIS'], recommendedSub: 2, confidence: 'high', coverage: '4% below target', coverageWeeks: 4.2, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 2, salesL30: 8, forecast: 1.2, stockouts: '0 → 0', locations: '2 → 2', overstocks: '2 → 1', understocks: '6 → 4', depth: '4.0 → 4.8', status: 'unapproved', currentUnits: 22, currentUnitsInTransit: 4, warehouseAllocateLine: '60 → 52', warehouseSellLine: '70 → 62', packMultiple: 10, skuCount: 5, isVirtualPack: true },
+    { id: 9, name: 'Coin-pack tote m', sku: 'C900010', colour: 'Noir', movementType: ["replenishment"], transfers: 55, transfersSub: 2, approvedTransfers: 28, unapprovedTransfers: 27, revenue: '€1.10K', recommended: 55, recommendedBadges: ['VIS'], recommendedSub: 2, confidence: 'high', coverage: '4% below target', coverageWeeks: 4.2, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 2, salesL30: 8, salesL90: 22, forecast: 1.2, stockouts: '0 → 0', locations: '2 → 2', overstocks: '2 → 1', understocks: '6 → 4', status: 'unapproved', currentUnits: 22, currentUnitsInTransit: 4, warehouseAllocateLine: '60 → 52', warehouseSellLine: '70 → 62', packMultiple: 10, skuCount: 5, isVirtualPack: true },
     // Unconstrained replen — baseline non-pack path
-    { id: 10, name: 'Mini sac band', sku: 'C900020', colour: 'Rouge', movementType: ["replenishment"], transfers: 3, transfersSub: 1, approvedTransfers: 2, unapprovedTransfers: 1, revenue: '€0.42K', recommended: 3, recommendedBadges: ['REV'], recommendedSub: 1, confidence: 'low', coverage: 'All SKUs in target', coverageWeeks: 6.0, coverageTarget: 6, nextEvent: { name: 'UK weekly replenishment', date: '16/06/2026' }, salesL7: 1, salesL30: 3, forecast: 0.6, stockouts: '0 → 0', locations: '1 → 1', overstocks: '1 → 0', understocks: '2 → 1', depth: '5.0 → 5.5', status: 'approved_by_system', currentUnits: 9, currentUnitsInTransit: 0, warehouseAllocateLine: '30 → 27', warehouseSellLine: '40 → 36', packMultiple: null, skuCount: 1 },
+    { id: 10, name: 'Mini sac band', sku: 'C900020', colour: 'Rouge', movementType: ["replenishment"], transfers: 3, transfersSub: 1, approvedTransfers: 2, unapprovedTransfers: 1, revenue: '€0.42K', recommended: 3, recommendedBadges: ['REV'], recommendedSub: 1, confidence: 'low', coverage: 'All SKUs in target', coverageWeeks: 6.0, coverageTarget: 6, nextEvent: { name: 'UK weekly replenishment', date: '16/06/2026' }, salesL7: 1, salesL30: 3, salesL90: 8, forecast: 0.6, stockouts: '0 → 0', locations: '1 → 1', overstocks: '1 → 0', understocks: '2 → 1', status: 'approved_by_system', currentUnits: 9, currentUnitsInTransit: 0, warehouseAllocateLine: '30 → 27', warehouseSellLine: '40 → 36', packMultiple: null, skuCount: 1 },
     // Mixed fulfilment (pack + loose) — packTransfers drives pack subtext; total = pack + loose
-    { id: 11, name: 'Gémo LOT tote', sku: 'G900100', colour: 'Camel', movementType: ["replenishment"], transfers: 58, packTransfers: 50, looseTransfers: 8, transfersSub: 2, approvedTransfers: 30, unapprovedTransfers: 28, revenue: '€0.94K', recommended: 58, recommendedBadges: ['VIS'], recommendedSub: 1, confidence: 'high', coverage: '3% below target', coverageWeeks: 3.6, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 2, salesL30: 7, forecast: 1.1, stockouts: '0 → 0', locations: '2 → 2', overstocks: '2 → 1', understocks: '5 → 3', depth: '3.8 → 4.6', status: 'unapproved', currentUnits: 14, currentUnitsInTransit: 2, warehouseAllocateLine: '62 → 54', warehouseSellLine: '74 → 66', packMultiple: 10, skuCount: 1, isVirtualPack: false },
+    { id: 11, name: 'Gémo LOT tote', sku: 'G900100', colour: 'Camel', movementType: ["replenishment"], transfers: 58, packTransfers: 50, looseTransfers: 8, transfersSub: 2, approvedTransfers: 30, unapprovedTransfers: 28, revenue: '€0.94K', recommended: 58, recommendedBadges: ['VIS'], recommendedSub: 1, confidence: 'high', coverage: '3% below target', coverageWeeks: 3.6, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 2, salesL30: 7, salesL90: 19, forecast: 1.1, stockouts: '0 → 0', locations: '2 → 2', overstocks: '2 → 1', understocks: '5 → 3', status: 'unapproved', currentUnits: 14, currentUnitsInTransit: 2, warehouseAllocateLine: '62 → 54', warehouseSellLine: '74 → 66', packMultiple: 10, skuCount: 1, isVirtualPack: false },
   ],
   2: [
-    { id: 7, name: 'Sac zip l', sku: 'B200001', colour: 'Noir', movementType: ["rebalancing"], transfers: 2, transfersSub: 1, approvedTransfers: 2, unapprovedTransfers: 0, revenue: '€0.89K', recommended: 2, recommendedBadges: ['REV'], recommendedSub: 1, confidence: 'high', coverage: '3% below target', coverageWeeks: 4.8, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 1, salesL30: 2, forecast: 0.45, stockouts: '0 → 0', locations: '2 → 2', overstocks: '2 → 1', understocks: '5 → 3', depth: '4.5 → 5.0', status: 'approved_by_user', approvedByUser: 'Jess Briggs', currentUnits: 18, currentUnitsInTransit: 4, warehouseAllocateLine: '40 → 36', warehouseSellLine: '50 → 45', packMultiple: null, skuCount: 1 },
-    { id: 8, name: 'Sac seau m', sku: 'B200002', colour: 'Noir', movementType: ["rebalancing"], transfers: 1, transfersSub: 2, approvedTransfers: 0, unapprovedTransfers: 1, revenue: '€0.52K', recommended: 1, recommendedBadges: ['VIS'], recommendedSub: 2, confidence: 'high', coverage: 'All SKUs in target', coverageWeeks: 6.3, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 0, salesL30: 1, forecast: 0.28, stockouts: '0 → 1', locations: '1 → 2', overstocks: '1 → 0', understocks: '3 → 1', depth: '3.6 → 4.3', status: 'last_edited_by_user', editedByUser: 'Csabi Toth', currentUnits: 11, currentUnitsInTransit: 2, warehouseAllocateLine: '35 → 30', warehouseSellLine: '42 → 38', packMultiple: null, skuCount: 1 },
+    { id: 7, name: 'Sac zip l', sku: 'B200001', colour: 'Noir', movementType: ["rebalancing"], transfers: 2, transfersSub: 1, approvedTransfers: 2, unapprovedTransfers: 0, revenue: '€0.89K', recommended: 2, recommendedBadges: ['REV'], recommendedSub: 1, confidence: 'high', coverage: '3% below target', coverageWeeks: 4.8, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 1, salesL30: 2, salesL90: 5, forecast: 0.45, stockouts: '0 → 0', locations: '2 → 2', overstocks: '2 → 1', understocks: '5 → 3', status: 'approved_by_user', approvedByUser: 'Jess Briggs', currentUnits: 18, currentUnitsInTransit: 4, warehouseAllocateLine: '40 → 36', warehouseSellLine: '50 → 45', packMultiple: null, skuCount: 1 },
+    { id: 8, name: 'Sac seau m', sku: 'B200002', colour: 'Noir', movementType: ["rebalancing"], transfers: 1, transfersSub: 2, approvedTransfers: 0, unapprovedTransfers: 1, revenue: '€0.52K', recommended: 1, recommendedBadges: ['VIS'], recommendedSub: 2, confidence: 'high', coverage: 'All SKUs in target', coverageWeeks: 6.3, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 0, salesL30: 1, salesL90: 3, forecast: 0.28, stockouts: '0 → 1', locations: '1 → 2', overstocks: '1 → 0', understocks: '3 → 1', status: 'last_edited_by_user', editedByUser: 'Csabi Toth', currentUnits: 11, currentUnitsInTransit: 2, warehouseAllocateLine: '35 → 30', warehouseSellLine: '42 → 38', packMultiple: null, skuCount: 1 },
   ] }
 
 // Default products when trip not in PRODUCTS_BY_TRIP
@@ -1402,24 +1402,32 @@ function ProductCoverageText({ coverageWeeks, coverageTarget, coverage, stale = 
   }
   const isBelowTarget = coverage?.includes('below target')
   const badgeText = isBelowTarget ? coverage.replace(' below target', ' of SKUs below target') : coverage
+  if (!coverage) return null
   return (
     <div className="flex flex-col items-end gap-1">
-      <span className={`text-[14px] font-medium ${stale ? 'text-[#9ca3af]' : 'text-[#0a0a0a]'}`}>
-        {coverageWeeks} wks
+      <span
+        className={`px-1.5 py-0.5 rounded-[4px] text-[11px] font-medium ${
+          stale
+            ? 'bg-[#f3f4f6] text-[#9ca3af]'
+            : isBelowTarget
+              ? 'bg-[#fee2e2] text-[#E30D3C]'
+              : 'bg-[#dcfce7] text-[#166534]'
+        }`}
+      >
+        {badgeText}
       </span>
-      {coverage && (
-        <span
-          className={`px-1.5 py-0.5 rounded-[4px] text-[11px] font-medium ${
-            stale
-              ? 'bg-[#f3f4f6] text-[#9ca3af]'
-              : isBelowTarget
-                ? 'bg-[#fee2e2] text-[#E30D3C]'
-                : 'bg-[#dcfce7] text-[#166534]'
-          }`}
-        >
-          {badgeText}
-        </span>
-      )}
+    </div>
+  )
+}
+
+/** Products tab only — do not use for Explorer (keeps ProductNextEventCell). */
+function ProductCreationDateCell() {
+  return (
+    <div className="flex flex-col items-end gap-1">
+      <span className="text-[13px] font-medium text-[#0a0a0a]">{SCHEDULE_CREATION_DATE}</span>
+      <span className="text-[12px] text-[#4b535c]">
+        {SCHEDULE_SUBMISSION_DEADLINE || '—'}
+      </span>
     </div>
   )
 }
@@ -4522,14 +4530,11 @@ function ProductsDrilldown({
           >
             <span className="inline-flex w-full min-w-0 items-center justify-end gap-2">
               {grip}
-              <span className="flex flex-col items-end justify-center gap-0.5 leading-tight">
-                <span
-                  className="inline-flex items-center gap-1 cursor-help"
-                  title="The next scheduled inventory event for this product across all locations in scope"
-                >
-                  Next event <IconInfo />
-                </span>
-                <span className="text-[11px] font-normal text-[#4b535c]">Submission deadline</span>
+              <span
+                className="inline-flex items-center gap-1 cursor-help"
+                title="Batch creation date for this schedule. Submission deadline shown as secondary context when available."
+              >
+                Creation date <IconInfo />
               </span>
             </span>
           </th>
@@ -4595,12 +4600,7 @@ function ProductsDrilldown({
           >
             <span className="inline-flex w-full min-w-0 items-center justify-end gap-2">
               {grip}
-              <span className="flex flex-col items-end justify-center gap-0.5 leading-tight">
-                <span className="inline-flex items-center gap-1">
-                  Forecast <IconInfo />
-                </span>
-                <span className="text-[11px] font-normal text-[#4b535c]">per wk</span>
-              </span>
+              L90D sales
             </span>
           </th>
         )
@@ -4613,7 +4613,12 @@ function ProductsDrilldown({
           >
             <span className="inline-flex w-full min-w-0 items-center justify-end gap-2">
               {grip}
-              Stockouts
+              <span className="flex flex-col items-end justify-center gap-0.5 leading-tight">
+                <span className="inline-flex items-center gap-1">
+                  Forecast <IconInfo />
+                </span>
+                <span className="text-[11px] font-normal text-[#4b535c]">per wk</span>
+              </span>
             </span>
           </th>
         )
@@ -4626,11 +4631,24 @@ function ProductsDrilldown({
           >
             <span className="inline-flex w-full min-w-0 items-center justify-end gap-2">
               {grip}
-              Locations
+              Stockouts
             </span>
           </th>
         )
       case 14:
+        return (
+          <th
+            key={logicalIdx}
+            className={`${productThPin(isFirst, isLast)}h-[62px] min-h-[62px] text-right px-4 align-middle font-medium text-[#00050A] min-w-[80px] box-border`}
+            {...d}
+          >
+            <span className="inline-flex w-full min-w-0 items-center justify-end gap-2">
+              {grip}
+              Locations
+            </span>
+          </th>
+        )
+      case 15:
         return (
           <th
             key={logicalIdx}
@@ -4645,7 +4663,7 @@ function ProductsDrilldown({
             </span>
           </th>
         )
-      case 15:
+      case 16:
         return (
           <th
             key={logicalIdx}
@@ -4656,21 +4674,6 @@ function ProductsDrilldown({
               {grip}
               <span className="inline-flex items-center gap-1">
                 Understocks <IconInfo />
-              </span>
-            </span>
-          </th>
-        )
-      case 16:
-        return (
-          <th
-            key={logicalIdx}
-            className={`${productThPin(isFirst, isLast)}h-[62px] min-h-[62px] text-right px-4 align-middle font-medium text-[#00050A] min-w-[70px] box-border`}
-            {...d}
-          >
-            <span className="inline-flex w-full min-w-0 items-center justify-end gap-2">
-              {grip}
-              <span className="inline-flex items-center gap-1">
-                Depth <IconInfo />
               </span>
             </span>
           </th>
@@ -4771,37 +4774,37 @@ function ProductsDrilldown({
       case 11:
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
-            {productSummary.forecast}
+            {productSummary.salesL90}
           </th>
         )
       case 12:
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
-            {productSummary.stockouts}
+            {productSummary.forecast}
           </th>
         )
       case 13:
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
-            {productSummary.locations}
+            {productSummary.stockouts}
           </th>
         )
       case 14:
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
-            {productSummary.overstocks}
+            {productSummary.locations}
           </th>
         )
       case 15:
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
-            {productSummary.understocks}
+            {productSummary.overstocks}
           </th>
         )
       case 16:
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
-            {productSummary.depth}
+            {productSummary.understocks}
           </th>
         )
       case 17:
@@ -5058,7 +5061,7 @@ function ProductsDrilldown({
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right align-top`}>
             <div className="flex justify-end line-clamp-2 min-w-0">
-              <ProductNextEventCell nextEvent={p.nextEvent} />
+              <ProductCreationDateCell />
             </div>
           </td>
         )
@@ -5099,37 +5102,37 @@ function ProductsDrilldown({
       case 11:
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right text-[#0a0a0a] align-top`}>
-            <div className="line-clamp-2 min-w-0 w-full text-right">{p.forecast}</div>
+            <div className="line-clamp-2 min-w-0 w-full text-right">{p.salesL90 ?? '—'}</div>
           </td>
         )
       case 12:
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right text-[#0a0a0a] align-top`}>
-            <div className="line-clamp-2 min-w-0 w-full text-right">{p.stockouts}</div>
+            <div className="line-clamp-2 min-w-0 w-full text-right">{p.forecast}</div>
           </td>
         )
       case 13:
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right text-[#0a0a0a] align-top`}>
-            <div className="line-clamp-2 min-w-0 w-full text-right">{p.locations}</div>
+            <div className="line-clamp-2 min-w-0 w-full text-right">{p.stockouts}</div>
           </td>
         )
       case 14:
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right text-[#0a0a0a] align-top`}>
-            <div className="line-clamp-2 min-w-0 w-full text-right">{p.overstocks}</div>
+            <div className="line-clamp-2 min-w-0 w-full text-right">{p.locations}</div>
           </td>
         )
       case 15:
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right text-[#0a0a0a] align-top`}>
-            <div className="line-clamp-2 min-w-0 w-full text-right">{p.understocks}</div>
+            <div className="line-clamp-2 min-w-0 w-full text-right">{p.overstocks}</div>
           </td>
         )
       case 16:
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right text-[#0a0a0a] align-top`}>
-            <div className="line-clamp-2 min-w-0 w-full text-right">{p.depth}</div>
+            <div className="line-clamp-2 min-w-0 w-full text-right">{p.understocks}</div>
           </td>
         )
       case 17:
@@ -5206,6 +5209,22 @@ function ProductsDrilldown({
             aria-label="Column settings"
           >
             <IconColumnSettings />
+          </button>
+          <button
+            type="button"
+            className="h-10 px-4 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] font-medium text-[#22272f] hover:bg-[#f3f4f6] shrink-0"
+            aria-label="Save view"
+          >
+            Save
+          </button>
+          <button
+            type="button"
+            className="h-10 px-3 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#22272f] hover:bg-[#f3f4f6] shrink-0 inline-flex items-center gap-1.5"
+            aria-label="Default view"
+            aria-haspopup="listbox"
+          >
+            Default view
+            <IconChevronDown />
           </button>
           <button
             type="button"
