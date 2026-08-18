@@ -55,10 +55,10 @@ function TripColumnDragGrip({ visualIndex, onDragStart }) {
 const TRIPS_TABLE_DEFAULT_COL_WIDTHS = [200, 200, 140, 120, 220, 160, 100, 200]
 const TRIPS_TABLE_NUM_DATA_COLS = TRIPS_TABLE_DEFAULT_COL_WIDTHS.length
 const TRIPS_COL_DND_MIME = 'application/x-autone-trip-col'
-/** Logical product table columns are 0–17 (Status = 17). */
+/** Logical product table columns are 0–17 (Status = 17). 11 = L90D sales; Depth removed. */
 const PRODUCTS_TABLE_NUM_DATA_COLS = 18
-/** Default visual order: cols 9–13 = Stockouts, Sales, Forecast, Stock in circulation, Warehouse units. */
-const PRODUCTS_TABLE_DEFAULT_COLUMN_ORDER = [0, 1, 2, 3, 4, 5, 6, 7, 12, 10, 11, 8, 9, 13, 14, 15, 16, 17]
+/** Default visual order: stockouts, sales, L90D, forecast, units, warehouse, … Status last. */
+const PRODUCTS_TABLE_DEFAULT_COLUMN_ORDER = [0, 1, 2, 3, 4, 5, 6, 7, 13, 10, 11, 12, 8, 9, 14, 15, 16, 17]
 const PRODUCTS_COL_DND_MIME = 'application/x-autone-products-col'
 const LOCATIONS_TABLE_NUM_DATA_COLS = 14
 const LOCATIONS_COL_DND_MIME = 'application/x-autone-locations-col'
@@ -106,12 +106,12 @@ const PRODUCTS_TAB_SUMMARY_TOTALS = {
   warehouseSell: '400 → 360 to sell',
   salesL7: '138 L7D',
   salesL30: '693 L30D',
+  salesL90: '1840 L90D',
   forecast: '5.58',
   stockouts: '1 → 2',
   locations: '11 → 10',
   overstocks: '21 → 5',
-  understocks: '25 → 11',
-  depth: '4.0 → 5.2' }
+  understocks: '25 → 11' }
 
 /** Hardcoded totals for Trips tab summary row (TRIPS_ALL, default full dataset view). */
 const TRIPS_TAB_SUMMARY_TOTALS_FULL = {
@@ -414,6 +414,14 @@ const TRIPS_OTHER = [
 
 const TRIPS_ALL = [...TRIPS_OPERA, ...TRIPS_OTHER]
 
+// G.3f: minimal trip capacity seed for live-rebal hover subtitle (all Opera + Other trips).
+for (const t of TRIPS_ALL) {
+  if (t.capacityUnits == null) {
+    t.capacityUnits = Number(String(t.transfers ?? '').replace(/[^\d]/g, '')) || 0
+  }
+  if (t.maxCapacity == null) t.maxCapacity = 10000
+}
+
 const VIEW_OPTIONS = [
   'Show all recommendations',
   'Exception 1 — Transfer units lower than 10 · Location: Opéra',
@@ -444,24 +452,24 @@ const LOCATIONS_TABLE_DATA = [
 // Mock products for trip drilldown (keyed by trip id)
 const PRODUCTS_BY_TRIP = {
   1: [
-    { id: 1, name: 'Croi-sac zip l', sku: 'A1398810', colour: 'Noir', movementType: ["rebalancing"], transfers: 3, transfersSub: 1, approvedTransfers: 3, unapprovedTransfers: 0, revenue: '€1.48K', recommended: 1, recommendedBadges: ['REV'], recommendedSub: 2, confidence: 'high', coverage: 'All SKUs in target', coverageWeeks: 5.2, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 1, salesL30: 2, forecast: 1.87, stockouts: '0 → 0', locations: '2 → 2', overstocks: '4 → 1', understocks: '8 → 5', depth: '5.0 → 5.0',     status: 'approved_by_system', currentUnits: 12, currentUnitsInTransit: 3, warehouseAllocateLine: '52 → 48', warehouseSellLine: '68 → 62', packMultiple: null, skuCount: 1 },
-    { id: 2, name: 'Pre-sac seau m', sku: 'A101080', colour: 'Bleu petrole', movementType: ["rebalancing"], transfers: 2, transfersSub: 1, approvedTransfers: 0, unapprovedTransfers: 2, revenue: '€1.12K', recommended: 2, recommendedBadges: ['VIS'], recommendedSub: 1, confidence: 'high', coverage: '2% below target', coverageWeeks: 3.8, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 2, salesL30: 3, forecast: 0.54, stockouts: '0 → 1', locations: '2 → 1', overstocks: '3 → 0', understocks: '2 → 0', depth: '3.0 → 6.0', currentUnits: 8, currentUnitsInTransit: 0, warehouseAllocateLine: '58 → 51', warehouseSellLine: '72 → 65', packMultiple: null, skuCount: 1 },
-    { id: 3, name: 'Ang-sac pte main m', sku: 'A1252810', colour: 'Figue', movementType: ["rebalancing"], transfers: 3, transfersSub: 2, approvedTransfers: 2, unapprovedTransfers: 1, revenue: '€1.89K', recommended: 3, recommendedBadges: ['REV', 'VIS'], recommendedSub: 1, confidence: 'high', coverage: '5% below target', coverageWeeks: 3.1, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 1, salesL30: 4, forecast: 2.1, stockouts: '1 → 0', locations: '2 → 2', overstocks: '5 → 2', understocks: '6 → 3', depth: '4.2 → 4.8',     status: 'last_edited_by_user', editedByUser: 'Csabi Toth', currentUnits: 25, currentUnitsInTransit: 5, warehouseAllocateLine: '48 → 42', warehouseSellLine: '65 → 58', packMultiple: null, skuCount: 2 },
-    { id: 4, name: 'Croi-sac zip s', sku: 'A1398811', colour: 'Noir', movementType: ["rebalancing"], transfers: 1, transfersSub: 2, approvedTransfers: 1, unapprovedTransfers: 0, revenue: '€0.98K', recommended: 1, recommendedBadges: ['REV'], recommendedSub: 2, confidence: 'high', coverage: 'All SKUs in target', coverageWeeks: 6.1, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 0, salesL30: 1, forecast: 0.32, stockouts: '0 → 0', locations: '1 → 2', overstocks: '2 → 1', understocks: '4 → 2', depth: '5.0 → 5.0', status: 'approved_by_user', approvedByUser: 'Jess Briggs', currentUnits: 3, currentUnitsInTransit: 1, warehouseAllocateLine: '55 → 50', warehouseSellLine: '70 → 63', packMultiple: null, skuCount: 1 },
+    { id: 1, name: 'Croi-sac zip l', sku: 'A1398810', colour: 'Noir', movementType: ["rebalancing"], transfers: 3, transfersSub: 1, approvedTransfers: 3, unapprovedTransfers: 0, revenue: '€1.48K', recommended: 1, recommendedBadges: ['REV'], recommendedSub: 2, confidence: 'high', coverage: 'All SKUs in target', coverageWeeks: 5.2, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 1, salesL30: 2, salesL90: 5, forecast: 1.87, stockouts: '0 → 0', locations: '2 → 2', overstocks: '4 → 1', understocks: '8 → 5',     status: 'approved_by_system', currentUnits: 12, currentUnitsInTransit: 3, warehouseAllocateLine: '52 → 48', warehouseSellLine: '68 → 62', packMultiple: null, skuCount: 1 },
+    { id: 2, name: 'Pre-sac seau m', sku: 'A101080', colour: 'Bleu petrole', movementType: ["rebalancing"], transfers: 2, transfersSub: 1, approvedTransfers: 0, unapprovedTransfers: 2, revenue: '€1.12K', recommended: 2, recommendedBadges: ['VIS'], recommendedSub: 1, confidence: 'high', coverage: '2% below target', coverageWeeks: 3.8, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 2, salesL30: 3, salesL90: 8, forecast: 0.54, stockouts: '0 → 1', locations: '2 → 1', overstocks: '3 → 0', understocks: '2 → 0', currentUnits: 8, currentUnitsInTransit: 0, warehouseAllocateLine: '58 → 51', warehouseSellLine: '72 → 65', packMultiple: null, skuCount: 1 },
+    { id: 3, name: 'Ang-sac pte main m', sku: 'A1252810', colour: 'Figue', movementType: ["rebalancing"], transfers: 3, transfersSub: 2, approvedTransfers: 2, unapprovedTransfers: 1, revenue: '€1.89K', recommended: 3, recommendedBadges: ['REV', 'VIS'], recommendedSub: 1, confidence: 'high', coverage: '5% below target', coverageWeeks: 3.1, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 1, salesL30: 4, salesL90: 11, forecast: 2.1, stockouts: '1 → 0', locations: '2 → 2', overstocks: '5 → 2', understocks: '6 → 3',     status: 'last_edited_by_user', editedByUser: 'Csabi Toth', currentUnits: 25, currentUnitsInTransit: 5, warehouseAllocateLine: '48 → 42', warehouseSellLine: '65 → 58', packMultiple: null, skuCount: 2 },
+    { id: 4, name: 'Croi-sac zip s', sku: 'A1398811', colour: 'Noir', movementType: ["rebalancing"], transfers: 1, transfersSub: 2, approvedTransfers: 1, unapprovedTransfers: 0, revenue: '€0.98K', recommended: 1, recommendedBadges: ['REV'], recommendedSub: 2, confidence: 'high', coverage: 'All SKUs in target', coverageWeeks: 6.1, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 0, salesL30: 1, salesL90: 3, forecast: 0.32, stockouts: '0 → 0', locations: '1 → 2', overstocks: '2 → 1', understocks: '4 → 2', status: 'approved_by_user', approvedByUser: 'Jess Briggs', currentUnits: 3, currentUnitsInTransit: 1, warehouseAllocateLine: '55 → 50', warehouseSellLine: '70 → 63', packMultiple: null, skuCount: 1 },
     // COIN: single-SKU pack-constrained replen — inline-editable
-    { id: 5, name: 'Pre-sac seau s', sku: 'A101081', colour: 'Bleu petrole', movementType: ["replenishment"], transfers: 20, transfersSub: 1, approvedTransfers: 10, unapprovedTransfers: 10, revenue: '€0.76K', recommended: 20, recommendedBadges: ['VIS'], recommendedSub: 1, confidence: 'low', coverage: '8% below target', coverageWeeks: 2.9, coverageTarget: 6, nextEvent: { name: 'UK weekly replenishment', date: '16/06/2026' }, salesL7: 1, salesL30: 2, forecast: 0.54, stockouts: '0 → 1', locations: '2 → 1', overstocks: '3 → 0', understocks: '2 → 0', depth: '3.0 → 6.0', status: 'needs_review_from_user', currentUnits: 15, currentUnitsInTransit: 2, warehouseAllocateLine: '50 → 45', warehouseSellLine: '68 → 61', packMultiple: 10, skuCount: 1, isVirtualPack: true },
+    { id: 5, name: 'Pre-sac seau s', sku: 'A101081', colour: 'Bleu petrole', movementType: ["replenishment"], transfers: 20, transfersSub: 1, approvedTransfers: 10, unapprovedTransfers: 10, revenue: '€0.76K', recommended: 20, recommendedBadges: ['VIS'], recommendedSub: 1, confidence: 'low', coverage: '8% below target', coverageWeeks: 2.9, coverageTarget: 6, nextEvent: { name: 'UK weekly replenishment', date: '16/06/2026' }, salesL7: 1, salesL30: 2, salesL90: 5, forecast: 0.54, stockouts: '0 → 1', locations: '2 → 1', overstocks: '3 → 0', understocks: '2 → 0', status: 'needs_review_from_user', currentUnits: 15, currentUnitsInTransit: 2, warehouseAllocateLine: '50 → 45', warehouseSellLine: '68 → 61', packMultiple: 10, skuCount: 1, isVirtualPack: true },
     // Mixed replen+rebal — pack rules apply to replen portion in hover
-    { id: 6, name: 'Ang-sac pte main s', sku: 'A1252811', colour: 'Figue', movementType: ["replenishment","rebalancing"], transfers: 22, transfersSub: 1, replenTransfers: 20, rebalTransfers: 2, approvedTransfers: 12, unapprovedTransfers: 10, revenue: '€0.65K', recommended: 1, recommendedBadges: ['REV'], recommendedSub: 1, confidence: 'low', coverage: '67% below target', coverageWeeks: 1.4, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 0, salesL30: 1, forecast: 0.21, stockouts: '0 → 0', locations: '2 → 2', overstocks: '4 → 1', understocks: '3 → 1', depth: '4.0 → 4.5', status: 'partially_approved', currentUnits: 7, currentUnitsInTransit: 0, warehouseAllocateLine: '57 → 44', warehouseSellLine: '57 → 51', packMultiple: 10, skuCount: 1, isVirtualPack: false },
+    { id: 6, name: 'Ang-sac pte main s', sku: 'A1252811', colour: 'Figue', movementType: ["replenishment","rebalancing"], transfers: 22, transfersSub: 1, replenTransfers: 20, rebalTransfers: 2, approvedTransfers: 12, unapprovedTransfers: 10, revenue: '€0.65K', recommended: 1, recommendedBadges: ['REV'], recommendedSub: 1, confidence: 'low', coverage: '67% below target', coverageWeeks: 1.4, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 0, salesL30: 1, salesL90: 3, forecast: 0.21, stockouts: '0 → 0', locations: '2 → 2', overstocks: '4 → 1', understocks: '3 → 1', status: 'partially_approved', currentUnits: 7, currentUnitsInTransit: 0, warehouseAllocateLine: '57 → 44', warehouseSellLine: '57 → 51', packMultiple: 10, skuCount: 1, isVirtualPack: false },
     // Multi-SKU pack-constrained replen — read-only on Products row
-    { id: 9, name: 'Coin-pack tote m', sku: 'C900010', colour: 'Noir', movementType: ["replenishment"], transfers: 40, transfersSub: 2, approvedTransfers: 20, unapprovedTransfers: 20, revenue: '€1.10K', recommended: 40, recommendedBadges: ['VIS'], recommendedSub: 2, confidence: 'high', coverage: '4% below target', coverageWeeks: 4.2, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 2, salesL30: 8, forecast: 1.2, stockouts: '0 → 0', locations: '3 → 3', overstocks: '2 → 1', understocks: '6 → 4', depth: '4.0 → 4.8', status: 'unapproved', currentUnits: 22, currentUnitsInTransit: 4, warehouseAllocateLine: '60 → 52', warehouseSellLine: '70 → 62', packMultiple: 10, skuCount: 4, isVirtualPack: true },
+    { id: 9, name: 'Coin-pack tote m', sku: 'C900010', colour: 'Noir', movementType: ["replenishment"], transfers: 55, transfersSub: 2, approvedTransfers: 28, unapprovedTransfers: 27, revenue: '€1.10K', recommended: 55, recommendedBadges: ['VIS'], recommendedSub: 2, confidence: 'high', coverage: '4% below target', coverageWeeks: 4.2, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 2, salesL30: 8, salesL90: 22, forecast: 1.2, stockouts: '0 → 0', locations: '2 → 2', overstocks: '2 → 1', understocks: '6 → 4', status: 'unapproved', currentUnits: 22, currentUnitsInTransit: 4, warehouseAllocateLine: '60 → 52', warehouseSellLine: '70 → 62', packMultiple: 10, skuCount: 5, isVirtualPack: true },
     // Unconstrained replen — baseline non-pack path
-    { id: 10, name: 'Mini sac band', sku: 'C900020', colour: 'Rouge', movementType: ["replenishment"], transfers: 3, transfersSub: 1, approvedTransfers: 2, unapprovedTransfers: 1, revenue: '€0.42K', recommended: 3, recommendedBadges: ['REV'], recommendedSub: 1, confidence: 'low', coverage: 'All SKUs in target', coverageWeeks: 6.0, coverageTarget: 6, nextEvent: { name: 'UK weekly replenishment', date: '16/06/2026' }, salesL7: 1, salesL30: 3, forecast: 0.6, stockouts: '0 → 0', locations: '1 → 1', overstocks: '1 → 0', understocks: '2 → 1', depth: '5.0 → 5.5', status: 'approved_by_system', currentUnits: 9, currentUnitsInTransit: 0, warehouseAllocateLine: '30 → 27', warehouseSellLine: '40 → 36', packMultiple: null, skuCount: 1 },
+    { id: 10, name: 'Mini sac band', sku: 'C900020', colour: 'Rouge', movementType: ["replenishment"], transfers: 3, transfersSub: 1, approvedTransfers: 2, unapprovedTransfers: 1, revenue: '€0.42K', recommended: 3, recommendedBadges: ['REV'], recommendedSub: 1, confidence: 'low', coverage: 'All SKUs in target', coverageWeeks: 6.0, coverageTarget: 6, nextEvent: { name: 'UK weekly replenishment', date: '16/06/2026' }, salesL7: 1, salesL30: 3, salesL90: 8, forecast: 0.6, stockouts: '0 → 0', locations: '1 → 1', overstocks: '1 → 0', understocks: '2 → 1', status: 'approved_by_system', currentUnits: 9, currentUnitsInTransit: 0, warehouseAllocateLine: '30 → 27', warehouseSellLine: '40 → 36', packMultiple: null, skuCount: 1 },
     // Mixed fulfilment (pack + loose) — packTransfers drives pack subtext; total = pack + loose
-    { id: 11, name: 'Gémo LOT tote', sku: 'G900100', colour: 'Camel', movementType: ["replenishment"], transfers: 58, packTransfers: 50, looseTransfers: 8, transfersSub: 2, approvedTransfers: 30, unapprovedTransfers: 28, revenue: '€0.94K', recommended: 58, recommendedBadges: ['VIS'], recommendedSub: 1, confidence: 'high', coverage: '3% below target', coverageWeeks: 3.6, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 2, salesL30: 7, forecast: 1.1, stockouts: '0 → 0', locations: '2 → 2', overstocks: '2 → 1', understocks: '5 → 3', depth: '3.8 → 4.6', status: 'unapproved', currentUnits: 14, currentUnitsInTransit: 2, warehouseAllocateLine: '62 → 54', warehouseSellLine: '74 → 66', packMultiple: 10, skuCount: 1, isVirtualPack: false },
+    { id: 11, name: 'Gémo LOT tote', sku: 'G900100', colour: 'Camel', movementType: ["replenishment"], transfers: 58, packTransfers: 50, looseTransfers: 8, transfersSub: 2, approvedTransfers: 30, unapprovedTransfers: 28, revenue: '€0.94K', recommended: 58, recommendedBadges: ['VIS'], recommendedSub: 1, confidence: 'high', coverage: '3% below target', coverageWeeks: 3.6, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 2, salesL30: 7, salesL90: 19, forecast: 1.1, stockouts: '0 → 0', locations: '2 → 2', overstocks: '2 → 1', understocks: '5 → 3', status: 'unapproved', currentUnits: 14, currentUnitsInTransit: 2, warehouseAllocateLine: '62 → 54', warehouseSellLine: '74 → 66', packMultiple: 10, skuCount: 1, isVirtualPack: false },
   ],
   2: [
-    { id: 7, name: 'Sac zip l', sku: 'B200001', colour: 'Noir', movementType: ["rebalancing"], transfers: 2, transfersSub: 1, approvedTransfers: 2, unapprovedTransfers: 0, revenue: '€0.89K', recommended: 2, recommendedBadges: ['REV'], recommendedSub: 1, confidence: 'high', coverage: '3% below target', coverageWeeks: 4.8, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 1, salesL30: 2, forecast: 0.45, stockouts: '0 → 0', locations: '2 → 2', overstocks: '2 → 1', understocks: '5 → 3', depth: '4.5 → 5.0', status: 'approved_by_user', approvedByUser: 'Jess Briggs', currentUnits: 18, currentUnitsInTransit: 4, warehouseAllocateLine: '40 → 36', warehouseSellLine: '50 → 45', packMultiple: null, skuCount: 1 },
-    { id: 8, name: 'Sac seau m', sku: 'B200002', colour: 'Noir', movementType: ["rebalancing"], transfers: 1, transfersSub: 2, approvedTransfers: 0, unapprovedTransfers: 1, revenue: '€0.52K', recommended: 1, recommendedBadges: ['VIS'], recommendedSub: 2, confidence: 'high', coverage: 'All SKUs in target', coverageWeeks: 6.3, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 0, salesL30: 1, forecast: 0.28, stockouts: '0 → 1', locations: '1 → 2', overstocks: '1 → 0', understocks: '3 → 1', depth: '3.6 → 4.3', status: 'last_edited_by_user', editedByUser: 'Csabi Toth', currentUnits: 11, currentUnitsInTransit: 2, warehouseAllocateLine: '35 → 30', warehouseSellLine: '42 → 38', packMultiple: null, skuCount: 1 },
+    { id: 7, name: 'Sac zip l', sku: 'B200001', colour: 'Noir', movementType: ["rebalancing"], transfers: 2, transfersSub: 1, approvedTransfers: 2, unapprovedTransfers: 0, revenue: '€0.89K', recommended: 2, recommendedBadges: ['REV'], recommendedSub: 1, confidence: 'high', coverage: '3% below target', coverageWeeks: 4.8, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 1, salesL30: 2, salesL90: 5, forecast: 0.45, stockouts: '0 → 0', locations: '2 → 2', overstocks: '2 → 1', understocks: '5 → 3', status: 'approved_by_user', approvedByUser: 'Jess Briggs', currentUnits: 18, currentUnitsInTransit: 4, warehouseAllocateLine: '40 → 36', warehouseSellLine: '50 → 45', packMultiple: null, skuCount: 1 },
+    { id: 8, name: 'Sac seau m', sku: 'B200002', colour: 'Noir', movementType: ["rebalancing"], transfers: 1, transfersSub: 2, approvedTransfers: 0, unapprovedTransfers: 1, revenue: '€0.52K', recommended: 1, recommendedBadges: ['VIS'], recommendedSub: 2, confidence: 'high', coverage: 'All SKUs in target', coverageWeeks: 6.3, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 0, salesL30: 1, salesL90: 3, forecast: 0.28, stockouts: '0 → 1', locations: '1 → 2', overstocks: '1 → 0', understocks: '3 → 1', status: 'last_edited_by_user', editedByUser: 'Csabi Toth', currentUnits: 11, currentUnitsInTransit: 2, warehouseAllocateLine: '35 → 30', warehouseSellLine: '42 → 38', packMultiple: null, skuCount: 1 },
   ] }
 
 // Default products when trip not in PRODUCTS_BY_TRIP
@@ -495,9 +503,237 @@ const LOCATIONS_BY_PRODUCT = {
   3: [
     { id: 1, name: 'Opéra', code: 'A1A', movementType: ["rebalancing"], stock: '6 → 6', tu: '6 → 6', tuWarehouse: 6, tuTruck: [], salesL7: 1, salesL30: 4, forecast: 2.1, stockouts: '0 → 0', coverage: '100% → 100%', targetWeeks: 6, receivingWeeksCoverage: '2.9 → 2.9 (6 target)', recommendationReason: 'Increase revenue', revenueIncrease: '€445', availableToSend: 6, sendingStock: '12 → 6', sendingCoverage: '2.8 → 1.4 (6 target)', storageCapacity: 'available' },
     { id: 2, name: 'G.L. Haussmann Maro', code: 'AIA', movementType: ["rebalancing"], stock: '5 → 5', tu: '5 → 5', tuWarehouse: 5, tuTruck: [], salesL7: 0, salesL30: 0, forecast: 0, stockouts: '0 → 0', coverage: '0% → 0%', targetWeeks: 5, receivingWeeksCoverage: 'N/A (0 forecast)', recommendationReason: 'Improve coverage', revenueIncrease: '€0', availableToSend: 5, sendingStock: '10 → 5', sendingCoverage: 'N/A (0 forecast)', approvalStatus: 'approved_by_system', storageCapacity: 'full' },
-  ] }
+  ],
+  // G.1 stubs — structural pack shapes; G.2 reconciles exact Products/Explorer totals
+  5: [
+    {
+      id: 1,
+      name: 'Opéra',
+      code: 'A1A',
+      movementType: ['replenishment'],
+      stock: '8 → 28',
+      tu: '0 → 20',
+      tuWarehouse: 12,
+      tuTruck: [],
+      tuReplen: [10, 10],
+      salesL7: 1,
+      salesL30: 2,
+      forecast: 0.54,
+      stockouts: '0 → 0',
+      coverage: '40% → 100%',
+      targetWeeks: 6,
+      receivingWeeksCoverage: '2.1 → 6.2 (6 target)',
+      recommendationReason: 'Improve coverage',
+      revenueIncrease: '€210',
+      availableToSend: 8,
+      sendingStock: '40 → 20',
+      sendingCoverage: '3.0 → 1.5 (4 target)',
+      approvalStatus: 'needs_review_from_user',
+      storageCapacity: 'available',
+    },
+    {
+      id: 2,
+      name: 'Cap 3000',
+      code: 'A3E',
+      movementType: ['replenishment'],
+      stock: '4 → 14',
+      tu: '0 → 10',
+      tuWarehouse: 6,
+      tuTruck: [],
+      tuReplen: [10],
+      salesL7: 0,
+      salesL30: 1,
+      forecast: 0.32,
+      stockouts: '0 → 0',
+      coverage: '20% → 80%',
+      targetWeeks: 4,
+      receivingWeeksCoverage: '1.0 → 4.5 (4 target)',
+      recommendationReason: 'Improve coverage',
+      revenueIncrease: '€95',
+      availableToSend: 5,
+      sendingStock: '30 → 20',
+      sendingCoverage: '2.0 → 1.2 (4 target)',
+      approvalStatus: 'unapproved',
+      storageCapacity: 'available',
+    },
+  ],
+  9: [
+    {
+      id: 1,
+      name: 'Opéra',
+      code: 'A1A',
+      movementType: ['replenishment'],
+      stock: '10 → 38',
+      tu: '0 → 28',
+      tuWarehouse: 18,
+      tuTruck: [],
+      // PACK-COIN-P1: 4 packs × 7 units (S/M/L ratio 2/3/2)
+      packMultiple: 7,
+      tuReplen: [7, 7, 7, 7],
+      salesL7: 2,
+      salesL30: 8,
+      forecast: 1.2,
+      stockouts: '0 → 0',
+      coverage: '0% → 67%',
+      targetWeeks: 6,
+      receivingWeeksCoverage: '1.6 → 6.5 (6 target)',
+      // Per-SKU weeks after pack delivery (P1). 2 of 3 sizes at/above target → ~67%.
+      skuCoverageWeeks: {
+        S: { before: 1.5, after: 6.8 },
+        M: { before: 2.0, after: 7.2 },
+        L: { before: 1.2, after: 5.4 },
+      },
+      recommendationReason: 'Increase revenue',
+      revenueIncrease: '€420',
+      availableToSend: 12,
+      sendingStock: '60 → 32',
+      sendingCoverage: '4.0 → 2.0 (6 target)',
+      approvalStatus: 'unapproved',
+      storageCapacity: 'available',
+    },
+    {
+      id: 2,
+      name: 'Cap 3000',
+      code: 'A3E',
+      movementType: ['replenishment'],
+      stock: '8 → 35',
+      tu: '0 → 27',
+      tuWarehouse: 14,
+      tuTruck: [],
+      // PACK-COIN-P2: 3 packs × 9 units (XS/S/M/L/XL ratio 1/2/3/2/1)
+      packMultiple: 9,
+      tuReplen: [9, 9, 9],
+      salesL7: 1,
+      salesL30: 5,
+      forecast: 0.9,
+      stockouts: '0 → 0',
+      coverage: '0% → 60%',
+      targetWeeks: 6,
+      receivingWeeksCoverage: '1.4 → 6.3 (6 target)',
+      // Per-SKU weeks after P2 delivery. 3 of 5 sizes at/above target → 60%.
+      skuCoverageWeeks: {
+        XS: { before: 1.0, after: 6.5 },
+        S: { before: 1.5, after: 7.0 },
+        M: { before: 2.0, after: 7.5 },
+        L: { before: 1.8, after: 5.2 },
+        XL: { before: 0.8, after: 5.0 },
+      },
+      recommendationReason: 'Improve coverage',
+      revenueIncrease: '€310',
+      availableToSend: 10,
+      sendingStock: '55 → 28',
+      sendingCoverage: '3.5 → 1.8 (6 target)',
+      approvalStatus: 'unapproved',
+      storageCapacity: 'available',
+    },
+  ],
+  11: [
+    {
+      id: 1,
+      name: 'Opéra',
+      code: 'A1A',
+      movementType: ['replenishment'],
+      stock: '6 → 29',
+      tu: '0 → 23',
+      tuWarehouse: 10,
+      tuTruck: [],
+      tuReplen: [10, 10],
+      tuReplenLoose: [3],
+      salesL7: 2,
+      salesL30: 7,
+      forecast: 1.1,
+      stockouts: '0 → 0',
+      coverage: '0% → 100%',
+      targetWeeks: 6,
+      receivingWeeksCoverage: '1.8 → 6.5 (6 target)',
+      recommendationReason: 'Improve coverage',
+      revenueIncrease: '€310',
+      availableToSend: 9,
+      sendingStock: '55 → 32',
+      sendingCoverage: '3.5 → 2.0 (6 target)',
+      approvalStatus: 'unapproved',
+      storageCapacity: 'available',
+    },
+    {
+      id: 2,
+      name: 'Cap 3000',
+      code: 'A3E',
+      movementType: ['replenishment'],
+      stock: '5 → 40',
+      tu: '0 → 35',
+      tuWarehouse: 8,
+      tuTruck: [],
+      tuReplen: [10, 10, 10],
+      tuReplenLoose: [5],
+      salesL7: 1,
+      salesL30: 4,
+      forecast: 0.9,
+      stockouts: '0 → 0',
+      coverage: '0% → 100%',
+      targetWeeks: 6,
+      receivingWeeksCoverage: '1.5 → 6.2 (6 target)',
+      recommendationReason: 'Improve coverage',
+      revenueIncrease: '€280',
+      availableToSend: 7,
+      sendingStock: '50 → 15',
+      sendingCoverage: '3.0 → 1.0 (6 target)',
+      approvalStatus: 'unapproved',
+      storageCapacity: 'available',
+    },
+  ],
+}
 
 const DEFAULT_LOCATIONS = LOCATIONS_BY_PRODUCT[1]
+
+/**
+ * G.3a pack-product drilldown layout meta (ids 5 / 9 / 11 only).
+ * Non-pack products and Ang-sac (id 6) keep the classic TU-column layout.
+ */
+const PACK_DRILLDOWN_META = {
+  5: {
+    sizes: ['S'],
+    warehouse: {
+      id: 'log01',
+      name: 'Log01 entrepot logtex',
+      code: 'LOG01',
+      stock: '—',
+      sohBySize: { S: 48 },
+      storageCapacity: 'available',
+      forecast: 0,
+      weeksCoverage: 8.0,
+      targetWeeks: 6,
+    },
+  },
+  9: {
+    sizes: ['XS', 'S', 'M', 'L', 'XL'],
+    warehouse: {
+      id: 'log01',
+      name: 'Log01 entrepot logtex',
+      code: 'LOG01',
+      stock: '—',
+      // Enough SOH to cover P1 (28) + P2 (27) outgoing by size
+      sohBySize: { XS: 12, S: 40, M: 50, L: 40, XL: 12 },
+      storageCapacity: 'available',
+      forecast: 0,
+      weeksCoverage: 12.0,
+      targetWeeks: 6,
+    },
+  },
+  11: {
+    sizes: ['S'],
+    warehouse: {
+      id: 'log01',
+      name: 'Log01 entrepot logtex',
+      code: 'LOG01',
+      stock: '—',
+      sohBySize: { S: 80 },
+      storageCapacity: 'available',
+      forecast: 0,
+      weeksCoverage: 10.0,
+      targetWeeks: 6,
+    },
+  },
+}
 
 // Mock chart data for Transfer detail view (22 days, values 0–8)
 const CHART_DATA = Array.from({ length: 22 }, (_, i) => {
@@ -654,7 +890,7 @@ const EXPLORER_PRODUCTS = [
     ws: '€0',
     ic: '€28',
     seasonAndEvent: 'Winter 26 · Vague 1',
-    sizes: ['S', 'M', 'L'],
+    sizes: ['XS', 'S', 'M', 'L', 'XL'],
     movementTypes: ['replenishment'] },
   {
     id: 'exp-p-gemo',
@@ -681,30 +917,81 @@ const EXPLORER_PRODUCTS = [
   },
 ]
 
-/** Multi-SKU pack: Log01 → Opéra replen rows for Coin-pack sizes (pack rows are display-only) */
-const EXPLORER_MULTI_SKU_PACK = {
-  packGroupId: 'pack-coin-p1',
-  packName: 'Coin-pack P1',
-  packId: 'PACK-COIN-P1',
-  packCount: 4,
-  toLocation: 'Opéra',
-  isVirtualPack: true,
-  packRatio: {
-    'C900010-S': 2,
-    'C900010-M': 3,
-    'C900010-L': 2,
+/**
+ * Multi-SKU pack groups for Coin-pack (C900010).
+ * packMultiple is pack-group-specific (P1=7, P2=9); product-level packMultiple stays 10 for single-SKU fallback.
+ */
+const EXPLORER_MULTI_SKU_PACKS = [
+  {
+    packGroupId: 'pack-coin-p1',
+    packName: 'Coin-pack P1',
+    packId: 'PACK-COIN-P1',
+    packCount: 4,
+    packMultiple: 7,
+    toLocation: 'Opéra',
+    isVirtualPack: true,
+    packRatio: {
+      'C900010-S': 2,
+      'C900010-M': 3,
+      'C900010-L': 2,
+    },
+    packRevenue: '+€1,420',
+    packRecommended: 4,
+    packRecommendedBadges: ['REV'],
+    packConfidence: 'high',
+    packCoverageWeeksBefore: 1.2,
+    packCoverageWeeksAfter: 3.4,
+    packCoverageTarget: 4,
+    packCoverageLabel: 'weeks of cover',
+    packStorageCapacity: 'available',
+    packStatus: 'unapproved',
   },
-  // Pack-level KPIs (solver-shaped); units/packCount stay derived from children + overrides
-  packRevenue: '+€1,420',
-  packRecommended: 4,
-  packRecommendedBadges: ['REV'],
-  packConfidence: 'high',
-  packCoverageWeeksBefore: 1.2,
-  packCoverageWeeksAfter: 3.4,
-  packCoverageTarget: 4,
-  packCoverageLabel: 'weeks of cover',
-  packStorageCapacity: 'available',
-  packStatus: 'unapproved',
+  {
+    packGroupId: 'pack-coin-p2',
+    packName: 'Coin-pack P2',
+    packId: 'PACK-COIN-P2',
+    packCount: 3,
+    packMultiple: 9,
+    toLocation: 'Cap 3000',
+    isVirtualPack: true,
+    packRatio: {
+      'C900010-XS': 1,
+      'C900010-S': 2,
+      'C900010-M': 3,
+      'C900010-L': 2,
+      'C900010-XL': 1,
+    },
+    packRevenue: '+€980',
+    packRecommended: 3,
+    packRecommendedBadges: ['VIS'],
+    packConfidence: 'high',
+    packCoverageWeeksBefore: 1.0,
+    packCoverageWeeksAfter: 3.1,
+    packCoverageTarget: 4,
+    packCoverageLabel: 'weeks of cover',
+    packStorageCapacity: 'available',
+    packStatus: 'unapproved',
+  },
+]
+
+/** @deprecated Prefer EXPLORER_MULTI_SKU_PACKS — kept as P1 alias for any residual single-pack reads */
+const EXPLORER_MULTI_SKU_PACK = EXPLORER_MULTI_SKU_PACKS[0]
+
+function getMultiSkuPacksForProduct(product) {
+  if (!product) return []
+  const sku = product.sku || product.baseSku
+  if (product.id === 9 || product.id === 'exp-p-coin' || sku === 'C900010') {
+    return EXPLORER_MULTI_SKU_PACKS
+  }
+  return []
+}
+
+function findMultiSkuPackByLocation(locationName) {
+  return EXPLORER_MULTI_SKU_PACKS.find((p) => p.toLocation === locationName) ?? null
+}
+
+function findMultiSkuPackByGroupId(packGroupId) {
+  return EXPLORER_MULTI_SKU_PACKS.find((p) => p.packGroupId === packGroupId) ?? null
 }
 
 const DEPARTMENT_FILTER_OPTIONS = ['Handbags', 'Crossbody', 'Bucket bags']
@@ -927,30 +1214,40 @@ function buildExplorerData() {
     })
   })
 
-  // Annotate multi-SKU pack members (Log01 → Opéra replen only). Pack rows are display-only.
+  // Annotate multi-SKU pack members (Log01 → pack destination). Pack rows are display-only.
   for (const row of rows) {
-    const unitsPerPack = EXPLORER_MULTI_SKU_PACK.packRatio[row.sku]
-    if (
-      unitsPerPack == null ||
-      row.movementType !== 'replenishment' ||
-      row.fromLocation !== EXPLORER_WAREHOUSE ||
-      row.toLocation !== EXPLORER_MULTI_SKU_PACK.toLocation
-    ) {
-      continue
-    }
-    row.packGroupId = EXPLORER_MULTI_SKU_PACK.packGroupId
-    row.packName = EXPLORER_MULTI_SKU_PACK.packName
-    row.packId = EXPLORER_MULTI_SKU_PACK.packId
-    row.packRatio = EXPLORER_MULTI_SKU_PACK.packRatio
-    row.packCount = EXPLORER_MULTI_SKU_PACK.packCount
-    row.isVirtualPack = Boolean(EXPLORER_MULTI_SKU_PACK.isVirtualPack)
+    if (row.movementType !== 'replenishment' || row.fromLocation !== EXPLORER_WAREHOUSE) continue
+    const packDef = EXPLORER_MULTI_SKU_PACKS.find(
+      (p) => p.toLocation === row.toLocation && p.packRatio[row.sku] != null
+    )
+    if (!packDef) continue
+    const unitsPerPack = packDef.packRatio[row.sku]
+    row.packGroupId = packDef.packGroupId
+    row.packName = packDef.packName
+    row.packId = packDef.packId
+    row.packRatio = packDef.packRatio
+    row.packCount = packDef.packCount
+    row.packGroupMultiple = packDef.packMultiple
+    row.isVirtualPack = Boolean(packDef.isVirtualPack)
     row.isPackMember = true
     row.packMultiple = null
-    row.transfers = unitsPerPack * EXPLORER_MULTI_SKU_PACK.packCount
+    row.transfers = unitsPerPack * packDef.packCount
     row.stockAfter = row.stockBefore + row.transfers + (row.stockFromOtherStores ?? 0)
+    // Coin pack children: end-state coverage reflects pack arrival (stock / forecast weeks)
+    if (row.productId === 'exp-p-coin') {
+      const weeklyDemand = Number(row.forecast) > 0 ? Number(row.forecast) : 0.5
+      row.coverageWeeksBefore = Number((row.stockBefore / weeklyDemand).toFixed(1))
+      row.coverageWeeksAfter = Number((row.stockAfter / weeklyDemand).toFixed(1))
+    }
   }
 
-  return rows
+  // Coin-pack: only show annotated pack-member replen rows (drop stray size×store noise)
+  return rows.filter((row) => {
+    if (row.productId === 'exp-p-coin' && row.movementType === 'replenishment') {
+      return Boolean(row.isPackMember)
+    }
+    return true
+  })
 }
 
 function isExplorerPackRowId(rowId) {
@@ -1039,7 +1336,7 @@ function StorageCapacityPill({ value, stale = false }) {
   if (stale) {
     return (
       <span className="inline-flex max-w-full items-center justify-center rounded-full bg-[#F2F4F7] px-2.5 py-1 text-[12px] font-medium text-[#9ca3af]">
-        {value === 'full' ? 'Full' : 'Available'}
+        {value === 'full' ? 'Full' : value === 'saturated' ? 'Saturated' : 'Available'}
       </span>
     )
   }
@@ -1050,10 +1347,52 @@ function StorageCapacityPill({ value, stale = false }) {
       </span>
     )
   }
+  if (value === 'saturated') {
+    return (
+      <span className="inline-flex max-w-full items-center justify-center rounded-full bg-[#FEF0C7] px-2.5 py-1 text-[12px] font-medium text-[#B54708]">
+        Saturated
+      </span>
+    )
+  }
   return (
     <span className="inline-flex max-w-full items-center justify-center rounded-full bg-[#F2F4F7] px-2.5 py-1 text-[12px] font-medium text-[#101828]">
       Available
     </span>
+  )
+}
+
+/** True when a "before → after" string represents an active move (values differ). */
+function isActiveMoveValue(value) {
+  if (value == null) return false
+  const parts = String(value).split(/\s*→\s*/)
+  if (parts.length !== 2) return false
+  return parts[0].trim() !== parts[1].trim()
+}
+
+/** Renders before→after in bold when active-move; regular weight when static. */
+function BeforeAfterText({ value, className = '' }) {
+  if (value == null || value === '') {
+    return <span className={`text-[#4b535c] ${className}`}>—</span>
+  }
+  const active = isActiveMoveValue(value)
+  return (
+    <span
+      className={`${active ? 'font-bold' : 'font-normal'} text-[#0a0a0a] ${className}`.trim()}
+    >
+      {value}
+    </span>
+  )
+}
+
+/** Coverage primary (% SKUs at/above target before→after) + muted numeric weeks subcopy. */
+function DrilldownCoverageCell({ coverage, targetWeeks }) {
+  return (
+    <div className="flex flex-col items-end gap-0.5">
+      <BeforeAfterText value={coverage} className="text-[14px]" />
+      {targetWeeks != null && targetWeeks !== '' ? (
+        <span className="text-[12px] font-normal text-[#4b535c]">{targetWeeks}</span>
+      ) : null}
+    </div>
   )
 }
 
@@ -1063,24 +1402,31 @@ function ProductCoverageText({ coverageWeeks, coverageTarget, coverage, stale = 
   }
   const isBelowTarget = coverage?.includes('below target')
   const badgeText = isBelowTarget ? coverage.replace(' below target', ' of SKUs below target') : coverage
+  if (!coverage) return null
   return (
     <div className="flex flex-col items-end gap-1">
-      <span className={`text-[14px] font-medium ${stale ? 'text-[#9ca3af]' : 'text-[#0a0a0a]'}`}>
-        {coverageWeeks} wks
+      <span
+        className={`px-1.5 py-0.5 rounded-[4px] text-[11px] font-medium ${
+          stale
+            ? 'bg-[#f3f4f6] text-[#9ca3af]'
+            : isBelowTarget
+              ? 'bg-[#fee2e2] text-[#E30D3C]'
+              : 'bg-[#dcfce7] text-[#166534]'
+        }`}
+      >
+        {badgeText}
       </span>
-      {coverage && (
-        <span
-          className={`px-1.5 py-0.5 rounded-[4px] text-[11px] font-medium ${
-            stale
-              ? 'bg-[#f3f4f6] text-[#9ca3af]'
-              : isBelowTarget
-                ? 'bg-[#fee2e2] text-[#E30D3C]'
-                : 'bg-[#dcfce7] text-[#166534]'
-          }`}
-        >
-          {badgeText}
-        </span>
-      )}
+    </div>
+  )
+}
+
+/** Products tab only — event name + batch creation date stand-in (SCHEDULE_CREATION_DATE). */
+function ProductNextEventProductsCell({ nextEvent }) {
+  if (!nextEvent?.name) return null
+  return (
+    <div className="flex flex-col items-end gap-1">
+      <span className="text-[13px] font-medium text-[#0a0a0a]">{nextEvent.name}</span>
+      <span className="text-[12px] text-[#4b535c]">{SCHEDULE_CREATION_DATE}</span>
     </div>
   )
 }
@@ -1658,28 +2004,11 @@ function SkuDetailsHoverCard({ row }) {
   )
 }
 
-/** Hover popover for TU warehouse / truck chips (stock analysis table) */
-function TuBadgeHoverCard({ loc, borderClassName, stockLabel, stockValue, icon }) {
-  const status = loc.assortmentStatus ?? 'Unassorted'
-  return (
-    <div
-      className={`pointer-events-none w-[min(280px,calc(100vw-1.5rem))] rounded-[8px] border bg-white p-4 shadow-[0_4px_16px_rgba(0,0,0,0.1)] ${borderClassName}`}
-    >
-      <div className="border-b border-[#E9EAEB] pb-3 text-[15px] font-semibold leading-snug text-[#0a0a0a]">{loc.name}</div>
-      <div className="mt-3 flex items-center justify-between gap-3">
-        <div className="flex min-w-0 items-center gap-2 text-[14px] text-[#0a0a0a]">
-          <span className="flex shrink-0 items-center">{icon}</span>
-          <span>{stockLabel}</span>
-        </div>
-        <span className="shrink-0 rounded-[4px] bg-[#f3f4f6] px-2 py-1 text-center text-[12px] font-semibold tabular-nums text-[#0a0a0a]">
-          {stockValue}
-        </span>
-      </div>
-      <div className="mt-3">
-        <span className="inline-block rounded-[4px] bg-[#f3f4f6] px-2 py-1 text-[12px] font-semibold text-[#0a0a0a]">{status}</span>
-      </div>
-    </div>
-  )
+/** Format forecast cell for live-rebal hover (receiving / sending). */
+function formatHoverForecastValue(value, { zeroForecastTag = false } = {}) {
+  if (value == null || value === '') return '—'
+  if (zeroForecastTag && Number(value) === 0) return '0 (0 forecast)'
+  return value
 }
 
 function TuHoverIconWrap({ children }) {
@@ -1839,51 +2168,192 @@ function ExplorerTransfersHoverCard({
   )
 }
 
-/** Multi-section transfer popover for truck TU badges (matches transfer detail summary) */
-function TuTruckTransferHoverCard({ trip, loc, truckUnits, borderClassName }) {
-  const tripType = trip.movementType || 'Rebalancing'
-  const assortment = loc.assortmentStatus ?? 'Unassorted'
+function TuHoverReasonBullet({ children }) {
+  return (
+    <div className="flex items-start gap-2 text-[13px]">
+      <TuHoverIconWrap>
+        <IconLightbulb />
+      </TuHoverIconWrap>
+      <span className="min-w-0 flex-1 font-medium leading-snug text-[#0a0a0a]">{children}</span>
+    </div>
+  )
+}
+
+/** Weeks coverage for SOH hover: "6.4 (6 target)". */
+function formatSohWeeksCoverageDisplay(loc, override) {
+  if (override != null && override !== '' && override !== '—') {
+    if (/\(\d+\s*target\)/.test(String(override))) return String(override)
+  }
+  const raw = String(loc?.receivingWeeksCoverage ?? '')
+  const full = raw.match(/→\s*([\d.]+)\s*\((\d+)\s*target\)/)
+  if (full) return `${full[1]} (${full[2]} target)`
+  const after = raw.match(/→\s*([\d.]+)/)
+  const target = loc?.targetWeeks
+  if (after && target != null && target !== '') return `${after[1]} (${target} target)`
+  if (target != null && target !== '') return `— (${target} target)`
+  return override ?? '—'
+}
+
+function buildTransferHoverReasonBullets(loc) {
+  const bullets = []
+  if (loc?.recommendationReason) bullets.push(String(loc.recommendationReason))
+  if (loc?.revenueIncrease) bullets.push(`Increase revenue by ${loc.revenueIncrease}`)
+  return bullets
+}
+
+/**
+ * Live-rebal hover fidelity (G.3f).
+ * variant: 'transfer' (rebal/loose) | 'pack' | 'soh'
+ */
+function TuTruckTransferHoverCard({
+  trip,
+  loc,
+  truckUnits,
+  borderClassName,
+  variant = 'transfer',
+  packCompositionLine,
+  packCount,
+  sendingLabel,
+  receivingLabel,
+  onMoreDetails,
+  sohLabel = 'Stock on-hand',
+  sohValue,
+  sohWeeksCoverage,
+  sohForecast,
+  sohInTransit = false,
+}) {
+  const from = sendingLabel ?? trip?.from ?? '—'
+  const to = receivingLabel ?? loc?.name ?? trip?.to ?? '—'
+  const capacityUnits = trip?.capacityUnits
+  const maxCapacity = trip?.maxCapacity
+  const tripCapacity =
+    capacityUnits != null && maxCapacity != null
+      ? `Trip capacity: ${capacityUnits} units (max ${Number(maxCapacity).toLocaleString()})`
+      : null
+
+  const moreDetails =
+    typeof onMoreDetails === 'function' ? (
+      <div className="pt-2.5">
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation()
+            onMoreDetails()
+          }}
+          className="pointer-events-auto text-[13px] font-medium text-[#0267ff] hover:underline"
+        >
+          More details
+        </button>
+      </div>
+    ) : null
+
+  if (variant === 'soh') {
+    const weeksLine = formatSohWeeksCoverageDisplay(loc, sohWeeksCoverage)
+    const forecastLine = formatHoverForecastValue(
+      sohForecast ?? loc?.forecast,
+      { zeroForecastTag: true }
+    )
+    const contextMessage = sohInTransit
+      ? 'No transfers out recommended because stock is in transit'
+      : 'No transfer proposed'
+    return (
+      <div
+        className={`pointer-events-auto w-[min(320px,calc(100vw-1.5rem))] max-h-[min(520px,72vh)] overflow-y-auto rounded-[6px] border bg-white p-4 shadow-[0_4px_20px_rgba(0,0,0,0.12)] ${borderClassName}`}
+      >
+        <div className="border-b border-[#E9EAEB] pb-3 text-[14px] font-semibold leading-snug text-[#0a0a0a]">
+          {loc?.name ?? from}
+        </div>
+        <div className="flex flex-col gap-1.5 border-b border-[#E9EAEB] py-2.5">
+          <TuHoverRow
+            icon={<IconPackageTu className="!size-3.5" />}
+            label="Stock on-hand"
+            value={sohValue}
+          />
+          <TuHoverRow icon={<IconCalendarNote />} label="Weeks coverage" value={weeksLine} />
+          <TuHoverRow
+            icon={<IconCalendarNote />}
+            label="Forecast per week"
+            value={forecastLine}
+          />
+        </div>
+        <div className="border-b border-[#E9EAEB] py-2.5 text-[13px] font-medium leading-snug text-[#0a0a0a]">
+          {contextMessage}
+        </div>
+        {moreDetails}
+      </div>
+    )
+  }
+
+  const isPack = variant === 'pack'
+  const recPrimaryLabel = isPack ? 'Transfer packs' : 'Transfer units'
+  const recPrimaryValue = isPack ? packCount : truckUnits
+  const reasonBullets = buildTransferHoverReasonBullets(loc)
+  const packBreakdown =
+    packCompositionLine?.replace(/^Pack contents:\s*/i, '') ?? null
+  const packTransferInfoLine =
+    isPack && packCount != null && packBreakdown
+      ? `Transfer packs: ${packCount} · ${packBreakdown}`
+      : isPack && packCount != null
+        ? `Transfer packs: ${packCount}`
+        : null
+
   return (
     <div
-      className={`pointer-events-none w-[min(320px,calc(100vw-1.5rem))] max-h-[min(520px,72vh)] overflow-y-auto rounded-[6px] border bg-white p-4 shadow-[0_4px_20px_rgba(0,0,0,0.12)] ${borderClassName}`}
+      className={`pointer-events-auto w-[min(320px,calc(100vw-1.5rem))] max-h-[min(520px,72vh)] overflow-y-auto rounded-[6px] border bg-white p-4 shadow-[0_4px_20px_rgba(0,0,0,0.12)] ${borderClassName}`}
     >
-      <div className="border-b border-[#E9EAEB] pb-3 text-[14px] font-semibold leading-snug text-[#0a0a0a]">
-        {trip.from} → {trip.to}
+      <div className="border-b border-[#E9EAEB] pb-3">
+        <div className="text-[14px] font-semibold leading-snug text-[#0a0a0a]">
+          {from} → {to}
+        </div>
+        {tripCapacity ? (
+          <div className="mt-1 text-[12px] font-medium text-[#4b535c]">{tripCapacity}</div>
+        ) : null}
       </div>
 
       <TuHoverSection title="Transfer info">
-        <TuHoverRow
-          icon={<IconTruckTu className="!size-3.5" />}
-          label="Truck units"
-          value={truckUnits}
-        />
-        <TuHoverRow icon={<IconRebalancing />} label="Transfer units" value={loc.tu} />
-        <TuHoverRow icon={<IconPackageTu className="!size-3.5" />} label="Available to send" value={loc.availableToSend} />
-        <TuHoverRow icon={<IconReplenishment />} label="Trip type" value={tripType} />
-        <TuHoverRow icon={<IconPackageTu className="!size-3.5" />} label="Assortment" value={assortment} />
+        {packTransferInfoLine ? (
+          <div className="flex items-start gap-2 text-[13px]">
+            <TuHoverIconWrap>
+              <IconPackageTu className="!size-3.5" />
+            </TuHoverIconWrap>
+            <span className="min-w-0 flex-1 font-medium leading-snug text-[#0a0a0a]">
+              {packTransferInfoLine}
+            </span>
+          </div>
+        ) : (
+          <TuHoverRow
+            icon={<IconPackageTu className="!size-3.5" />}
+            label="Transfer units"
+            value={truckUnits}
+          />
+        )}
       </TuHoverSection>
 
       <TuHoverSection title="Recommendation">
-        <TuHoverRow icon={<IconRebalancing />} label="Transfer units" value={loc.tu} />
-        <TuHoverRow icon={<IconTrendUp />} label="Revenue increase" value={loc.revenueIncrease} />
+        <TuHoverRow
+          icon={isPack ? <IconReplenishment /> : <IconRebalancing />}
+          label={recPrimaryLabel}
+          value={recPrimaryValue}
+        />
+        {reasonBullets.map((text) => (
+          <TuHoverReasonBullet key={text}>{text}</TuHoverReasonBullet>
+        ))}
       </TuHoverSection>
 
-      <div className="border-b border-[#E9EAEB] py-2.5">
-        <div className="mb-2 text-[10px] font-bold uppercase tracking-[0.04em] text-[#9ca3af]">Recommendation reasons</div>
-        <div className="rounded-[4px] bg-[#f3f4f6] px-2.5 py-2 text-[12px] font-semibold leading-snug text-[#0a0a0a]">
-          {loc.recommendationReason ?? '—'}
-        </div>
-      </div>
-
-      <TuHoverSection title="Total stock">
-        <TuHoverRow icon={<IconPackageTu className="!size-3.5" />} label={trip.from} value={loc.sendingStock} />
-        <TuHoverRow icon={<IconPackageTu className="!size-3.5" />} label={loc.name} value={loc.stock} />
+      <TuHoverSection title="Forecast (per week)">
+        <TuHoverRow
+          icon={<IconCalendarNote />}
+          label={from}
+          value={formatHoverForecastValue(loc?.sendingForecast)}
+        />
+        <TuHoverRow
+          icon={<IconCalendarNote />}
+          label={to}
+          value={formatHoverForecastValue(loc?.forecast, { zeroForecastTag: true })}
+        />
       </TuHoverSection>
 
-      <TuHoverSection title="Total weeks coverage">
-        <TuHoverRow icon={<IconCalendarNote />} label={trip.from} value={loc.sendingCoverage} />
-        <TuHoverRow icon={<IconCalendarNote />} label={loc.name} value={loc.receivingWeeksCoverage} />
-      </TuHoverSection>
+      {moreDetails}
     </div>
   )
 }
@@ -1901,29 +2371,41 @@ function EditableTuTransferBadge({
   onCancel,
   bgClassName,
   icon,
-  hoverPanel }) {
+  hoverPanel,
+  inputError = false,
+  errorMessage = null,
+  inputStep,
+}) {
   if (isEditing) {
     return (
-      <input
-        type="number"
-        min={0}
-        autoFocus
-        value={editingValue}
-        onChange={(e) => onEditingValueChange(e.target.value)}
-        onBlur={onCommit}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') {
-            e.preventDefault()
-            onCommit()
-          }
-          if (e.key === 'Escape') {
-            e.preventDefault()
-            onCancel()
-          }
-        }}
-        onClick={(e) => e.stopPropagation()}
-        className="h-[26px] min-w-[50px] w-[50px] rounded-[2px] border border-[#e9eaeb] px-[6px] py-[2px] text-[12px] font-medium text-[#0a0a0a] text-center focus:outline-none"
-      />
+      <div className="flex flex-col items-end gap-0.5">
+        <input
+          type="number"
+          min={0}
+          step={inputStep}
+          autoFocus
+          value={editingValue}
+          onChange={(e) => onEditingValueChange(e.target.value)}
+          onBlur={onCommit}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault()
+              onCommit()
+            }
+            if (e.key === 'Escape') {
+              e.preventDefault()
+              onCancel()
+            }
+          }}
+          onClick={(e) => e.stopPropagation()}
+          className={`h-[26px] min-w-[50px] w-[50px] rounded-[2px] border px-[6px] py-[2px] text-[12px] font-medium text-[#0a0a0a] text-center focus:outline-none ${
+            inputError ? 'border-[#E30D3C]' : 'border-[#e9eaeb]'
+          }`}
+        />
+        {inputError && errorMessage ? (
+          <span className="text-[11px] text-[#E30D3C]">{errorMessage}</span>
+        ) : null}
+      </div>
     )
   }
 
@@ -1953,15 +2435,194 @@ function EditableTuTransferBadge({
 }
 
 function locationVisibleForTripTypeFilters(loc, tripTypeFilters) {
+  // Empty filters = no trip-type filter applied (show all locations)
+  if (!tripTypeFilters?.length) return true
   if (loc.tuWarehouse != null) return true
   const showRebal = tripTypeFilters.includes('rebalancing')
   const showReplen = tripTypeFilters.includes('replenishment')
   const truckCount = loc.tuTruck?.length ?? 0
-  const replenCount = loc.tuReplen?.length ?? 0
+  const replenCount = (loc.tuReplen?.length ?? 0) + (loc.tuReplenLoose?.length ?? 0)
   if (showReplen && replenCount > 0) return true
   if (showRebal && truckCount > 0) return true
   if (showRebal && truckCount === 0 && replenCount === 0) return true
   return false
+}
+
+/**
+ * "% of SKUs at/above coverage target" for a drilldown location.
+ * Prefer per-SKU weeks (skuCoverageWeeks) when seeded; else approximate from
+ * receivingWeeksCoverage vs targetWeeks (single binary for the location).
+ */
+function getDrilldownSkuCoverageAtTarget(loc) {
+  const target = Number(loc?.targetWeeks)
+  const skuWeeks = loc?.skuCoverageWeeks
+  if (skuWeeks && typeof skuWeeks === 'object' && Number.isFinite(target) && target > 0) {
+    const entries = Object.values(skuWeeks)
+    if (entries.length > 0) {
+      let beforeAt = 0
+      let afterAt = 0
+      for (const entry of entries) {
+        if (Number(entry?.before) >= target) beforeAt += 1
+        if (Number(entry?.after) >= target) afterAt += 1
+      }
+      const n = entries.length
+      return {
+        pctLine: `${Math.round((beforeAt / n) * 100)}% → ${Math.round((afterAt / n) * 100)}%`,
+        targetWeeks: target,
+      }
+    }
+  }
+  const raw = String(loc?.receivingWeeksCoverage ?? '')
+  // e.g. "3.2 → 6.4 (6 target)" or "N/A (0 forecast)"
+  const match = raw.match(/^([\d.]+)\s*→\s*([\d.]+)/)
+  if (match && Number.isFinite(target) && target > 0) {
+    const beforeW = Number(match[1])
+    const afterW = Number(match[2])
+    const beforePct = beforeW >= target ? 100 : 0
+    const afterPct = afterW >= target ? 100 : 0
+    return {
+      pctLine: `${beforePct}% → ${afterPct}%`,
+      targetWeeks: target,
+    }
+  }
+  if (loc?.coverage && String(loc.coverage).includes('%') && String(loc.coverage).includes('→')) {
+    return {
+      pctLine: loc.coverage,
+      targetWeeks: Number.isFinite(target) ? target : loc.targetWeeks,
+    }
+  }
+  return {
+    pctLine: '—',
+    targetWeeks: Number.isFinite(target) ? target : loc?.targetWeeks,
+  }
+}
+
+/** Pack ratio breakdown e.g. "S=2, M=3, L=2 (7 units/pack)" (no Pack contents prefix). */
+function getPackCompositionLine(product, loc) {
+  // Multi-SKU composition only for Coin (etc.); never bleed Opéra/Cap ratios onto Pre-sac/Gémo.
+  if (getMultiSkuPacksForProduct(product).length > 0) {
+    const packDef = findMultiSkuPackByLocation(loc?.name)
+    if (packDef?.packRatio) {
+      const parts = Object.entries(packDef.packRatio).map(([sku, n]) => {
+        const size = String(sku).includes('-') ? String(sku).split('-').pop() : sku
+        return `${size}=${n}`
+      })
+      const units =
+        packDef.packMultiple ??
+        Object.values(packDef.packRatio).reduce((sum, n) => sum + (Number(n) || 0), 0)
+      return `${parts.join(', ')} (${units} units/pack)`
+    }
+  }
+  const units =
+    (loc?.packMultiple != null && loc.packMultiple > 0
+      ? loc.packMultiple
+      : product?.packMultiple) || 10
+  const size = PACK_DRILLDOWN_META[product?.id]?.sizes?.[0] ?? 'S'
+  return `${size}=${units} (${units} units/pack)`
+}
+
+/** Log01 packs available from SOH units ÷ pack multiple (Coin uses min multi-SKU multiple). */
+function getLog01PacksAvailable(product, wh) {
+  if (wh?.packsAvailable != null) return wh.packsAvailable
+  const units = Object.values(wh?.sohBySize ?? {}).reduce(
+    (sum, n) => sum + (Number(n) || 0),
+    0
+  )
+  const multi = getMultiSkuPacksForProduct(product)
+  const pm =
+    multi.length > 0
+      ? Math.min(...multi.map((p) => p.packMultiple).filter((n) => n > 0))
+      : product?.packMultiple || 10
+  if (!pm || pm <= 0) return 0
+  return Math.floor(units / pm)
+}
+
+/** Expand total units into one box per pack (each box displays packMultiple). */
+function expandUnitsToPackBoxes(totalUnits, packMultiple) {
+  if (!packMultiple || packMultiple <= 0) return []
+  const n = Math.max(0, Math.floor((Number(totalUnits) || 0) / packMultiple))
+  return Array.from({ length: n }, () => packMultiple)
+}
+
+function sumBoxUnits(boxes) {
+  return (boxes ?? []).reduce((sum, n) => sum + (Number(n) || 0), 0)
+}
+
+function productHasMixedFulfilment(p) {
+  return p?.packTransfers != null && p?.looseTransfers != null
+}
+
+/**
+ * Parse drilldown pack-count input: integer pack count, or units that are a pack multiple.
+ * Returns { packCount } or { error: true }.
+ */
+function parseDrilldownPackCountInput(raw, packMultiple) {
+  const n = Number(raw)
+  if (!Number.isFinite(n) || n < 0) return { error: true }
+  if (packMultiple > 0 && isPackMultipleValue(raw, packMultiple)) {
+    return { packCount: Math.round(n / packMultiple) }
+  }
+  if (Number.isInteger(n)) return { packCount: n }
+  return { error: true }
+}
+
+/** Write Explorer transfer overrides for a product×location pack or loose edit. */
+function syncExplorerFromDrilldownLocationEdit({
+  product,
+  locationName,
+  fulfilmentType,
+  units,
+  packCount,
+  packMultiple,
+  setExplorerTransferOverrides,
+}) {
+  if (!setExplorerTransferOverrides) return
+  const updates = {}
+  const statusSkip = {}
+
+  if (fulfilmentType === 'pack' && product.id === 9) {
+    // Multi-SKU Coin-pack: resolve pack group by destination location (P1 Opéra / P2 Cap 3000)
+    const packDef = findMultiSkuPackByLocation(locationName)
+    if (!packDef) return
+    const members = EXPLORER_DATA.filter(
+      (r) =>
+        r.isPackMember &&
+        r.packGroupId === packDef.packGroupId &&
+        r.toLocation === locationName &&
+        r.movementType === 'replenishment'
+    )
+    const ratio = packDef.packRatio
+    const unitsPerPack = packDef.packMultiple
+    const count = packCount ?? Math.floor((units || 0) / (unitsPerPack || packMultiple || 1))
+    for (const member of members) {
+      const perPack = ratio[member.sku]
+      if (perPack == null) continue
+      updates[member.id] = count * perPack
+    }
+  } else {
+    const rows = EXPLORER_DATA.filter(
+      (r) =>
+        r.productName === product.name &&
+        r.toLocation === locationName &&
+        r.movementType === 'replenishment' &&
+        !r.isPackMember &&
+        (fulfilmentType === 'pack'
+          ? r.packMultiple != null && r.packMultiple > 0
+          : (r.fulfilmentType ?? 'loose') === 'loose' && !(r.packMultiple > 0))
+    )
+    for (const row of rows) {
+      if (fulfilmentType === 'pack') {
+        const pm = row.packMultiple || packMultiple
+        updates[row.id] = (packCount ?? Math.floor((units || 0) / pm)) * pm
+      } else {
+        updates[row.id] = units
+      }
+    }
+  }
+
+  if (Object.keys(updates).length === 0) return
+  setExplorerTransferOverrides((prev) => ({ ...prev, ...updates }))
+  void statusSkip
 }
 
 function StockAnalysisDrilldown({
@@ -1971,27 +2632,67 @@ function StockAnalysisDrilldown({
   setExplorerProductNameFilters,
   setActiveTab,
   productStatusOverrides,
-  setProductStatusOverrides }) {
+  setProductStatusOverrides,
+  setProductTransfersOverrides,
+  setProductPackTransfersOverrides,
+  setProductLooseTransfersOverrides,
+  setProductPackCountOverrides,
+  setExplorerTransferOverrides,
+}) {
   const [selectedTransferDetail, setSelectedTransferDetail] = useState(null)
   const [approvedLocations, setApprovedLocations] = useState({})
   const [selectedLocationIds, setSelectedLocationIds] = useState(new Set())
+  // Pack/loose box arrays per location: { [locId]: { pack?: number[], loose?: number[] } }
+  const [locationReplenOverrides, setLocationReplenOverrides] = useState({})
   const [tuBoxOverrides, setTuBoxOverrides] = useState({})
   const [editingTuBoxKey, setEditingTuBoxKey] = useState(null)
   const [editingTuBoxValue, setEditingTuBoxValue] = useState('')
-  const [drilldownTripTypeFilters, setDrilldownTripTypeFilters] = useState([
-    'rebalancing',
-    'replenishment',
-  ])
+  const [packInputError, setPackInputError] = useState(false)
+  const [drilldownTripTypeFilters, setDrilldownTripTypeFilters] = useState([])
   const [drilldownFiltersOpen, setDrilldownFiltersOpen] = useState(false)
+  // G.3a.1: single active click-to-reveal cell (`${locId}-pack` | `${locId}-size-${size}` | null)
+  const [activeTransferCell, setActiveTransferCell] = useState(null)
   const locations = LOCATIONS_BY_PRODUCT[product.id] || DEFAULT_LOCATIONS
   const breadcrumbFrom = `${trip.from} [${trip.fromCode}]`
+  const packMultiple =
+    product.packMultiple != null && product.packMultiple > 0 ? product.packMultiple : null
+  const isPackProduct = packMultiple != null
+  const isMixedPackProduct = isPackProduct && productHasMixedFulfilment(product)
+  const packDrilldownMeta = PACK_DRILLDOWN_META[product.id] ?? null
+  const usePackDrilldownLayout = Boolean(packDrilldownMeta)
+  const packDrilldownSizes = packDrilldownMeta?.sizes ?? []
+
+  /** Additive: location / pack-group multiple takes precedence; else product-level packMultiple. */
+  const getLocPackMultiple = (loc) => {
+    if (loc?.packMultiple != null && loc.packMultiple > 0) return loc.packMultiple
+    // Only resolve pack-group multiples for multi-SKU products (Coin); never bleed onto Pre-sac/Gémo
+    if (getMultiSkuPacksForProduct(product).length > 0) {
+      const packDef = findMultiSkuPackByLocation(loc?.name)
+      if (packDef?.packMultiple > 0) return packDef.packMultiple
+    }
+    return packMultiple
+  }
 
   useEffect(() => {
-    setDrilldownTripTypeFilters(['rebalancing', 'replenishment'])
+    setDrilldownTripTypeFilters([])
+    setLocationReplenOverrides({})
+    setTuBoxOverrides({})
+    setEditingTuBoxKey(null)
+    setPackInputError(false)
+    setActiveTransferCell(null)
   }, [product.id])
 
-  const showRebalancing = drilldownTripTypeFilters.includes('rebalancing')
-  const showReplenishment = drilldownTripTypeFilters.includes('replenishment')
+  const toggleTransferCellReveal = (cellKey) => {
+    setActiveTransferCell((prev) => (prev === cellKey ? null : cellKey))
+  }
+
+  // Empty trip-type filters = show all movement boxes (Explorer-style default)
+  const showRebalancing =
+    drilldownTripTypeFilters.length === 0 ||
+    drilldownTripTypeFilters.includes('rebalancing')
+  const showReplenishment =
+    drilldownTripTypeFilters.length === 0 ||
+    drilldownTripTypeFilters.includes('replenishment')
 
   const filteredLocations = useMemo(
     () => locations.filter((loc) => locationVisibleForTripTypeFilters(loc, drilldownTripTypeFilters)),
@@ -1999,27 +2700,220 @@ function StockAnalysisDrilldown({
   )
 
   const tuBoxKey = (locId, type, index) => `${product.id}-${locId}-${type}-${index}`
+  const packCountEditKey = (locId) => `${product.id}-${locId}-pack-count`
 
   const getEffectiveTuBoxValue = (key, baseValue) =>
     tuBoxOverrides[key] !== undefined ? tuBoxOverrides[key] : baseValue
 
+  const getLocationPackBoxes = (loc) => {
+    const override = locationReplenOverrides[loc.id]
+    if (override?.pack) return override.pack
+    if (isPackProduct) {
+      const locPm = getLocPackMultiple(loc)
+      const base = loc.tuReplen ?? []
+      // Already one-box-per-pack stubs, or expand a single total
+      if (base.length > 0 && locPm > 0 && base.every((n) => n === locPm)) return [...base]
+      return expandUnitsToPackBoxes(sumBoxUnits(base), locPm)
+    }
+    return loc.tuReplen ?? []
+  }
+
+  const getLocationLooseBoxes = (loc) => {
+    // Pure pack products never render loose replen boxes
+    if (!isMixedPackProduct) return []
+    const override = locationReplenOverrides[loc.id]
+    if (override?.loose) return override.loose
+    return loc.tuReplenLoose ?? []
+  }
+
+  /** Loose units for a size column (Option C: excludes pack contributions). */
+  const getLocationLooseBoxesForSize = (loc, size) => {
+    if (!usePackDrilldownLayout) return []
+    // Single-size pack products: all loose maps to that size
+    if (packDrilldownSizes.length === 1 && packDrilldownSizes[0] === size) {
+      return getLocationLooseBoxes(loc)
+    }
+    const override = locationReplenOverrides[loc.id]
+    if (override?.looseBySize?.[size]) return override.looseBySize[size]
+    return loc.looseBySize?.[size] ?? []
+  }
+
+  /** Per-row TU label: for pack products, after = sum of rendered pack + loose boxes. */
+  const getLocationTuDisplay = (loc) => {
+    if (!isPackProduct) return loc.tu
+    const before = String(loc.tu ?? '0 → 0').split(' → ')[0] ?? '0'
+    const after =
+      sumBoxUnits(getLocationPackBoxes(loc)) + sumBoxUnits(getLocationLooseBoxes(loc))
+    return `${before} → ${after}`
+  }
+
+  const packLayoutPackCountTotal = useMemo(() => {
+    if (!usePackDrilldownLayout) return { before: 0, after: 0, label: '0 → 0' }
+    const after = filteredLocations.reduce(
+      (sum, loc) => sum + getLocationPackBoxes(loc).length,
+      0
+    )
+    return { before: 0, after, label: `0 → ${after}` }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filteredLocations, usePackDrilldownLayout, locationReplenOverrides, packMultiple])
+
+  const packLayoutLooseTotalsBySize = useMemo(() => {
+    const totals = {}
+    for (const size of packDrilldownSizes) {
+      // Destination rows only — Log01 never contributes to size totals
+      totals[size] = filteredLocations.reduce(
+        (sum, loc) => sum + sumBoxUnits(getLocationLooseBoxesForSize(loc, size)),
+        0
+      )
+    }
+    return totals
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filteredLocations, packDrilldownSizes, locationReplenOverrides, usePackDrilldownLayout])
+
+  const log01PacksAvailable = useMemo(() => {
+    if (!usePackDrilldownLayout || !packDrilldownMeta?.warehouse) return 0
+    return getLog01PacksAvailable(product, packDrilldownMeta.warehouse)
+  }, [usePackDrilldownLayout, packDrilldownMeta, product])
+
+  const log01SelectionId = packDrilldownMeta?.warehouse?.id ?? 'log01'
+
+  const syncProductTotalsFromLocations = (nextLocationOverrides) => {
+    if (!setProductTransfersOverrides) return
+    let packUnits = 0
+    let looseUnits = 0
+    let packCountTotal = 0
+    for (const loc of locations) {
+      const ov = nextLocationOverrides[loc.id]
+      const locPm = getLocPackMultiple(loc)
+      const packBoxes =
+        ov?.pack ??
+        (isPackProduct
+          ? loc.tuReplen?.every((n) => n === locPm)
+            ? loc.tuReplen
+            : expandUnitsToPackBoxes(sumBoxUnits(loc.tuReplen), locPm)
+          : [])
+      const looseBoxes = ov?.loose ?? loc.tuReplenLoose ?? []
+      if (isPackProduct) {
+        packUnits += sumBoxUnits(packBoxes)
+        looseUnits += sumBoxUnits(looseBoxes)
+        packCountTotal += (packBoxes ?? []).length
+      } else {
+        packUnits += sumBoxUnits(loc.tuReplen)
+      }
+    }
+    // Non-pack products: don't rewrite product totals from location stubs
+    if (!isPackProduct) return
+
+    const total = packUnits + looseUnits
+    setProductTransfersOverrides((prev) => ({ ...prev, [product.id]: total }))
+    setProductPackCountOverrides?.((prev) => ({ ...prev, [product.id]: packCountTotal }))
+    if (isMixedPackProduct) {
+      setProductPackTransfersOverrides?.((prev) => ({ ...prev, [product.id]: packUnits }))
+      setProductLooseTransfersOverrides?.((prev) => ({ ...prev, [product.id]: looseUnits }))
+    }
+  }
+
   const startEditTuBox = (key, currentValue) => {
     setEditingTuBoxKey(key)
     setEditingTuBoxValue(String(currentValue))
+    setPackInputError(false)
   }
 
   const commitTuBoxEdit = () => {
     if (!editingTuBoxKey) return
+
+    // Pack-count edit for a location: key = `${product.id}-${locId}-pack-count`
+    if (isPackProduct && editingTuBoxKey.endsWith('-pack-count')) {
+      const locationId = Number(
+        editingTuBoxKey.slice(String(product.id).length + 1).replace(/-pack-count$/, '')
+      )
+      const loc = locations.find((l) => l.id === locationId)
+      const locPm = getLocPackMultiple(loc)
+      const parsed = parseDrilldownPackCountInput(editingTuBoxValue, locPm)
+      if (parsed.error) {
+        setPackInputError(true)
+        return
+      }
+      const newBoxes = expandUnitsToPackBoxes(parsed.packCount * locPm, locPm)
+      setLocationReplenOverrides((prev) => {
+        const next = {
+          ...prev,
+          [locationId]: {
+            pack: newBoxes,
+            loose: prev[locationId]?.loose ?? (loc?.tuReplenLoose ? [...loc.tuReplenLoose] : []),
+          },
+        }
+        queueMicrotask(() => syncProductTotalsFromLocations(next))
+        return next
+      })
+      syncExplorerFromDrilldownLocationEdit({
+        product,
+        locationName: loc?.name,
+        fulfilmentType: 'pack',
+        packCount: parsed.packCount,
+        packMultiple: locPm,
+        setExplorerTransferOverrides,
+      })
+      setEditingTuBoxKey(null)
+      setEditingTuBoxValue('')
+      setPackInputError(false)
+      return
+    }
+
+    // Loose replen box: `${product.id}-${locId}-replen-loose-${index}`
+    if (isPackProduct && editingTuBoxKey.includes('-replen-loose-')) {
+      const withoutPrefix = editingTuBoxKey.slice(String(product.id).length + 1)
+      const match = withoutPrefix.match(/^(\d+)-replen-loose-(\d+)$/)
+      if (!match) {
+        setEditingTuBoxKey(null)
+        setEditingTuBoxValue('')
+        return
+      }
+      const locationId = Number(match[1])
+      const index = Number(match[2])
+      const loc = locations.find((l) => l.id === locationId)
+      const parsed = parseInt(editingTuBoxValue, 10)
+      const value = Number.isFinite(parsed) ? Math.max(0, parsed) : 0
+      setLocationReplenOverrides((prev) => {
+        const pack =
+          prev[locationId]?.pack ??
+          (loc ? getLocationPackBoxes(loc) : [])
+        const loose = [...(prev[locationId]?.loose ?? loc?.tuReplenLoose ?? [])]
+        while (loose.length <= index) loose.push(0)
+        loose[index] = value
+        const next = { ...prev, [locationId]: { pack, loose } }
+        queueMicrotask(() => {
+          syncProductTotalsFromLocations(next)
+          syncExplorerFromDrilldownLocationEdit({
+            product,
+            locationName: loc?.name,
+            fulfilmentType: 'loose',
+            units: sumBoxUnits(loose),
+            packMultiple,
+            setExplorerTransferOverrides,
+          })
+        })
+        return next
+      })
+      setTuBoxOverrides((prev) => ({ ...prev, [editingTuBoxKey]: value }))
+      setEditingTuBoxKey(null)
+      setEditingTuBoxValue('')
+      setPackInputError(false)
+      return
+    }
+
     const parsed = parseInt(editingTuBoxValue, 10)
     const value = Number.isFinite(parsed) ? Math.max(0, parsed) : 0
     setTuBoxOverrides((prev) => ({ ...prev, [editingTuBoxKey]: value }))
     setEditingTuBoxKey(null)
     setEditingTuBoxValue('')
+    setPackInputError(false)
   }
 
   const cancelTuBoxEdit = () => {
     setEditingTuBoxKey(null)
     setEditingTuBoxValue('')
+    setPackInputError(false)
   }
 
   const toggleLocationSelection = (id) => {
@@ -2032,7 +2926,10 @@ function StockAnalysisDrilldown({
   }
 
   const toggleAllLocationsSelection = () => {
-    const allIds = filteredLocations.map((loc) => loc.id)
+    const allIds = [
+      ...(usePackDrilldownLayout ? [log01SelectionId] : []),
+      ...filteredLocations.map((loc) => loc.id),
+    ]
     const allSelected = allIds.length > 0 && allIds.every((id) => selectedLocationIds.has(id))
     setSelectedLocationIds(allSelected ? new Set() : new Set(allIds))
   }
@@ -2044,6 +2941,8 @@ function StockAnalysisDrilldown({
     setApprovedLocations((prev) => {
       const next = { ...prev }
       selectedLocationIds.forEach((id) => {
+        // Log01 selection is visual-only in the prototype
+        if (id === log01SelectionId) return
         next[id] = true
       })
       return next
@@ -2057,12 +2956,6 @@ function StockAnalysisDrilldown({
   const breadcrumbTo = trip.to.length > 12 ? `${trip.to.slice(0, 10)}...` : trip.to
   const productLabel = product.name.length > 16 ? `${product.name.slice(0, 14)}...` : product.name
   const productSku = product.sku
-  const showExplorerProductLink = EXPLORER_PRODUCTS.some((p) => p.name === product.name)
-
-  const handleEditProductOnExplorer = () => {
-    setExplorerProductNameFilters([product.name])
-    setActiveTab('explorer')
-  }
 
   const summaryStock = useMemo(
     () =>
@@ -2079,13 +2972,74 @@ function StockAnalysisDrilldown({
     () =>
       filteredLocations.reduce(
         (acc, loc) => {
-          const [before, after] = loc.tu.split(' → ').map(Number)
+          const label = getLocationTuDisplay(loc)
+          const [before, after] = String(label).split(' → ').map(Number)
           return { before: acc.before + (before || 0), after: acc.after + (after || 0) }
         },
         { before: 0, after: 0 }
       ),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- getLocationTuDisplay closes over pack helpers / overrides
+    [filteredLocations, isPackProduct, isMixedPackProduct, packMultiple, locationReplenOverrides]
+  )
+  const summarySales = useMemo(
+    () =>
+      filteredLocations.reduce(
+        (acc, loc) => ({
+          l7: acc.l7 + (Number(loc.salesL7) || 0),
+          l30: acc.l30 + (Number(loc.salesL30) || 0),
+        }),
+        { l7: 0, l30: 0 }
+      ),
     [filteredLocations]
   )
+  const summaryStockouts = useMemo(() => {
+    let before = 0
+    let after = 0
+    let hasArrow = false
+    for (const loc of filteredLocations) {
+      const raw = String(loc.stockouts ?? '')
+      const match = raw.match(/^([\d.]+)\s*→\s*([\d.]+)/)
+      if (match) {
+        before += Number(match[1]) || 0
+        after += Number(match[2]) || 0
+        hasArrow = true
+        continue
+      }
+      const n = Number(raw)
+      if (Number.isFinite(n)) {
+        before += n
+        after += n
+      }
+    }
+    return { before, after, hasArrow }
+  }, [filteredLocations])
+  const summaryLocations = useMemo(() => {
+    let receiving = 0
+    for (const loc of filteredLocations) {
+      const packUnits = sumBoxUnits(getLocationPackBoxes(loc))
+      const looseUnits = sumBoxUnits(getLocationLooseBoxes(loc))
+      const truckUnits = sumBoxUnits(loc.tuTruck)
+      const replenUnits = !isPackProduct ? sumBoxUnits(loc.tuReplen) : 0
+      if (packUnits + looseUnits + truckUnits + replenUnits > 0) receiving += 1
+    }
+    // Pack layout: Log01 is the sending warehouse. Non-pack: trip origin is the sender.
+    const sending =
+      receiving > 0 ? (usePackDrilldownLayout || trip?.from ? 1 : 0) : 0
+    return { sending, receiving }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- pack/loose helpers close over overrides
+  }, [
+    filteredLocations,
+    usePackDrilldownLayout,
+    trip?.from,
+    isPackProduct,
+    locationReplenOverrides,
+  ])
+  const summaryStockoutsLabel = summaryStockouts.hasArrow
+    ? `${summaryStockouts.before} → ${summaryStockouts.after}`
+    : String(summaryStockouts.after)
+  const summaryLocationsLabel = `${summaryLocations.sending} sending → ${summaryLocations.receiving} receiving`
+  const packSendingLabel =
+    packDrilldownMeta?.warehouse?.name ?? 'Log01 entrepot logtex'
 
   if (selectedTransferDetail) {
     return (
@@ -2129,15 +3083,6 @@ function StockAnalysisDrilldown({
               setProductStatusOverrides((prev) => ({ ...prev, [product.id]: statusId }))
             }
           />
-          {showExplorerProductLink && (
-            <button
-              type="button"
-              onClick={handleEditProductOnExplorer}
-              className="text-[13px] font-medium text-[#0267ff] hover:underline shrink-0"
-            >
-              Edit product on the Explorer tab
-            </button>
-          )}
         </div>
       </div>
 
@@ -2248,7 +3193,417 @@ function StockAnalysisDrilldown({
 
       <div className="border border-[#e5e7eb] rounded-[4px] overflow-hidden bg-white">
         <div className="max-h-[min(65vh,800px)] overflow-x-auto overflow-y-auto">
+        {usePackDrilldownLayout ? (
         <table className="w-full text-[14px]">
+          <thead className="bg-white">
+            <tr className="border-b border-[#E9EAEB]">
+              <th className="sticky top-0 z-20 w-10 max-w-[40px] bg-white py-3 px-2 text-left" />
+              <th className="sticky top-0 z-20 w-12 bg-white py-3 px-4 text-left">
+                <input
+                  type="checkbox"
+                  className="size-4 rounded border-[#E9EAEB] text-[#0267ff]"
+                  aria-label="Select all"
+                  checked={
+                    filteredLocations.length > 0 &&
+                    [
+                      ...(usePackDrilldownLayout ? [log01SelectionId] : []),
+                      ...filteredLocations.map((loc) => loc.id),
+                    ].every((id) => selectedLocationIds.has(id))
+                  }
+                  onChange={toggleAllLocationsSelection}
+                />
+              </th>
+              <th className="sticky top-0 z-20 bg-white text-left py-3 px-4 font-medium text-[#00050A]">Locations</th>
+              <th className="sticky top-0 z-20 bg-white text-right py-3 px-4 font-medium text-[#00050A]">
+                <span className="inline-flex items-center gap-1">Stock <IconSortDown /></span>
+              </th>
+              <th className="sticky top-0 z-20 bg-white text-right py-3 px-4 font-medium text-[#00050A]">Pack</th>
+              {packDrilldownSizes.map((size) => (
+                <th
+                  key={`size-h-${size}`}
+                  className="sticky top-0 z-20 bg-white text-right py-3 px-4 font-medium text-[#00050A]"
+                >
+                  {size}
+                </th>
+              ))}
+              <th className="sticky top-0 z-20 bg-white text-right py-3 px-4 font-medium text-[#00050A]">
+                <span className="flex flex-col items-end">
+                  Sales
+                  <span className="text-[11px] font-normal text-[#4b535c]">L7D / L30D</span>
+                </span>
+              </th>
+              <th className="sticky top-0 z-20 bg-white text-right py-3 px-4 font-medium text-[#00050A]">
+                <span className="flex flex-col items-end">
+                  <span className="inline-flex items-center gap-1">Forecast <IconInfo /></span>
+                  <span className="text-[11px] font-normal text-[#4b535c]">per wk</span>
+                </span>
+              </th>
+              <th className="sticky top-0 z-20 bg-white text-right py-3 px-4 font-medium text-[#00050A]">Stockouts</th>
+              <th className="sticky top-0 z-20 bg-white text-right py-3 px-4 font-medium text-[#00050A]">
+                <span className="flex flex-col items-end">
+                  Coverage
+                  <span className="text-[11px] font-normal text-[#4b535c]">target weeks</span>
+                </span>
+              </th>
+              <th className="sticky top-0 z-20 bg-white text-right py-3 px-4 font-medium text-[#00050A]">
+                <span className="inline-flex items-center gap-1 justify-end">
+                  Storage capacity{' '}
+                  <span
+                    className="inline-flex cursor-help"
+                    title="The storage capacity status of the location after the recommended transfers"
+                  >
+                    <IconInfo />
+                  </span>
+                </span>
+              </th>
+            </tr>
+            <tr className="border-b border-[#E9EAEB] bg-white">
+              <th className="w-10 max-w-[40px] bg-white py-2 px-2" />
+              <th className="bg-white py-2 px-4" />
+              <th className="bg-white py-2 px-4 text-left text-[12px] font-bold text-[#0a0a0a]">
+                {summaryLocationsLabel}
+              </th>
+              <th className="bg-white py-2 px-4 text-right text-[12px] font-bold text-[#0a0a0a]">
+                {summaryStock.before} → {summaryStock.after}
+              </th>
+              <th className="bg-white py-2 px-4 text-right text-[12px] font-bold text-[#0a0a0a]">
+                {packLayoutPackCountTotal.label}
+              </th>
+              {packDrilldownSizes.map((size) => (
+                <th
+                  key={`size-t-${size}`}
+                  className="bg-white py-2 px-4 text-right text-[12px] font-bold text-[#0a0a0a]"
+                >
+                  {packLayoutLooseTotalsBySize[size] ?? 0}
+                </th>
+              ))}
+              <th className="bg-white py-2 px-4 text-right text-[12px] font-bold text-[#0a0a0a]">
+                <div className="flex flex-col items-end">
+                  <span>{summarySales.l7}</span>
+                  <span className="text-[11px] font-normal text-[#4b535c]">{summarySales.l30}</span>
+                </div>
+              </th>
+              <th className="bg-white py-2 px-4 text-right text-[12px] font-bold text-[#4b535c]">7.01 per wk</th>
+              <th className="bg-white py-2 px-4 text-right text-[12px] font-bold text-[#0a0a0a]">
+                {summaryStockoutsLabel}
+              </th>
+              <th className="bg-white py-2 px-4 text-right text-[12px] font-bold text-[#4b535c]">—</th>
+              <th className="bg-white py-2 px-4 text-right text-[12px] font-bold text-[#4b535c]">—</th>
+            </tr>
+          </thead>
+          <tbody>
+            {(() => {
+              const wh = packDrilldownMeta.warehouse
+              const packsAvailable = log01PacksAvailable
+              const log01PackCellKey = `${wh.id}-pack`
+              const log01PackRevealed = activeTransferCell === log01PackCellKey
+              return (
+                <tr key={wh.id} className="border-b border-[#E9EAEB] bg-white hover:bg-white">
+                  <td className="w-10 max-w-[40px] py-3 px-2" />
+                  <td className="py-3 px-4" onClick={(e) => e.stopPropagation()}>
+                    <input
+                      type="checkbox"
+                      className="size-4 rounded border-[#E9EAEB] text-[#0267ff]"
+                      aria-label={`Select ${wh.name}`}
+                      checked={selectedLocationIds.has(log01SelectionId)}
+                      onChange={() => toggleLocationSelection(log01SelectionId)}
+                    />
+                  </td>
+                  <td className="py-3 px-4">
+                    <div className="flex flex-col gap-0.5">
+                      <span className="font-medium text-[#0a0a0a]">{wh.name}</span>
+                      <span className="text-[12px] text-[#4b535c]">{wh.code}</span>
+                    </div>
+                  </td>
+                  <td className="py-3 px-4 text-right text-[#0a0a0a] font-normal">{wh.stock}</td>
+                  <td
+                    className="py-3 px-4 text-right cursor-pointer"
+                    onClick={() => toggleTransferCellReveal(log01PackCellKey)}
+                  >
+                    {log01PackRevealed ? (
+                      <div
+                        className="flex flex-wrap gap-1 justify-end"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <TuHoverPopover
+                          panel={
+                            <TuTruckTransferHoverCard
+                              loc={{
+                                name: wh.name,
+                                forecast: wh.forecast,
+                                targetWeeks: wh.targetWeeks,
+                                receivingWeeksCoverage:
+                                  wh.weeksCoverage != null && wh.targetWeeks != null
+                                    ? `${wh.weeksCoverage} → ${wh.weeksCoverage} (${wh.targetWeeks} target)`
+                                    : undefined,
+                              }}
+                              borderClassName="border-[#A234DA]"
+                              variant="soh"
+                              sohValue={packsAvailable}
+                              sohWeeksCoverage={
+                                wh.weeksCoverage != null && wh.targetWeeks != null
+                                  ? `${wh.weeksCoverage} (${wh.targetWeeks} target)`
+                                  : '—'
+                              }
+                              sohForecast={wh.forecast}
+                              sohInTransit={false}
+                              onMoreDetails={() => {}}
+                            />
+                          }
+                        >
+                          <span className="inline-flex h-[26px] min-w-[50px] w-fit shrink-0 items-center justify-center gap-1.5 rounded-[2px] bg-[#A234DA] px-[6px] py-[2px] text-[12px] font-medium text-white cursor-pointer transition-[filter,box-shadow] hover:brightness-90 hover:shadow-[0px_2px_4px_rgba(0,0,0,0.1)]">
+                            <IconPackageTu />
+                            {packsAvailable}
+                          </span>
+                        </TuHoverPopover>
+                      </div>
+                    ) : (
+                      <span className="text-[#0a0a0a]">{packsAvailable}</span>
+                    )}
+                  </td>
+                  {packDrilldownSizes.map((size) => (
+                    <td key={`${wh.id}-size-${size}`} className="py-3 px-4 text-right text-[#4b535c]">
+                      —
+                    </td>
+                  ))}
+                  <td className="py-3 px-4 text-right text-[#4b535c]">—</td>
+                  <td className="py-3 px-4 text-right text-[#4b535c]">—</td>
+                  <td className="py-3 px-4 text-right text-[#4b535c]">—</td>
+                  <td className="py-3 px-4 text-right text-[#4b535c]">—</td>
+                  <td className="py-3 px-4 text-right">
+                    <div className="flex justify-end">
+                      <StorageCapacityPill value={wh.storageCapacity ?? 'available'} />
+                    </div>
+                  </td>
+                </tr>
+              )
+            })()}
+            {filteredLocations.map((loc) => {
+              const packBoxes = getLocationPackBoxes(loc)
+              const packCount = packBoxes.length
+              const packCellKey = `${loc.id}-pack`
+              const packRevealed = activeTransferCell === packCellKey
+              const locPm = getLocPackMultiple(loc)
+              const packEditKey = packCountEditKey(loc.id)
+              const isEditingPack = editingTuBoxKey === packEditKey
+              return (
+                <tr key={loc.id} className="border-b border-[#E9EAEB] bg-white hover:bg-white">
+                  <td className="w-10 max-w-[40px] py-3 px-2" />
+                  <td className="py-3 px-4" onClick={(e) => e.stopPropagation()}>
+                    <input
+                      type="checkbox"
+                      className="size-4 rounded border-[#E9EAEB] text-[#0267ff]"
+                      aria-label={`Select ${loc.name}`}
+                      checked={selectedLocationIds.has(loc.id)}
+                      onChange={() => toggleLocationSelection(loc.id)}
+                    />
+                  </td>
+                  <td className="py-3 px-4">
+                    <div className="flex flex-col gap-0.5">
+                      <span className="font-medium text-[#0a0a0a]">{loc.name}</span>
+                      <span className="text-[12px] text-[#4b535c]">{loc.code}</span>
+                    </div>
+                  </td>
+                  <td className="py-3 px-4 text-right">
+                    <BeforeAfterText value={loc.stock} />
+                  </td>
+                  <td
+                    className="py-3 px-4 text-right cursor-pointer"
+                    onClick={() => {
+                      if (packCount === 0 || isEditingPack) return
+                      toggleTransferCellReveal(packCellKey)
+                    }}
+                  >
+                    {packCount === 0 ? (
+                      <span className="text-[#4b535c]">—</span>
+                    ) : packRevealed || isEditingPack ? (
+                      <div
+                        className="flex flex-wrap gap-1 justify-end"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {isEditingPack ? (
+                          <EditableTuTransferBadge
+                            key={packEditKey}
+                            value={locPm}
+                            isEditing
+                            editingValue={editingTuBoxValue}
+                            onStartEdit={() => {}}
+                            onEditingValueChange={(v) => {
+                              setPackInputError(false)
+                              setEditingTuBoxValue(v)
+                            }}
+                            onCommit={commitTuBoxEdit}
+                            onCancel={cancelTuBoxEdit}
+                            bgClassName="bg-[#BE185D]"
+                            icon={<IconReplenishment />}
+                            hoverPanel={null}
+                            inputError={packInputError}
+                            errorMessage={
+                              packInputError ? `Multiple of ${locPm}` : null
+                            }
+                            inputStep={1}
+                          />
+                        ) : (
+                          packBoxes.map((n, i) => (
+                            <EditableTuTransferBadge
+                              key={tuBoxKey(loc.id, 'replen-pack', i)}
+                              value={1}
+                              isEditing={false}
+                              editingValue=""
+                              onStartEdit={() => startEditTuBox(packEditKey, packCount)}
+                              onEditingValueChange={setEditingTuBoxValue}
+                              onCommit={commitTuBoxEdit}
+                              onCancel={cancelTuBoxEdit}
+                              bgClassName="bg-[#BE185D]"
+                              icon={<IconReplenishment />}
+                              hoverPanel={
+                                <TuTruckTransferHoverCard
+                                  trip={trip}
+                                  loc={loc}
+                                  truckUnits={n}
+                                  borderClassName="border-[#BE185D]"
+                                  variant="pack"
+                                  packCompositionLine={getPackCompositionLine(product, loc)}
+                                  packCount={packCount}
+                                  sendingLabel={packSendingLabel}
+                                  receivingLabel={loc.name}
+                                  onMoreDetails={() => setSelectedTransferDetail(loc)}
+                                />
+                              }
+                            />
+                          ))
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-[#0a0a0a]">{formatPackLabel(packCount)}</span>
+                    )}
+                  </td>
+                  {packDrilldownSizes.map((size) => {
+                    const looseBoxes = getLocationLooseBoxesForSize(loc, size)
+                    const cellKey = `${loc.id}-size-${size}`
+                    const revealed = activeTransferCell === cellKey
+                    const hasLoose = looseBoxes.length > 0
+                    const hasRebal =
+                      showRebalancing && (loc.tuTruck?.length ?? 0) > 0 && packDrilldownSizes[0] === size
+                    const hasContent = hasLoose || hasRebal
+                    return (
+                      <td
+                        key={cellKey}
+                        className="py-3 px-4 text-right cursor-pointer"
+                        onClick={() => {
+                          if (!hasContent) return
+                          toggleTransferCellReveal(cellKey)
+                        }}
+                      >
+                        {!hasContent ? (
+                          <span className="text-[#4b535c]">—</span>
+                        ) : revealed ? (
+                          <div
+                            className="flex flex-wrap gap-1 justify-end"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            {showReplenishment &&
+                              looseBoxes.map((n, i) => {
+                                const key = tuBoxKey(loc.id, 'replen-loose', i)
+                                const effectiveValue = getEffectiveTuBoxValue(key, n)
+                                return (
+                                  <EditableTuTransferBadge
+                                    key={key}
+                                    value={effectiveValue}
+                                    isEditing={editingTuBoxKey === key}
+                                    editingValue={editingTuBoxValue}
+                                    onStartEdit={() => startEditTuBox(key, effectiveValue)}
+                                    onEditingValueChange={(v) => {
+                                      setPackInputError(false)
+                                      setEditingTuBoxValue(v)
+                                    }}
+                                    onCommit={commitTuBoxEdit}
+                                    onCancel={cancelTuBoxEdit}
+                                    bgClassName="bg-[#EC4899]"
+                                    icon={<IconReplenishment />}
+                                    hoverPanel={
+                                      <TuTruckTransferHoverCard
+                                        trip={trip}
+                                        loc={loc}
+                                        truckUnits={effectiveValue}
+                                        borderClassName="border-[#EC4899]"
+                                        receivingLabel={loc.name}
+                                        onMoreDetails={() => setSelectedTransferDetail(loc)}
+                                      />
+                                    }
+                                  />
+                                )
+                              })}
+                            {hasRebal &&
+                              loc.tuTruck.map((n, i) => {
+                                const key = tuBoxKey(loc.id, 'truck', i)
+                                const effectiveValue = getEffectiveTuBoxValue(key, n)
+                                return (
+                                  <EditableTuTransferBadge
+                                    key={key}
+                                    value={effectiveValue}
+                                    isEditing={editingTuBoxKey === key}
+                                    editingValue={editingTuBoxValue}
+                                    onStartEdit={() => startEditTuBox(key, effectiveValue)}
+                                    onEditingValueChange={(v) => {
+                                      setPackInputError(false)
+                                      setEditingTuBoxValue(v)
+                                    }}
+                                    onCommit={commitTuBoxEdit}
+                                    onCancel={cancelTuBoxEdit}
+                                    bgClassName="bg-[#0267FF]"
+                                    icon={<IconTruckTu />}
+                                    hoverPanel={
+                                      <TuTruckTransferHoverCard
+                                        trip={trip}
+                                        loc={loc}
+                                        truckUnits={effectiveValue}
+                                        borderClassName="border-[#0267FF]"
+                                        receivingLabel={loc.name}
+                                        onMoreDetails={() => setSelectedTransferDetail(loc)}
+                                      />
+                                    }
+                                  />
+                                )
+                              })}
+                          </div>
+                        ) : (
+                          <span className="text-[#0a0a0a]">
+                            {sumBoxUnits(looseBoxes) +
+                              (hasRebal ? sumBoxUnits(loc.tuTruck) : 0)}
+                          </span>
+                        )}
+                      </td>
+                    )
+                  })}
+                  <td className="py-3 px-4 text-right">
+                    <div className="flex flex-col items-end">
+                      <span className="text-[#0a0a0a]">{loc.salesL7}</span>
+                      <span className="text-[12px] text-[#4b535c]">{loc.salesL30}</span>
+                    </div>
+                  </td>
+                  <td className="py-3 px-4 text-right text-[#0a0a0a]">{loc.forecast}</td>
+                  <td className="py-3 px-4 text-right">
+                    <BeforeAfterText value={loc.stockouts} />
+                  </td>
+                  <td className="py-3 px-4 text-right">
+                    <DrilldownCoverageCell
+                      coverage={getDrilldownSkuCoverageAtTarget(loc).pctLine}
+                      targetWeeks={getDrilldownSkuCoverageAtTarget(loc).targetWeeks}
+                    />
+                  </td>
+                  <td className="py-3 px-4 text-right">
+                    <div className="flex justify-end">
+                      <StorageCapacityPill value={loc.storageCapacity ?? 'available'} />
+                    </div>
+                  </td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+        ) : (
+<table className="w-full text-[14px]">
           <thead className="bg-white">
             <tr className="border-b border-[#E9EAEB]">
               <th className="sticky top-0 z-20 w-10 max-w-[40px] bg-white py-3 px-2 text-left" />
@@ -2284,7 +3639,12 @@ function StockAnalysisDrilldown({
                 </span>
               </th>
               <th className="sticky top-0 z-20 bg-white text-right py-3 px-4 font-medium text-[#00050A]">Stockouts</th>
-              <th className="sticky top-0 z-20 bg-white text-right py-3 px-4 font-medium text-[#00050A]">Coverage</th>
+              <th className="sticky top-0 z-20 bg-white text-right py-3 px-4 font-medium text-[#00050A]">
+                <span className="flex flex-col items-end">
+                  Coverage
+                  <span className="text-[11px] font-normal text-[#4b535c]">target weeks</span>
+                </span>
+              </th>
               <th className="sticky top-0 z-20 bg-white text-right py-3 px-4 font-medium text-[#00050A]">
                 <span className="inline-flex items-center gap-1 justify-end">
                   Storage capacity{' '}
@@ -2300,33 +3660,33 @@ function StockAnalysisDrilldown({
             <tr className="border-b border-[#E9EAEB] bg-white">
               <th className="w-10 max-w-[40px] bg-white py-2 px-2" />
               <th className="bg-white py-2 px-4" />
-              <th className="bg-white py-2 px-4" />
-              <th className="bg-white py-2 px-4 text-right text-[12px] font-medium text-[#0a0a0a]">
+              <th className="bg-white py-2 px-4 text-left text-[12px] font-bold text-[#0a0a0a]">
+                {summaryLocationsLabel}
+              </th>
+              <th className="bg-white py-2 px-4 text-right text-[12px] font-bold text-[#0a0a0a]">
                 {summaryStock.before} → {summaryStock.after}
               </th>
-              <th className="bg-white py-2 px-4 text-right text-[12px] font-medium text-[#0a0a0a]">
+              <th className="bg-white py-2 px-4 text-right text-[12px] font-bold text-[#0a0a0a]">
                 {summaryTU.before} → {summaryTU.after}
               </th>
-              <th className="bg-white py-2 px-4 text-right text-[12px] font-normal text-[#4b535c]">—</th>
-              <th className="bg-white py-2 px-4 text-right text-[12px] font-normal text-[#4b535c]">7.01 per wk</th>
-              <th className="bg-white py-2 px-4 text-right text-[12px] font-normal text-[#4b535c]">—</th>
-              <th className="bg-white py-2 px-4 text-right text-[12px] font-normal text-[#4b535c]">—</th>
-              <th className="bg-white py-2 px-4 text-right text-[12px] font-normal text-[#4b535c]">—</th>
+              <th className="bg-white py-2 px-4 text-right text-[12px] font-bold text-[#0a0a0a]">
+                <div className="flex flex-col items-end">
+                  <span>{summarySales.l7}</span>
+                  <span className="text-[11px] font-normal text-[#4b535c]">{summarySales.l30}</span>
+                </div>
+              </th>
+              <th className="bg-white py-2 px-4 text-right text-[12px] font-bold text-[#4b535c]">7.01 per wk</th>
+              <th className="bg-white py-2 px-4 text-right text-[12px] font-bold text-[#0a0a0a]">
+                {summaryStockoutsLabel}
+              </th>
+              <th className="bg-white py-2 px-4 text-right text-[12px] font-bold text-[#4b535c]">—</th>
+              <th className="bg-white py-2 px-4 text-right text-[12px] font-bold text-[#4b535c]">—</th>
             </tr>
           </thead>
           <tbody>
             {filteredLocations.map((loc) => (
               <tr key={loc.id} className="border-b border-[#E9EAEB] bg-white hover:bg-white">
-                <td className="w-10 max-w-[40px] py-3 px-2">
-                  <button
-                    type="button"
-                    onClick={() => setSelectedTransferDetail(loc)}
-                    className="p-1 rounded-[4px] text-[#4B535C] hover:text-[#00050A] cursor-pointer transition-colors"
-                    aria-label={`View transfer detail for ${loc.name}`}
-                  >
-                    <IconChevronRight className="size-4" />
-                  </button>
-                </td>
+                <td className="w-10 max-w-[40px] py-3 px-2" />
                 <td className="py-3 px-4" onClick={(e) => e.stopPropagation()}>
                   <input
                     type="checkbox"
@@ -2342,20 +3702,23 @@ function StockAnalysisDrilldown({
                     <span className="text-[12px] text-[#4b535c]">{loc.code}</span>
                   </div>
                 </td>
-                <td className="py-3 px-4 text-right text-[#0a0a0a]">{loc.stock}</td>
+                <td className="py-3 px-4 text-right">
+                  <BeforeAfterText value={loc.stock} />
+                </td>
                 <td className="py-3 px-4 text-right">
                   <div className="flex flex-col items-end gap-1">
-                    <span className="text-[#0a0a0a]">{loc.tu}</span>
+                    <BeforeAfterText value={getLocationTuDisplay(loc)} />
                     <div className="flex flex-wrap gap-1 justify-end">
                       {loc.tuWarehouse != null && (
                         <TuHoverPopover
                           panel={
-                            <TuBadgeHoverCard
+                            <TuTruckTransferHoverCard
                               loc={loc}
                               borderClassName="border-[#A234DA]"
-                              stockLabel="Stock on-hand"
-                              stockValue={loc.tuWarehouse}
-                              icon={<IconPackageTu className="!size-4 text-[#6b7280]" />}
+                              variant="soh"
+                              sohValue={loc.tuWarehouse}
+                              sohInTransit
+                              onMoreDetails={() => setSelectedTransferDetail(loc)}
                             />
                           }
                         >
@@ -2376,7 +3739,10 @@ function StockAnalysisDrilldown({
                             isEditing={editingTuBoxKey === key}
                             editingValue={editingTuBoxValue}
                             onStartEdit={() => startEditTuBox(key, effectiveValue)}
-                            onEditingValueChange={setEditingTuBoxValue}
+                            onEditingValueChange={(v) => {
+                              setPackInputError(false)
+                              setEditingTuBoxValue(v)
+                            }}
                             onCommit={commitTuBoxEdit}
                             onCancel={cancelTuBoxEdit}
                             bgClassName="bg-[#0267FF]"
@@ -2387,12 +3753,122 @@ function StockAnalysisDrilldown({
                                 loc={loc}
                                 truckUnits={effectiveValue}
                                 borderClassName="border-[#0267FF]"
+                                receivingLabel={loc.name}
+                                onMoreDetails={() => setSelectedTransferDetail(loc)}
                               />
                             }
                           />
                         )
                       })}
                       {showReplenishment &&
+                        isPackProduct &&
+                        (() => {
+                          const packBoxes = getLocationPackBoxes(loc)
+                          const looseBoxes = getLocationLooseBoxes(loc)
+                          const locPm = getLocPackMultiple(loc)
+                          const packCount = packBoxes.length
+                          const packEditKey = packCountEditKey(loc.id)
+                          const isEditingPack = editingTuBoxKey === packEditKey
+                          return (
+                            <>
+                              {isEditingPack ? (
+                                <EditableTuTransferBadge
+                                  key={packEditKey}
+                                  value={locPm}
+                                  isEditing
+                                  editingValue={editingTuBoxValue}
+                                  onStartEdit={() => {}}
+                                  onEditingValueChange={(v) => {
+                                    setPackInputError(false)
+                                    setEditingTuBoxValue(v)
+                                  }}
+                                  onCommit={commitTuBoxEdit}
+                                  onCancel={cancelTuBoxEdit}
+                                  bgClassName="bg-[#BE185D]"
+                                  icon={<IconReplenishment />}
+                                  hoverPanel={null}
+                                  inputError={packInputError}
+                                  errorMessage={
+                                    packInputError
+                                      ? `Multiple of ${locPm}`
+                                      : null
+                                  }
+                                  inputStep={1}
+                                />
+                              ) : (
+                                packBoxes.map((n, i) => {
+                                  const key = tuBoxKey(loc.id, 'replen-pack', i)
+                                  return (
+                                    <EditableTuTransferBadge
+                                      key={key}
+                                      value={1}
+                                      isEditing={false}
+                                      editingValue=""
+                                      onStartEdit={() =>
+                                        startEditTuBox(packEditKey, packCount)
+                                      }
+                                      onEditingValueChange={setEditingTuBoxValue}
+                                      onCommit={commitTuBoxEdit}
+                                      onCancel={cancelTuBoxEdit}
+                                      bgClassName="bg-[#BE185D]"
+                                      icon={<IconReplenishment />}
+                                      hoverPanel={
+                                        <TuTruckTransferHoverCard
+                                          trip={trip}
+                                          loc={loc}
+                                          truckUnits={n}
+                                          borderClassName="border-[#BE185D]"
+                                          variant="pack"
+                                          packCompositionLine={getPackCompositionLine(product, loc)}
+                                          packCount={packCount}
+                                          sendingLabel={packSendingLabel}
+                                          receivingLabel={loc.name}
+                                          onMoreDetails={() => setSelectedTransferDetail(loc)}
+                                        />
+                                      }
+                                    />
+                                  )
+                                })
+                              )}
+                              {isMixedPackProduct &&
+                                looseBoxes.map((n, i) => {
+                                const key = tuBoxKey(loc.id, 'replen-loose', i)
+                                const effectiveValue = getEffectiveTuBoxValue(key, n)
+                                return (
+                                  <EditableTuTransferBadge
+                                    key={key}
+                                    value={effectiveValue}
+                                    isEditing={editingTuBoxKey === key}
+                                    editingValue={editingTuBoxValue}
+                                    onStartEdit={() =>
+                                      startEditTuBox(key, effectiveValue)
+                                    }
+                                    onEditingValueChange={(v) => {
+                                      setPackInputError(false)
+                                      setEditingTuBoxValue(v)
+                                    }}
+                                    onCommit={commitTuBoxEdit}
+                                    onCancel={cancelTuBoxEdit}
+                                    bgClassName="bg-[#EC4899]"
+                                    icon={<IconReplenishment />}
+                                    hoverPanel={
+                                      <TuTruckTransferHoverCard
+                                        trip={trip}
+                                        loc={loc}
+                                        truckUnits={effectiveValue}
+                                        borderClassName="border-[#EC4899]"
+                                        receivingLabel={loc.name}
+                                        onMoreDetails={() => setSelectedTransferDetail(loc)}
+                                      />
+                                    }
+                                  />
+                                )
+                              })}
+                            </>
+                          )
+                        })()}
+                      {showReplenishment &&
+                        !isPackProduct &&
                         loc.tuReplen?.map((n, i) => {
                         const key = tuBoxKey(loc.id, 'replen', i)
                         const effectiveValue = getEffectiveTuBoxValue(key, n)
@@ -2414,6 +3890,8 @@ function StockAnalysisDrilldown({
                                 loc={loc}
                                 truckUnits={effectiveValue}
                                 borderClassName="border-[#EC4899]"
+                                receivingLabel={loc.name}
+                                onMoreDetails={() => setSelectedTransferDetail(loc)}
                               />
                             }
                           />
@@ -2429,6 +3907,8 @@ function StockAnalysisDrilldown({
                               loc={loc}
                               truckUnits={loc.tu.split(' → ')[1] || '—'}
                               borderClassName="border-[#4B535C]"
+                              receivingLabel={loc.name}
+                              onMoreDetails={() => setSelectedTransferDetail(loc)}
                             />
                           }
                         >
@@ -2448,12 +3928,14 @@ function StockAnalysisDrilldown({
                   </div>
                 </td>
                 <td className="py-3 px-4 text-right text-[#0a0a0a]">{loc.forecast}</td>
-                <td className="py-3 px-4 text-right text-[#0a0a0a]">{loc.stockouts}</td>
                 <td className="py-3 px-4 text-right">
-                  <div className="flex flex-col items-end">
-                    <span className="text-[#0a0a0a]">{loc.coverage}</span>
-                    <span className="text-[12px] text-[#4b535c]">{loc.targetWeeks}</span>
-                  </div>
+                  <BeforeAfterText value={loc.stockouts} />
+                </td>
+                <td className="py-3 px-4 text-right">
+                  <DrilldownCoverageCell
+                    coverage={getDrilldownSkuCoverageAtTarget(loc).pctLine}
+                    targetWeeks={getDrilldownSkuCoverageAtTarget(loc).targetWeeks}
+                  />
                 </td>
                 <td className="py-3 px-4 text-right">
                   <div className="flex justify-end">
@@ -2464,6 +3946,7 @@ function StockAnalysisDrilldown({
             ))}
           </tbody>
         </table>
+        )}
         </div>
       </div>
 
@@ -2614,7 +4097,9 @@ function ProductsDrilldown({
   setExplorerProductNameFilters,
   setActiveTab,
   selectedProduct: controlledSelectedProduct,
-  onSelectedProductChange }) {
+  onSelectedProductChange,
+  setExplorerTransferOverrides,
+}) {
   const [localSelectedProduct, setLocalSelectedProduct] = useState(null)
   const isSelectedProductControlled = typeof onSelectedProductChange === 'function'
   const selectedProduct = isSelectedProductControlled
@@ -2625,6 +4110,9 @@ function ProductsDrilldown({
     : setLocalSelectedProduct
   const [productStatusOverrides, setProductStatusOverrides] = useState({})
   const [productTransfersOverrides, setProductTransfersOverrides] = useState({})
+  const [productPackTransfersOverrides, setProductPackTransfersOverrides] = useState({})
+  const [productLooseTransfersOverrides, setProductLooseTransfersOverrides] = useState({})
+  const [productPackCountOverrides, setProductPackCountOverrides] = useState({})
   const [editingTransfersProductId, setEditingTransfersProductId] = useState(null)
   const [editingTransfersValue, setEditingTransfersValue] = useState('')
   const [selectedProductIds, setSelectedProductIds] = useState(new Set())
@@ -2657,6 +4145,18 @@ function ProductsDrilldown({
     if (productHasTransferSplit(p)) {
       return getEffectiveReplenTransfers(p) + (Number(p.rebalTransfers) || 0)
     }
+    if (productHasMixedFulfilment(p)) {
+      if (Object.prototype.hasOwnProperty.call(productTransfersOverrides, p.id)) {
+        return Number(productTransfersOverrides[p.id]) || 0
+      }
+      const packU = Object.prototype.hasOwnProperty.call(productPackTransfersOverrides, p.id)
+        ? Number(productPackTransfersOverrides[p.id]) || 0
+        : Number(p.packTransfers) || 0
+      const looseU = Object.prototype.hasOwnProperty.call(productLooseTransfersOverrides, p.id)
+        ? Number(productLooseTransfersOverrides[p.id]) || 0
+        : Number(p.looseTransfers) || 0
+      return packU + looseU
+    }
     if (Object.prototype.hasOwnProperty.call(productTransfersOverrides, p.id)) {
       return Number(productTransfersOverrides[p.id]) || 0
     }
@@ -2665,9 +4165,20 @@ function ProductsDrilldown({
 
   const getReplenPackCount = (p) => {
     if (!productHasPackConstraint(p)) return 0
+    if (Object.prototype.hasOwnProperty.call(productPackCountOverrides, p.id)) {
+      return Number(productPackCountOverrides[p.id]) || 0
+    }
+    // Multi-SKU Coin-pack: sum pack-group counts (P1 + P2), not transfers / product packMultiple
+    const multiPacks = getMultiSkuPacksForProduct(p)
+    if (multiPacks.length > 0) {
+      return multiPacks.reduce((sum, pack) => sum + (Number(pack.packCount) || 0), 0)
+    }
     // Mixed fulfilment: pack subtext from pack-fulfilled units only (not pack+loose total)
     if (p.packTransfers != null && p.packMultiple > 0) {
-      return p.packTransfers / p.packMultiple
+      const packUnits = Object.prototype.hasOwnProperty.call(productPackTransfersOverrides, p.id)
+        ? Number(productPackTransfersOverrides[p.id]) || 0
+        : Number(p.packTransfers) || 0
+      return packUnits / p.packMultiple
     }
     if (productHasTransferSplit(p)) {
       return getEffectiveReplenTransfers(p) / p.packMultiple
@@ -2857,6 +4368,11 @@ function ProductsDrilldown({
         setActiveTab={setActiveTab}
         productStatusOverrides={productStatusOverrides}
         setProductStatusOverrides={setProductStatusOverrides}
+        setProductTransfersOverrides={setProductTransfersOverrides}
+        setProductPackTransfersOverrides={setProductPackTransfersOverrides}
+        setProductLooseTransfersOverrides={setProductLooseTransfersOverrides}
+        setProductPackCountOverrides={setProductPackCountOverrides}
+        setExplorerTransferOverrides={setExplorerTransferOverrides}
       />
     )
   }
@@ -3020,7 +4536,7 @@ function ProductsDrilldown({
                 >
                   Next event <IconInfo />
                 </span>
-                <span className="text-[11px] font-normal text-[#4b535c]">Submission deadline</span>
+                <span className="text-[11px] font-normal text-[#4b535c]">Creation date</span>
               </span>
             </span>
           </th>
@@ -3086,12 +4602,7 @@ function ProductsDrilldown({
           >
             <span className="inline-flex w-full min-w-0 items-center justify-end gap-2">
               {grip}
-              <span className="flex flex-col items-end justify-center gap-0.5 leading-tight">
-                <span className="inline-flex items-center gap-1">
-                  Forecast <IconInfo />
-                </span>
-                <span className="text-[11px] font-normal text-[#4b535c]">per wk</span>
-              </span>
+              L90D sales
             </span>
           </th>
         )
@@ -3104,7 +4615,12 @@ function ProductsDrilldown({
           >
             <span className="inline-flex w-full min-w-0 items-center justify-end gap-2">
               {grip}
-              Stockouts
+              <span className="flex flex-col items-end justify-center gap-0.5 leading-tight">
+                <span className="inline-flex items-center gap-1">
+                  Forecast <IconInfo />
+                </span>
+                <span className="text-[11px] font-normal text-[#4b535c]">per wk</span>
+              </span>
             </span>
           </th>
         )
@@ -3117,11 +4633,24 @@ function ProductsDrilldown({
           >
             <span className="inline-flex w-full min-w-0 items-center justify-end gap-2">
               {grip}
-              Locations
+              Stockouts
             </span>
           </th>
         )
       case 14:
+        return (
+          <th
+            key={logicalIdx}
+            className={`${productThPin(isFirst, isLast)}h-[62px] min-h-[62px] text-right px-4 align-middle font-medium text-[#00050A] min-w-[80px] box-border`}
+            {...d}
+          >
+            <span className="inline-flex w-full min-w-0 items-center justify-end gap-2">
+              {grip}
+              Locations
+            </span>
+          </th>
+        )
+      case 15:
         return (
           <th
             key={logicalIdx}
@@ -3136,7 +4665,7 @@ function ProductsDrilldown({
             </span>
           </th>
         )
-      case 15:
+      case 16:
         return (
           <th
             key={logicalIdx}
@@ -3147,21 +4676,6 @@ function ProductsDrilldown({
               {grip}
               <span className="inline-flex items-center gap-1">
                 Understocks <IconInfo />
-              </span>
-            </span>
-          </th>
-        )
-      case 16:
-        return (
-          <th
-            key={logicalIdx}
-            className={`${productThPin(isFirst, isLast)}h-[62px] min-h-[62px] text-right px-4 align-middle font-medium text-[#00050A] min-w-[70px] box-border`}
-            {...d}
-          >
-            <span className="inline-flex w-full min-w-0 items-center justify-end gap-2">
-              {grip}
-              <span className="inline-flex items-center gap-1">
-                Depth <IconInfo />
               </span>
             </span>
           </th>
@@ -3262,37 +4776,37 @@ function ProductsDrilldown({
       case 11:
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
-            {productSummary.forecast}
+            {productSummary.salesL90}
           </th>
         )
       case 12:
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
-            {productSummary.stockouts}
+            {productSummary.forecast}
           </th>
         )
       case 13:
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
-            {productSummary.locations}
+            {productSummary.stockouts}
           </th>
         )
       case 14:
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
-            {productSummary.overstocks}
+            {productSummary.locations}
           </th>
         )
       case 15:
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
-            {productSummary.understocks}
+            {productSummary.overstocks}
           </th>
         )
       case 16:
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
-            {productSummary.depth}
+            {productSummary.understocks}
           </th>
         )
       case 17:
@@ -3462,6 +4976,7 @@ function ProductsDrilldown({
       case 4: {
         const hasPack = productHasPackConstraint(p)
         const recommendedUnits = Number(p.recommended) || 0
+        const multiPacks = getMultiSkuPacksForProduct(p)
         const packUnitsForRecommended =
           hasPack && p.packMultiple > 0
             ? p.packTransfers != null
@@ -3471,7 +4986,11 @@ function ProductsDrilldown({
                 : recommendedUnits
             : 0
         const recommendedPackCount =
-          hasPack && p.packMultiple > 0 ? packUnitsForRecommended / p.packMultiple : 0
+          multiPacks.length > 0
+            ? multiPacks.reduce((sum, pack) => sum + (Number(pack.packCount) || 0), 0)
+            : hasPack && p.packMultiple > 0
+              ? packUnitsForRecommended / p.packMultiple
+              : 0
         const showPackRecommended = hasPack && recommendedPackCount > 0
 
         return (
@@ -3544,7 +5063,7 @@ function ProductsDrilldown({
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right align-top`}>
             <div className="flex justify-end line-clamp-2 min-w-0">
-              <ProductNextEventCell nextEvent={p.nextEvent} />
+              <ProductNextEventProductsCell nextEvent={p.nextEvent} />
             </div>
           </td>
         )
@@ -3585,37 +5104,37 @@ function ProductsDrilldown({
       case 11:
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right text-[#0a0a0a] align-top`}>
-            <div className="line-clamp-2 min-w-0 w-full text-right">{p.forecast}</div>
+            <div className="line-clamp-2 min-w-0 w-full text-right">{p.salesL90 ?? '—'}</div>
           </td>
         )
       case 12:
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right text-[#0a0a0a] align-top`}>
-            <div className="line-clamp-2 min-w-0 w-full text-right">{p.stockouts}</div>
+            <div className="line-clamp-2 min-w-0 w-full text-right">{p.forecast}</div>
           </td>
         )
       case 13:
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right text-[#0a0a0a] align-top`}>
-            <div className="line-clamp-2 min-w-0 w-full text-right">{p.locations}</div>
+            <div className="line-clamp-2 min-w-0 w-full text-right">{p.stockouts}</div>
           </td>
         )
       case 14:
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right text-[#0a0a0a] align-top`}>
-            <div className="line-clamp-2 min-w-0 w-full text-right">{p.overstocks}</div>
+            <div className="line-clamp-2 min-w-0 w-full text-right">{p.locations}</div>
           </td>
         )
       case 15:
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right text-[#0a0a0a] align-top`}>
-            <div className="line-clamp-2 min-w-0 w-full text-right">{p.understocks}</div>
+            <div className="line-clamp-2 min-w-0 w-full text-right">{p.overstocks}</div>
           </td>
         )
       case 16:
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right text-[#0a0a0a] align-top`}>
-            <div className="line-clamp-2 min-w-0 w-full text-right">{p.depth}</div>
+            <div className="line-clamp-2 min-w-0 w-full text-right">{p.understocks}</div>
           </td>
         )
       case 17:
@@ -3744,6 +5263,24 @@ function ProductsDrilldown({
               activeId={productsActiveQuickFilter}
               onChange={setProductsActiveQuickFilter}
             />
+          </div>
+          <div className="flex items-center gap-2 shrink-0 ml-auto">
+            <button
+              type="button"
+              className="h-10 px-4 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] font-medium text-[#22272f] hover:bg-[#f3f4f6] shrink-0"
+              aria-label="Save view"
+            >
+              Save
+            </button>
+            <button
+              type="button"
+              className="h-10 px-3 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#22272f] hover:bg-[#f3f4f6] shrink-0 inline-flex items-center gap-1.5"
+              aria-label="Default view"
+              aria-haspopup="listbox"
+            >
+              Default view
+              <IconChevronDown />
+            </button>
           </div>
         </div>
 
@@ -4823,32 +6360,33 @@ function filterExplorerRows(
 function buildExplorerDisplayRows(filteredSkuRows, allSkuRows, expandedPackGroupIds = new Set()) {
   const packTotalCounts = new Map()
   const packMetaByGroup = new Map()
-  const packMock = EXPLORER_MULTI_SKU_PACK
 
   for (const row of allSkuRows) {
     if (!row.isPackMember || !row.packGroupId) continue
     packTotalCounts.set(row.packGroupId, (packTotalCounts.get(row.packGroupId) ?? 0) + 1)
     if (!packMetaByGroup.has(row.packGroupId)) {
+      const packDef = findMultiSkuPackByGroupId(row.packGroupId) ?? EXPLORER_MULTI_SKU_PACK
       packMetaByGroup.set(row.packGroupId, {
         packGroupId: row.packGroupId,
-        packName: row.packName ?? packMock.packName,
-        packId: row.packId ?? packMock.packId,
+        packName: row.packName ?? packDef.packName,
+        packId: row.packId ?? packDef.packId,
         packRatio: row.packRatio,
         packCount: row.packCount,
+        packMultiple: row.packGroupMultiple ?? packDef.packMultiple,
         isVirtualPack: row.isVirtualPack,
         fromLocation: row.fromLocation,
         toLocation: row.toLocation,
         movementType: row.movementType,
-        packRevenue: packMock.packRevenue,
-        packRecommended: packMock.packRecommended,
-        packRecommendedBadges: packMock.packRecommendedBadges,
-        packConfidence: packMock.packConfidence,
-        packCoverageWeeksBefore: packMock.packCoverageWeeksBefore,
-        packCoverageWeeksAfter: packMock.packCoverageWeeksAfter,
-        packCoverageTarget: packMock.packCoverageTarget,
-        packCoverageLabel: packMock.packCoverageLabel,
-        packStorageCapacity: packMock.packStorageCapacity,
-        packStatus: packMock.packStatus,
+        packRevenue: packDef.packRevenue,
+        packRecommended: packDef.packRecommended,
+        packRecommendedBadges: packDef.packRecommendedBadges,
+        packConfidence: packDef.packConfidence,
+        packCoverageWeeksBefore: packDef.packCoverageWeeksBefore,
+        packCoverageWeeksAfter: packDef.packCoverageWeeksAfter,
+        packCoverageTarget: packDef.packCoverageTarget,
+        packCoverageLabel: packDef.packCoverageLabel,
+        packStorageCapacity: packDef.packStorageCapacity,
+        packStatus: packDef.packStatus,
       })
     }
   }
@@ -5550,13 +7088,11 @@ function renderExplorerPackRowCell(packRow, col, {
               <span className="text-[12px] text-[#B45309]">availability exceeded</span>
             ) : (
               <span
-                className={`inline-flex items-center gap-1 text-[12px] ${
+                className={`whitespace-normal text-right text-[12px] leading-snug ${
                   availableConstrained ? 'text-[#B45309]' : 'text-[#166534]'
                 }`}
               >
-                <span>{packsAvailable}</span>
-                <PackUnitLabel count={packsAvailable} />
-                <span>available to send</span>
+                {formatPackLabel(packsAvailable)} available to send
               </span>
             )}
           </div>
@@ -5668,7 +7204,7 @@ function renderExplorerPackChildCell(child, col, {
       return (
         <td key={col.id} className={`${childTdClass} ${col.minWidth} ${alignClass}`}>
           <div className="flex flex-col items-end gap-0.5">
-            <span className="inline-flex items-baseline gap-1 text-[13px] text-[#0a0a0a]">
+            <span className="inline-flex items-baseline gap-1 text-[13px] text-[#9ca3af]">
               <span>
                 {child.stockBefore} → {child.stockAfter}
               </span>
@@ -5685,16 +7221,20 @@ function renderExplorerPackChildCell(child, col, {
         </td>
       )
     }
-    case 'revenue': {
-      const revenueStale = explorerRowHasPackUnitOverride(child, explorerTransferOverrides)
+    case 'revenue':
       return (
         <td key={col.id} className={`${childTdClass} ${col.minWidth} ${alignClass}`}>
-          <span className={`text-[13px] ${revenueStale ? 'text-[#9ca3af]' : 'text-[#0a0a0a]'}`}>
-            {child.revenue}
+          {EXPLORER_PACK_MUTED_DASH}
+        </td>
+      )
+    case 'coverage':
+      return (
+        <td key={col.id} className={`${childTdClass} ${col.minWidth} ${alignClass}`}>
+          <span className="text-[13px] text-[#9ca3af]">
+            {child.coverageWeeksBefore} → {child.coverageWeeksAfter} wks
           </span>
         </td>
       )
-    }
     case 'status':
       return (
         <td key={col.id} className={`${explorerStatusTdClass} ${col.minWidth}`}>
@@ -6562,18 +8102,22 @@ function ExplorerTable({
                       onClick={(e) => e.stopPropagation()}
                     >
                       <div className="flex items-start gap-1">
-                        <button
-                          type="button"
-                          className="flex size-6 items-center justify-center rounded-[4px] text-[#4b535c] hover:bg-[#e5e7eb]"
-                          aria-label={isExpanded ? 'Collapse pack' : 'Expand pack'}
-                          aria-expanded={isExpanded}
-                          onClick={() => togglePackExpanded(row.packGroupId)}
-                        >
-                          {/* IconChevronRight ignores className — wrap for rotate */}
-                          <span className={`inline-flex ${isExpanded ? 'rotate-90' : ''}`}>
-                            <IconChevronRight />
-                          </span>
-                        </button>
+                        {!row.isSingleSkuPack ? (
+                          <button
+                            type="button"
+                            className="flex size-6 items-center justify-center rounded-[4px] text-[#4b535c] hover:bg-[#e5e7eb]"
+                            aria-label={isExpanded ? 'Collapse pack' : 'Expand pack'}
+                            aria-expanded={isExpanded}
+                            onClick={() => togglePackExpanded(row.packGroupId)}
+                          >
+                            {/* IconChevronRight ignores className — wrap for rotate */}
+                            <span className={`inline-flex ${isExpanded ? 'rotate-90' : ''}`}>
+                              <IconChevronRight />
+                            </span>
+                          </button>
+                        ) : (
+                          <span className="inline-block size-6 shrink-0" aria-hidden />
+                        )}
                         <input
                           type="checkbox"
                           className={explorerCheckboxInputClass}
@@ -7432,6 +8976,7 @@ export default function ScheduleDetailPage() {
             setActiveTab={setActiveTab}
             selectedProduct={productsTabSelectedProduct}
             onSelectedProductChange={setProductsTabSelectedProduct}
+            setExplorerTransferOverrides={setExplorerTransferOverrides}
           />
         ) : activeTab === 'locations' ? (
           <LocationsTab
@@ -7464,6 +9009,7 @@ export default function ScheduleDetailPage() {
               onDrawerFiltersActiveChange={setProductsDrawerFiltersActive}
               setExplorerProductNameFilters={setExplorerProductNameFilters}
               setActiveTab={setActiveTab}
+              setExplorerTransferOverrides={setExplorerTransferOverrides}
             />
           ) : (
           <div className="flex flex-col gap-[15px]">
