@@ -516,6 +516,7 @@ const LOCATIONS_BY_PRODUCT = {
       tuWarehouse: 12,
       tuTruck: [],
       tuReplen: [10, 10],
+      sohBySize: { S: 8 },
       salesL7: 1,
       salesL30: 2,
       forecast: 0.54,
@@ -541,6 +542,7 @@ const LOCATIONS_BY_PRODUCT = {
       tuWarehouse: 6,
       tuTruck: [],
       tuReplen: [10],
+      sohBySize: { S: 4 },
       salesL7: 0,
       salesL30: 1,
       forecast: 0.32,
@@ -570,6 +572,8 @@ const LOCATIONS_BY_PRODUCT = {
       // PACK-COIN-P1: 4 packs × 7 units (S/M/L ratio 2/3/2)
       packMultiple: 7,
       tuReplen: [7, 7, 7, 7],
+      // Aggregate before stock = 10; after = 10 + 28 pack units
+      sohBySize: { XS: 1, S: 2, M: 3, L: 2, XL: 2 },
       salesL7: 2,
       salesL30: 8,
       forecast: 1.2,
@@ -603,6 +607,8 @@ const LOCATIONS_BY_PRODUCT = {
       // PACK-COIN-P2: 3 packs × 9 units (XS/S/M/L/XL ratio 1/2/3/2/1)
       packMultiple: 9,
       tuReplen: [9, 9, 9],
+      // Aggregate before stock = 8; after = 8 + 27 pack units
+      sohBySize: { XS: 1, S: 1, M: 2, L: 2, XL: 2 },
       salesL7: 1,
       salesL30: 5,
       forecast: 0.9,
@@ -639,6 +645,7 @@ const LOCATIONS_BY_PRODUCT = {
       tuTruck: [],
       tuReplen: [10, 10],
       tuReplenLoose: [3],
+      sohBySize: { S: 6 },
       salesL7: 2,
       salesL30: 7,
       forecast: 1.1,
@@ -665,6 +672,7 @@ const LOCATIONS_BY_PRODUCT = {
       tuTruck: [],
       tuReplen: [10, 10, 10],
       tuReplenLoose: [5],
+      sohBySize: { S: 5 },
       salesL7: 1,
       salesL30: 4,
       forecast: 0.9,
@@ -2537,6 +2545,65 @@ function getLog01PacksAvailable(product, wh) {
   return Math.floor(units / pm)
 }
 
+/** Units of `size` contributed by each pack in a multi-SKU pack ratio (e.g. C900010-S → 2). */
+function getPackRatioForSize(packDef, size) {
+  if (!packDef?.packRatio || !size) return 0
+  for (const [sku, ratio] of Object.entries(packDef.packRatio)) {
+    if (sku === size || sku.endsWith(`-${size}`)) return Number(ratio) || 0
+  }
+  return 0
+}
+
+/**
+ * SKU units contributed by incoming packs at a receiving location for a given size.
+ * `packBoxes` should be the effective pack-box array (honours locationReplenOverrides).
+ */
+function getPackUnitsForSize(product, location, size, packBoxes) {
+  const boxes = packBoxes ?? []
+  const packCount = boxes.length
+  if (packCount <= 0) return 0
+  const packDef = findMultiSkuPackByLocation(location?.name)
+  if (packDef?.packRatio) {
+    return packCount * getPackRatioForSize(packDef, size)
+  }
+  // Single-SKU pack products: all pack units land on the sole size column
+  const sizes = PACK_DRILLDOWN_META[product?.id]?.sizes ?? []
+  if (sizes.length === 1 && sizes[0] === size) {
+    return sumBoxUnits(boxes)
+  }
+  return 0
+}
+
+/**
+ * Per-size before → after for pack drilldown size cells.
+ * Receiving: before = sohBySize; after = before + pack + loose + rebal.
+ * Log01 (options.mode === 'log01'): after = before − outgoing pack units for that size.
+ */
+function getSizeBeforeAfter(location, size, product, options = {}) {
+  const before = Number(location?.sohBySize?.[size]) || 0
+  if (options.mode === 'log01') {
+    const outgoing = Number(options.outgoingPackUnits) || 0
+    const after = Math.max(0, before - outgoing)
+    return { before, after, label: `${before} → ${after}` }
+  }
+  const packUnits =
+    options.packUnits != null
+      ? Number(options.packUnits) || 0
+      : getPackUnitsForSize(product, location, size, options.packBoxes)
+  const looseUnits = Number(options.looseUnits) || 0
+  const rebalUnits = Number(options.rebalUnits) || 0
+  const after = before + packUnits + looseUnits + rebalUnits
+  return { before, after, label: `${before} → ${after}` }
+}
+
+/** Log01 Pack column: pack COUNT before → after (not underlying SKU units). */
+function getLog01PackBeforeAfter(product, wh, packsSent) {
+  const before = getLog01PacksAvailable(product, wh)
+  const sent = Number(packsSent) || 0
+  const after = Math.max(0, before - sent)
+  return { before, after, label: `${before} → ${after}` }
+}
+
 /** Expand total units into one box per pack (each box displays packMultiple). */
 function expandUnitsToPackBoxes(totalUnits, packMultiple) {
   if (!packMultiple || packMultiple <= 0) return []
@@ -2760,20 +2827,57 @@ function StockAnalysisDrilldown({
   const packLayoutLooseTotalsBySize = useMemo(() => {
     const totals = {}
     for (const size of packDrilldownSizes) {
-      // Destination rows only — Log01 never contributes to size totals
-      totals[size] = filteredLocations.reduce(
-        (sum, loc) => sum + sumBoxUnits(getLocationLooseBoxesForSize(loc, size)),
-        0
-      )
+      // Destination rows only — Log01 never contributes to size totals.
+      // Includes pack contribution + loose (+ rebal on the first size when present).
+      totals[size] = filteredLocations.reduce((sum, loc) => {
+        const packBoxes = getLocationPackBoxes(loc)
+        const packUnits = getPackUnitsForSize(product, loc, size, packBoxes)
+        const looseUnits = sumBoxUnits(getLocationLooseBoxesForSize(loc, size))
+        const rebalUnits =
+          showRebalancing &&
+          (loc.tuTruck?.length ?? 0) > 0 &&
+          packDrilldownSizes[0] === size
+            ? sumBoxUnits(loc.tuTruck)
+            : 0
+        return sum + packUnits + looseUnits + rebalUnits
+      }, 0)
     }
     return totals
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filteredLocations, packDrilldownSizes, locationReplenOverrides, usePackDrilldownLayout])
+  }, [
+    filteredLocations,
+    packDrilldownSizes,
+    locationReplenOverrides,
+    usePackDrilldownLayout,
+    showRebalancing,
+    product,
+  ])
 
-  const log01PacksAvailable = useMemo(() => {
-    if (!usePackDrilldownLayout || !packDrilldownMeta?.warehouse) return 0
-    return getLog01PacksAvailable(product, packDrilldownMeta.warehouse)
-  }, [usePackDrilldownLayout, packDrilldownMeta, product])
+  const packsSentFromLog01 = useMemo(() => {
+    if (!usePackDrilldownLayout) return 0
+    return filteredLocations.reduce(
+      (sum, loc) => sum + getLocationPackBoxes(loc).length,
+      0
+    )
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filteredLocations, usePackDrilldownLayout, locationReplenOverrides, packMultiple])
+
+  const log01PackBeforeAfter = useMemo(() => {
+    if (!usePackDrilldownLayout || !packDrilldownMeta?.warehouse) {
+      return { before: 0, after: 0, label: '0 → 0' }
+    }
+    return getLog01PackBeforeAfter(
+      product,
+      packDrilldownMeta.warehouse,
+      packsSentFromLog01
+    )
+  }, [usePackDrilldownLayout, packDrilldownMeta, product, packsSentFromLog01])
+
+  const getOutgoingPackUnitsForSize = (size) =>
+    filteredLocations.reduce((sum, loc) => {
+      const packBoxes = getLocationPackBoxes(loc)
+      return sum + getPackUnitsForSize(product, loc, size, packBoxes)
+    }, 0)
 
   const log01SelectionId = packDrilldownMeta?.warehouse?.id ?? 'log01'
 
@@ -3294,7 +3398,7 @@ function StockAnalysisDrilldown({
           <tbody>
             {(() => {
               const wh = packDrilldownMeta.warehouse
-              const packsAvailable = log01PacksAvailable
+              const packsAvailable = log01PackBeforeAfter.before
               const log01PackCellKey = `${wh.id}-pack`
               const log01PackRevealed = activeTransferCell === log01PackCellKey
               return (
@@ -3322,50 +3426,91 @@ function StockAnalysisDrilldown({
                   >
                     {log01PackRevealed ? (
                       <div
-                        className="flex flex-wrap gap-1 justify-end"
+                        className="flex flex-col items-end gap-1"
                         onClick={(e) => e.stopPropagation()}
                       >
-                        <TuHoverPopover
-                          panel={
-                            <TuTruckTransferHoverCard
-                              loc={{
-                                name: wh.name,
-                                forecast: wh.forecast,
-                                targetWeeks: wh.targetWeeks,
-                                receivingWeeksCoverage:
+                        <BeforeAfterText value={log01PackBeforeAfter.label} />
+                        <div className="flex flex-wrap gap-1 justify-end">
+                          <TuHoverPopover
+                            panel={
+                              <TuTruckTransferHoverCard
+                                loc={{
+                                  name: wh.name,
+                                  forecast: wh.forecast,
+                                  targetWeeks: wh.targetWeeks,
+                                  receivingWeeksCoverage:
+                                    wh.weeksCoverage != null && wh.targetWeeks != null
+                                      ? `${wh.weeksCoverage} → ${wh.weeksCoverage} (${wh.targetWeeks} target)`
+                                      : undefined,
+                                }}
+                                borderClassName="border-[#A234DA]"
+                                variant="soh"
+                                sohValue={packsAvailable}
+                                sohWeeksCoverage={
                                   wh.weeksCoverage != null && wh.targetWeeks != null
-                                    ? `${wh.weeksCoverage} → ${wh.weeksCoverage} (${wh.targetWeeks} target)`
-                                    : undefined,
-                              }}
-                              borderClassName="border-[#A234DA]"
-                              variant="soh"
-                              sohValue={packsAvailable}
-                              sohWeeksCoverage={
-                                wh.weeksCoverage != null && wh.targetWeeks != null
-                                  ? `${wh.weeksCoverage} (${wh.targetWeeks} target)`
-                                  : '—'
-                              }
-                              sohForecast={wh.forecast}
-                              sohInTransit={false}
-                              onMoreDetails={() => {}}
-                            />
-                          }
-                        >
-                          <span className="inline-flex h-[26px] min-w-[50px] w-fit shrink-0 items-center justify-center gap-1.5 rounded-[2px] bg-[#A234DA] px-[6px] py-[2px] text-[12px] font-medium text-white cursor-pointer transition-[filter,box-shadow] hover:brightness-90 hover:shadow-[0px_2px_4px_rgba(0,0,0,0.1)]">
-                            <IconPackageTu />
-                            {packsAvailable}
-                          </span>
-                        </TuHoverPopover>
+                                    ? `${wh.weeksCoverage} (${wh.targetWeeks} target)`
+                                    : '—'
+                                }
+                                sohForecast={wh.forecast}
+                                sohInTransit={false}
+                                onMoreDetails={() => {}}
+                              />
+                            }
+                          >
+                            <span className="inline-flex h-[26px] min-w-[50px] w-fit shrink-0 items-center justify-center gap-1.5 rounded-[2px] bg-[#A234DA] px-[6px] py-[2px] text-[12px] font-medium text-white cursor-pointer transition-[filter,box-shadow] hover:brightness-90 hover:shadow-[0px_2px_4px_rgba(0,0,0,0.1)]">
+                              <IconPackageTu />
+                              {packsAvailable}
+                            </span>
+                          </TuHoverPopover>
+                        </div>
                       </div>
                     ) : (
-                      <span className="text-[#0a0a0a]">{packsAvailable}</span>
+                      <BeforeAfterText value={log01PackBeforeAfter.label} />
                     )}
                   </td>
-                  {packDrilldownSizes.map((size) => (
-                    <td key={`${wh.id}-size-${size}`} className="py-3 px-4 text-right text-[#4b535c]">
-                      —
-                    </td>
-                  ))}
+                  {packDrilldownSizes.map((size) => {
+                    const outgoing = getOutgoingPackUnitsForSize(size)
+                    const sizeBA = getSizeBeforeAfter(wh, size, product, {
+                      mode: 'log01',
+                      outgoingPackUnits: outgoing,
+                    })
+                    const cellKey = `${wh.id}-size-${size}`
+                    const revealed = activeTransferCell === cellKey
+                    const hasContent = sizeBA.before > 0 || outgoing > 0
+                    return (
+                      <td
+                        key={cellKey}
+                        className="py-3 px-4 text-right cursor-pointer"
+                        onClick={() => {
+                          if (!hasContent) return
+                          toggleTransferCellReveal(cellKey)
+                        }}
+                      >
+                        <div className="flex flex-col items-end gap-1">
+                          <BeforeAfterText value={sizeBA.label} />
+                          {revealed && hasContent ? (
+                            <div
+                              className="flex flex-wrap gap-1 justify-end"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              {outgoing > 0 ? (
+                                <span className="inline-flex h-[26px] min-w-[50px] w-fit shrink-0 items-center justify-center gap-1.5 rounded-[2px] bg-[#9CA3AF] px-[6px] py-[2px] text-[12px] font-medium text-white">
+                                  <IconReplenishment />
+                                  {outgoing}
+                                </span>
+                              ) : null}
+                              {sizeBA.before > 0 ? (
+                                <span className="inline-flex h-[26px] min-w-[50px] w-fit shrink-0 items-center justify-center gap-1.5 rounded-[2px] bg-[#A234DA] px-[6px] py-[2px] text-[12px] font-medium text-white">
+                                  <IconPackageTu />
+                                  {sizeBA.before}
+                                </span>
+                              ) : null}
+                            </div>
+                          ) : null}
+                        </div>
+                      </td>
+                    )
+                  })}
                   <td className="py-3 px-4 text-right text-[#4b535c]">—</td>
                   <td className="py-3 px-4 text-right text-[#4b535c]">—</td>
                   <td className="py-3 px-4 text-right text-[#4b535c]">—</td>
@@ -3480,12 +3625,25 @@ function StockAnalysisDrilldown({
                   </td>
                   {packDrilldownSizes.map((size) => {
                     const looseBoxes = getLocationLooseBoxesForSize(loc, size)
+                    const packUnits = getPackUnitsForSize(product, loc, size, packBoxes)
+                    const looseUnits = sumBoxUnits(looseBoxes)
+                    const hasRebal =
+                      showRebalancing &&
+                      (loc.tuTruck?.length ?? 0) > 0 &&
+                      packDrilldownSizes[0] === size
+                    const rebalUnits = hasRebal ? sumBoxUnits(loc.tuTruck) : 0
+                    const sizeBA = getSizeBeforeAfter(loc, size, product, {
+                      packUnits,
+                      looseUnits,
+                      rebalUnits,
+                    })
+                    const sohUnits = sizeBA.before
                     const cellKey = `${loc.id}-size-${size}`
                     const revealed = activeTransferCell === cellKey
                     const hasLoose = looseBoxes.length > 0
-                    const hasRebal =
-                      showRebalancing && (loc.tuTruck?.length ?? 0) > 0 && packDrilldownSizes[0] === size
-                    const hasContent = hasLoose || hasRebal
+                    const hasPack = packUnits > 0
+                    const hasSoh = sohUnits > 0
+                    const hasContent = hasLoose || hasRebal || hasPack || hasSoh
                     return (
                       <td
                         key={cellKey}
@@ -3495,84 +3653,100 @@ function StockAnalysisDrilldown({
                           toggleTransferCellReveal(cellKey)
                         }}
                       >
-                        {!hasContent ? (
-                          <span className="text-[#4b535c]">—</span>
-                        ) : revealed ? (
-                          <div
-                            className="flex flex-wrap gap-1 justify-end"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            {showReplenishment &&
-                              looseBoxes.map((n, i) => {
-                                const key = tuBoxKey(loc.id, 'replen-loose', i)
-                                const effectiveValue = getEffectiveTuBoxValue(key, n)
-                                return (
-                                  <EditableTuTransferBadge
-                                    key={key}
-                                    value={effectiveValue}
-                                    isEditing={editingTuBoxKey === key}
-                                    editingValue={editingTuBoxValue}
-                                    onStartEdit={() => startEditTuBox(key, effectiveValue)}
-                                    onEditingValueChange={(v) => {
-                                      setPackInputError(false)
-                                      setEditingTuBoxValue(v)
-                                    }}
-                                    onCommit={commitTuBoxEdit}
-                                    onCancel={cancelTuBoxEdit}
-                                    bgClassName="bg-[#EC4899]"
-                                    icon={<IconReplenishment />}
-                                    hoverPanel={
-                                      <TuTruckTransferHoverCard
-                                        trip={trip}
-                                        loc={loc}
-                                        truckUnits={effectiveValue}
-                                        borderClassName="border-[#EC4899]"
-                                        receivingLabel={loc.name}
-                                        onMoreDetails={() => setSelectedTransferDetail(loc)}
-                                      />
-                                    }
-                                  />
-                                )
-                              })}
-                            {hasRebal &&
-                              loc.tuTruck.map((n, i) => {
-                                const key = tuBoxKey(loc.id, 'truck', i)
-                                const effectiveValue = getEffectiveTuBoxValue(key, n)
-                                return (
-                                  <EditableTuTransferBadge
-                                    key={key}
-                                    value={effectiveValue}
-                                    isEditing={editingTuBoxKey === key}
-                                    editingValue={editingTuBoxValue}
-                                    onStartEdit={() => startEditTuBox(key, effectiveValue)}
-                                    onEditingValueChange={(v) => {
-                                      setPackInputError(false)
-                                      setEditingTuBoxValue(v)
-                                    }}
-                                    onCommit={commitTuBoxEdit}
-                                    onCancel={cancelTuBoxEdit}
-                                    bgClassName="bg-[#0267FF]"
-                                    icon={<IconTruckTu />}
-                                    hoverPanel={
-                                      <TuTruckTransferHoverCard
-                                        trip={trip}
-                                        loc={loc}
-                                        truckUnits={effectiveValue}
-                                        borderClassName="border-[#0267FF]"
-                                        receivingLabel={loc.name}
-                                        onMoreDetails={() => setSelectedTransferDetail(loc)}
-                                      />
-                                    }
-                                  />
-                                )
-                              })}
-                          </div>
-                        ) : (
-                          <span className="text-[#0a0a0a]">
-                            {sumBoxUnits(looseBoxes) +
-                              (hasRebal ? sumBoxUnits(loc.tuTruck) : 0)}
-                          </span>
-                        )}
+                        <div className="flex flex-col items-end gap-1">
+                          <BeforeAfterText value={sizeBA.label} />
+                          {revealed && hasContent ? (
+                            <div
+                              className="flex flex-wrap gap-1 justify-end"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              {hasPack ? (
+                                <EditableTuTransferBadge
+                                  value={packUnits}
+                                  isEditing={false}
+                                  editingValue=""
+                                  onStartEdit={() => {}}
+                                  onEditingValueChange={() => {}}
+                                  onCommit={() => {}}
+                                  onCancel={() => {}}
+                                  bgClassName="bg-[#9CA3AF] pointer-events-none"
+                                  icon={<IconReplenishment />}
+                                  hoverPanel={null}
+                                />
+                              ) : null}
+                              {showReplenishment &&
+                                looseBoxes.map((n, i) => {
+                                  const key = tuBoxKey(loc.id, 'replen-loose', i)
+                                  const effectiveValue = getEffectiveTuBoxValue(key, n)
+                                  return (
+                                    <EditableTuTransferBadge
+                                      key={key}
+                                      value={effectiveValue}
+                                      isEditing={editingTuBoxKey === key}
+                                      editingValue={editingTuBoxValue}
+                                      onStartEdit={() => startEditTuBox(key, effectiveValue)}
+                                      onEditingValueChange={(v) => {
+                                        setPackInputError(false)
+                                        setEditingTuBoxValue(v)
+                                      }}
+                                      onCommit={commitTuBoxEdit}
+                                      onCancel={cancelTuBoxEdit}
+                                      bgClassName="bg-[#EC4899]"
+                                      icon={<IconReplenishment />}
+                                      hoverPanel={
+                                        <TuTruckTransferHoverCard
+                                          trip={trip}
+                                          loc={loc}
+                                          truckUnits={effectiveValue}
+                                          borderClassName="border-[#EC4899]"
+                                          receivingLabel={loc.name}
+                                          onMoreDetails={() => setSelectedTransferDetail(loc)}
+                                        />
+                                      }
+                                    />
+                                  )
+                                })}
+                              {hasRebal &&
+                                loc.tuTruck.map((n, i) => {
+                                  const key = tuBoxKey(loc.id, 'truck', i)
+                                  const effectiveValue = getEffectiveTuBoxValue(key, n)
+                                  return (
+                                    <EditableTuTransferBadge
+                                      key={key}
+                                      value={effectiveValue}
+                                      isEditing={editingTuBoxKey === key}
+                                      editingValue={editingTuBoxValue}
+                                      onStartEdit={() => startEditTuBox(key, effectiveValue)}
+                                      onEditingValueChange={(v) => {
+                                        setPackInputError(false)
+                                        setEditingTuBoxValue(v)
+                                      }}
+                                      onCommit={commitTuBoxEdit}
+                                      onCancel={cancelTuBoxEdit}
+                                      bgClassName="bg-[#0267FF]"
+                                      icon={<IconTruckTu />}
+                                      hoverPanel={
+                                        <TuTruckTransferHoverCard
+                                          trip={trip}
+                                          loc={loc}
+                                          truckUnits={effectiveValue}
+                                          borderClassName="border-[#0267FF]"
+                                          receivingLabel={loc.name}
+                                          onMoreDetails={() => setSelectedTransferDetail(loc)}
+                                        />
+                                      }
+                                    />
+                                  )
+                                })}
+                              {hasSoh ? (
+                                <span className="inline-flex h-[26px] min-w-[50px] w-fit shrink-0 items-center justify-center gap-1.5 rounded-[2px] bg-[#A234DA] px-[6px] py-[2px] text-[12px] font-medium text-white">
+                                  <IconPackageTu />
+                                  {sohUnits}
+                                </span>
+                              ) : null}
+                            </div>
+                          ) : null}
+                        </div>
                       </td>
                     )
                   })}
