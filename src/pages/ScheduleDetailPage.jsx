@@ -4398,6 +4398,9 @@ function ProductsDrilldown({
     onDrawerFiltersActiveChange?.(statusFilters.length > 0)
   }, [statusFilters, onDrawerFiltersActiveChange])
 
+  // Future: extend to include productsActiveQuickFilter when chips become real filters
+  const filtersActive = statusFilters.length > 0
+
   const baseProducts = PRODUCTS_BY_TRIP[trip.id] || DEFAULT_PRODUCTS
 
   const getEffectiveReplenTransfers = (p) => {
@@ -5174,6 +5177,16 @@ function ProductsDrilldown({
     const isFirst = visualIdx === 0
     const isLast = visualIdx === productColLast
     const pin = `${productThPin(isFirst, isLast)}`
+    const stateMuted = filtersActive
+    const stateMutedTitle = stateMuted
+      ? 'This value reflects your full scope, not the filtered view.'
+      : undefined
+    const statePrimary = stateMuted ? 'text-[#9ca3af]' : 'text-[#0a0a0a]'
+    const stateSecondary = stateMuted ? 'text-[#9ca3af]' : 'text-[#4b535c]'
+    const stateThClass = stateMuted
+      ? `${pin}py-2 px-4 text-[12px] font-medium text-[#9ca3af] text-right cursor-help`
+      : `${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`
+
     switch (logicalIdx) {
       case 0:
         return (
@@ -5206,7 +5219,11 @@ function ProductsDrilldown({
 
       case 6:
         return (
-          <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] text-[#4b535c] text-right`}>
+          <th
+            key={logicalIdx}
+            className={`${pin}py-2 px-4 text-[12px] text-right ${stateMuted ? 'text-[#9ca3af] cursor-help' : 'text-[#4b535c]'}`}
+            title={stateMutedTitle}
+          >
             —
           </th>
         )
@@ -5214,67 +5231,71 @@ function ProductsDrilldown({
         return <th key={logicalIdx} className={`${pin}py-2 px-4 text-right`} />
       case 8:
         return (
-          <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
+          <th key={logicalIdx} className={stateThClass} title={stateMutedTitle}>
             <div className="flex flex-col items-end">
               <span className="inline-flex items-baseline gap-1">
-                <span className="text-[14px] text-[#0a0a0a]">{productSummary.stockUnits}</span>
-                <span className="text-[14px] text-[#0a0a0a]">SOH</span>
+                <span className={`text-[14px] ${statePrimary}`}>{productSummary.stockUnits}</span>
+                <span className={`text-[14px] ${statePrimary}`}>SOH</span>
               </span>
-              <span className="text-[12px] text-[#4b535c]">{productSummary.stockInTransit}</span>
+              <span className={`text-[12px] ${stateSecondary}`}>{productSummary.stockInTransit}</span>
             </div>
           </th>
         )
       case 9:
         return (
-          <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
+          <th key={logicalIdx} className={stateThClass} title={stateMutedTitle}>
             {productSummary.warehouseAllocate}
           </th>
         )
       case 10:
         return (
-          <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
+          <th key={logicalIdx} className={stateThClass} title={stateMutedTitle}>
             {productSummary.salesL7}
           </th>
         )
       case 11:
         return (
-          <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
+          <th key={logicalIdx} className={stateThClass} title={stateMutedTitle}>
             {productSummary.salesL30}
           </th>
         )
       case 12:
         return (
-          <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
+          <th key={logicalIdx} className={stateThClass} title={stateMutedTitle}>
             {productSummary.salesL90}
           </th>
         )
       case 13:
         return (
-          <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] text-[#4b535c] text-right`}>
+          <th
+            key={logicalIdx}
+            className={`${pin}py-2 px-4 text-[12px] text-right ${stateMuted ? 'text-[#9ca3af] cursor-help' : 'text-[#4b535c]'}`}
+            title={stateMutedTitle}
+          >
             —
           </th>
         )
       case 14:
         return (
-          <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
+          <th key={logicalIdx} className={stateThClass} title={stateMutedTitle}>
             {productSummary.stockouts}
           </th>
         )
       case 15:
         return (
-          <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
+          <th key={logicalIdx} className={stateThClass} title={stateMutedTitle}>
             {productSummary.locations}
           </th>
         )
       case 16:
         return (
-          <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
+          <th key={logicalIdx} className={stateThClass} title={stateMutedTitle}>
             {productSummary.overstocks}
           </th>
         )
       case 17:
         return (
-          <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
+          <th key={logicalIdx} className={stateThClass} title={stateMutedTitle}>
             {productSummary.understocks}
           </th>
         )
