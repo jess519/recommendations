@@ -7245,6 +7245,8 @@ function filterExplorerRows(
     productNameFilters,
     confidenceFilters,
     statusFilters,
+    fromLocationFilters = [],
+    toLocationFilters = [],
     statusOverrides = {} }
 ) {
   return rows.filter((row) => {
@@ -7255,6 +7257,12 @@ function filterExplorerRows(
       return false
     }
     if (confidenceFilters.length > 0 && !confidenceFilters.includes(row.confidence)) {
+      return false
+    }
+    if (fromLocationFilters.length > 0 && !fromLocationFilters.includes(row.fromLocation)) {
+      return false
+    }
+    if (toLocationFilters.length > 0 && !toLocationFilters.includes(row.toLocation)) {
       return false
     }
     if (statusFilters.length > 0) {
@@ -8205,6 +8213,10 @@ function ExplorerTable({
   setExplorerConfidenceFilters,
   explorerStatusFilters,
   setExplorerStatusFilters,
+  explorerFromLocationFilters,
+  setExplorerFromLocationFilters,
+  explorerToLocationFilters,
+  setExplorerToLocationFilters,
   onOpenProductTransfers }) {
   const [explorerSearch, setExplorerSearch] = useState('')
   const [explorerActiveQuickFilter, setExplorerActiveQuickFilter] = useState(null)
@@ -8538,23 +8550,45 @@ function ExplorerTable({
     explorerStatusOverrides[row.id] ??
     (row.rowKind === 'packRow' ? row.packStatus ?? row.status : getRowStatus(row))
 
+  const explorerFromLocationOptions = useMemo(() => {
+    const names = new Set()
+    for (const row of data) {
+      if (row.fromLocation) names.add(row.fromLocation)
+    }
+    return [...names].sort((a, b) => a.localeCompare(b))
+  }, [data])
+
+  const explorerToLocationOptions = useMemo(() => {
+    const names = new Set()
+    for (const row of data) {
+      if (row.toLocation) names.add(row.toLocation)
+    }
+    return [...names].sort((a, b) => a.localeCompare(b))
+  }, [data])
+
   const explorerFilterCount =
     explorerDepartmentFilters.length +
     explorerProductNameFilters.length +
     explorerConfidenceFilters.length +
-    explorerStatusFilters.length
+    explorerStatusFilters.length +
+    explorerFromLocationFilters.length +
+    explorerToLocationFilters.length
 
   const hasClearableExplorerFilters =
     explorerDepartmentFilters.length > 0 ||
     explorerProductNameFilters.length > 0 ||
     explorerConfidenceFilters.length > 0 ||
-    explorerStatusFilters.length > 0
+    explorerStatusFilters.length > 0 ||
+    explorerFromLocationFilters.length > 0 ||
+    explorerToLocationFilters.length > 0
 
   const hasAnyFilter =
     explorerDepartmentFilters.length > 0 ||
     explorerProductNameFilters.length > 0 ||
     explorerConfidenceFilters.length > 0 ||
-    explorerStatusFilters.length > 0
+    explorerStatusFilters.length > 0 ||
+    explorerFromLocationFilters.length > 0 ||
+    explorerToLocationFilters.length > 0
 
   useEffect(() => {
     onDrawerFiltersActiveChange?.(hasAnyFilter)
@@ -8565,6 +8599,8 @@ function ExplorerTable({
     setExplorerProductNameFilters([])
     setExplorerConfidenceFilters([])
     setExplorerStatusFilters([])
+    setExplorerFromLocationFilters([])
+    setExplorerToLocationFilters([])
   }
 
   const filteredData = useMemo(
@@ -8574,6 +8610,8 @@ function ExplorerTable({
         productNameFilters: explorerProductNameFilters,
         confidenceFilters: explorerConfidenceFilters,
         statusFilters: explorerStatusFilters,
+        fromLocationFilters: explorerFromLocationFilters,
+        toLocationFilters: explorerToLocationFilters,
         statusOverrides: explorerStatusOverrides }),
     [
       data,
@@ -8581,6 +8619,8 @@ function ExplorerTable({
       explorerProductNameFilters,
       explorerConfidenceFilters,
       explorerStatusFilters,
+      explorerFromLocationFilters,
+      explorerToLocationFilters,
       explorerStatusOverrides,
     ]
   )
@@ -8593,6 +8633,8 @@ function ExplorerTable({
     explorerProductNameFilters,
     explorerConfidenceFilters,
     explorerStatusFilters,
+    explorerFromLocationFilters,
+    explorerToLocationFilters,
   ])
 
   const displayRows = useMemo(
@@ -8853,6 +8895,54 @@ function ExplorerTable({
                     ))}
                   </div>
 
+                  <div className="border-t border-[#e5e7eb] pt-3 mt-3">
+                    <div className="text-[12px] font-medium uppercase tracking-[0.04em] text-[#4b535c] mb-2">
+                      From location
+                    </div>
+                    {explorerFromLocationOptions.map((loc) => (
+                      <label
+                        key={`from-${loc}`}
+                        className="flex items-center gap-2 px-0 py-1.5 hover:bg-[#f3f4f6] cursor-pointer rounded-[4px]"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={explorerFromLocationFilters.includes(loc)}
+                          onChange={(e) => {
+                            setExplorerFromLocationFilters((prev) =>
+                              e.target.checked ? [...prev, loc] : prev.filter((x) => x !== loc)
+                            )
+                          }}
+                          className="size-4 rounded border-[#d1d5db] text-[#0267ff]"
+                        />
+                        <span className="text-[14px] text-[#0a0a0a]">{loc}</span>
+                      </label>
+                    ))}
+                  </div>
+
+                  <div className="border-t border-[#e5e7eb] pt-3 mt-3">
+                    <div className="text-[12px] font-medium uppercase tracking-[0.04em] text-[#4b535c] mb-2">
+                      To location
+                    </div>
+                    {explorerToLocationOptions.map((loc) => (
+                      <label
+                        key={`to-${loc}`}
+                        className="flex items-center gap-2 px-0 py-1.5 hover:bg-[#f3f4f6] cursor-pointer rounded-[4px]"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={explorerToLocationFilters.includes(loc)}
+                          onChange={(e) => {
+                            setExplorerToLocationFilters((prev) =>
+                              e.target.checked ? [...prev, loc] : prev.filter((x) => x !== loc)
+                            )
+                          }}
+                          className="size-4 rounded border-[#d1d5db] text-[#0267ff]"
+                        />
+                        <span className="text-[14px] text-[#0a0a0a]">{loc}</span>
+                      </label>
+                    ))}
+                  </div>
+
                   {explorerFilterCount > 0 && (
                     <div className="border-t border-[#e5e7eb] mt-3 pt-3">
                       <button
@@ -8955,6 +9045,38 @@ function ExplorerTable({
                 onClick={() => setExplorerStatusFilters((prev) => prev.filter((x) => x !== f))}
                 className="p-0.5 rounded-[4px] text-[#6b7280] hover:bg-[#e5e7eb] hover:text-[#374151]"
                 aria-label={`Remove filter: Status ${EXPLORER_STATUS_FILTER_LABELS[f]}`}
+              >
+                <IconClose className="size-3.5" />
+              </button>
+            </span>
+          ))}
+          {explorerFromLocationFilters.map((loc) => (
+            <span
+              key={`from-${loc}`}
+              className="inline-flex items-center gap-1.5 pl-3 pr-1.5 py-1.5 rounded-[4px] bg-[#f3f4f6] text-[#4b535c] border border-[#e5e7eb]"
+            >
+              <span>From location: {loc}</span>
+              <button
+                type="button"
+                onClick={() => setExplorerFromLocationFilters((prev) => prev.filter((x) => x !== loc))}
+                className="p-0.5 rounded-[4px] text-[#6b7280] hover:bg-[#e5e7eb] hover:text-[#374151]"
+                aria-label={`Remove filter: From location ${loc}`}
+              >
+                <IconClose className="size-3.5" />
+              </button>
+            </span>
+          ))}
+          {explorerToLocationFilters.map((loc) => (
+            <span
+              key={`to-${loc}`}
+              className="inline-flex items-center gap-1.5 pl-3 pr-1.5 py-1.5 rounded-[4px] bg-[#f3f4f6] text-[#4b535c] border border-[#e5e7eb]"
+            >
+              <span>To location: {loc}</span>
+              <button
+                type="button"
+                onClick={() => setExplorerToLocationFilters((prev) => prev.filter((x) => x !== loc))}
+                className="p-0.5 rounded-[4px] text-[#6b7280] hover:bg-[#e5e7eb] hover:text-[#374151]"
+                aria-label={`Remove filter: To location ${loc}`}
               >
                 <IconClose className="size-3.5" />
               </button>
@@ -9592,6 +9714,8 @@ export default function ScheduleDetailPage() {
   const [explorerProductNameFilters, setExplorerProductNameFilters] = useState([])
   const [explorerConfidenceFilters, setExplorerConfidenceFilters] = useState([])
   const [explorerStatusFilters, setExplorerStatusFilters] = useState([])
+  const [explorerFromLocationFilters, setExplorerFromLocationFilters] = useState([])
+  const [explorerToLocationFilters, setExplorerToLocationFilters] = useState([])
   const [productsTabSelectedProduct, setProductsTabSelectedProduct] = useState(null)
   const [tripStatusOverrides, setTripStatusOverrides] = useState({})
   const [selectedTrip, setSelectedTrip] = useState(null)
@@ -9612,7 +9736,19 @@ export default function ScheduleDetailPage() {
   const handleOpenExplorerUnapprovedForProduct = (productName) => {
     setExplorerDepartmentFilters([])
     setExplorerConfidenceFilters([])
+    setExplorerFromLocationFilters([])
+    setExplorerToLocationFilters([])
     setExplorerProductNameFilters([productName])
+    setExplorerStatusFilters(['unapproved', 'needs_review', 'edited'])
+    setActiveTab('explorer')
+  }
+
+  const handleOpenExplorerUnapprovedForTrip = (trip) => {
+    setExplorerDepartmentFilters([])
+    setExplorerProductNameFilters([])
+    setExplorerConfidenceFilters([])
+    setExplorerFromLocationFilters(trip?.from ? [trip.from] : [])
+    setExplorerToLocationFilters(trip?.to ? [trip.to] : [])
     setExplorerStatusFilters(['unapproved', 'needs_review', 'edited'])
     setActiveTab('explorer')
   }
@@ -9961,6 +10097,10 @@ export default function ScheduleDetailPage() {
             setExplorerConfidenceFilters={setExplorerConfidenceFilters}
             explorerStatusFilters={explorerStatusFilters}
             setExplorerStatusFilters={setExplorerStatusFilters}
+            explorerFromLocationFilters={explorerFromLocationFilters}
+            setExplorerFromLocationFilters={setExplorerFromLocationFilters}
+            explorerToLocationFilters={explorerToLocationFilters}
+            setExplorerToLocationFilters={setExplorerToLocationFilters}
             onOpenProductTransfers={handleOpenProductTransfersFromExplorer}
           />
         ) : selectedTrip ? (
@@ -10516,9 +10656,16 @@ export default function ScheduleDetailPage() {
                                         </span>
                                       )}
                                       {(row.unapprovedTransfers ?? 0) > 0 && (
-                                        <span className="text-[12px] font-medium text-[#4b535c]">
+                                        <button
+                                          type="button"
+                                          className="text-[12px] font-medium text-[#4b535c] hover:underline"
+                                          onClick={(e) => {
+                                            e.stopPropagation()
+                                            handleOpenExplorerUnapprovedForTrip(row)
+                                          }}
+                                        >
                                           {row.unapprovedTransfers} unapproved
-                                        </span>
+                                        </button>
                                       )}
                                     </div>
                                   </div>
