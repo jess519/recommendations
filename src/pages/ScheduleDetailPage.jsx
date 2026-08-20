@@ -51,8 +51,8 @@ function TripColumnDragGrip({ visualIndex, onDragStart }) {
   )
 }
 
-/** Trips table data cols; 3 = Transfers, 4 = Revenue increase, 5 = Recommended transfers (long headers) */
-const TRIPS_TABLE_DEFAULT_COL_WIDTHS = [200, 200, 140, 120, 220, 160, 100, 200]
+/** Trips table data cols; 2 = Transfers, 3 = Revenue increase, 4 = Recommended transfers (long headers). Movement removed. */
+const TRIPS_TABLE_DEFAULT_COL_WIDTHS = [200, 200, 120, 220, 160, 100, 200]
 const TRIPS_TABLE_NUM_DATA_COLS = TRIPS_TABLE_DEFAULT_COL_WIDTHS.length
 const TRIPS_COL_DND_MIME = 'application/x-autone-trip-col'
 /** Logical product table columns are 0–18 (Status = 18). 10–12 = Sales L7D / L30D / L90D; 13 = Forecast. */
@@ -112,7 +112,6 @@ function moveTripTableColumnOrder(order, fromVisualIndex, toVisualIndex) {
 const TRIP_COL_RESIZE_LABELS = [
   'Resize Sending location column',
   'Resize Receiving location column',
-  'Resize Movement type column',
   'Resize Transfers column',
   'Resize Revenue increase column',
   'Resize Recommended transfers column',
@@ -448,6 +447,23 @@ for (const t of TRIPS_ALL) {
     t.capacityUnits = Number(String(t.transfers ?? '').replace(/[^\d]/g, '')) || 0
   }
   if (t.maxCapacity == null) t.maxCapacity = 10000
+  // SKU-location approval counts for Trips Status sub-text (vary 3–8 by trip id)
+  if (t.approvedTransfers == null || t.unapprovedTransfers == null) {
+    const status = t.status || 'unapproved'
+    const total = 3 + (Number(t.id) % 6) // 3..8
+    if (status === 'approved_by_system' || status === 'approved_by_user') {
+      t.approvedTransfers = total
+      t.unapprovedTransfers = 0
+    } else if (status === 'unapproved') {
+      t.approvedTransfers = 0
+      t.unapprovedTransfers = total
+    } else {
+      // needs_review / edited / partially_approved / missing
+      const approved = Math.max(1, Math.floor(total / 2))
+      t.approvedTransfers = approved
+      t.unapprovedTransfers = total - approved
+    }
+  }
 }
 
 const VIEW_OPTIONS = [
@@ -498,7 +514,38 @@ const PRODUCTS_BY_TRIP = {
   2: [
     { id: 7, name: 'Sac zip l', sku: 'B200001', colour: 'Noir', movementType: ["rebalancing"], transfers: 2, transfersSub: 1, approvedTransfers: 2, unapprovedTransfers: 0, revenue: '€0.89K', recommended: 2, recommendedBadges: ['REV'], recommendedSub: 1, confidence: 'high', coverage: '3% below target', coverageWeeks: 4.8, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 1, salesL30: 2, salesL90: 5, forecast: 0.45, stockouts: '0 → 0', locations: '2 → 2', overstocks: '2 → 1', understocks: '5 → 3', status: 'approved_by_user', approvedByUser: 'Jess Briggs', currentUnits: 18, currentUnitsInTransit: 4, warehouseAllocateLine: '40 → 36', warehouseSellLine: '50 → 45', packMultiple: null, skuCount: 1, rrp: 460, ws: 163, season: 'P/e 2026', event: 'Main', firstSalesDate: '30th Apr 25', lifeToDateSales: 54, department: 'Maroquinerie', subDepartment: 'Porte-documents', material: 'Tissu technique enduit', gender: 'Homme' },
     { id: 8, name: 'Sac seau m', sku: 'B200002', colour: 'Noir', movementType: ["rebalancing"], transfers: 1, transfersSub: 2, approvedTransfers: 0, unapprovedTransfers: 1, revenue: '€0.52K', recommended: 1, recommendedBadges: ['VIS'], recommendedSub: 2, confidence: 'high', coverage: 'All SKUs in target', coverageWeeks: 6.3, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 0, salesL30: 1, salesL90: 3, forecast: 0.28, stockouts: '0 → 1', locations: '1 → 2', overstocks: '1 → 0', understocks: '3 → 1', status: 'last_edited_by_user', editedByUser: 'Csabi Toth', currentUnits: 11, currentUnitsInTransit: 2, warehouseAllocateLine: '35 → 30', warehouseSellLine: '42 → 38', packMultiple: null, skuCount: 1, rrp: 210, ws: 72, season: 'AW25', event: 'Flash', firstSalesDate: '11th Jul 25', lifeToDateSales: 31, department: 'R.t.w. donna', subDepartment: 'Pant.lunghi donna', material: 'Jersey di cotone', gender: 'Donna' },
-  ] }
+  ],
+  // Trip 3 — Printemps toulon → Opéra (replen-heavy)
+  3: [
+    { id: 20, name: 'Croi-sac zip l', sku: 'T3-1398810', colour: 'Noir', movementType: ["replenishment"], transfers: 8, transfersSub: 1, approvedTransfers: 8, unapprovedTransfers: 0, revenue: '€0.92K', recommended: 8, recommendedBadges: ['REV'], recommendedSub: 1, confidence: 'high', coverage: 'All SKUs in target', coverageWeeks: 6.0, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 1, salesL30: 3, salesL90: 7, forecast: 0.9, stockouts: '0 → 0', locations: '1 → 1', overstocks: '1 → 0', understocks: '2 → 1', status: 'approved_by_system', currentUnits: 10, currentUnitsInTransit: 0, warehouseAllocateLine: '40 → 36', warehouseSellLine: '50 → 45', packMultiple: null, skuCount: 1, rrp: 420, ws: 0, season: 'SS26', event: 'Drop 3', firstSalesDate: '12th Mar 25', lifeToDateSales: 22, department: 'Crossbody', subDepartment: 'Bandoulière', material: 'Nylon', gender: 'Unisexe', skuConfidenceBuckets: { veryHigh: 1, high: 0, medium: 0, low: 0, veryLow: 0 }, skuCoverageSummary: { inTarget: 1, total: 1 } },
+    { id: 21, name: 'Pre-sac seau m', sku: 'T3-101080', colour: 'Bleu', movementType: ["replenishment"], transfers: 10, transfersSub: 1, approvedTransfers: 4, unapprovedTransfers: 6, revenue: '€0.55K', recommended: 10, recommendedBadges: ['VIS'], recommendedSub: 1, confidence: 'low', coverage: '12% below target', coverageWeeks: 2.8, coverageTarget: 6, nextEvent: { name: 'UK weekly replenishment', date: '16/06/2026' }, salesL7: 2, salesL30: 4, salesL90: 9, forecast: 0.7, stockouts: '0 → 1', locations: '2 → 1', overstocks: '2 → 0', understocks: '3 → 1', status: 'needs_review_from_user', currentUnits: 6, currentUnitsInTransit: 1, warehouseAllocateLine: '30 → 25', warehouseSellLine: '40 → 34', packMultiple: 10, skuCount: 1, isVirtualPack: true, rrp: 85, ws: 0, season: 'Winter 26', event: 'Vague 2', firstSalesDate: '3rd Nov 25', lifeToDateSales: 14, department: 'Bucket bags', subDepartment: 'Seau', material: 'Laine', gender: 'Femme', skuConfidenceBuckets: { veryHigh: 0, high: 0, medium: 0, low: 1, veryLow: 0 }, skuCoverageSummary: { inTarget: 0, total: 1 } },
+    { id: 22, name: 'Mini sac band', sku: 'T3-900020', colour: 'Rouge', movementType: ["rebalancing"], transfers: 2, transfersSub: 1, approvedTransfers: 0, unapprovedTransfers: 2, revenue: '€0.28K', recommended: 2, recommendedBadges: ['REV'], recommendedSub: 1, confidence: 'high', coverage: 'All SKUs in target', coverageWeeks: 5.5, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 0, salesL30: 2, salesL90: 5, forecast: 0.4, stockouts: '0 → 0', locations: '1 → 1', overstocks: '0 → 0', understocks: '1 → 0', status: 'unapproved', currentUnits: 4, currentUnitsInTransit: 0, warehouseAllocateLine: '20 → 18', warehouseSellLine: '28 → 26', packMultiple: null, skuCount: 1, rrp: 195, ws: 48, season: 'P/e 2026', event: 'Pre', firstSalesDate: '14th Jan 26', lifeToDateSales: 8, department: 'R.t.w. donna', subDepartment: 'Accessori piccoli', material: 'Cady', gender: 'Donna', skuConfidenceBuckets: { veryHigh: 0, high: 1, medium: 0, low: 0, veryLow: 0 }, skuCoverageSummary: { inTarget: 1, total: 1 } },
+    { id: 23, name: 'Ang-sac pte main m', sku: 'T3-1252810', colour: 'Figue', movementType: ["replenishment", "rebalancing"], transfers: 6, transfersSub: 1, approvedTransfers: 3, unapprovedTransfers: 3, revenue: '€0.71K', recommended: 6, recommendedBadges: ['REV', 'VIS'], recommendedSub: 1, confidence: 'low', coverage: '8% below target', coverageWeeks: 3.2, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 1, salesL30: 3, salesL90: 8, forecast: 1.1, stockouts: '1 → 0', locations: '2 → 2', overstocks: '2 → 1', understocks: '4 → 2', status: 'partially_approved', currentUnits: 9, currentUnitsInTransit: 2, warehouseAllocateLine: '35 → 30', warehouseSellLine: '45 → 40', packMultiple: null, skuCount: 2, rrp: 890, ws: 0, season: 'Winter 26', event: 'Vague 1', firstSalesDate: '22nd Jan 26', lifeToDateSales: 19, department: 'Handbags', subDepartment: 'Sac à main', material: 'Cuir', gender: 'Femme', skuConfidenceBuckets: { veryHigh: 0, high: 0, medium: 1, low: 1, veryLow: 0 }, skuCoverageSummary: { inTarget: 1, total: 2 } },
+  ],
+  // Trip 5 — Bruxelles → Opéra (mixed)
+  5: [
+    { id: 24, name: 'Coin-pack tote m', sku: 'T5-900010', colour: 'Noir', movementType: ["replenishment"], transfers: 30, transfersSub: 2, approvedTransfers: 15, unapprovedTransfers: 15, revenue: '€0.88K', recommended: 30, recommendedBadges: ['VIS'], recommendedSub: 1, confidence: 'high', coverage: '5% below target', coverageWeeks: 4.0, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 2, salesL30: 6, salesL90: 15, forecast: 1.0, stockouts: '0 → 0', locations: '2 → 2', overstocks: '1 → 0', understocks: '3 → 2', status: 'partially_approved', currentUnits: 14, currentUnitsInTransit: 3, warehouseAllocateLine: '45 → 40', warehouseSellLine: '55 → 50', packMultiple: 10, skuCount: 5, isVirtualPack: true, rrp: 320, ws: 0, season: 'Winter 26', event: 'Vague 1', firstSalesDate: '28th Oct 25', lifeToDateSales: 60, department: 'Handbags', subDepartment: 'Sac à main', material: 'Cuir', gender: 'Femme', skuConfidenceBuckets: { veryHigh: 1, high: 1, medium: 1, low: 1, veryLow: 1 }, skuCoverageSummary: { inTarget: 2, total: 5 } },
+    { id: 25, name: 'Gémo LOT tote', sku: 'T5-900100', colour: 'Camel', movementType: ["replenishment"], transfers: 20, transfersSub: 1, approvedTransfers: 8, unapprovedTransfers: 12, revenue: '€0.64K', recommended: 20, recommendedBadges: ['VIS'], recommendedSub: 1, confidence: 'low', coverage: '10% below target', coverageWeeks: 3.1, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 1, salesL30: 4, salesL90: 11, forecast: 0.8, stockouts: '0 → 0', locations: '1 → 2', overstocks: '2 → 1', understocks: '4 → 2', status: 'unapproved', currentUnits: 8, currentUnitsInTransit: 1, warehouseAllocateLine: '38 → 32', warehouseSellLine: '48 → 42', packMultiple: 10, skuCount: 1, isVirtualPack: false, rrp: 280, ws: 0, season: 'Winter 26', event: 'Vague 1', firstSalesDate: '2nd Aug 25', lifeToDateSales: 40, department: 'Handbags', subDepartment: 'Sac à main', material: 'Cuir', gender: 'Femme', skuConfidenceBuckets: { veryHigh: 0, high: 0, medium: 0, low: 2, veryLow: 1 }, skuCoverageSummary: { inTarget: 0, total: 3 } },
+    { id: 26, name: 'Croi-sac zip s', sku: 'T5-1398811', colour: 'Noir', movementType: ["rebalancing"], transfers: 3, transfersSub: 1, approvedTransfers: 3, unapprovedTransfers: 0, revenue: '€0.41K', recommended: 3, recommendedBadges: ['REV'], recommendedSub: 1, confidence: 'high', coverage: 'All SKUs in target', coverageWeeks: 6.2, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 0, salesL30: 1, salesL90: 4, forecast: 0.35, stockouts: '0 → 0', locations: '1 → 1', overstocks: '1 → 0', understocks: '1 → 0', status: 'approved_by_user', approvedByUser: 'Jess Briggs', currentUnits: 5, currentUnitsInTransit: 0, warehouseAllocateLine: '22 → 20', warehouseSellLine: '30 → 28', packMultiple: null, skuCount: 1, rrp: 380, ws: 25, season: 'SS26', event: 'Drop 1', firstSalesDate: '8th Feb 26', lifeToDateSales: 12, department: 'Crossbody', subDepartment: 'Bandoulière', material: 'Cuir', gender: 'Homme', skuConfidenceBuckets: { veryHigh: 1, high: 0, medium: 0, low: 0, veryLow: 0 }, skuCoverageSummary: { inTarget: 1, total: 1 } },
+  ],
+  // Trip 7 — Miramas → Romans (full-dataset trip)
+  7: [
+    { id: 27, name: 'Pre-sac seau s', sku: 'T7-101081', colour: 'Bleu petrole', movementType: ["replenishment"], transfers: 40, transfersSub: 1, approvedTransfers: 40, unapprovedTransfers: 0, revenue: '€1.2K', recommended: 40, recommendedBadges: ['VIS'], recommendedSub: 1, confidence: 'high', coverage: '3% below target', coverageWeeks: 4.5, coverageTarget: 6, nextEvent: { name: 'UK weekly replenishment', date: '16/06/2026' }, salesL7: 3, salesL30: 9, salesL90: 22, forecast: 1.4, stockouts: '0 → 0', locations: '2 → 2', overstocks: '2 → 1', understocks: '5 → 3', status: 'approved_by_system', currentUnits: 20, currentUnitsInTransit: 4, warehouseAllocateLine: '70 → 60', warehouseSellLine: '85 → 75', packMultiple: 10, skuCount: 1, isVirtualPack: true, rrp: 120, ws: 8, season: 'AW25', event: 'Continuity', firstSalesDate: '19th Sep 25', lifeToDateSales: 80, department: 'Bucket bags', subDepartment: 'Foulard', material: 'Cachemire', gender: 'Femme', skuConfidenceBuckets: { veryHigh: 0, high: 2, medium: 0, low: 0, veryLow: 0 }, skuCoverageSummary: { inTarget: 1, total: 2 } },
+    { id: 28, name: 'Ang-sac pte main s', sku: 'T7-1252811', colour: 'Figue', movementType: ["replenishment", "rebalancing"], transfers: 14, transfersSub: 1, packTransfers: 10, looseTransfers: 2, replenTransfers: 12, rebalTransfers: 2, approvedTransfers: 7, unapprovedTransfers: 7, revenue: '€0.58K', recommended: 14, recommendedBadges: ['REV'], recommendedSub: 1, confidence: 'low', coverage: '20% below target', coverageWeeks: 2.0, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 0, salesL30: 2, salesL90: 6, forecast: 0.5, stockouts: '0 → 1', locations: '2 → 2', overstocks: '3 → 1', understocks: '4 → 2', status: 'last_edited_by_user', editedByUser: 'Csabi Toth', currentUnits: 7, currentUnitsInTransit: 0, warehouseAllocateLine: '40 → 34', warehouseSellLine: '50 → 44', packMultiple: 10, skuCount: 1, isVirtualPack: false, rrp: 750, ws: 12, season: 'Winter 26', event: 'Vague 2', firstSalesDate: '5th Dec 25', lifeToDateSales: 18, department: 'Handbags', subDepartment: 'Sac à main', material: 'Cuir', gender: 'Femme', skuConfidenceBuckets: { veryHigh: 0, high: 0, medium: 0, low: 1, veryLow: 1 }, skuCoverageSummary: { inTarget: 0, total: 2 } },
+    { id: 29, name: 'Mini sac band', sku: 'T7-900021', colour: 'Noir', movementType: ["rebalancing"], transfers: 5, transfersSub: 1, approvedTransfers: 5, unapprovedTransfers: 0, revenue: '€0.33K', recommended: 5, recommendedBadges: ['REV'], recommendedSub: 1, confidence: 'high', coverage: 'All SKUs in target', coverageWeeks: 6.1, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 1, salesL30: 2, salesL90: 6, forecast: 0.45, stockouts: '0 → 0', locations: '1 → 1', overstocks: '0 → 0', understocks: '1 → 0', status: 'approved_by_user', approvedByUser: 'Jess Briggs', currentUnits: 8, currentUnitsInTransit: 1, warehouseAllocateLine: '25 → 22', warehouseSellLine: '32 → 29', packMultiple: null, skuCount: 1, rrp: 195, ws: 40, season: 'P/e 2026', event: 'Pre', firstSalesDate: '14th Jan 26', lifeToDateSales: 11, department: 'R.t.w. donna', subDepartment: 'Accessori piccoli', material: 'Cady', gender: 'Donna', skuConfidenceBuckets: { veryHigh: 1, high: 0, medium: 0, low: 0, veryLow: 0 }, skuCoverageSummary: { inTarget: 1, total: 1 } },
+    { id: 30, name: 'Croi-sac zip l', sku: 'T7-1398812', colour: 'Camel', movementType: ["rebalancing"], transfers: 4, transfersSub: 1, approvedTransfers: 2, unapprovedTransfers: 2, revenue: '€0.49K', recommended: 4, recommendedBadges: ['VIS'], recommendedSub: 1, confidence: 'medium', coverage: '4% below target', coverageWeeks: 4.8, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 1, salesL30: 3, salesL90: 7, forecast: 0.6, stockouts: '0 → 0', locations: '2 → 1', overstocks: '1 → 0', understocks: '2 → 1', status: 'needs_review_from_user', currentUnits: 6, currentUnitsInTransit: 0, warehouseAllocateLine: '28 → 24', warehouseSellLine: '36 → 32', packMultiple: null, skuCount: 1, rrp: 420, ws: 0, season: 'SS26', event: 'Drop 2', firstSalesDate: '1st Apr 25', lifeToDateSales: 25, department: 'Crossbody', subDepartment: 'Bandoulière', material: 'Nylon', gender: 'Unisexe', skuConfidenceBuckets: { veryHigh: 0, high: 0, medium: 1, low: 0, veryLow: 0 }, skuCoverageSummary: { inTarget: 0, total: 1 } },
+    { id: 31, name: 'Gémo LOT tote', sku: 'T7-900101', colour: 'Noir', movementType: ["replenishment"], transfers: 25, transfersSub: 1, approvedTransfers: 10, unapprovedTransfers: 15, revenue: '€0.77K', recommended: 25, recommendedBadges: ['VIS'], recommendedSub: 1, confidence: 'low', coverage: '7% below target', coverageWeeks: 3.4, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 2, salesL30: 5, salesL90: 14, forecast: 0.95, stockouts: '0 → 0', locations: '2 → 2', overstocks: '2 → 1', understocks: '3 → 2', status: 'unapproved', currentUnits: 11, currentUnitsInTransit: 2, warehouseAllocateLine: '50 → 44', warehouseSellLine: '60 → 54', packMultiple: 10, skuCount: 1, isVirtualPack: false, rrp: 280, ws: 0, season: 'Winter 26', event: 'Vague 1', firstSalesDate: '2nd Aug 25', lifeToDateSales: 55, department: 'Handbags', subDepartment: 'Sac à main', material: 'Cuir', gender: 'Femme', skuConfidenceBuckets: { veryHigh: 0, high: 1, medium: 1, low: 2, veryLow: 1 }, skuCoverageSummary: { inTarget: 1, total: 5 } },
+  ],
+  // Trip 8 — Troyes → Grenoble (unapproved-heavy)
+  8: [
+    { id: 32, name: 'Ang-sac pte main m', sku: 'T8-1252810', colour: 'Figue', movementType: ["rebalancing"], transfers: 7, transfersSub: 1, approvedTransfers: 0, unapprovedTransfers: 7, revenue: '€1.05K', recommended: 7, recommendedBadges: ['REV', 'VIS'], recommendedSub: 1, confidence: 'high', coverage: '6% below target', coverageWeeks: 3.5, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 2, salesL30: 5, salesL90: 12, forecast: 1.3, stockouts: '1 → 0', locations: '2 → 2', overstocks: '3 → 1', understocks: '5 → 3', status: 'unapproved', currentUnits: 12, currentUnitsInTransit: 2, warehouseAllocateLine: '42 → 36', warehouseSellLine: '55 → 48', packMultiple: null, skuCount: 2, rrp: 890, ws: 0, season: 'Winter 26', event: 'Vague 1', firstSalesDate: '22nd Jan 26', lifeToDateSales: 30, department: 'Handbags', subDepartment: 'Sac à main', material: 'Cuir', gender: 'Femme', skuConfidenceBuckets: { veryHigh: 0, high: 2, medium: 0, low: 0, veryLow: 0 }, skuCoverageSummary: { inTarget: 0, total: 2 } },
+    { id: 33, name: 'Pre-sac seau m', sku: 'T8-101080', colour: 'Vert', movementType: ["replenishment"], transfers: 15, transfersSub: 1, approvedTransfers: 0, unapprovedTransfers: 15, revenue: '€0.62K', recommended: 15, recommendedBadges: ['VIS'], recommendedSub: 1, confidence: 'low', coverage: '15% below target', coverageWeeks: 2.5, coverageTarget: 6, nextEvent: { name: 'UK weekly replenishment', date: '16/06/2026' }, salesL7: 1, salesL30: 3, salesL90: 8, forecast: 0.65, stockouts: '0 → 1', locations: '1 → 1', overstocks: '1 → 0', understocks: '3 → 1', status: 'unapproved', currentUnits: 5, currentUnitsInTransit: 1, warehouseAllocateLine: '28 → 22', warehouseSellLine: '36 → 30', packMultiple: 10, skuCount: 1, isVirtualPack: true, rrp: 85, ws: 0, season: 'Winter 26', event: 'Vague 2', firstSalesDate: '3rd Nov 25', lifeToDateSales: 16, department: 'Bucket bags', subDepartment: 'Seau', material: 'Laine', gender: 'Femme', skuConfidenceBuckets: { veryHigh: 0, high: 0, medium: 0, low: 0, veryLow: 1 }, skuCoverageSummary: { inTarget: 0, total: 1 } },
+    { id: 34, name: 'Coin-pack tote m', sku: 'T8-900010', colour: 'Camel', movementType: ["replenishment"], transfers: 22, transfersSub: 1, approvedTransfers: 5, unapprovedTransfers: 17, revenue: '€0.71K', recommended: 22, recommendedBadges: ['VIS'], recommendedSub: 1, confidence: 'medium', coverage: 'All SKUs in target', coverageWeeks: 5.8, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 1, salesL30: 4, salesL90: 10, forecast: 0.85, stockouts: '0 → 0', locations: '2 → 1', overstocks: '1 → 0', understocks: '2 → 1', status: 'needs_review_from_user', currentUnits: 9, currentUnitsInTransit: 0, warehouseAllocateLine: '33 → 28', warehouseSellLine: '42 → 37', packMultiple: 10, skuCount: 3, isVirtualPack: true, rrp: 320, ws: 0, season: 'Winter 26', event: 'Vague 1', firstSalesDate: '28th Oct 25', lifeToDateSales: 44, department: 'Handbags', subDepartment: 'Sac à main', material: 'Cuir', gender: 'Femme', skuConfidenceBuckets: { veryHigh: 0, high: 1, medium: 2, low: 0, veryLow: 0 }, skuCoverageSummary: { inTarget: 3, total: 3 } },
+    { id: 35, name: 'Croi-sac zip s', sku: 'T8-1398811', colour: 'Rouge', movementType: ["rebalancing"], transfers: 2, transfersSub: 1, approvedTransfers: 0, unapprovedTransfers: 2, revenue: '€0.25K', recommended: 2, recommendedBadges: ['REV'], recommendedSub: 1, confidence: 'high', coverage: '9% below target', coverageWeeks: 3.0, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 0, salesL30: 1, salesL90: 3, forecast: 0.3, stockouts: '0 → 0', locations: '1 → 1', overstocks: '0 → 0', understocks: '2 → 1', status: 'unapproved', currentUnits: 3, currentUnitsInTransit: 0, warehouseAllocateLine: '15 → 13', warehouseSellLine: '20 → 18', packMultiple: null, skuCount: 1, rrp: 380, ws: 25, season: 'SS26', event: 'Drop 1', firstSalesDate: '8th Feb 26', lifeToDateSales: 7, department: 'Crossbody', subDepartment: 'Bandoulière', material: 'Cuir', gender: 'Homme', skuConfidenceBuckets: { veryHigh: 0, high: 1, medium: 0, low: 0, veryLow: 0 }, skuCoverageSummary: { inTarget: 0, total: 1 } },
+  ]
+}
+
+
 
 /** Per-product SKU-location confidence buckets + coverage summary (Products tab). */
 const PRODUCT_SKU_LOCATION_METRICS = {
@@ -9580,6 +9627,13 @@ export default function ScheduleDetailPage() {
     }
     return rows
   })()
+  const tripApprovalTotals = tripsRows.reduce(
+    (acc, row) => ({
+      approved: acc.approved + (Number(row.approvedTransfers) || 0),
+      unapproved: acc.unapproved + (Number(row.unapprovedTransfers) || 0),
+    }),
+    { approved: 0, unapproved: 0 }
+  )
   const tripSummary = viewShowsFullDataset ? TRIPS_TAB_SUMMARY_TOTALS_FULL : TRIPS_TAB_SUMMARY_TOTALS_OPERA
 
   const [tripTableColWidths, setTripTableColWidths] = useState(() => [...TRIPS_TABLE_DEFAULT_COL_WIDTHS])
@@ -9587,7 +9641,7 @@ export default function ScheduleDetailPage() {
     Array.from({ length: TRIPS_TABLE_NUM_DATA_COLS }, (_, i) => i)
   )
   /** Status (logical col 7) only pins to the right when it is the trailing column after reorder. */
-  const tripStatusColumnIsTrailing = tripColumnOrder[tripColumnOrder.length - 1] === 7
+  const tripStatusColumnIsTrailing = tripColumnOrder[tripColumnOrder.length - 1] === 6
 
   const onTripColDragStart = useCallback((visualIndex, e) => {
     e.stopPropagation()
@@ -9627,7 +9681,7 @@ export default function ScheduleDetailPage() {
     e.stopPropagation()
     const startX = e.clientX
     const startW = tripTableColWidths[colIndex]
-    const minColW = colIndex === 4 ? 160 : colIndex === 6 ? 190 : 72
+    const minColW = colIndex === 3 ? 160 : colIndex === 5 ? 190 : 72
     const onMove = (ev) => {
       const d = ev.clientX - startX
       setTripTableColWidths((prev) => {
@@ -10107,26 +10161,12 @@ export default function ScheduleDetailPage() {
                             >
                               <span className="inline-flex min-w-0 items-center gap-2">
                                 {grip}
-                                Movement
-                              </span>
-                              {resizer}
-                            </th>
-                          )
-                        case 3:
-                          return (
-                            <th
-                              key={logicalIdx}
-                              className="sticky top-0 z-20 bg-white relative h-[62px] min-h-[62px] px-3 text-left align-middle font-medium text-[#0a0a0a] box-border"
-                              {...dropProps}
-                            >
-                              <span className="inline-flex min-w-0 items-center gap-2">
-                                {grip}
                                 Transfers
                               </span>
                               {resizer}
                             </th>
                           )
-                        case 4:
+                        case 3:
                           return (
                             <th
                               key={logicalIdx}
@@ -10144,7 +10184,7 @@ export default function ScheduleDetailPage() {
                               {resizer}
                             </th>
                           )
-                        case 5:
+                        case 4:
                           return (
                             <th
                               key={logicalIdx}
@@ -10161,8 +10201,7 @@ export default function ScheduleDetailPage() {
                               {resizer}
                             </th>
                           )
-
-                        case 6:
+                        case 5:
                           return (
                             <th
                               key={logicalIdx}
@@ -10176,7 +10215,7 @@ export default function ScheduleDetailPage() {
                               {resizer}
                             </th>
                           )
-                        case 7:
+                        case 6:
                           return (
                             <th
                               key={logicalIdx}
@@ -10223,19 +10262,12 @@ export default function ScheduleDetailPage() {
                           return (
                             <th
                               key={logicalIdx}
-                              className="sticky top-[62px] z-20 bg-white py-2 px-3"
-                            />
-                          )
-                        case 3:
-                          return (
-                            <th
-                              key={logicalIdx}
                               className="sticky top-[62px] z-20 bg-white py-2 px-3 text-[12px] font-medium text-[#0a0a0a]"
                             >
                               {tripSummary.transfers}
                             </th>
                           )
-                        case 4:
+                        case 3:
                           return (
                             <th
                               key={logicalIdx}
@@ -10244,7 +10276,7 @@ export default function ScheduleDetailPage() {
                               {tripSummary.revenue}
                             </th>
                           )
-                        case 5:
+                        case 4:
                           return (
                             <th
                               key={logicalIdx}
@@ -10253,8 +10285,7 @@ export default function ScheduleDetailPage() {
                               {tripSummary.recommended}
                             </th>
                           )
-
-                        case 6:
+                        case 5:
                           return (
                             <th
                               key={logicalIdx}
@@ -10263,7 +10294,7 @@ export default function ScheduleDetailPage() {
                               {tripSummary.products}
                             </th>
                           )
-                        case 7:
+                        case 6:
                           return (
                             <th
                               key={logicalIdx}
@@ -10272,7 +10303,20 @@ export default function ScheduleDetailPage() {
                                   ? 'right-0 z-30 shadow-[-4px_0_12px_-6px_rgba(15,23,42,0.12)]'
                                   : 'z-20'
                               }`}
-                            />
+                            >
+                              <div className="flex flex-col items-end gap-0.5 text-[12px] font-medium">
+                                {tripApprovalTotals.approved > 0 && (
+                                  <span className="text-[#166534]">
+                                    {tripApprovalTotals.approved} approved
+                                  </span>
+                                )}
+                                {tripApprovalTotals.unapproved > 0 && (
+                                  <span className="text-[#4b535c]">
+                                    {tripApprovalTotals.unapproved} unapproved
+                                  </span>
+                                )}
+                              </div>
+                            </th>
                           )
                         default:
                           return null
@@ -10334,24 +10378,18 @@ export default function ScheduleDetailPage() {
                             case 2:
                               return (
                                 <td key={logicalIdx} className="py-3 px-3 align-top">
-                                  <MovementTypePills movementType={row.movementType} />
-                                </td>
-                              )
-                            case 3:
-                              return (
-                                <td key={logicalIdx} className="py-3 px-3 align-top">
                                   <span className="text-[#0a0a0a]">{row.transfers}</span>
                                   <span className="text-[12px] text-[#4b535c] ml-1">(max 200)</span>
                                 </td>
                               )
-                            case 4:
+                            case 3:
                               return (
                                 <td key={logicalIdx} className="py-3 pl-3 pr-8 align-top">
                                   <span className="text-[#0a0a0a]">{row.revenue}</span>
                                   <span className="text-[12px] text-[#4b535c] ml-1">(min 6903)</span>
                                 </td>
                               )
-                            case 5:
+                            case 4:
                               return (
                                 <td key={logicalIdx} className="py-3 px-3 align-top text-right">
                                   <div className="flex flex-col gap-1 items-end">
@@ -10376,14 +10414,13 @@ export default function ScheduleDetailPage() {
                                   </div>
                                 </td>
                               )
-
-                            case 6:
+                            case 5:
                               return (
                                 <td key={logicalIdx} className="py-3 px-3 align-top text-right">
                                   <span className="text-[#0a0a0a]">{row.products}</span>
                                 </td>
                               )
-                            case 7:
+                            case 6:
                               return (
                                 <td
                                   key={logicalIdx}
@@ -10394,7 +10431,7 @@ export default function ScheduleDetailPage() {
                                   }`}
                                   onClick={(e) => e.stopPropagation()}
                                 >
-                                  <div className="flex justify-end">
+                                  <div className="flex flex-col items-end gap-1">
                                     <StatusDropdown
                                       rowId={`trip-${row.id}`}
                                       value={rowStatus}
@@ -10404,6 +10441,18 @@ export default function ScheduleDetailPage() {
                                         setTripStatusOverrides((prev) => ({ ...prev, [row.id]: statusId }))
                                       }
                                     />
+                                    <div className="flex flex-col items-end gap-0.5">
+                                      {(row.approvedTransfers ?? 0) > 0 && (
+                                        <span className="text-[12px] font-medium text-[#166534]">
+                                          {row.approvedTransfers} approved
+                                        </span>
+                                      )}
+                                      {(row.unapprovedTransfers ?? 0) > 0 && (
+                                        <span className="text-[12px] font-medium text-[#4b535c]">
+                                          {row.unapprovedTransfers} unapproved
+                                        </span>
+                                      )}
+                                    </div>
                                   </div>
                                 </td>
                               )
