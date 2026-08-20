@@ -5385,7 +5385,7 @@ function ProductsDrilldown({
                 {productSkuLocationTotals.lowConfidence} low
               </span>
               <span className={`text-[11px] ${stateSecondary}`}>
-                {productSkuLocationTotals.totalSkuLocations} SKUs
+                {productSkuLocationTotals.totalSkuLocations} SKU-locations
               </span>
             </div>
           </th>
