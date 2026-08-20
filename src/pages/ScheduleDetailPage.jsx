@@ -142,11 +142,11 @@ const PRODUCTS_TAB_SUMMARY_TOTALS = {
 
 /** Hardcoded totals for Trips tab summary row (TRIPS_ALL, default full dataset view). */
 const TRIPS_TAB_SUMMARY_TOTALS_FULL = {
-  sendingTrips: '22 trips',
-  transfers: '2,038',
-  revenue: '€435.3K',
-  recommended: '2,151',
-  products: '257 products' }
+  sendingTrips: '25 trips',
+  transfers: '2,147',
+  revenue: '€428.9K',
+  recommended: '2,260',
+  products: '288 products' }
 
 /** Hardcoded totals for Trips tab summary row (TRIPS_OPERA subset view). */
 const TRIPS_TAB_SUMMARY_TOTALS_OPERA = {
@@ -437,6 +437,82 @@ const TRIPS_OTHER = [
     products: 4,
     movementType: ['replenishment'],
     badges: ['MDQ', 'VIS', 'REV'] },
+  // Warehouse-involved trips (Log01 roles + revenue rules)
+  {
+    id: 201,
+    from: 'Log01 entrepot logtex',
+    fromCode: 'LOG01',
+    fromLocationType: 'warehouse',
+    fromWarehouseRole: 'non-selling',
+    to: 'Opéra',
+    toCode: 'A1A',
+    toLocationType: 'store',
+    transfers: '45',
+    revenue: '€4.2K',
+    recommended: '45',
+    products: 12,
+    packCount: 4,
+    movementType: ['replenishment'],
+    badges: ['VIS', 'REV'],
+    status: 'needs_review_from_user',
+    approvedTransfers: 3,
+    unapprovedTransfers: 3 },
+  {
+    id: 202,
+    from: 'Log01 entrepot logtex',
+    fromCode: 'LOG01',
+    fromLocationType: 'warehouse',
+    fromWarehouseRole: 'non-selling',
+    to: 'Log01 entrepot logtex',
+    toCode: 'LOG01',
+    toLocationType: 'warehouse',
+    toWarehouseRole: 'selling',
+    transfers: '22',
+    revenue: '€1.8K',
+    recommended: '22',
+    products: 6,
+    movementType: ['replenishment'],
+    badges: ['REV'],
+    status: 'unapproved',
+    approvedTransfers: 0,
+    unapprovedTransfers: 5 },
+  {
+    id: 203,
+    from: 'Cannes',
+    fromCode: 'A1R',
+    fromLocationType: 'store',
+    to: 'Log01 entrepot logtex',
+    toCode: 'LOG01',
+    toLocationType: 'warehouse',
+    toWarehouseRole: 'non-selling',
+    transfers: '28',
+    revenue: '€0',
+    recommended: '28',
+    products: 8,
+    movementType: ['rebalancing'],
+    badges: ['VIS', 'REV'],
+    status: 'partially_approved',
+    approvedTransfers: 2,
+    unapprovedTransfers: 3 },
+  {
+    id: 204,
+    from: 'Log01 entrepot logtex',
+    fromCode: 'LOG01',
+    fromLocationType: 'warehouse',
+    fromWarehouseRole: 'selling',
+    to: 'Nice',
+    toCode: 'NCE06',
+    toLocationType: 'store',
+    transfers: '14',
+    revenue: '€0.8K',
+    recommended: '14',
+    products: 5,
+    movementType: ['rebalancing'],
+    badges: ['REV'],
+    status: 'last_edited_by_user',
+    editedByUser: 'Csabi Toth',
+    approvedTransfers: 2,
+    unapprovedTransfers: 2 },
 ]
 
 const TRIPS_ALL = [...TRIPS_OPERA, ...TRIPS_OTHER]
@@ -1685,6 +1761,23 @@ function MovementTypePills({ movementType }) {
         </span>
       ))}
     </div>
+  )
+}
+
+/** Warehouse role tag for Trips From/To cells; stores render no tag. */
+function getTripLocationRoleTag(locationType, warehouseRole) {
+  if (locationType !== 'warehouse') return null
+  if (warehouseRole === 'selling') return 'Selling'
+  if (warehouseRole === 'non-selling') return 'Warehouse'
+  return null
+}
+
+function TripLocationRoleTag({ label }) {
+  if (!label) return null
+  return (
+    <span className="inline-flex items-center px-2 py-0.5 rounded-[4px] bg-[#f8f8f8] text-[11px] font-medium text-[#0267ff]">
+      {label}
+    </span>
   )
 }
 
@@ -10557,7 +10650,15 @@ export default function ScheduleDetailPage() {
                               return (
                                 <td key={logicalIdx} className="py-3 px-3 align-top">
                                   <div className="flex flex-col">
-                                    <span className="text-[#0a0a0a] font-medium">{row.from}</span>
+                                    <span className="inline-flex flex-wrap items-center gap-1.5">
+                                      <span className="text-[#0a0a0a] font-medium">{row.from}</span>
+                                      <TripLocationRoleTag
+                                        label={getTripLocationRoleTag(
+                                          row.fromLocationType,
+                                          row.fromWarehouseRole
+                                        )}
+                                      />
+                                    </span>
                                     <span className="text-[12px] text-[#4b535c]">{row.fromCode}</span>
                                   </div>
                                 </td>
@@ -10566,7 +10667,15 @@ export default function ScheduleDetailPage() {
                               return (
                                 <td key={logicalIdx} className="py-3 px-3 align-top">
                                   <div className="flex flex-col">
-                                    <span className="text-[#0a0a0a] font-medium">{row.to}</span>
+                                    <span className="inline-flex flex-wrap items-center gap-1.5">
+                                      <span className="text-[#0a0a0a] font-medium">{row.to}</span>
+                                      <TripLocationRoleTag
+                                        label={getTripLocationRoleTag(
+                                          row.toLocationType,
+                                          row.toWarehouseRole
+                                        )}
+                                      />
+                                    </span>
                                     <span className="text-[12px] text-[#4b535c]">{row.toCode}</span>
                                   </div>
                                 </td>
