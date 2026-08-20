@@ -59,11 +59,11 @@ const TRIPS_COL_DND_MIME = 'application/x-autone-trip-col'
 const PRODUCTS_TABLE_NUM_DATA_COLS = 19
 /** Default visual order: CX preferred visible set first (Status last), then hidden columns. */
 const PRODUCTS_TABLE_DEFAULT_COLUMN_ORDER = [
-  0, 1, 2, 4, 5, 3, 6, 14, 10, 11, 12, 13, 8, 18, 7, 9, 15, 16, 17,
+  0, 1, 8, 10, 11, 12, 13, 2, 4, 5, 3, 6, 14, 18, 7, 9, 15, 16, 17,
 ]
 /** Default visible logical columns — order matches PRODUCTS_TABLE_DEFAULT_COLUMN_ORDER prefix. */
 const PRODUCTS_DEFAULT_VISIBLE_LOGICAL_IDS = [
-  0, 1, 2, 4, 5, 3, 6, 14, 10, 11, 12, 13, 8, 18,
+  0, 1, 8, 10, 11, 12, 13, 2, 4, 5, 3, 6, 14, 18,
 ]
 /** Product + Status are always visible in the column picker. */
 const PRODUCTS_LOCKED_LOGICAL_IDS = [0, 18]
@@ -6627,16 +6627,16 @@ const EXPLORER_REDUCED_COLUMN_IDS = [
   'fromLocation',
   'toLocation',
   'movementType',
+  'stockInCirculation',
+  'salesL7',
+  'salesL30',
+  'salesL90',
+  'forecast',
   'transfers',
   'recommended',
   'confidence',
   'revenue',
   'coverage',
-  'salesL7',
-  'salesL30',
-  'salesL90',
-  'forecast',
-  'stockInCirculation',
   'status',
 ]
 
