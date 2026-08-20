@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useLayoutEffect, useMemo } from 'react'
 import { createPortal } from 'react-dom'
-import { Plus, Copy } from 'lucide-react'
+import { Plus, Copy, Pencil, X, ChevronUp, ChevronDown } from 'lucide-react'
 import { ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts'
 import { IconSearch, IconChevronDown, IconChevronRight, IconShare, IconDocument, IconClose, IconArrowLeft, IconGears, IconTruckTu, IconPackageTu, IconRebalancing, IconReplenishment, IconCalendarNote, IconTrendUp, IconFilterFunnel, IconColumnSettings, IconSortOrder, IconWarning, IconLightbulb } from '../components/icons'
 function IconInfo() {
@@ -55,10 +55,40 @@ function TripColumnDragGrip({ visualIndex, onDragStart }) {
 const TRIPS_TABLE_DEFAULT_COL_WIDTHS = [200, 200, 140, 120, 220, 160, 100, 200]
 const TRIPS_TABLE_NUM_DATA_COLS = TRIPS_TABLE_DEFAULT_COL_WIDTHS.length
 const TRIPS_COL_DND_MIME = 'application/x-autone-trip-col'
-/** Logical product table columns are 0–17 (Status = 17). 11 = L90D sales; Depth removed. */
-const PRODUCTS_TABLE_NUM_DATA_COLS = 18
-/** Default visual order: stockouts, sales, L90D, forecast, units, warehouse, … Status last. */
-const PRODUCTS_TABLE_DEFAULT_COLUMN_ORDER = [0, 1, 2, 3, 4, 5, 6, 7, 13, 10, 11, 12, 8, 9, 14, 15, 16, 17]
+/** Logical product table columns are 0–18 (Status = 18). 10–12 = Sales L7D / L30D / L90D; 13 = Forecast. */
+const PRODUCTS_TABLE_NUM_DATA_COLS = 19
+/** Default visual order: CX preferred visible set first (Status last), then hidden columns. */
+const PRODUCTS_TABLE_DEFAULT_COLUMN_ORDER = [
+  0, 1, 8, 10, 11, 12, 13, 2, 4, 5, 3, 6, 14, 18, 7, 9, 15, 16, 17,
+]
+/** Default visible logical columns — order matches PRODUCTS_TABLE_DEFAULT_COLUMN_ORDER prefix. */
+const PRODUCTS_DEFAULT_VISIBLE_LOGICAL_IDS = [
+  0, 1, 8, 10, 11, 12, 13, 2, 4, 5, 3, 6, 14, 18,
+]
+/** Product + Status are always visible in the column picker. */
+const PRODUCTS_LOCKED_LOGICAL_IDS = [0, 18]
+/** Picker labels by logical index (match header wording; list order is 0…18). */
+const PRODUCTS_COLUMN_PICKER_LABELS = [
+  'Product',
+  'Movement',
+  'Transfers',
+  'Revenue increase',
+  'Recommended transfers',
+  'Confidence',
+  'Coverage',
+  'Next event',
+  'Units (to)',
+  'Warehouse',
+  'Sales L7D',
+  'Sales L30D',
+  'Sales L90D',
+  'Forecast per wk',
+  'Stockouts',
+  'Locations',
+  'Overstocks',
+  'Understocks',
+  'Status',
+]
 const PRODUCTS_COL_DND_MIME = 'application/x-autone-products-col'
 const LOCATIONS_TABLE_NUM_DATA_COLS = 14
 const LOCATIONS_COL_DND_MIME = 'application/x-autone-locations-col'
@@ -99,15 +129,13 @@ const PRODUCTS_TAB_SUMMARY_TOTALS = {
   transfersTrips: '5 trips',
   revenue: '€6.9K',
   recommendedUnits: '18',
-  recommendedTrips: '5 trips',
   stockUnits: '70',
   stockInTransit: '11 in transit & PFP',
-  warehouseAllocate: '320 → 280 to allocate',
+  warehouseAllocate: '320 → 280',
   warehouseSell: '400 → 360 to sell',
-  salesL7: '138 L7D',
-  salesL30: '693 L30D',
-  salesL90: '1840 L90D',
-  forecast: '5.58',
+  salesL7: '138',
+  salesL30: '693',
+  salesL90: '1840',
   stockouts: '1 → 2',
   locations: '11 → 10',
   overstocks: '21 → 5',
@@ -452,25 +480,80 @@ const LOCATIONS_TABLE_DATA = [
 // Mock products for trip drilldown (keyed by trip id)
 const PRODUCTS_BY_TRIP = {
   1: [
-    { id: 1, name: 'Croi-sac zip l', sku: 'A1398810', colour: 'Noir', movementType: ["rebalancing"], transfers: 3, transfersSub: 1, approvedTransfers: 3, unapprovedTransfers: 0, revenue: '€1.48K', recommended: 1, recommendedBadges: ['REV'], recommendedSub: 2, confidence: 'high', coverage: 'All SKUs in target', coverageWeeks: 5.2, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 1, salesL30: 2, salesL90: 5, forecast: 1.87, stockouts: '0 → 0', locations: '2 → 2', overstocks: '4 → 1', understocks: '8 → 5',     status: 'approved_by_system', currentUnits: 12, currentUnitsInTransit: 3, warehouseAllocateLine: '52 → 48', warehouseSellLine: '68 → 62', packMultiple: null, skuCount: 1 },
-    { id: 2, name: 'Pre-sac seau m', sku: 'A101080', colour: 'Bleu petrole', movementType: ["rebalancing"], transfers: 2, transfersSub: 1, approvedTransfers: 0, unapprovedTransfers: 2, revenue: '€1.12K', recommended: 2, recommendedBadges: ['VIS'], recommendedSub: 1, confidence: 'high', coverage: '2% below target', coverageWeeks: 3.8, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 2, salesL30: 3, salesL90: 8, forecast: 0.54, stockouts: '0 → 1', locations: '2 → 1', overstocks: '3 → 0', understocks: '2 → 0', currentUnits: 8, currentUnitsInTransit: 0, warehouseAllocateLine: '58 → 51', warehouseSellLine: '72 → 65', packMultiple: null, skuCount: 1 },
-    { id: 3, name: 'Ang-sac pte main m', sku: 'A1252810', colour: 'Figue', movementType: ["rebalancing"], transfers: 3, transfersSub: 2, approvedTransfers: 2, unapprovedTransfers: 1, revenue: '€1.89K', recommended: 3, recommendedBadges: ['REV', 'VIS'], recommendedSub: 1, confidence: 'high', coverage: '5% below target', coverageWeeks: 3.1, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 1, salesL30: 4, salesL90: 11, forecast: 2.1, stockouts: '1 → 0', locations: '2 → 2', overstocks: '5 → 2', understocks: '6 → 3',     status: 'last_edited_by_user', editedByUser: 'Csabi Toth', currentUnits: 25, currentUnitsInTransit: 5, warehouseAllocateLine: '48 → 42', warehouseSellLine: '65 → 58', packMultiple: null, skuCount: 2 },
-    { id: 4, name: 'Croi-sac zip s', sku: 'A1398811', colour: 'Noir', movementType: ["rebalancing"], transfers: 1, transfersSub: 2, approvedTransfers: 1, unapprovedTransfers: 0, revenue: '€0.98K', recommended: 1, recommendedBadges: ['REV'], recommendedSub: 2, confidence: 'high', coverage: 'All SKUs in target', coverageWeeks: 6.1, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 0, salesL30: 1, salesL90: 3, forecast: 0.32, stockouts: '0 → 0', locations: '1 → 2', overstocks: '2 → 1', understocks: '4 → 2', status: 'approved_by_user', approvedByUser: 'Jess Briggs', currentUnits: 3, currentUnitsInTransit: 1, warehouseAllocateLine: '55 → 50', warehouseSellLine: '70 → 63', packMultiple: null, skuCount: 1 },
+    { id: 1, name: 'Croi-sac zip l', sku: 'A1398810', colour: 'Noir', movementType: ["rebalancing"], transfers: 3, transfersSub: 1, approvedTransfers: 3, unapprovedTransfers: 0, revenue: '€1.48K', recommended: 1, recommendedBadges: ['REV'], recommendedSub: 2, confidence: 'high', coverage: 'All SKUs in target', coverageWeeks: 5.2, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 1, salesL30: 2, salesL90: 5, forecast: 1.87, stockouts: '0 → 0', locations: '2 → 2', overstocks: '4 → 1', understocks: '8 → 5',     status: 'approved_by_system', currentUnits: 12, currentUnitsInTransit: 3, warehouseAllocateLine: '52 → 48', warehouseSellLine: '68 → 62', packMultiple: null, skuCount: 1, rrp: 420, ws: 0, season: 'SS26', event: 'Drop 3', firstSalesDate: '12th Mar 25', lifeToDateSales: 41, department: 'Crossbody', subDepartment: 'Bandoulière', material: 'Nylon ripstop with leather trim', gender: 'Unisexe' },
+    { id: 2, name: 'Pre-sac seau m', sku: 'A101080', colour: 'Bleu petrole', movementType: ["rebalancing"], transfers: 2, transfersSub: 1, approvedTransfers: 0, unapprovedTransfers: 2, revenue: '€1.12K', recommended: 2, recommendedBadges: ['VIS'], recommendedSub: 1, confidence: 'high', coverage: '2% below target', coverageWeeks: 3.8, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 2, salesL30: 3, salesL90: 8, forecast: 0.54, stockouts: '0 → 1', locations: '2 → 1', overstocks: '3 → 0', understocks: '2 → 0', currentUnits: 8, currentUnitsInTransit: 0, warehouseAllocateLine: '58 → 51', warehouseSellLine: '72 → 65', packMultiple: null, skuCount: 1, rrp: 85, ws: 0, season: 'Winter 26', event: 'Vague 2', firstSalesDate: '3rd Nov 25', lifeToDateSales: 18, department: 'Bucket bags', subDepartment: 'Seau', material: 'Laine', gender: 'Femme' },
+    { id: 3, name: 'Ang-sac pte main m', sku: 'A1252810', colour: 'Figue', movementType: ["rebalancing"], transfers: 3, transfersSub: 2, approvedTransfers: 2, unapprovedTransfers: 1, revenue: '€1.89K', recommended: 3, recommendedBadges: ['REV', 'VIS'], recommendedSub: 1, confidence: 'high', coverage: '5% below target', coverageWeeks: 3.1, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 1, salesL30: 4, salesL90: 11, forecast: 2.1, stockouts: '1 → 0', locations: '2 → 2', overstocks: '5 → 2', understocks: '6 → 3',     status: 'last_edited_by_user', editedByUser: 'Csabi Toth', currentUnits: 25, currentUnitsInTransit: 5, warehouseAllocateLine: '48 → 42', warehouseSellLine: '65 → 58', packMultiple: null, skuCount: 2, rrp: 890, ws: 0, season: 'Winter 26', event: 'Vague 1', firstSalesDate: '22nd Jan 26', lifeToDateSales: 23, department: 'Handbags', subDepartment: 'Sac à main', material: 'Cuir grainé pleine fleur', gender: 'Femme' },
+    { id: 4, name: 'Croi-sac zip s', sku: 'A1398811', colour: 'Noir', movementType: ["rebalancing"], transfers: 1, transfersSub: 2, approvedTransfers: 1, unapprovedTransfers: 0, revenue: '€0.98K', recommended: 1, recommendedBadges: ['REV'], recommendedSub: 2, confidence: 'high', coverage: 'All SKUs in target', coverageWeeks: 6.1, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 0, salesL30: 1, salesL90: 3, forecast: 0.32, stockouts: '0 → 0', locations: '1 → 2', overstocks: '2 → 1', understocks: '4 → 2', status: 'approved_by_user', approvedByUser: 'Jess Briggs', currentUnits: 3, currentUnitsInTransit: 1, warehouseAllocateLine: '55 → 50', warehouseSellLine: '70 → 63', packMultiple: null, skuCount: 1, rrp: 380, ws: 25, season: 'SS26', event: 'Drop 1', firstSalesDate: '8th Feb 26', lifeToDateSales: 9, department: 'Crossbody', subDepartment: 'Bandoulière', material: 'Cuir', gender: 'Homme' },
     // COIN: single-SKU pack-constrained replen — inline-editable
-    { id: 5, name: 'Pre-sac seau s', sku: 'A101081', colour: 'Bleu petrole', movementType: ["replenishment"], transfers: 20, transfersSub: 1, approvedTransfers: 10, unapprovedTransfers: 10, revenue: '€0.76K', recommended: 20, recommendedBadges: ['VIS'], recommendedSub: 1, confidence: 'low', coverage: '8% below target', coverageWeeks: 2.9, coverageTarget: 6, nextEvent: { name: 'UK weekly replenishment', date: '16/06/2026' }, salesL7: 1, salesL30: 2, salesL90: 5, forecast: 0.54, stockouts: '0 → 1', locations: '2 → 1', overstocks: '3 → 0', understocks: '2 → 0', status: 'needs_review_from_user', currentUnits: 15, currentUnitsInTransit: 2, warehouseAllocateLine: '50 → 45', warehouseSellLine: '68 → 61', packMultiple: 10, skuCount: 1, isVirtualPack: true },
-    // Mixed replen+rebal — pack rules apply to replen portion in hover
-    { id: 6, name: 'Ang-sac pte main s', sku: 'A1252811', colour: 'Figue', movementType: ["replenishment","rebalancing"], transfers: 22, transfersSub: 1, replenTransfers: 20, rebalTransfers: 2, approvedTransfers: 12, unapprovedTransfers: 10, revenue: '€0.65K', recommended: 1, recommendedBadges: ['REV'], recommendedSub: 1, confidence: 'low', coverage: '67% below target', coverageWeeks: 1.4, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 0, salesL30: 1, salesL90: 3, forecast: 0.21, stockouts: '0 → 0', locations: '2 → 2', overstocks: '4 → 1', understocks: '3 → 1', status: 'partially_approved', currentUnits: 7, currentUnitsInTransit: 0, warehouseAllocateLine: '57 → 44', warehouseSellLine: '57 → 51', packMultiple: 10, skuCount: 1, isVirtualPack: false },
+    { id: 5, name: 'Pre-sac seau s', sku: 'A101081', colour: 'Bleu petrole', movementType: ["replenishment"], transfers: 20, transfersSub: 1, approvedTransfers: 10, unapprovedTransfers: 10, revenue: '€0.76K', recommended: 20, recommendedBadges: ['VIS'], recommendedSub: 1, confidence: 'low', coverage: '8% below target', coverageWeeks: 2.9, coverageTarget: 6, nextEvent: { name: 'UK weekly replenishment', date: '16/06/2026' }, salesL7: 1, salesL30: 2, salesL90: 5, forecast: 0.54, stockouts: '0 → 1', locations: '2 → 1', overstocks: '3 → 0', understocks: '2 → 0', status: 'needs_review_from_user', currentUnits: 15, currentUnitsInTransit: 2, warehouseAllocateLine: '50 → 45', warehouseSellLine: '68 → 61', packMultiple: 10, skuCount: 1, isVirtualPack: true, rrp: 120, ws: 8, season: 'AW25', event: 'Continuity', firstSalesDate: '19th Sep 25', lifeToDateSales: 67, department: 'Bucket bags', subDepartment: 'Foulard', material: 'Cachemire', gender: 'Femme' },
+    // Mixed pack + loose replen + rebal — pen opens edit modal (loose only)
+    { id: 6, name: 'Ang-sac pte main s', sku: 'A1252811', colour: 'Figue', movementType: ["replenishment","rebalancing"], transfers: 24, transfersSub: 1, packTransfers: 20, looseTransfers: 2, replenTransfers: 22, rebalTransfers: 2, approvedTransfers: 12, unapprovedTransfers: 10, revenue: '€0.65K', recommended: 1, recommendedBadges: ['REV'], recommendedSub: 1, confidence: 'low', coverage: '67% below target', coverageWeeks: 1.4, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 0, salesL30: 1, salesL90: 3, forecast: 0.21, stockouts: '0 → 0', locations: '2 → 2', overstocks: '4 → 1', understocks: '3 → 1', status: 'partially_approved', currentUnits: 7, currentUnitsInTransit: 0, warehouseAllocateLine: '57 → 44', warehouseSellLine: '57 → 51', packMultiple: 10, skuCount: 1, isVirtualPack: false, rrp: 750, ws: 12, season: 'Winter 26', event: 'Vague 2', firstSalesDate: '5th Dec 25', lifeToDateSales: 14, department: 'Handbags', subDepartment: 'Sac à main', material: 'Cuir verni', gender: 'Femme' },
     // Multi-SKU pack-constrained replen — read-only on Products row
-    { id: 9, name: 'Coin-pack tote m', sku: 'C900010', colour: 'Noir', movementType: ["replenishment"], transfers: 55, transfersSub: 2, approvedTransfers: 28, unapprovedTransfers: 27, revenue: '€1.10K', recommended: 55, recommendedBadges: ['VIS'], recommendedSub: 2, confidence: 'high', coverage: '4% below target', coverageWeeks: 4.2, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 2, salesL30: 8, salesL90: 22, forecast: 1.2, stockouts: '0 → 0', locations: '2 → 2', overstocks: '2 → 1', understocks: '6 → 4', status: 'unapproved', currentUnits: 22, currentUnitsInTransit: 4, warehouseAllocateLine: '60 → 52', warehouseSellLine: '70 → 62', packMultiple: 10, skuCount: 5, isVirtualPack: true },
+    { id: 9, name: 'Coin-pack tote m', sku: 'C900010', colour: 'Noir', movementType: ["replenishment"], transfers: 55, transfersSub: 2, approvedTransfers: 28, unapprovedTransfers: 27, revenue: '€1.10K', recommended: 55, recommendedBadges: ['VIS'], recommendedSub: 2, confidence: 'high', coverage: '4% below target', coverageWeeks: 4.2, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 2, salesL30: 8, salesL90: 22, forecast: 1.2, stockouts: '0 → 0', locations: '2 → 2', overstocks: '2 → 1', understocks: '6 → 4', status: 'unapproved', currentUnits: 22, currentUnitsInTransit: 4, warehouseAllocateLine: '60 → 52', warehouseSellLine: '70 → 62', packMultiple: 10, skuCount: 5, isVirtualPack: true, rrp: 320, ws: 0, season: 'Winter 26', event: 'Vague 1', firstSalesDate: '28th Oct 25', lifeToDateSales: 112, department: 'Handbags', subDepartment: 'Sac à main', material: 'Cuir', gender: 'Femme' },
     // Unconstrained replen — baseline non-pack path
-    { id: 10, name: 'Mini sac band', sku: 'C900020', colour: 'Rouge', movementType: ["replenishment"], transfers: 3, transfersSub: 1, approvedTransfers: 2, unapprovedTransfers: 1, revenue: '€0.42K', recommended: 3, recommendedBadges: ['REV'], recommendedSub: 1, confidence: 'low', coverage: 'All SKUs in target', coverageWeeks: 6.0, coverageTarget: 6, nextEvent: { name: 'UK weekly replenishment', date: '16/06/2026' }, salesL7: 1, salesL30: 3, salesL90: 8, forecast: 0.6, stockouts: '0 → 0', locations: '1 → 1', overstocks: '1 → 0', understocks: '2 → 1', status: 'approved_by_system', currentUnits: 9, currentUnitsInTransit: 0, warehouseAllocateLine: '30 → 27', warehouseSellLine: '40 → 36', packMultiple: null, skuCount: 1 },
+    { id: 10, name: 'Mini sac band', sku: 'C900020', colour: 'Rouge', movementType: ["replenishment"], transfers: 3, transfersSub: 1, approvedTransfers: 2, unapprovedTransfers: 1, revenue: '€0.42K', recommended: 3, recommendedBadges: ['REV'], recommendedSub: 1, confidence: 'low', coverage: 'All SKUs in target', coverageWeeks: 6.0, coverageTarget: 6, nextEvent: { name: 'UK weekly replenishment', date: '16/06/2026' }, salesL7: 1, salesL30: 3, salesL90: 8, forecast: 0.6, stockouts: '0 → 0', locations: '1 → 1', overstocks: '1 → 0', understocks: '2 → 1', status: 'approved_by_system', currentUnits: 9, currentUnitsInTransit: 0, warehouseAllocateLine: '30 → 27', warehouseSellLine: '40 → 36', packMultiple: null, skuCount: 1, rrp: 195, ws: 48, season: 'P/e 2026', event: 'Pre', firstSalesDate: '14th Jan 26', lifeToDateSales: 6, department: 'R.t.w. donna', subDepartment: 'Accessori piccoli', material: 'Cady crepe in triacetato di poliestere', gender: 'Donna' },
     // Mixed fulfilment (pack + loose) — packTransfers drives pack subtext; total = pack + loose
-    { id: 11, name: 'Gémo LOT tote', sku: 'G900100', colour: 'Camel', movementType: ["replenishment"], transfers: 58, packTransfers: 50, looseTransfers: 8, transfersSub: 2, approvedTransfers: 30, unapprovedTransfers: 28, revenue: '€0.94K', recommended: 58, recommendedBadges: ['VIS'], recommendedSub: 1, confidence: 'high', coverage: '3% below target', coverageWeeks: 3.6, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 2, salesL30: 7, salesL90: 19, forecast: 1.1, stockouts: '0 → 0', locations: '2 → 2', overstocks: '2 → 1', understocks: '5 → 3', status: 'unapproved', currentUnits: 14, currentUnitsInTransit: 2, warehouseAllocateLine: '62 → 54', warehouseSellLine: '74 → 66', packMultiple: 10, skuCount: 1, isVirtualPack: false },
+    { id: 11, name: 'Gémo LOT tote', sku: 'G900100', colour: 'Camel', movementType: ["replenishment"], transfers: 58, packTransfers: 50, looseTransfers: 8, transfersSub: 2, approvedTransfers: 30, unapprovedTransfers: 28, revenue: '€0.94K', recommended: 58, recommendedBadges: ['VIS'], recommendedSub: 1, confidence: 'high', coverage: '3% below target', coverageWeeks: 3.6, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 2, salesL30: 7, salesL90: 19, forecast: 1.1, stockouts: '0 → 0', locations: '2 → 2', overstocks: '2 → 1', understocks: '5 → 3', status: 'unapproved', currentUnits: 14, currentUnitsInTransit: 2, warehouseAllocateLine: '62 → 54', warehouseSellLine: '74 → 66', packMultiple: 10, skuCount: 1, isVirtualPack: false, rrp: 280, ws: 0, season: 'Winter 26', event: 'Vague 1', firstSalesDate: '2nd Aug 25', lifeToDateSales: 88, department: 'Handbags', subDepartment: 'Sac à main', material: 'Cuir végétal tanné à la main avec finition naturelle', gender: 'Femme' },
   ],
   2: [
-    { id: 7, name: 'Sac zip l', sku: 'B200001', colour: 'Noir', movementType: ["rebalancing"], transfers: 2, transfersSub: 1, approvedTransfers: 2, unapprovedTransfers: 0, revenue: '€0.89K', recommended: 2, recommendedBadges: ['REV'], recommendedSub: 1, confidence: 'high', coverage: '3% below target', coverageWeeks: 4.8, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 1, salesL30: 2, salesL90: 5, forecast: 0.45, stockouts: '0 → 0', locations: '2 → 2', overstocks: '2 → 1', understocks: '5 → 3', status: 'approved_by_user', approvedByUser: 'Jess Briggs', currentUnits: 18, currentUnitsInTransit: 4, warehouseAllocateLine: '40 → 36', warehouseSellLine: '50 → 45', packMultiple: null, skuCount: 1 },
-    { id: 8, name: 'Sac seau m', sku: 'B200002', colour: 'Noir', movementType: ["rebalancing"], transfers: 1, transfersSub: 2, approvedTransfers: 0, unapprovedTransfers: 1, revenue: '€0.52K', recommended: 1, recommendedBadges: ['VIS'], recommendedSub: 2, confidence: 'high', coverage: 'All SKUs in target', coverageWeeks: 6.3, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 0, salesL30: 1, salesL90: 3, forecast: 0.28, stockouts: '0 → 1', locations: '1 → 2', overstocks: '1 → 0', understocks: '3 → 1', status: 'last_edited_by_user', editedByUser: 'Csabi Toth', currentUnits: 11, currentUnitsInTransit: 2, warehouseAllocateLine: '35 → 30', warehouseSellLine: '42 → 38', packMultiple: null, skuCount: 1 },
+    { id: 7, name: 'Sac zip l', sku: 'B200001', colour: 'Noir', movementType: ["rebalancing"], transfers: 2, transfersSub: 1, approvedTransfers: 2, unapprovedTransfers: 0, revenue: '€0.89K', recommended: 2, recommendedBadges: ['REV'], recommendedSub: 1, confidence: 'high', coverage: '3% below target', coverageWeeks: 4.8, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 1, salesL30: 2, salesL90: 5, forecast: 0.45, stockouts: '0 → 0', locations: '2 → 2', overstocks: '2 → 1', understocks: '5 → 3', status: 'approved_by_user', approvedByUser: 'Jess Briggs', currentUnits: 18, currentUnitsInTransit: 4, warehouseAllocateLine: '40 → 36', warehouseSellLine: '50 → 45', packMultiple: null, skuCount: 1, rrp: 460, ws: 163, season: 'P/e 2026', event: 'Main', firstSalesDate: '30th Apr 25', lifeToDateSales: 54, department: 'Maroquinerie', subDepartment: 'Porte-documents', material: 'Tissu technique enduit', gender: 'Homme' },
+    { id: 8, name: 'Sac seau m', sku: 'B200002', colour: 'Noir', movementType: ["rebalancing"], transfers: 1, transfersSub: 2, approvedTransfers: 0, unapprovedTransfers: 1, revenue: '€0.52K', recommended: 1, recommendedBadges: ['VIS'], recommendedSub: 2, confidence: 'high', coverage: 'All SKUs in target', coverageWeeks: 6.3, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 0, salesL30: 1, salesL90: 3, forecast: 0.28, stockouts: '0 → 1', locations: '1 → 2', overstocks: '1 → 0', understocks: '3 → 1', status: 'last_edited_by_user', editedByUser: 'Csabi Toth', currentUnits: 11, currentUnitsInTransit: 2, warehouseAllocateLine: '35 → 30', warehouseSellLine: '42 → 38', packMultiple: null, skuCount: 1, rrp: 210, ws: 72, season: 'AW25', event: 'Flash', firstSalesDate: '11th Jul 25', lifeToDateSales: 31, department: 'R.t.w. donna', subDepartment: 'Pant.lunghi donna', material: 'Jersey di cotone', gender: 'Donna' },
   ] }
+
+/** Per-product SKU-location confidence buckets + coverage summary (Products tab). */
+const PRODUCT_SKU_LOCATION_METRICS = {
+  1: {
+    skuConfidenceBuckets: { veryHigh: 1, high: 0, medium: 0, low: 0, veryLow: 0 },
+    skuCoverageSummary: { inTarget: 1, total: 1 },
+  },
+  2: {
+    skuConfidenceBuckets: { veryHigh: 0, high: 1, medium: 0, low: 0, veryLow: 0 },
+    skuCoverageSummary: { inTarget: 0, total: 1 },
+  },
+  3: {
+    skuConfidenceBuckets: { veryHigh: 1, high: 1, medium: 0, low: 0, veryLow: 0 },
+    skuCoverageSummary: { inTarget: 1, total: 2 },
+  },
+  4: {
+    skuConfidenceBuckets: { veryHigh: 1, high: 0, medium: 0, low: 0, veryLow: 0 },
+    skuCoverageSummary: { inTarget: 1, total: 1 },
+  },
+  5: {
+    skuConfidenceBuckets: { veryHigh: 0, high: 0, medium: 0, low: 1, veryLow: 0 },
+    skuCoverageSummary: { inTarget: 0, total: 1 },
+  },
+  6: {
+    skuConfidenceBuckets: { veryHigh: 0, high: 0, medium: 0, low: 1, veryLow: 1 },
+    skuCoverageSummary: { inTarget: 0, total: 2 },
+  },
+  7: {
+    skuConfidenceBuckets: { veryHigh: 0, high: 1, medium: 0, low: 0, veryLow: 0 },
+    skuCoverageSummary: { inTarget: 0, total: 1 },
+  },
+  8: {
+    skuConfidenceBuckets: { veryHigh: 1, high: 0, medium: 0, low: 0, veryLow: 0 },
+    skuCoverageSummary: { inTarget: 1, total: 1 },
+  },
+  9: {
+    skuConfidenceBuckets: { veryHigh: 1, high: 1, medium: 1, low: 1, veryLow: 1 },
+    skuCoverageSummary: { inTarget: 3, total: 5 },
+  },
+  10: {
+    skuConfidenceBuckets: { veryHigh: 0, high: 0, medium: 1, low: 0, veryLow: 0 },
+    skuCoverageSummary: { inTarget: 1, total: 1 },
+  },
+  11: {
+    skuConfidenceBuckets: { veryHigh: 0, high: 1, medium: 2, low: 3, veryLow: 2 },
+    skuCoverageSummary: { inTarget: 2, total: 8 },
+  },
+}
+
+Object.values(PRODUCTS_BY_TRIP).forEach((list) => {
+  list.forEach((p) => {
+    const metrics = PRODUCT_SKU_LOCATION_METRICS[p.id]
+    if (metrics) Object.assign(p, metrics)
+  })
+})
 
 // Default products when trip not in PRODUCTS_BY_TRIP
 const DEFAULT_PRODUCTS = PRODUCTS_BY_TRIP[1]
@@ -516,6 +599,7 @@ const LOCATIONS_BY_PRODUCT = {
       tuWarehouse: 12,
       tuTruck: [],
       tuReplen: [10, 10],
+      sohBySize: { S: 8 },
       salesL7: 1,
       salesL30: 2,
       forecast: 0.54,
@@ -541,6 +625,7 @@ const LOCATIONS_BY_PRODUCT = {
       tuWarehouse: 6,
       tuTruck: [],
       tuReplen: [10],
+      sohBySize: { S: 4 },
       salesL7: 0,
       salesL30: 1,
       forecast: 0.32,
@@ -570,6 +655,8 @@ const LOCATIONS_BY_PRODUCT = {
       // PACK-COIN-P1: 4 packs × 7 units (S/M/L ratio 2/3/2)
       packMultiple: 7,
       tuReplen: [7, 7, 7, 7],
+      // Aggregate before stock = 10; after = 10 + 28 pack units
+      sohBySize: { XS: 1, S: 2, M: 3, L: 2, XL: 2 },
       salesL7: 2,
       salesL30: 8,
       forecast: 1.2,
@@ -603,6 +690,8 @@ const LOCATIONS_BY_PRODUCT = {
       // PACK-COIN-P2: 3 packs × 9 units (XS/S/M/L/XL ratio 1/2/3/2/1)
       packMultiple: 9,
       tuReplen: [9, 9, 9],
+      // Aggregate before stock = 8; after = 8 + 27 pack units
+      sohBySize: { XS: 1, S: 1, M: 2, L: 2, XL: 2 },
       salesL7: 1,
       salesL30: 5,
       forecast: 0.9,
@@ -639,6 +728,7 @@ const LOCATIONS_BY_PRODUCT = {
       tuTruck: [],
       tuReplen: [10, 10],
       tuReplenLoose: [3],
+      sohBySize: { S: 6 },
       salesL7: 2,
       salesL30: 7,
       forecast: 1.1,
@@ -665,6 +755,7 @@ const LOCATIONS_BY_PRODUCT = {
       tuTruck: [],
       tuReplen: [10, 10, 10],
       tuReplenLoose: [5],
+      sohBySize: { S: 5 },
       salesL7: 1,
       salesL30: 4,
       forecast: 0.9,
@@ -879,7 +970,7 @@ const EXPLORER_PRODUCTS = [
     isVirtualPack: true },
   {
     id: 'exp-p-coin',
-    name: 'Coin-pack tote',
+    name: 'Coin-pack tote m',
     baseSku: 'C900010',
     colour: 'Noir',
     department: 'Handbags',
@@ -1021,6 +1112,8 @@ function buildExplorerRow(rowIndex, product, size, fromLoc, toLoc, movementType,
   const coverageWeeksBefore = Number((1 + (rowIndex * 1.3) % 5).toFixed(1))
   const coverageWeeksAfter = Number((coverageWeeksBefore + 0.5 + (rowIndex % 4) * 0.8).toFixed(1))
   const salesL7 = ((rowIndex * 2) % 15) + 1
+  const salesL30 = salesL7 * 5
+  const salesL90 = salesL7 * 12
   const transfers = options.transfers != null ? options.transfers : 1 + (rowIndex * 3) % 15
   // Usually headroom (green); every 7th row is constrained (orange by default).
   const availableToSend =
@@ -1128,7 +1221,8 @@ function buildExplorerRow(rowIndex, product, size, fromLoc, toLoc, movementType,
       date: SCHEDULE_CREATION_DATE,
     },
     salesL7,
-    salesL30: salesL7 * 5,
+    salesL30,
+    salesL90,
     currentUnits: 10 + (rowIndex * 5) % 50,
     currentUnitsInTransit: rowIndex % 6,
     stockInTransitAndPfp: rowIndex % 11,
@@ -1329,6 +1423,90 @@ function ConfidencePill({ value }) {
       <span className={`size-2 rounded-full shrink-0 ${cfg.dotClass}`} aria-hidden />
       <span className="truncate">{cfg.label}</span>
     </span>
+  )
+}
+
+const CONFIDENCE_BUCKET_ORDER = [
+  { key: 'veryHigh', label: 'Very high', color: '#166534' },
+  { key: 'high', label: 'High', color: '#08a16a' },
+  { key: 'medium', label: 'Medium', color: '#9ca3af' },
+  { key: 'low', label: 'Low', color: '#eab308' },
+  { key: 'veryLow', label: 'Very low', color: '#f87171' },
+]
+
+function sumConfidenceBuckets(buckets) {
+  if (!buckets) return 0
+  return CONFIDENCE_BUCKET_ORDER.reduce((sum, b) => sum + (Number(buckets[b.key]) || 0), 0)
+}
+
+function lowConfidenceCount(buckets) {
+  if (!buckets) return 0
+  return (Number(buckets.low) || 0) + (Number(buckets.veryLow) || 0)
+}
+
+/** Products-tab confidence bar — proportional segments; zero buckets omitted. */
+function ConfidenceBucketBar({ buckets }) {
+  const segments = CONFIDENCE_BUCKET_ORDER.filter((b) => (Number(buckets?.[b.key]) || 0) > 0)
+  // Explicit width required: TuHoverPopover wraps in inline-block, so w-full + flex-grow-only
+  // children collapse to ~0px (no intrinsic width to resolve against).
+  const barStyle = { width: 108, height: 14, minHeight: 14 }
+  if (segments.length === 0) {
+    return (
+      <div
+        className="rounded-full border border-[#e5e7eb] bg-[#f3f4f6]"
+        style={barStyle}
+        aria-hidden
+      />
+    )
+  }
+  return (
+    <div
+      className="flex overflow-hidden rounded-full border border-[#e5e7eb]"
+      style={barStyle}
+      role="img"
+      aria-label="Confidence distribution"
+    >
+      {segments.map((b) => (
+        <div
+          key={b.key}
+          className="h-full min-w-0"
+          style={{
+            flexGrow: Number(buckets[b.key]) || 0,
+            flexBasis: 0,
+            backgroundColor: b.color,
+          }}
+        />
+      ))}
+    </div>
+  )
+}
+
+/** Products-tab confidence hover — all five buckets including zeros. */
+function ConfidenceBreakdownHoverCard({ buckets }) {
+  return (
+    <div className="pointer-events-none w-[min(260px,calc(100vw-1.5rem))] rounded-[8px] border border-[#E9EAEB] bg-white p-3 shadow-[0_4px_16px_rgba(0,0,0,0.1)]">
+      <div className="mb-2.5 text-[13px] font-semibold text-[#0a0a0a]">Confidence breakdown</div>
+      <div className="flex flex-col gap-2">
+        {CONFIDENCE_BUCKET_ORDER.map((b) => {
+          const count = Number(buckets?.[b.key]) || 0
+          return (
+            <div key={b.key} className="flex items-center justify-between gap-3 text-[12px]">
+              <span className="inline-flex min-w-0 items-center gap-2 text-[#4b535c]">
+                <span
+                  className="size-2 shrink-0 rounded-full"
+                  style={{ backgroundColor: b.color }}
+                  aria-hidden
+                />
+                <span>{b.label}</span>
+              </span>
+              <span className="shrink-0 tabular-nums text-[#0a0a0a]">
+                {count} SKU-location{count === 1 ? '' : 's'}
+              </span>
+            </div>
+          )
+        })}
+      </div>
+    </div>
   )
 }
 
@@ -2004,6 +2182,51 @@ function SkuDetailsHoverCard({ row }) {
   )
 }
 
+function ProductDetailsField({ label, value }) {
+  const display = value === null || value === undefined || value === '' ? '—' : value
+  return (
+    <div className="flex min-w-0 flex-col gap-0.5">
+      <span className="text-[11px] leading-snug text-[#6b7280]">{label}</span>
+      <span className="break-words text-[13px] leading-snug text-[#0a0a0a]">{String(display)}</span>
+    </div>
+  )
+}
+
+/** Products-tab product details hover — forked from SkuDetailsHoverCard; do not use on Explorer */
+function ProductDetailsHoverCard({ product }) {
+  const formatEuro = (n) =>
+    n === null || n === undefined || n === '' ? '—' : `€${n}`
+
+  return (
+    <div className="pointer-events-none w-[min(320px,calc(100vw-1.5rem))] rounded-[8px] border border-[#E9EAEB] bg-white p-3 shadow-[0_4px_16px_rgba(0,0,0,0.1)]">
+      <div className="mb-3 grid grid-cols-2 gap-2 rounded-[8px] bg-[#f3f4f6] px-3 py-2.5">
+        <div className="flex flex-col items-center gap-0.5 text-center">
+          <span className="text-[11px] leading-snug text-[#6b7280]">RRP</span>
+          <span className="text-[13px] font-medium tabular-nums text-[#0a0a0a]">
+            {formatEuro(product.rrp)}
+          </span>
+        </div>
+        <div className="flex flex-col items-center gap-0.5 text-center">
+          <span className="text-[11px] leading-snug text-[#6b7280]">WS</span>
+          <span className="text-[13px] font-medium tabular-nums text-[#0a0a0a]">
+            {formatEuro(product.ws)}
+          </span>
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+        <ProductDetailsField label="Season" value={product.season} />
+        <ProductDetailsField label="Event" value={product.event} />
+        <ProductDetailsField label="First sale" value={product.firstSalesDate} />
+        <ProductDetailsField label="Life to date sales" value={product.lifeToDateSales} />
+        <ProductDetailsField label="Department" value={product.department} />
+        <ProductDetailsField label="Sub-department" value={product.subDepartment} />
+        <ProductDetailsField label="Material" value={product.material} />
+        <ProductDetailsField label="Gender" value={product.gender} />
+      </div>
+    </div>
+  )
+}
+
 /** Format forecast cell for live-rebal hover (receiving / sending). */
 function formatHoverForecastValue(value, { zeroForecastTag = false } = {}) {
   if (value == null || value === '') return '—'
@@ -2537,6 +2760,65 @@ function getLog01PacksAvailable(product, wh) {
   return Math.floor(units / pm)
 }
 
+/** Units of `size` contributed by each pack in a multi-SKU pack ratio (e.g. C900010-S → 2). */
+function getPackRatioForSize(packDef, size) {
+  if (!packDef?.packRatio || !size) return 0
+  for (const [sku, ratio] of Object.entries(packDef.packRatio)) {
+    if (sku === size || sku.endsWith(`-${size}`)) return Number(ratio) || 0
+  }
+  return 0
+}
+
+/**
+ * SKU units contributed by incoming packs at a receiving location for a given size.
+ * `packBoxes` should be the effective pack-box array (honours locationReplenOverrides).
+ */
+function getPackUnitsForSize(product, location, size, packBoxes) {
+  const boxes = packBoxes ?? []
+  const packCount = boxes.length
+  if (packCount <= 0) return 0
+  const packDef = findMultiSkuPackByLocation(location?.name)
+  if (packDef?.packRatio) {
+    return packCount * getPackRatioForSize(packDef, size)
+  }
+  // Single-SKU pack products: all pack units land on the sole size column
+  const sizes = PACK_DRILLDOWN_META[product?.id]?.sizes ?? []
+  if (sizes.length === 1 && sizes[0] === size) {
+    return sumBoxUnits(boxes)
+  }
+  return 0
+}
+
+/**
+ * Per-size before → after for pack drilldown size cells.
+ * Receiving: before = sohBySize; after = before + pack + loose + rebal.
+ * Log01 (options.mode === 'log01'): after = before − outgoing pack units for that size.
+ */
+function getSizeBeforeAfter(location, size, product, options = {}) {
+  const before = Number(location?.sohBySize?.[size]) || 0
+  if (options.mode === 'log01') {
+    const outgoing = Number(options.outgoingPackUnits) || 0
+    const after = Math.max(0, before - outgoing)
+    return { before, after, label: `${before} → ${after}` }
+  }
+  const packUnits =
+    options.packUnits != null
+      ? Number(options.packUnits) || 0
+      : getPackUnitsForSize(product, location, size, options.packBoxes)
+  const looseUnits = Number(options.looseUnits) || 0
+  const rebalUnits = Number(options.rebalUnits) || 0
+  const after = before + packUnits + looseUnits + rebalUnits
+  return { before, after, label: `${before} → ${after}` }
+}
+
+/** Log01 Pack column: pack COUNT before → after (not underlying SKU units). */
+function getLog01PackBeforeAfter(product, wh, packsSent) {
+  const before = getLog01PacksAvailable(product, wh)
+  const sent = Number(packsSent) || 0
+  const after = Math.max(0, before - sent)
+  return { before, after, label: `${before} → ${after}` }
+}
+
 /** Expand total units into one box per pack (each box displays packMultiple). */
 function expandUnitsToPackBoxes(totalUnits, packMultiple) {
   if (!packMultiple || packMultiple <= 0) return []
@@ -2760,20 +3042,57 @@ function StockAnalysisDrilldown({
   const packLayoutLooseTotalsBySize = useMemo(() => {
     const totals = {}
     for (const size of packDrilldownSizes) {
-      // Destination rows only — Log01 never contributes to size totals
-      totals[size] = filteredLocations.reduce(
-        (sum, loc) => sum + sumBoxUnits(getLocationLooseBoxesForSize(loc, size)),
-        0
-      )
+      // Destination rows only — Log01 never contributes to size totals.
+      // Includes pack contribution + loose (+ rebal on the first size when present).
+      totals[size] = filteredLocations.reduce((sum, loc) => {
+        const packBoxes = getLocationPackBoxes(loc)
+        const packUnits = getPackUnitsForSize(product, loc, size, packBoxes)
+        const looseUnits = sumBoxUnits(getLocationLooseBoxesForSize(loc, size))
+        const rebalUnits =
+          showRebalancing &&
+          (loc.tuTruck?.length ?? 0) > 0 &&
+          packDrilldownSizes[0] === size
+            ? sumBoxUnits(loc.tuTruck)
+            : 0
+        return sum + packUnits + looseUnits + rebalUnits
+      }, 0)
     }
     return totals
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filteredLocations, packDrilldownSizes, locationReplenOverrides, usePackDrilldownLayout])
+  }, [
+    filteredLocations,
+    packDrilldownSizes,
+    locationReplenOverrides,
+    usePackDrilldownLayout,
+    showRebalancing,
+    product,
+  ])
 
-  const log01PacksAvailable = useMemo(() => {
-    if (!usePackDrilldownLayout || !packDrilldownMeta?.warehouse) return 0
-    return getLog01PacksAvailable(product, packDrilldownMeta.warehouse)
-  }, [usePackDrilldownLayout, packDrilldownMeta, product])
+  const packsSentFromLog01 = useMemo(() => {
+    if (!usePackDrilldownLayout) return 0
+    return filteredLocations.reduce(
+      (sum, loc) => sum + getLocationPackBoxes(loc).length,
+      0
+    )
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filteredLocations, usePackDrilldownLayout, locationReplenOverrides, packMultiple])
+
+  const log01PackBeforeAfter = useMemo(() => {
+    if (!usePackDrilldownLayout || !packDrilldownMeta?.warehouse) {
+      return { before: 0, after: 0, label: '0 → 0' }
+    }
+    return getLog01PackBeforeAfter(
+      product,
+      packDrilldownMeta.warehouse,
+      packsSentFromLog01
+    )
+  }, [usePackDrilldownLayout, packDrilldownMeta, product, packsSentFromLog01])
+
+  const getOutgoingPackUnitsForSize = (size) =>
+    filteredLocations.reduce((sum, loc) => {
+      const packBoxes = getLocationPackBoxes(loc)
+      return sum + getPackUnitsForSize(product, loc, size, packBoxes)
+    }, 0)
 
   const log01SelectionId = packDrilldownMeta?.warehouse?.id ?? 'log01'
 
@@ -3294,7 +3613,7 @@ function StockAnalysisDrilldown({
           <tbody>
             {(() => {
               const wh = packDrilldownMeta.warehouse
-              const packsAvailable = log01PacksAvailable
+              const packsAvailable = log01PackBeforeAfter.before
               const log01PackCellKey = `${wh.id}-pack`
               const log01PackRevealed = activeTransferCell === log01PackCellKey
               return (
@@ -3322,50 +3641,91 @@ function StockAnalysisDrilldown({
                   >
                     {log01PackRevealed ? (
                       <div
-                        className="flex flex-wrap gap-1 justify-end"
+                        className="flex flex-col items-end gap-1"
                         onClick={(e) => e.stopPropagation()}
                       >
-                        <TuHoverPopover
-                          panel={
-                            <TuTruckTransferHoverCard
-                              loc={{
-                                name: wh.name,
-                                forecast: wh.forecast,
-                                targetWeeks: wh.targetWeeks,
-                                receivingWeeksCoverage:
+                        <BeforeAfterText value={log01PackBeforeAfter.label} />
+                        <div className="flex flex-wrap gap-1 justify-end">
+                          <TuHoverPopover
+                            panel={
+                              <TuTruckTransferHoverCard
+                                loc={{
+                                  name: wh.name,
+                                  forecast: wh.forecast,
+                                  targetWeeks: wh.targetWeeks,
+                                  receivingWeeksCoverage:
+                                    wh.weeksCoverage != null && wh.targetWeeks != null
+                                      ? `${wh.weeksCoverage} → ${wh.weeksCoverage} (${wh.targetWeeks} target)`
+                                      : undefined,
+                                }}
+                                borderClassName="border-[#A234DA]"
+                                variant="soh"
+                                sohValue={packsAvailable}
+                                sohWeeksCoverage={
                                   wh.weeksCoverage != null && wh.targetWeeks != null
-                                    ? `${wh.weeksCoverage} → ${wh.weeksCoverage} (${wh.targetWeeks} target)`
-                                    : undefined,
-                              }}
-                              borderClassName="border-[#A234DA]"
-                              variant="soh"
-                              sohValue={packsAvailable}
-                              sohWeeksCoverage={
-                                wh.weeksCoverage != null && wh.targetWeeks != null
-                                  ? `${wh.weeksCoverage} (${wh.targetWeeks} target)`
-                                  : '—'
-                              }
-                              sohForecast={wh.forecast}
-                              sohInTransit={false}
-                              onMoreDetails={() => {}}
-                            />
-                          }
-                        >
-                          <span className="inline-flex h-[26px] min-w-[50px] w-fit shrink-0 items-center justify-center gap-1.5 rounded-[2px] bg-[#A234DA] px-[6px] py-[2px] text-[12px] font-medium text-white cursor-pointer transition-[filter,box-shadow] hover:brightness-90 hover:shadow-[0px_2px_4px_rgba(0,0,0,0.1)]">
-                            <IconPackageTu />
-                            {packsAvailable}
-                          </span>
-                        </TuHoverPopover>
+                                    ? `${wh.weeksCoverage} (${wh.targetWeeks} target)`
+                                    : '—'
+                                }
+                                sohForecast={wh.forecast}
+                                sohInTransit={false}
+                                onMoreDetails={() => {}}
+                              />
+                            }
+                          >
+                            <span className="inline-flex h-[26px] min-w-[50px] w-fit shrink-0 items-center justify-center gap-1.5 rounded-[2px] bg-[#A234DA] px-[6px] py-[2px] text-[12px] font-medium text-white cursor-pointer transition-[filter,box-shadow] hover:brightness-90 hover:shadow-[0px_2px_4px_rgba(0,0,0,0.1)]">
+                              <IconPackageTu />
+                              {packsAvailable}
+                            </span>
+                          </TuHoverPopover>
+                        </div>
                       </div>
                     ) : (
-                      <span className="text-[#0a0a0a]">{packsAvailable}</span>
+                      <BeforeAfterText value={log01PackBeforeAfter.label} />
                     )}
                   </td>
-                  {packDrilldownSizes.map((size) => (
-                    <td key={`${wh.id}-size-${size}`} className="py-3 px-4 text-right text-[#4b535c]">
-                      —
-                    </td>
-                  ))}
+                  {packDrilldownSizes.map((size) => {
+                    const outgoing = getOutgoingPackUnitsForSize(size)
+                    const sizeBA = getSizeBeforeAfter(wh, size, product, {
+                      mode: 'log01',
+                      outgoingPackUnits: outgoing,
+                    })
+                    const cellKey = `${wh.id}-size-${size}`
+                    const revealed = activeTransferCell === cellKey
+                    const hasContent = sizeBA.before > 0 || outgoing > 0
+                    return (
+                      <td
+                        key={cellKey}
+                        className="py-3 px-4 text-right cursor-pointer"
+                        onClick={() => {
+                          if (!hasContent) return
+                          toggleTransferCellReveal(cellKey)
+                        }}
+                      >
+                        <div className="flex flex-col items-end gap-1">
+                          <BeforeAfterText value={sizeBA.label} />
+                          {revealed && hasContent ? (
+                            <div
+                              className="flex flex-wrap gap-1 justify-end"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              {outgoing > 0 ? (
+                                <span className="inline-flex h-[26px] min-w-[50px] w-fit shrink-0 items-center justify-center gap-1.5 rounded-[2px] bg-[#9CA3AF] px-[6px] py-[2px] text-[12px] font-medium text-white">
+                                  <IconReplenishment />
+                                  {outgoing}
+                                </span>
+                              ) : null}
+                              {sizeBA.before > 0 ? (
+                                <span className="inline-flex h-[26px] min-w-[50px] w-fit shrink-0 items-center justify-center gap-1.5 rounded-[2px] bg-[#A234DA] px-[6px] py-[2px] text-[12px] font-medium text-white">
+                                  <IconPackageTu />
+                                  {sizeBA.before}
+                                </span>
+                              ) : null}
+                            </div>
+                          ) : null}
+                        </div>
+                      </td>
+                    )
+                  })}
                   <td className="py-3 px-4 text-right text-[#4b535c]">—</td>
                   <td className="py-3 px-4 text-right text-[#4b535c]">—</td>
                   <td className="py-3 px-4 text-right text-[#4b535c]">—</td>
@@ -3480,12 +3840,25 @@ function StockAnalysisDrilldown({
                   </td>
                   {packDrilldownSizes.map((size) => {
                     const looseBoxes = getLocationLooseBoxesForSize(loc, size)
+                    const packUnits = getPackUnitsForSize(product, loc, size, packBoxes)
+                    const looseUnits = sumBoxUnits(looseBoxes)
+                    const hasRebal =
+                      showRebalancing &&
+                      (loc.tuTruck?.length ?? 0) > 0 &&
+                      packDrilldownSizes[0] === size
+                    const rebalUnits = hasRebal ? sumBoxUnits(loc.tuTruck) : 0
+                    const sizeBA = getSizeBeforeAfter(loc, size, product, {
+                      packUnits,
+                      looseUnits,
+                      rebalUnits,
+                    })
+                    const sohUnits = sizeBA.before
                     const cellKey = `${loc.id}-size-${size}`
                     const revealed = activeTransferCell === cellKey
                     const hasLoose = looseBoxes.length > 0
-                    const hasRebal =
-                      showRebalancing && (loc.tuTruck?.length ?? 0) > 0 && packDrilldownSizes[0] === size
-                    const hasContent = hasLoose || hasRebal
+                    const hasPack = packUnits > 0
+                    const hasSoh = sohUnits > 0
+                    const hasContent = hasLoose || hasRebal || hasPack || hasSoh
                     return (
                       <td
                         key={cellKey}
@@ -3495,84 +3868,100 @@ function StockAnalysisDrilldown({
                           toggleTransferCellReveal(cellKey)
                         }}
                       >
-                        {!hasContent ? (
-                          <span className="text-[#4b535c]">—</span>
-                        ) : revealed ? (
-                          <div
-                            className="flex flex-wrap gap-1 justify-end"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            {showReplenishment &&
-                              looseBoxes.map((n, i) => {
-                                const key = tuBoxKey(loc.id, 'replen-loose', i)
-                                const effectiveValue = getEffectiveTuBoxValue(key, n)
-                                return (
-                                  <EditableTuTransferBadge
-                                    key={key}
-                                    value={effectiveValue}
-                                    isEditing={editingTuBoxKey === key}
-                                    editingValue={editingTuBoxValue}
-                                    onStartEdit={() => startEditTuBox(key, effectiveValue)}
-                                    onEditingValueChange={(v) => {
-                                      setPackInputError(false)
-                                      setEditingTuBoxValue(v)
-                                    }}
-                                    onCommit={commitTuBoxEdit}
-                                    onCancel={cancelTuBoxEdit}
-                                    bgClassName="bg-[#EC4899]"
-                                    icon={<IconReplenishment />}
-                                    hoverPanel={
-                                      <TuTruckTransferHoverCard
-                                        trip={trip}
-                                        loc={loc}
-                                        truckUnits={effectiveValue}
-                                        borderClassName="border-[#EC4899]"
-                                        receivingLabel={loc.name}
-                                        onMoreDetails={() => setSelectedTransferDetail(loc)}
-                                      />
-                                    }
-                                  />
-                                )
-                              })}
-                            {hasRebal &&
-                              loc.tuTruck.map((n, i) => {
-                                const key = tuBoxKey(loc.id, 'truck', i)
-                                const effectiveValue = getEffectiveTuBoxValue(key, n)
-                                return (
-                                  <EditableTuTransferBadge
-                                    key={key}
-                                    value={effectiveValue}
-                                    isEditing={editingTuBoxKey === key}
-                                    editingValue={editingTuBoxValue}
-                                    onStartEdit={() => startEditTuBox(key, effectiveValue)}
-                                    onEditingValueChange={(v) => {
-                                      setPackInputError(false)
-                                      setEditingTuBoxValue(v)
-                                    }}
-                                    onCommit={commitTuBoxEdit}
-                                    onCancel={cancelTuBoxEdit}
-                                    bgClassName="bg-[#0267FF]"
-                                    icon={<IconTruckTu />}
-                                    hoverPanel={
-                                      <TuTruckTransferHoverCard
-                                        trip={trip}
-                                        loc={loc}
-                                        truckUnits={effectiveValue}
-                                        borderClassName="border-[#0267FF]"
-                                        receivingLabel={loc.name}
-                                        onMoreDetails={() => setSelectedTransferDetail(loc)}
-                                      />
-                                    }
-                                  />
-                                )
-                              })}
-                          </div>
-                        ) : (
-                          <span className="text-[#0a0a0a]">
-                            {sumBoxUnits(looseBoxes) +
-                              (hasRebal ? sumBoxUnits(loc.tuTruck) : 0)}
-                          </span>
-                        )}
+                        <div className="flex flex-col items-end gap-1">
+                          <BeforeAfterText value={sizeBA.label} />
+                          {revealed && hasContent ? (
+                            <div
+                              className="flex flex-wrap gap-1 justify-end"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              {hasPack ? (
+                                <EditableTuTransferBadge
+                                  value={packUnits}
+                                  isEditing={false}
+                                  editingValue=""
+                                  onStartEdit={() => {}}
+                                  onEditingValueChange={() => {}}
+                                  onCommit={() => {}}
+                                  onCancel={() => {}}
+                                  bgClassName="bg-[#9CA3AF] pointer-events-none"
+                                  icon={<IconReplenishment />}
+                                  hoverPanel={null}
+                                />
+                              ) : null}
+                              {showReplenishment &&
+                                looseBoxes.map((n, i) => {
+                                  const key = tuBoxKey(loc.id, 'replen-loose', i)
+                                  const effectiveValue = getEffectiveTuBoxValue(key, n)
+                                  return (
+                                    <EditableTuTransferBadge
+                                      key={key}
+                                      value={effectiveValue}
+                                      isEditing={editingTuBoxKey === key}
+                                      editingValue={editingTuBoxValue}
+                                      onStartEdit={() => startEditTuBox(key, effectiveValue)}
+                                      onEditingValueChange={(v) => {
+                                        setPackInputError(false)
+                                        setEditingTuBoxValue(v)
+                                      }}
+                                      onCommit={commitTuBoxEdit}
+                                      onCancel={cancelTuBoxEdit}
+                                      bgClassName="bg-[#EC4899]"
+                                      icon={<IconReplenishment />}
+                                      hoverPanel={
+                                        <TuTruckTransferHoverCard
+                                          trip={trip}
+                                          loc={loc}
+                                          truckUnits={effectiveValue}
+                                          borderClassName="border-[#EC4899]"
+                                          receivingLabel={loc.name}
+                                          onMoreDetails={() => setSelectedTransferDetail(loc)}
+                                        />
+                                      }
+                                    />
+                                  )
+                                })}
+                              {hasRebal &&
+                                loc.tuTruck.map((n, i) => {
+                                  const key = tuBoxKey(loc.id, 'truck', i)
+                                  const effectiveValue = getEffectiveTuBoxValue(key, n)
+                                  return (
+                                    <EditableTuTransferBadge
+                                      key={key}
+                                      value={effectiveValue}
+                                      isEditing={editingTuBoxKey === key}
+                                      editingValue={editingTuBoxValue}
+                                      onStartEdit={() => startEditTuBox(key, effectiveValue)}
+                                      onEditingValueChange={(v) => {
+                                        setPackInputError(false)
+                                        setEditingTuBoxValue(v)
+                                      }}
+                                      onCommit={commitTuBoxEdit}
+                                      onCancel={cancelTuBoxEdit}
+                                      bgClassName="bg-[#0267FF]"
+                                      icon={<IconTruckTu />}
+                                      hoverPanel={
+                                        <TuTruckTransferHoverCard
+                                          trip={trip}
+                                          loc={loc}
+                                          truckUnits={effectiveValue}
+                                          borderClassName="border-[#0267FF]"
+                                          receivingLabel={loc.name}
+                                          onMoreDetails={() => setSelectedTransferDetail(loc)}
+                                        />
+                                      }
+                                    />
+                                  )
+                                })}
+                              {hasSoh ? (
+                                <span className="inline-flex h-[26px] min-w-[50px] w-fit shrink-0 items-center justify-center gap-1.5 rounded-[2px] bg-[#A234DA] px-[6px] py-[2px] text-[12px] font-medium text-white">
+                                  <IconPackageTu />
+                                  {sohUnits}
+                                </span>
+                              ) : null}
+                            </div>
+                          ) : null}
+                        </div>
                       </td>
                     )
                   })}
@@ -4018,6 +4407,11 @@ function productHasTransferSplit(p) {
   return p?.replenTransfers != null && p?.rebalTransfers != null
 }
 
+/** Aggregated rows where pen+modal disambiguates which portion is editable. */
+function productHasTransfersModalEdit(p) {
+  return productHasMixedFulfilment(p) || productHasTransferSplit(p)
+}
+
 function productIsNonPackReplenEditable(p) {
   return productIsReplenOnly(p) && !productHasPackConstraint(p)
 }
@@ -4095,10 +4489,12 @@ function ProductsDrilldown({
   showBackButton = true,
   onDrawerFiltersActiveChange,
   setExplorerProductNameFilters,
+  setExplorerStatusFilters,
   setActiveTab,
   selectedProduct: controlledSelectedProduct,
   onSelectedProductChange,
   setExplorerTransferOverrides,
+  onOpenExplorerUnapprovedForProduct,
 }) {
   const [localSelectedProduct, setLocalSelectedProduct] = useState(null)
   const isSelectedProductControlled = typeof onSelectedProductChange === 'function'
@@ -4115,6 +4511,11 @@ function ProductsDrilldown({
   const [productPackCountOverrides, setProductPackCountOverrides] = useState({})
   const [editingTransfersProductId, setEditingTransfersProductId] = useState(null)
   const [editingTransfersValue, setEditingTransfersValue] = useState('')
+  const [transfersModalProductId, setTransfersModalProductId] = useState(null)
+  const [editingTransfersLooseValue, setEditingTransfersLooseValue] = useState('')
+  const [transfersPopoverCoords, setTransfersPopoverCoords] = useState({ left: 0, top: 0 })
+  const transfersEditPenRefs = useRef({})
+  const transfersPopoverRef = useRef(null)
   const [selectedProductIds, setSelectedProductIds] = useState(new Set())
   const [statusFilters, setStatusFilters] = useState([])
   const [filtersDropdownOpen, setFiltersDropdownOpen] = useState(false)
@@ -4124,12 +4525,20 @@ function ProductsDrilldown({
   const [productColumnOrder, setProductColumnOrder] = useState(
     () => [...PRODUCTS_TABLE_DEFAULT_COLUMN_ORDER]
   )
-  const [hoveredTransferProductId, setHoveredTransferProductId] = useState(null)
+  const [productVisibleColumns, setProductVisibleColumns] = useState(
+    () => new Set(PRODUCTS_DEFAULT_VISIBLE_LOGICAL_IDS)
+  )
+  const [columnSettingsOpen, setColumnSettingsOpen] = useState(false)
+  const [columnSettingsSearch, setColumnSettingsSearch] = useState('')
   const [replenTransferOverrides, setReplenTransferOverrides] = useState({})
+  const productsColumnSettingsRef = useRef(null)
 
   useEffect(() => {
     onDrawerFiltersActiveChange?.(statusFilters.length > 0)
   }, [statusFilters, onDrawerFiltersActiveChange])
+
+  // Future: extend to include productsActiveQuickFilter when chips become real filters
+  const filtersActive = statusFilters.length > 0
 
   const baseProducts = PRODUCTS_BY_TRIP[trip.id] || DEFAULT_PRODUCTS
 
@@ -4141,21 +4550,35 @@ function ProductsDrilldown({
     return Number(p.replenTransfers) || 0
   }
 
+  const getEffectivePackTransfers = (p) => {
+    if (Object.prototype.hasOwnProperty.call(productPackTransfersOverrides, p.id)) {
+      return Number(productPackTransfersOverrides[p.id]) || 0
+    }
+    return Number(p.packTransfers) || 0
+  }
+
+  const getEffectiveLooseTransfers = (p) => {
+    if (Object.prototype.hasOwnProperty.call(productLooseTransfersOverrides, p.id)) {
+      return Number(productLooseTransfersOverrides[p.id]) || 0
+    }
+    if (p.looseTransfers != null) return Number(p.looseTransfers) || 0
+    // Non-pack mixed replen+rebal: replen portion is the editable "loose" value
+    if (productHasTransferSplit(p) && !productHasMixedFulfilment(p)) {
+      return getEffectiveReplenTransfers(p) ?? 0
+    }
+    return 0
+  }
+
   const getEffectiveTransfers = (p) => {
+    // Pack + loose (+ optional rebal) — prefer mixed fulfilment so loose overrides apply
+    if (productHasMixedFulfilment(p)) {
+      const packU = getEffectivePackTransfers(p)
+      const looseU = getEffectiveLooseTransfers(p)
+      const rebalU = Number(p.rebalTransfers) || 0
+      return packU + looseU + rebalU
+    }
     if (productHasTransferSplit(p)) {
       return getEffectiveReplenTransfers(p) + (Number(p.rebalTransfers) || 0)
-    }
-    if (productHasMixedFulfilment(p)) {
-      if (Object.prototype.hasOwnProperty.call(productTransfersOverrides, p.id)) {
-        return Number(productTransfersOverrides[p.id]) || 0
-      }
-      const packU = Object.prototype.hasOwnProperty.call(productPackTransfersOverrides, p.id)
-        ? Number(productPackTransfersOverrides[p.id]) || 0
-        : Number(p.packTransfers) || 0
-      const looseU = Object.prototype.hasOwnProperty.call(productLooseTransfersOverrides, p.id)
-        ? Number(productLooseTransfersOverrides[p.id]) || 0
-        : Number(p.looseTransfers) || 0
-      return packU + looseU
     }
     if (Object.prototype.hasOwnProperty.call(productTransfersOverrides, p.id)) {
       return Number(productTransfersOverrides[p.id]) || 0
@@ -4189,21 +4612,6 @@ function ProductsDrilldown({
     return 0
   }
 
-  const transferApprovalTotals = useMemo(() => {
-    return baseProducts.reduce(
-      (acc, p) => {
-        const units = getEffectiveTransfers(p)
-        return {
-          transfers: acc.transfers + units,
-          approved: acc.approved + (p.approvedTransfers ?? 0),
-          unapproved: acc.unapproved + (p.unapprovedTransfers ?? 0),
-        }
-      },
-      { transfers: 0, approved: 0, unapproved: 0 }
-    )
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- helpers close over override maps
-  }, [baseProducts, productTransfersOverrides, replenTransferOverrides])
-
   const beginTransfersEdit = (p, currentValue) => {
     setEditingTransfersProductId(p.id)
     setEditingTransfersValue(String(currentValue ?? 0))
@@ -4227,6 +4635,119 @@ function ProductsDrilldown({
     setEditingTransfersValue('')
   }
 
+  const handleOpenTransfersModal = (p) => {
+    setTransfersModalProductId(p.id)
+    setEditingTransfersLooseValue(String(getEffectiveLooseTransfers(p)))
+  }
+
+  const handleCloseTransfersModal = () => {
+    setTransfersModalProductId(null)
+    setEditingTransfersLooseValue('')
+  }
+
+  const handleConfirmTransfersEdit = () => {
+    const p = baseProducts.find((row) => row.id === transfersModalProductId)
+    if (!p) {
+      handleCloseTransfersModal()
+      return
+    }
+    const raw = editingTransfersLooseValue
+    const n = Number(raw)
+    if (raw === '' || !Number.isFinite(n) || n < 0 || !Number.isInteger(n)) {
+      handleCloseTransfersModal()
+      return
+    }
+    setProductLooseTransfersOverrides((prev) => ({ ...prev, [p.id]: n }))
+    // Non-pack mixed replen+rebal still uses replen overrides for the editable portion
+    if (productHasTransferSplit(p) && !productHasMixedFulfilment(p)) {
+      setReplenTransferOverrides((prev) => ({ ...prev, [p.id]: n }))
+    }
+    handleCloseTransfersModal()
+  }
+
+  const updateTransfersPopoverPosition = useCallback(() => {
+    const el = transfersEditPenRefs.current[transfersModalProductId]
+    const pop = transfersPopoverRef.current
+    if (!el || transfersModalProductId == null) return
+    const rect = el.getBoundingClientRect()
+    const gap = 8
+    const pad = 12
+    const vw = window.innerWidth
+    const vh = window.innerHeight
+    const pw = pop?.offsetWidth || 300
+    const ph = pop?.offsetHeight || 240
+
+    // Prefer right of pen so Transfers cell stays visible. Never open left over the cell.
+    let left = rect.right + gap
+    let top = rect.top + rect.height / 2 - ph / 2
+
+    if (left + pw > vw - pad) {
+      // Flip below the trigger (or above if bottom would clip)
+      left = Math.max(pad, Math.min(rect.right - pw, vw - pad - pw))
+      top = rect.bottom + gap
+      if (top + ph > vh - pad) {
+        top = rect.top - gap - ph
+      }
+    } else {
+      top = Math.max(pad, Math.min(top, vh - pad - ph))
+    }
+
+    left = Math.max(pad, Math.min(left, vw - pad - pw))
+    top = Math.max(pad, Math.min(top, vh - pad - ph))
+    setTransfersPopoverCoords({ left, top })
+  }, [transfersModalProductId])
+
+  useLayoutEffect(() => {
+    if (transfersModalProductId == null) return
+    updateTransfersPopoverPosition()
+    const id = requestAnimationFrame(() => updateTransfersPopoverPosition())
+
+    const pop = transfersPopoverRef.current
+    const ro = pop ? new ResizeObserver(() => updateTransfersPopoverPosition()) : null
+    if (pop && ro) ro.observe(pop)
+
+    const onScrollOrResize = () => updateTransfersPopoverPosition()
+    window.addEventListener('scroll', onScrollOrResize, true)
+    window.addEventListener('resize', onScrollOrResize)
+
+    const scrollParents = []
+    let node = transfersEditPenRefs.current[transfersModalProductId]?.parentElement
+    while (node) {
+      const st = getComputedStyle(node)
+      if (/(auto|scroll|overlay)/.test(st.overflowY) || /(auto|scroll|overlay)/.test(st.overflowX)) {
+        node.addEventListener('scroll', onScrollOrResize, { passive: true })
+        scrollParents.push(node)
+      }
+      node = node.parentElement
+    }
+
+    return () => {
+      cancelAnimationFrame(id)
+      ro?.disconnect()
+      window.removeEventListener('scroll', onScrollOrResize, true)
+      window.removeEventListener('resize', onScrollOrResize)
+      scrollParents.forEach((n) => n.removeEventListener('scroll', onScrollOrResize))
+    }
+  }, [transfersModalProductId, updateTransfersPopoverPosition, editingTransfersLooseValue])
+
+  useEffect(() => {
+    if (transfersModalProductId == null) return
+    const onKey = (e) => {
+      if (e.key === 'Escape') handleCloseTransfersModal()
+    }
+    const onPointerDown = (e) => {
+      if (e.target.closest('[data-transfers-edit-popover]')) return
+      if (e.target.closest('[data-transfers-edit]')) return
+      handleCloseTransfersModal()
+    }
+    window.addEventListener('keydown', onKey)
+    document.addEventListener('mousedown', onPointerDown)
+    return () => {
+      window.removeEventListener('keydown', onKey)
+      document.removeEventListener('mousedown', onPointerDown)
+    }
+  }, [transfersModalProductId])
+
   const products = (() => {
     let list = baseProducts
     if (statusFilters.length > 0) {
@@ -4244,6 +4765,47 @@ function ProductsDrilldown({
     return list
   })()
 
+  const transferApprovalTotals = useMemo(() => {
+    // Transfers units stay scope-wide (movement totals recompute is a separate BE brief item)
+    const transfers = baseProducts.reduce(
+      (sum, p) => sum + getEffectiveTransfers(p),
+      0
+    )
+    // Status approved/unapproved reflect the filtered table view
+    const { approved, unapproved } = products.reduce(
+      (acc, p) => ({
+        approved: acc.approved + (p.approvedTransfers ?? 0),
+        unapproved: acc.unapproved + (p.unapprovedTransfers ?? 0),
+      }),
+      { approved: 0, unapproved: 0 }
+    )
+    return { transfers, approved, unapproved }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- helpers close over override maps
+  }, [
+    baseProducts,
+    products,
+    productTransfersOverrides,
+    replenTransferOverrides,
+    productPackTransfersOverrides,
+    productLooseTransfersOverrides,
+  ])
+
+  // Confidence + Coverage totals stay scope-wide (state metrics; greyed when filters active)
+  const productSkuLocationTotals = useMemo(() => {
+    let lowConfidence = 0
+    let totalSkuLocations = 0
+    let coverageInTarget = 0
+    let coverageTotal = 0
+    baseProducts.forEach((p) => {
+      lowConfidence += lowConfidenceCount(p.skuConfidenceBuckets)
+      totalSkuLocations += sumConfidenceBuckets(p.skuConfidenceBuckets)
+      coverageInTarget += Number(p.skuCoverageSummary?.inTarget) || 0
+      coverageTotal += Number(p.skuCoverageSummary?.total) || 0
+    })
+    const coveragePct =
+      coverageTotal > 0 ? Math.round((100 * coverageInTarget) / coverageTotal) : 0
+    return { lowConfidence, totalSkuLocations, coveragePct }
+  }, [baseProducts])
 
   const toggleProductSelection = (id) => {
     setSelectedProductIds((prev) => {
@@ -4282,9 +4844,13 @@ function ProductsDrilldown({
     selectedProductIds.forEach((id) => {
       const p = baseProducts.find((row) => row.id === id)
       const hasReplenSplit = productHasTransferSplit(p)
+      const hasMixed = productHasMixedFulfilment(p)
       const hasReplenOverride = Object.prototype.hasOwnProperty.call(replenTransferOverrides, id)
       const hasTransfersOverride = Object.prototype.hasOwnProperty.call(productTransfersOverrides, id)
-      if (hasReplenSplit || hasReplenOverride || hasTransfersOverride) eligibleIds.push(id)
+      const hasLooseOverride = Object.prototype.hasOwnProperty.call(productLooseTransfersOverrides, id)
+      if (hasReplenSplit || hasMixed || hasReplenOverride || hasTransfersOverride || hasLooseOverride) {
+        eligibleIds.push(id)
+      }
     })
 
     if (eligibleIds.length > 0) {
@@ -4296,6 +4862,13 @@ function ProductsDrilldown({
         return next
       })
       setProductTransfersOverrides((prev) => {
+        const next = { ...prev }
+        eligibleIds.forEach((id) => {
+          delete next[id]
+        })
+        return next
+      })
+      setProductLooseTransfersOverrides((prev) => {
         const next = { ...prev }
         eligibleIds.forEach((id) => {
           delete next[id]
@@ -4344,8 +4917,13 @@ function ProductsDrilldown({
     const raw = e.dataTransfer.getData(PRODUCTS_COL_DND_MIME) || e.dataTransfer.getData('text/plain')
     const from = parseInt(raw, 10)
     if (Number.isNaN(from)) return
-    setProductColumnOrder((order) => moveTripTableColumnOrder(order, from, targetVisualIndex))
-  }, [])
+    setProductColumnOrder((order) => {
+      const visible = order.filter((id) => productVisibleColumns.has(id))
+      const nextVisible = moveTripTableColumnOrder(visible, from, targetVisualIndex)
+      let i = 0
+      return order.map((id) => (productVisibleColumns.has(id) ? nextVisible[i++] : id))
+    })
+  }, [productVisibleColumns])
 
   useEffect(() => {
     const expected = PRODUCTS_TABLE_NUM_DATA_COLS
@@ -4357,6 +4935,43 @@ function ProductsDrilldown({
       setProductColumnOrder([...PRODUCTS_TABLE_DEFAULT_COLUMN_ORDER])
     }
   }, [productColumnOrder])
+
+  useEffect(() => {
+    if (!columnSettingsOpen) return undefined
+    const onKeyDown = (e) => {
+      if (e.key === 'Escape') setColumnSettingsOpen(false)
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [columnSettingsOpen])
+
+  const visibleProductColumnOrder = useMemo(
+    () => productColumnOrder.filter((id) => productVisibleColumns.has(id)),
+    [productColumnOrder, productVisibleColumns]
+  )
+
+  const toggleProductColumnVisibility = (logicalIdx) => {
+    if (PRODUCTS_LOCKED_LOGICAL_IDS.includes(logicalIdx)) return
+    const willShow = !productVisibleColumns.has(logicalIdx)
+    setProductVisibleColumns((prev) => {
+      const next = new Set(prev)
+      if (willShow) next.add(logicalIdx)
+      else next.delete(logicalIdx)
+      return next
+    })
+    // Newly shown columns append before Status (end of visible set).
+    if (willShow) {
+      setProductColumnOrder((order) => {
+        const without = order.filter((id) => id !== logicalIdx)
+        const statusPos = without.indexOf(18)
+        if (statusPos >= 0) {
+          without.splice(statusPos, 0, logicalIdx)
+          return without
+        }
+        return [...without, logicalIdx]
+      })
+    }
+  }
 
   if (selectedProduct) {
     return (
@@ -4380,7 +4995,7 @@ function ProductsDrilldown({
   const breadcrumbTo = trip.to.length > 12 ? `${trip.to.slice(0, 10)}...` : trip.to
   const productSummary = PRODUCTS_TAB_SUMMARY_TOTALS
 
-  const productColLast = productColumnOrder.length - 1
+  const productColLast = visibleProductColumnOrder.length - 1
   const productThPin = (isFirst, isLast) => {
     const L = isFirst
       ? 'sticky left-14 z-20 border-r border-[#e5e7eb] shadow-[4px_0_8px_rgba(0,0,0,0.04)] bg-white '
@@ -4486,14 +5101,14 @@ function ProductsDrilldown({
         return (
           <th
             key={logicalIdx}
-            className={`${productThPin(isFirst, isLast)}h-[62px] min-h-[62px] text-right px-4 align-middle font-medium text-[#00050A] min-w-[100px] box-border`}
+            className={`${productThPin(isFirst, isLast)}h-[62px] min-h-[62px] w-[140px] min-w-[140px] text-right px-4 align-middle font-medium text-[#00050A] box-border`}
             {...d}
           >
             <span className="inline-flex w-full min-w-0 items-center justify-end gap-2">
               {grip}
               <span
                 className="inline-flex items-center gap-1 cursor-help"
-                title="Based on historical forecast accuracy at the product level. Low confidence means recommendations carry more uncertainty."
+                title="How confident Autone is in the recommendation for each SKU-location. Higher confidence means less review needed."
               >
                 Confidence <IconInfo />
               </span>
@@ -4570,7 +5185,7 @@ function ProductsDrilldown({
               {grip}
               <span
                 className="inline-flex items-center gap-1 cursor-help"
-                title="Units reserved to sell at this location and units available to allocate to stores"
+                title="The total number of units across your warehouses in scope, before & after transfers."
               >
                 Warehouse <IconInfo />
               </span>
@@ -4588,7 +5203,7 @@ function ProductsDrilldown({
               {grip}
               <span className="flex flex-col items-end justify-center gap-0.5 leading-tight">
                 Sales
-                <span className="text-[11px] font-normal text-[#4b535c]">L7D / L30D</span>
+                <span className="text-[11px] font-normal text-[#4b535c]">L7D</span>
               </span>
             </span>
           </th>
@@ -4597,16 +5212,35 @@ function ProductsDrilldown({
         return (
           <th
             key={logicalIdx}
-            className={`${productThPin(isFirst, isLast)}h-[62px] min-h-[62px] text-right px-4 align-middle font-medium text-[#00050A] min-w-[80px] box-border`}
+            className={`${productThPin(isFirst, isLast)}h-[62px] min-h-[62px] text-right px-4 align-middle font-medium text-[#00050A] min-w-[70px] box-border`}
             {...d}
           >
             <span className="inline-flex w-full min-w-0 items-center justify-end gap-2">
               {grip}
-              L90D sales
+              <span className="flex flex-col items-end justify-center gap-0.5 leading-tight">
+                Sales
+                <span className="text-[11px] font-normal text-[#4b535c]">L30D</span>
+              </span>
             </span>
           </th>
         )
       case 12:
+        return (
+          <th
+            key={logicalIdx}
+            className={`${productThPin(isFirst, isLast)}h-[62px] min-h-[62px] text-right px-4 align-middle font-medium text-[#00050A] min-w-[70px] box-border`}
+            {...d}
+          >
+            <span className="inline-flex w-full min-w-0 items-center justify-end gap-2">
+              {grip}
+              <span className="flex flex-col items-end justify-center gap-0.5 leading-tight">
+                Sales
+                <span className="text-[11px] font-normal text-[#4b535c]">L90D</span>
+              </span>
+            </span>
+          </th>
+        )
+      case 13:
         return (
           <th
             key={logicalIdx}
@@ -4624,7 +5258,7 @@ function ProductsDrilldown({
             </span>
           </th>
         )
-      case 13:
+      case 14:
         return (
           <th
             key={logicalIdx}
@@ -4637,7 +5271,7 @@ function ProductsDrilldown({
             </span>
           </th>
         )
-      case 14:
+      case 15:
         return (
           <th
             key={logicalIdx}
@@ -4650,7 +5284,7 @@ function ProductsDrilldown({
             </span>
           </th>
         )
-      case 15:
+      case 16:
         return (
           <th
             key={logicalIdx}
@@ -4665,7 +5299,7 @@ function ProductsDrilldown({
             </span>
           </th>
         )
-      case 16:
+      case 17:
         return (
           <th
             key={logicalIdx}
@@ -4680,7 +5314,7 @@ function ProductsDrilldown({
             </span>
           </th>
         )
-      case 17:
+      case 18:
         return (
           <th
             key={logicalIdx}
@@ -4702,6 +5336,16 @@ function ProductsDrilldown({
     const isFirst = visualIdx === 0
     const isLast = visualIdx === productColLast
     const pin = `${productThPin(isFirst, isLast)}`
+    const stateMuted = filtersActive
+    const stateMutedTitle = stateMuted
+      ? 'This value reflects your full scope, not the filtered view.'
+      : undefined
+    const statePrimary = stateMuted ? 'text-[#9ca3af]' : 'text-[#0a0a0a]'
+    const stateSecondary = stateMuted ? 'text-[#9ca3af]' : 'text-[#4b535c]'
+    const stateThClass = stateMuted
+      ? `${pin}py-2 px-4 text-[12px] font-medium text-[#9ca3af] text-right cursor-help`
+      : `${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`
+
     switch (logicalIdx) {
       case 0:
         return (
@@ -4726,90 +5370,125 @@ function ProductsDrilldown({
       case 4:
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
-            <div className="flex flex-col items-end">
-              <span>{productSummary.recommendedUnits}</span>
-              <span className="text-[12px] text-[#4b535c]">{productSummary.recommendedTrips}</span>
-            </div>
+            {productSummary.recommendedUnits} units
           </th>
         )
       case 5:
-        return <th key={logicalIdx} className={`${pin}py-2 px-4 text-right`} />
-
-      case 6:
         return (
-          <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] text-[#4b535c] text-right`}>
-            —
+          <th
+            key={logicalIdx}
+            className={`${pin}py-2 px-4 text-right ${stateMuted ? 'cursor-help' : ''}`}
+            title={stateMutedTitle}
+          >
+            <div className="flex flex-col items-end gap-0.5">
+              <span className={`text-[12px] font-medium ${statePrimary}`}>
+                {productSkuLocationTotals.lowConfidence} low
+              </span>
+              <span className={`text-[11px] ${stateSecondary}`}>
+                {productSkuLocationTotals.totalSkuLocations} SKU-locations
+              </span>
+            </div>
           </th>
         )
+
+      case 6: {
+        const coveragePct = productSkuLocationTotals.coveragePct
+        const coverageFull = coveragePct === 100
+        return (
+          <th
+            key={logicalIdx}
+            className={`${pin}py-2 px-4 text-right ${stateMuted ? 'cursor-help' : ''}`}
+            title={stateMutedTitle}
+          >
+            <div className="flex justify-end">
+              <span
+                className={`px-1.5 py-0.5 rounded-[4px] text-[11px] font-medium ${
+                  stateMuted
+                    ? 'bg-[#f3f4f6] text-[#9ca3af]'
+                    : coverageFull
+                      ? 'bg-[#dcfce7] text-[#166534]'
+                      : 'bg-[#f3f4f6] text-[#0a0a0a]'
+                }`}
+              >
+                {coveragePct}% of SKU-locations in target
+              </span>
+            </div>
+          </th>
+        )
+      }
       case 7:
         return <th key={logicalIdx} className={`${pin}py-2 px-4 text-right`} />
       case 8:
         return (
-          <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
+          <th key={logicalIdx} className={stateThClass} title={stateMutedTitle}>
             <div className="flex flex-col items-end">
               <span className="inline-flex items-baseline gap-1">
-                <span className="text-[14px] text-[#0a0a0a]">{productSummary.stockUnits}</span>
-                <span className="text-[14px] text-[#0a0a0a]">SOH</span>
+                <span className={`text-[14px] ${statePrimary}`}>{productSummary.stockUnits}</span>
+                <span className={`text-[14px] ${statePrimary}`}>SOH</span>
               </span>
-              <span className="text-[12px] text-[#4b535c]">{productSummary.stockInTransit}</span>
+              <span className={`text-[12px] ${stateSecondary}`}>{productSummary.stockInTransit}</span>
             </div>
           </th>
         )
       case 9:
         return (
-          <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
-            <div className="flex flex-col items-end">
-              <span>{productSummary.warehouseAllocate}</span>
-              <span className="text-[12px] text-[#4b535c]">{productSummary.warehouseSell}</span>
-            </div>
+          <th key={logicalIdx} className={stateThClass} title={stateMutedTitle}>
+            {productSummary.warehouseAllocate}
           </th>
         )
       case 10:
         return (
-          <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
-            <div className="flex flex-col items-end">
-              <span>{productSummary.salesL7}</span>
-              <span className="text-[12px] text-[#4b535c]">{productSummary.salesL30}</span>
-            </div>
+          <th key={logicalIdx} className={stateThClass} title={stateMutedTitle}>
+            {productSummary.salesL7}
           </th>
         )
       case 11:
         return (
-          <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
-            {productSummary.salesL90}
+          <th key={logicalIdx} className={stateThClass} title={stateMutedTitle}>
+            {productSummary.salesL30}
           </th>
         )
       case 12:
         return (
-          <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
-            {productSummary.forecast}
+          <th key={logicalIdx} className={stateThClass} title={stateMutedTitle}>
+            {productSummary.salesL90}
           </th>
         )
       case 13:
         return (
-          <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
-            {productSummary.stockouts}
+          <th
+            key={logicalIdx}
+            className={`${pin}py-2 px-4 text-[12px] text-right ${stateMuted ? 'text-[#9ca3af] cursor-help' : 'text-[#4b535c]'}`}
+            title={stateMutedTitle}
+          >
+            —
           </th>
         )
       case 14:
         return (
-          <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
-            {productSummary.locations}
+          <th key={logicalIdx} className={stateThClass} title={stateMutedTitle}>
+            {productSummary.stockouts}
           </th>
         )
       case 15:
         return (
-          <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
-            {productSummary.overstocks}
+          <th key={logicalIdx} className={stateThClass} title={stateMutedTitle}>
+            {productSummary.locations}
           </th>
         )
       case 16:
         return (
-          <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
-            {productSummary.understocks}
+          <th key={logicalIdx} className={stateThClass} title={stateMutedTitle}>
+            {productSummary.overstocks}
           </th>
         )
       case 17:
+        return (
+          <th key={logicalIdx} className={stateThClass} title={stateMutedTitle}>
+            {productSummary.understocks}
+          </th>
+        )
+      case 18:
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-right min-w-[140px]`}>
             <div className="flex flex-col items-end gap-0.5 text-[12px] font-medium">
@@ -4836,14 +5515,16 @@ function ProductsDrilldown({
             key={logicalIdx}
             className={`${pin}py-3 px-4 max-w-[220px] min-w-[220px] align-top`}
           >
-            <div className="flex items-center gap-4 min-w-0">
-              <div className="w-12 h-12 rounded-[4px] bg-[#f3f4f6] shrink-0" />
-              <div className="flex min-w-0 flex-col gap-0.5 line-clamp-2">
-                <span className="truncate font-medium text-[#0a0a0a]">{p.name}</span>
-                <span className="truncate text-[12px] text-[#4b535c]">{p.sku}</span>
-                <span className="text-[12px] text-[#4b535c]">{p.colour}</span>
+            <TuHoverPopover panel={<ProductDetailsHoverCard product={p} />}>
+              <div className="flex items-center gap-4 min-w-0">
+                <div className="w-12 h-12 rounded-[4px] bg-[#f3f4f6] shrink-0" />
+                <div className="flex min-w-0 flex-col gap-0.5 line-clamp-2">
+                  <span className="truncate font-medium text-[#0a0a0a]">{p.name}</span>
+                  <span className="truncate text-[12px] text-[#4b535c]">{p.sku}</span>
+                  <span className="text-[12px] text-[#4b535c]">{p.colour}</span>
+                </div>
               </div>
-            </div>
+            </TuHoverPopover>
           </td>
         )
       case 1:
@@ -4855,15 +5536,23 @@ function ProductsDrilldown({
       case 2: {
         const effectiveTransfers = getEffectiveTransfers(p)
         const hasTransferSplit = productHasTransferSplit(p)
+        const hasMixedFulfilment = productHasMixedFulfilment(p)
         const hasPack = productHasPackConstraint(p)
         const isReplenOnly = productIsReplenOnly(p)
-        // Pack rows (single- and multi-SKU) are display-only; only non-pack replen is inline-editable
         const isInlineEditable = productIsNonPackReplenEditable(p)
+        const hasModalEdit = productHasTransfersModalEdit(p)
         const packCount = getReplenPackCount(p)
-        const effectiveReplen = hasTransferSplit ? getEffectiveReplenTransfers(p) : null
+        const looseUnits = getEffectiveLooseTransfers(p)
+        const rebalUnits = Number(p.rebalTransfers) || 0
         const isEditingThis = editingTransfersProductId === p.id
+        // Pack + loose + rebal: summary units = loose + rebal (not pack contents)
+        const showPackLooseRebalSummary =
+          hasMixedFulfilment && rebalUnits > 0 && packCount > 0
         const showPackPrimary =
-          hasPack && (isReplenOnly || hasTransferSplit) && packCount > 0
+          hasPack &&
+          (isReplenOnly || hasTransferSplit) &&
+          packCount > 0 &&
+          !showPackLooseRebalSummary
 
         const transfersCellContent = isInlineEditable ? (
           <div className="flex flex-col items-end gap-0.5">
@@ -4892,6 +5581,13 @@ function ProductsDrilldown({
               className="w-16 h-7 px-2 rounded-[4px] border border-[#e9eaeb] text-[12px] text-[#0a0a0a] text-right"
             />
           </div>
+        ) : showPackLooseRebalSummary ? (
+          <div className="flex flex-col items-end gap-0.5">
+            <PackCountDisplay count={packCount} />
+            <span className="text-[12px] text-[#4b535c]">
+              {looseUnits + rebalUnits} units
+            </span>
+          </div>
         ) : showPackPrimary ? (
           <div className="flex flex-col items-end gap-0.5">
             <PackCountDisplay count={packCount} />
@@ -4903,55 +5599,38 @@ function ProductsDrilldown({
           </div>
         )
 
-        if (!hasTransferSplit) {
-          return (
-            <td key={logicalIdx} className={`${pin}py-3 px-4 text-right align-top`}>
-              {transfersCellContent}
-            </td>
-          )
-        }
-
         return (
           <td
             key={logicalIdx}
-            className={`${pin}py-3 px-4 text-right align-top relative`}
-            onMouseEnter={() => setHoveredTransferProductId(p.id)}
-            onMouseLeave={() => setHoveredTransferProductId(null)}
+            className={`${pin}group/transfers py-3 px-4 text-right align-top`}
           >
-            {transfersCellContent}
-            {hoveredTransferProductId === p.id && (
-              <div
-                className="absolute bottom-full mb-1 left-0 z-50 bg-white border border-[#e5e7eb] rounded-[6px] shadow-md p-3 min-w-[200px]"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <div className="text-[12px] font-medium text-[#0a0a0a] mb-2">Transfer split</div>
-                <div className="flex items-center justify-between gap-4 mb-2">
-                  <span className="text-[12px] text-[#4b535c]">Rebalancing</span>
-                  <span className="text-[12px] text-[#0a0a0a] font-medium">{p.rebalTransfers}</span>
-                </div>
-                <div className="flex items-center justify-between gap-4">
-                  <span className="text-[12px] text-[#4b535c]">Replenishment</span>
-                  {hasPack ? (
-                    <span className="text-[12px] text-[#0a0a0a] font-medium">{effectiveReplen}</span>
-                  ) : (
-                    <input
-                      type="number"
-                      min="0"
-                      value={effectiveReplen ?? 0}
-                      onChange={(e) => {
-                        const next = e.target.value === '' ? '' : Number(e.target.value)
-                        setReplenTransferOverrides((prev) => ({ ...prev, [p.id]: next }))
-                      }}
-                      onClick={(e) => e.stopPropagation()}
-                      className="w-16 h-7 px-2 rounded-[4px] border border-[#e9eaeb] text-[12px] text-[#0a0a0a] text-right"
-                    />
-                  )}
-                </div>
-                <p className="text-[11px] text-[#4b535c] italic mt-2">
-                  Rebalancing quantity is set by the solver and cannot be edited at this level.
-                </p>
-              </div>
-            )}
+            <div className="inline-flex w-full items-center justify-end gap-1.5">
+              {transfersCellContent}
+              {hasModalEdit && (
+                <button
+                  type="button"
+                  ref={(el) => {
+                    if (el) transfersEditPenRefs.current[p.id] = el
+                    else delete transfersEditPenRefs.current[p.id]
+                  }}
+                  data-transfers-edit
+                  aria-label={`Edit replenishment units for ${p.name}`}
+                  aria-expanded={transfersModalProductId === p.id}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    if (transfersModalProductId === p.id) handleCloseTransfersModal()
+                    else handleOpenTransfersModal(p)
+                  }}
+                  className={`shrink-0 rounded p-0.5 text-[#6A7282] transition-opacity duration-150 hover:text-[#101828] focus-visible:opacity-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0267FF] ${
+                    transfersModalProductId === p.id
+                      ? 'opacity-100'
+                      : 'opacity-0 group-hover/transfers:opacity-100'
+                  }`}
+                >
+                  <Pencil size={14} strokeWidth={2} aria-hidden />
+                </button>
+              )}
+            </div>
           </td>
         )
       }
@@ -5012,20 +5691,17 @@ function ProductsDrilldown({
                   <span className="text-[12px] text-[#4b535c]">{recommendedUnits} units</span>
                 </>
               ) : (
-                <>
-                  <span className="text-[#0a0a0a]">
-                    {p.recommended}
-                    {p.recommendedBadges?.map((b) => (
-                      <span
-                        key={b}
-                        className="ml-1 inline-flex items-center px-2 py-0.5 rounded-[4px] bg-[#f8f8f8] text-[11px] font-medium text-[#0267ff]"
-                      >
-                        {b === 'VIS' ? 'VS' : b}
-                      </span>
-                    ))}
-                  </span>
-                  <span className="text-[12px] text-[#4b535c]">{p.recommendedSub}</span>
-                </>
+                <span className="text-[#0a0a0a]">
+                  {p.recommended}
+                  {p.recommendedBadges?.map((b) => (
+                    <span
+                      key={b}
+                      className="ml-1 inline-flex items-center px-2 py-0.5 rounded-[4px] bg-[#f8f8f8] text-[11px] font-medium text-[#0267ff]"
+                    >
+                      {b === 'VIS' ? 'VS' : b}
+                    </span>
+                  ))}
+                </span>
               )}
             </div>
           </td>
@@ -5033,9 +5709,16 @@ function ProductsDrilldown({
       }
       case 5:
         return (
-          <td key={logicalIdx} className={`${pin}py-3 px-4 text-right align-top`}>
+          <td
+            key={logicalIdx}
+            className={`${pin}py-3 px-4 w-[140px] min-w-[140px] text-right align-top`}
+          >
             <div className="flex justify-end">
-              <ConfidencePill value={p.confidence} />
+              <TuHoverPopover
+                panel={<ConfidenceBreakdownHoverCard buckets={p.skuConfidenceBuckets} />}
+              >
+                <ConfidenceBucketBar buckets={p.skuConfidenceBuckets} />
+              </TuHoverPopover>
             </div>
           </td>
         )
@@ -5086,58 +5769,60 @@ function ProductsDrilldown({
       case 9:
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right align-top`}>
-            <div className="flex flex-col items-end line-clamp-2 min-w-0">
-              <span className="text-[#0a0a0a]">{p.warehouseAllocateLine ?? '—'}</span>
-              <span className="text-[12px] text-[#4b535c]">{p.warehouseSellLine ?? '—'}</span>
+            <div className="line-clamp-2 min-w-0 w-full text-right text-[#0a0a0a]">
+              {p.warehouseAllocateLine ?? '—'}
             </div>
           </td>
         )
       case 10:
         return (
-          <td key={logicalIdx} className={`${pin}py-3 px-4 text-right align-top`}>
-            <div className="flex flex-col items-end line-clamp-2 min-w-0">
-              <span className="text-[#0a0a0a]">{p.salesL7}</span>
-              <span className="text-[12px] text-[#4b535c]">{p.salesL30}</span>
-            </div>
+          <td key={logicalIdx} className={`${pin}py-3 px-4 text-right text-[#0a0a0a] align-top`}>
+            <div className="line-clamp-2 min-w-0 w-full text-right">{p.salesL7 ?? '—'}</div>
           </td>
         )
       case 11:
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right text-[#0a0a0a] align-top`}>
-            <div className="line-clamp-2 min-w-0 w-full text-right">{p.salesL90 ?? '—'}</div>
+            <div className="line-clamp-2 min-w-0 w-full text-right">{p.salesL30 ?? '—'}</div>
           </td>
         )
       case 12:
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right text-[#0a0a0a] align-top`}>
-            <div className="line-clamp-2 min-w-0 w-full text-right">{p.forecast}</div>
+            <div className="line-clamp-2 min-w-0 w-full text-right">{p.salesL90 ?? '—'}</div>
           </td>
         )
       case 13:
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right text-[#0a0a0a] align-top`}>
-            <div className="line-clamp-2 min-w-0 w-full text-right">{p.stockouts}</div>
+            <div className="line-clamp-2 min-w-0 w-full text-right">{p.forecast}</div>
           </td>
         )
       case 14:
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right text-[#0a0a0a] align-top`}>
-            <div className="line-clamp-2 min-w-0 w-full text-right">{p.locations}</div>
+            <div className="line-clamp-2 min-w-0 w-full text-right">{p.stockouts}</div>
           </td>
         )
       case 15:
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right text-[#0a0a0a] align-top`}>
-            <div className="line-clamp-2 min-w-0 w-full text-right">{p.overstocks}</div>
+            <div className="line-clamp-2 min-w-0 w-full text-right">{p.locations}</div>
           </td>
         )
       case 16:
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right text-[#0a0a0a] align-top`}>
-            <div className="line-clamp-2 min-w-0 w-full text-right">{p.understocks}</div>
+            <div className="line-clamp-2 min-w-0 w-full text-right">{p.overstocks}</div>
           </td>
         )
       case 17:
+        return (
+          <td key={logicalIdx} className={`${pin}py-3 px-4 text-right text-[#0a0a0a] align-top`}>
+            <div className="line-clamp-2 min-w-0 w-full text-right">{p.understocks}</div>
+          </td>
+        )
+      case 18:
         return (
           <td
             key={logicalIdx}
@@ -5156,9 +5841,16 @@ function ProductsDrilldown({
                   {p.approvedTransfers} approved
                 </span>
                 {p.unapprovedTransfers > 0 && (
-                  <span className="text-[12px] font-medium text-[#4b535c]">
+                  <button
+                    type="button"
+                    className="text-[12px] font-medium text-[#4b535c] hover:underline"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onOpenExplorerUnapprovedForProduct?.(p.name)
+                    }}
+                  >
                     {p.unapprovedTransfers} unapproved
-                  </span>
+                  </button>
                 )}
               </div>
             </div>
@@ -5205,13 +5897,75 @@ function ProductsDrilldown({
               <IconSearch className="size-4" />
             </span>
           </div>
-          <button
-            type="button"
-            className="h-10 w-10 flex items-center justify-center rounded-[4px] border border-[#e9eaeb] bg-white text-[#22272f] hover:bg-[#f3f4f6] shrink-0"
-            aria-label="Column settings"
-          >
-            <IconColumnSettings />
-          </button>
+          <div className="relative shrink-0" ref={productsColumnSettingsRef}>
+            <button
+              type="button"
+              onClick={() => setColumnSettingsOpen((o) => !o)}
+              className="h-10 w-10 flex items-center justify-center rounded-[4px] border border-[#e9eaeb] bg-white text-[#22272f] hover:bg-[#f3f4f6] shrink-0"
+              aria-label="Column settings"
+              aria-expanded={columnSettingsOpen}
+              aria-haspopup="dialog"
+            >
+              <IconColumnSettings />
+            </button>
+            {columnSettingsOpen && (
+              <>
+                <div
+                  className="fixed inset-0 z-[60]"
+                  aria-hidden
+                  onClick={() => setColumnSettingsOpen(false)}
+                />
+                <div
+                  role="dialog"
+                  aria-label="Customise columns"
+                  className="absolute left-0 top-full mt-1 z-[70] w-[280px] max-h-[min(70vh,420px)] overflow-hidden rounded-[6px] border border-[#e5e7eb] bg-white shadow-lg flex flex-col"
+                >
+                  <div className="shrink-0 border-b border-[#e5e7eb] p-2">
+                    <div className="flex items-center h-9 rounded-[4px] border border-[#e9eaeb] bg-white">
+                      <input
+                        type="text"
+                        placeholder="search..."
+                        value={columnSettingsSearch}
+                        onChange={(e) => setColumnSettingsSearch(e.target.value)}
+                        className="flex-1 min-w-0 h-full pl-3 pr-2 border-0 bg-transparent rounded-[4px] text-[13px] text-[#0a0a0a] placeholder:text-[#9ca3af] focus:outline-none focus:ring-0"
+                        aria-label="Search columns"
+                      />
+                      <span className="pr-2.5 shrink-0 text-[#9ca3af]">
+                        <IconSearch className="size-3.5" />
+                      </span>
+                    </div>
+                  </div>
+                  <div className="overflow-y-auto py-1">
+                    {PRODUCTS_COLUMN_PICKER_LABELS.map((label, logicalIdx) => {
+                      const locked = PRODUCTS_LOCKED_LOGICAL_IDS.includes(logicalIdx)
+                      const checked = productVisibleColumns.has(logicalIdx)
+                      return (
+                        <label
+                          key={logicalIdx}
+                          className={`flex items-center gap-2 px-3 py-1.5 ${
+                            locked
+                              ? 'cursor-default text-[#9ca3af]'
+                              : 'cursor-pointer hover:bg-[#f3f4f6] text-[#0a0a0a]'
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            disabled={locked}
+                            onChange={() => toggleProductColumnVisibility(logicalIdx)}
+                            className="size-4 rounded border-[#d1d5db] text-[#0267ff] disabled:cursor-not-allowed disabled:opacity-50"
+                          />
+                          <span className={`text-[13px] ${locked ? 'text-[#9ca3af]' : 'text-[#0a0a0a]'}`}>
+                            {label}
+                          </span>
+                        </label>
+                      )
+                    })}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
           <button
             type="button"
             className="h-10 w-10 flex items-center justify-center rounded-[4px] border border-[#e9eaeb] bg-white text-[#22272f] hover:bg-[#f3f4f6] shrink-0"
@@ -5324,13 +6078,13 @@ function ProductsDrilldown({
                   />
                 </label>
               </th>
-              {productColumnOrder.map((logicalIdx, visualIdx) =>
+              {visibleProductColumnOrder.map((logicalIdx, visualIdx) =>
                 renderProductsHeaderCell(logicalIdx, visualIdx)
               )}
             </tr>
             <tr className="border-b border-[#E9EAEB] bg-white">
               <th className="sticky left-0 z-30 w-14 min-w-14 max-w-14 box-border py-2 px-4 bg-white shadow-[4px_0_12px_-6px_rgba(15,23,42,0.12)]" />
-              {productColumnOrder.map((logicalIdx, visualIdx) =>
+              {visibleProductColumnOrder.map((logicalIdx, visualIdx) =>
                 renderProductsSummaryCell(logicalIdx, visualIdx)
               )}
             </tr>
@@ -5342,6 +6096,7 @@ function ProductsDrilldown({
                 className="group border-b border-[#E9EAEB] bg-white hover:bg-[#f9fafb] cursor-pointer"
                 onClick={(e) => {
                   if (e.target.closest('[data-status-dropdown]')) return
+                  if (e.target.closest('[data-transfers-edit]')) return
                   setSelectedProduct(p)
                 }}
                 role="button"
@@ -5350,6 +6105,7 @@ function ProductsDrilldown({
                   if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault()
                     if (e.target.closest('[data-status-dropdown]')) return
+                    if (e.target.closest('[data-transfers-edit]')) return
                     setSelectedProduct(p)
                   }
                 }}
@@ -5366,7 +6122,7 @@ function ProductsDrilldown({
                     onChange={() => toggleProductSelection(p.id)}
                   />
                 </td>
-                {productColumnOrder.map((logicalIdx, visualIdx) =>
+                {visibleProductColumnOrder.map((logicalIdx, visualIdx) =>
                   renderProductsBodyCell(logicalIdx, visualIdx, p)
                 )}
               </tr>
@@ -5502,6 +6258,128 @@ function ProductsDrilldown({
         </div>
         )
       })()}
+      {transfersModalProductId != null &&
+        (() => {
+          const modalProduct = baseProducts.find((row) => row.id === transfersModalProductId)
+          if (!modalProduct) return null
+          const packMultiple = Number(modalProduct.packMultiple) || 0
+          const packUnits = getEffectivePackTransfers(modalProduct)
+          const packCount = packMultiple > 0 ? packUnits / packMultiple : 0
+          const rebalUnits = Number(modalProduct.rebalTransfers) || 0
+          const showPacks = productHasMixedFulfilment(modalProduct) && packUnits > 0
+          const showRebal = rebalUnits > 0
+          const looseNum = Number(editingTransfersLooseValue)
+          const canStepDown = Number.isFinite(looseNum) && looseNum > 0
+          const bodyCopy =
+            'This updates the replenishment quantity. Rebalancing and pack units can be changed on the Transfer drilldown.'
+
+          return createPortal(
+            <div
+              ref={transfersPopoverRef}
+              data-transfers-edit-popover
+              role="dialog"
+              aria-modal="false"
+              aria-labelledby="edit-replenishment-units-title"
+              className="fixed z-[10000] flex w-[300px] flex-col overflow-hidden rounded-[8px] border border-[#e5e7eb] bg-white shadow-[0_8px_24px_rgba(15,23,42,0.12)]"
+              style={{ left: transfersPopoverCoords.left, top: transfersPopoverCoords.top }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex shrink-0 items-start justify-between gap-2 border-b border-[#eaeaea] px-3 py-2">
+                <h2
+                  id="edit-replenishment-units-title"
+                  className="text-[14px] font-semibold leading-snug text-[#0a0a0a]"
+                >
+                  Edit replenishment units
+                </h2>
+                <button
+                  type="button"
+                  onClick={handleCloseTransfersModal}
+                  className="flex size-6 shrink-0 items-center justify-center rounded-[4px] text-[#6b7280] hover:bg-[#f3f4f6]"
+                  aria-label="Close"
+                >
+                  <X className="size-4" strokeWidth={2} />
+                </button>
+              </div>
+              <div className="flex flex-col gap-2 px-3 py-2.5">
+                <p className="text-[12px] leading-snug text-[#4b535c]">{bodyCopy}</p>
+                <div className="flex flex-col gap-1.5">
+                  {showPacks && (
+                    <div className="flex items-center justify-between gap-3 text-[12px] text-[#6b7280]">
+                      <span>Packs</span>
+                      <span className="text-right tabular-nums">
+                        {packCount} × {packMultiple} units ({packUnits} units total)
+                      </span>
+                    </div>
+                  )}
+                  {showRebal && (
+                    <div className="flex items-center justify-between gap-3 text-[12px] text-[#6b7280]">
+                      <span>Rebalancing</span>
+                      <span className="tabular-nums">{rebalUnits} units</span>
+                    </div>
+                  )}
+                  <div className="flex items-center justify-between gap-3 text-[12px] text-[#0a0a0a]">
+                    <span className="font-medium">Loose</span>
+                    <div className="flex items-center gap-2">
+                      <div className="flex overflow-hidden rounded-[4px] border border-[#e9eaeb]">
+                        <input
+                          type="number"
+                          min="0"
+                          step={1}
+                          value={editingTransfersLooseValue}
+                          onChange={(e) => setEditingTransfersLooseValue(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') handleConfirmTransfersEdit()
+                          }}
+                          className="h-8 w-14 border-0 px-2 text-right text-[12px] text-[#0a0a0a] outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                          aria-label="Loose replenishment units"
+                          autoFocus
+                        />
+                        <div className="flex flex-col border-l border-[#e9eaeb]">
+                          <button
+                            type="button"
+                            aria-label="Increase loose units"
+                            className="flex h-4 w-6 items-center justify-center text-[#6b7280] hover:bg-[#f3f4f6] hover:text-[#0a0a0a]"
+                            onClick={() => {
+                              const n = Number(editingTransfersLooseValue)
+                              const next = Number.isFinite(n) ? n + 1 : 1
+                              setEditingTransfersLooseValue(String(Math.max(0, next)))
+                            }}
+                          >
+                            <ChevronUp size={11} strokeWidth={2.5} aria-hidden />
+                          </button>
+                          <button
+                            type="button"
+                            aria-label="Decrease loose units"
+                            disabled={!canStepDown}
+                            className="flex h-4 w-6 items-center justify-center border-t border-[#e9eaeb] text-[#6b7280] hover:bg-[#f3f4f6] hover:text-[#0a0a0a] disabled:cursor-not-allowed disabled:opacity-40"
+                            onClick={() => {
+                              const n = Number(editingTransfersLooseValue)
+                              if (!Number.isFinite(n) || n <= 0) return
+                              setEditingTransfersLooseValue(String(n - 1))
+                            }}
+                          >
+                            <ChevronDown size={11} strokeWidth={2.5} aria-hidden />
+                          </button>
+                        </div>
+                      </div>
+                      <span className="text-[#4b535c]">units</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="flex shrink-0 justify-end border-t border-[#eaeaea] px-3 py-2">
+                <button
+                  type="button"
+                  onClick={handleConfirmTransfersEdit}
+                  className="h-8 rounded-[6px] bg-[#0267ff] px-3 text-[13px] font-medium text-white hover:bg-[#0256d6]"
+                >
+                  Confirm
+                </button>
+              </div>
+            </div>,
+            document.body
+          )
+        })()}
     </div>
   )
 }
@@ -6235,7 +7113,9 @@ const EXPLORER_TABLE_COLUMNS = [
     minWidth: 'min-w-[160px]',
     tooltip: 'Stock on-hand at the receiving location. In transit & PFP shown as secondary context.',
   },
-  { id: 'sales', label: 'Sales', alignment: 'right', minWidth: 'min-w-[120px]', subtitle: 'L7D / L30D' },
+  { id: 'salesL7', label: 'Sales', alignment: 'right', minWidth: 'min-w-[70px]', subtitle: 'L7D' },
+  { id: 'salesL30', label: 'Sales', alignment: 'right', minWidth: 'min-w-[70px]', subtitle: 'L30D' },
+  { id: 'salesL90', label: 'Sales', alignment: 'right', minWidth: 'min-w-[70px]', subtitle: 'L90D' },
   { id: 'forecast', label: 'Forecast', alignment: 'right', minWidth: 'min-w-[100px]', subtitle: 'per wk', tooltip: null },
   {
     id: 'warehouseUnits',
@@ -6289,19 +7169,22 @@ const EXPLORER_TABLE_COLUMNS = [
   { id: 'status', label: 'Status', alignment: 'right', minWidth: 'min-w-[150px]' },
 ]
 
-/** CX prototype — ordered subset; Confidence sits after Recommended (differs from full order) */
+/** CX prototype — reduced default aligned with Products preferred set (+ From/To). No Stockouts column on Explorer. */
 const EXPLORER_REDUCED_COLUMN_IDS = [
   'productDetails',
   'fromLocation',
   'toLocation',
   'movementType',
+  'stockInCirculation',
+  'salesL7',
+  'salesL30',
+  'salesL90',
+  'forecast',
   'transfers',
-  'revenue',
   'recommended',
   'confidence',
+  'revenue',
   'coverage',
-  'stockInCirculation',
-  'forecast',
   'status',
 ]
 
@@ -6824,13 +7707,22 @@ function renderExplorerBodyCell(row, col, {
           <ProductNextEventCell nextEvent={row.nextEvent} />
         </td>
       )
-    case 'sales':
+    case 'salesL7':
       return (
         <td key={col.id} className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}>
-          <div className="flex flex-col items-end gap-0.5">
-            <span className="text-[14px] text-[#0a0a0a]">{row.salesL7}</span>
-            <span className="text-[12px] text-[#4b535c]">{row.salesL30}</span>
-          </div>
+          <span className="text-[14px] text-[#0a0a0a]">{row.salesL7 ?? '—'}</span>
+        </td>
+      )
+    case 'salesL30':
+      return (
+        <td key={col.id} className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}>
+          <span className="text-[14px] text-[#0a0a0a]">{row.salesL30 ?? '—'}</span>
+        </td>
+      )
+    case 'salesL90':
+      return (
+        <td key={col.id} className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}>
+          <span className="text-[14px] text-[#0a0a0a]">{row.salesL90 ?? '—'}</span>
         </td>
       )
     case 'forecast':
@@ -6951,13 +7843,22 @@ function renderExplorerTotalsCell(col, totals, { explorerTotalsThClass, explorer
           {totals.recommended}
         </th>
       )
-    case 'sales':
+    case 'salesL7':
       return (
         <th key={col.id} className={`${baseClass} ${col.minWidth} text-right`}>
-          <div className="flex flex-col items-end">
-            <span>{totals.salesL7}</span>
-            <span className="text-[12px] text-[#4b535c]">{totals.salesL30}</span>
-          </div>
+          {totals.salesL7}
+        </th>
+      )
+    case 'salesL30':
+      return (
+        <th key={col.id} className={`${baseClass} ${col.minWidth} text-right`}>
+          {totals.salesL30}
+        </th>
+      )
+    case 'salesL90':
+      return (
+        <th key={col.id} className={`${baseClass} ${col.minWidth} text-right`}>
+          {totals.salesL90}
         </th>
       )
     case 'stockInCirculation':
@@ -7715,6 +8616,7 @@ function ExplorerTable({
     const sumRecommended = skuRows.reduce((sum, row) => sum + parseInt(row.recommended, 10), 0)
     const sumSalesL7 = skuRows.reduce((sum, row) => sum + row.salesL7, 0)
     const sumSalesL30 = skuRows.reduce((sum, row) => sum + row.salesL30, 0)
+    const sumSalesL90 = skuRows.reduce((sum, row) => sum + (row.salesL90 ?? 0), 0)
     const sumStockBefore = skuRows.reduce((sum, row) => sum + row.stockBefore, 0)
     const sumStockAfter = skuRows.reduce((sum, row) => sum + row.stockAfter, 0)
     const sumInTransitAndPfp = skuRows.reduce((sum, row) => sum + row.stockInTransitAndPfp, 0)
@@ -7725,6 +8627,7 @@ function ExplorerTable({
       recommended: `${sumRecommended}`,
       salesL7: sumSalesL7,
       salesL30: sumSalesL30,
+      salesL90: sumSalesL90,
       stockBeforeAfter: `${sumStockBefore} → ${sumStockAfter}`,
       inTransit:
         sumInTransitAndPfp > 0 ? `${sumInTransitAndPfp} in transit & PFP` : null }
@@ -8669,6 +9572,14 @@ export default function ScheduleDetailPage() {
     setActiveTab('products')
   }
 
+  const handleOpenExplorerUnapprovedForProduct = (productName) => {
+    setExplorerDepartmentFilters([])
+    setExplorerConfidenceFilters([])
+    setExplorerProductNameFilters([productName])
+    setExplorerStatusFilters(['unapproved', 'needs_review', 'edited'])
+    setActiveTab('explorer')
+  }
+
   const hasActiveFilters =
     activeTab === 'products'
       ? productsDrawerFiltersActive
@@ -8973,10 +9884,12 @@ export default function ScheduleDetailPage() {
             showBackButton={false}
             onDrawerFiltersActiveChange={setProductsDrawerFiltersActive}
             setExplorerProductNameFilters={setExplorerProductNameFilters}
+            setExplorerStatusFilters={setExplorerStatusFilters}
             setActiveTab={setActiveTab}
             selectedProduct={productsTabSelectedProduct}
             onSelectedProductChange={setProductsTabSelectedProduct}
             setExplorerTransferOverrides={setExplorerTransferOverrides}
+            onOpenExplorerUnapprovedForProduct={handleOpenExplorerUnapprovedForProduct}
           />
         ) : activeTab === 'locations' ? (
           <LocationsTab
@@ -9008,8 +9921,10 @@ export default function ScheduleDetailPage() {
               onBack={() => setSelectedTrip(null)}
               onDrawerFiltersActiveChange={setProductsDrawerFiltersActive}
               setExplorerProductNameFilters={setExplorerProductNameFilters}
+              setExplorerStatusFilters={setExplorerStatusFilters}
               setActiveTab={setActiveTab}
               setExplorerTransferOverrides={setExplorerTransferOverrides}
+              onOpenExplorerUnapprovedForProduct={handleOpenExplorerUnapprovedForProduct}
             />
           ) : (
           <div className="flex flex-col gap-[15px]">
