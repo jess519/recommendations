@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useLayoutEffect, useMemo } from 'react'
 import { createPortal } from 'react-dom'
-import { Plus, Copy } from 'lucide-react'
+import { Plus, Copy, Pencil, X, ChevronUp, ChevronDown } from 'lucide-react'
 import { ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts'
 import { IconSearch, IconChevronDown, IconChevronRight, IconShare, IconDocument, IconClose, IconArrowLeft, IconGears, IconTruckTu, IconPackageTu, IconRebalancing, IconReplenishment, IconCalendarNote, IconTrendUp, IconFilterFunnel, IconColumnSettings, IconSortOrder, IconWarning, IconLightbulb } from '../components/icons'
 function IconInfo() {
@@ -486,8 +486,8 @@ const PRODUCTS_BY_TRIP = {
     { id: 4, name: 'Croi-sac zip s', sku: 'A1398811', colour: 'Noir', movementType: ["rebalancing"], transfers: 1, transfersSub: 2, approvedTransfers: 1, unapprovedTransfers: 0, revenue: '€0.98K', recommended: 1, recommendedBadges: ['REV'], recommendedSub: 2, confidence: 'high', coverage: 'All SKUs in target', coverageWeeks: 6.1, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 0, salesL30: 1, salesL90: 3, forecast: 0.32, stockouts: '0 → 0', locations: '1 → 2', overstocks: '2 → 1', understocks: '4 → 2', status: 'approved_by_user', approvedByUser: 'Jess Briggs', currentUnits: 3, currentUnitsInTransit: 1, warehouseAllocateLine: '55 → 50', warehouseSellLine: '70 → 63', packMultiple: null, skuCount: 1 },
     // COIN: single-SKU pack-constrained replen — inline-editable
     { id: 5, name: 'Pre-sac seau s', sku: 'A101081', colour: 'Bleu petrole', movementType: ["replenishment"], transfers: 20, transfersSub: 1, approvedTransfers: 10, unapprovedTransfers: 10, revenue: '€0.76K', recommended: 20, recommendedBadges: ['VIS'], recommendedSub: 1, confidence: 'low', coverage: '8% below target', coverageWeeks: 2.9, coverageTarget: 6, nextEvent: { name: 'UK weekly replenishment', date: '16/06/2026' }, salesL7: 1, salesL30: 2, salesL90: 5, forecast: 0.54, stockouts: '0 → 1', locations: '2 → 1', overstocks: '3 → 0', understocks: '2 → 0', status: 'needs_review_from_user', currentUnits: 15, currentUnitsInTransit: 2, warehouseAllocateLine: '50 → 45', warehouseSellLine: '68 → 61', packMultiple: 10, skuCount: 1, isVirtualPack: true },
-    // Mixed replen+rebal — pack rules apply to replen portion in hover
-    { id: 6, name: 'Ang-sac pte main s', sku: 'A1252811', colour: 'Figue', movementType: ["replenishment","rebalancing"], transfers: 22, transfersSub: 1, replenTransfers: 20, rebalTransfers: 2, approvedTransfers: 12, unapprovedTransfers: 10, revenue: '€0.65K', recommended: 1, recommendedBadges: ['REV'], recommendedSub: 1, confidence: 'low', coverage: '67% below target', coverageWeeks: 1.4, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 0, salesL30: 1, salesL90: 3, forecast: 0.21, stockouts: '0 → 0', locations: '2 → 2', overstocks: '4 → 1', understocks: '3 → 1', status: 'partially_approved', currentUnits: 7, currentUnitsInTransit: 0, warehouseAllocateLine: '57 → 44', warehouseSellLine: '57 → 51', packMultiple: 10, skuCount: 1, isVirtualPack: false },
+    // Mixed pack + loose replen + rebal — pen opens edit modal (loose only)
+    { id: 6, name: 'Ang-sac pte main s', sku: 'A1252811', colour: 'Figue', movementType: ["replenishment","rebalancing"], transfers: 24, transfersSub: 1, packTransfers: 20, looseTransfers: 2, replenTransfers: 22, rebalTransfers: 2, approvedTransfers: 12, unapprovedTransfers: 10, revenue: '€0.65K', recommended: 1, recommendedBadges: ['REV'], recommendedSub: 1, confidence: 'low', coverage: '67% below target', coverageWeeks: 1.4, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 0, salesL30: 1, salesL90: 3, forecast: 0.21, stockouts: '0 → 0', locations: '2 → 2', overstocks: '4 → 1', understocks: '3 → 1', status: 'partially_approved', currentUnits: 7, currentUnitsInTransit: 0, warehouseAllocateLine: '57 → 44', warehouseSellLine: '57 → 51', packMultiple: 10, skuCount: 1, isVirtualPack: false },
     // Multi-SKU pack-constrained replen — read-only on Products row
     { id: 9, name: 'Coin-pack tote m', sku: 'C900010', colour: 'Noir', movementType: ["replenishment"], transfers: 55, transfersSub: 2, approvedTransfers: 28, unapprovedTransfers: 27, revenue: '€1.10K', recommended: 55, recommendedBadges: ['VIS'], recommendedSub: 2, confidence: 'high', coverage: '4% below target', coverageWeeks: 4.2, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 2, salesL30: 8, salesL90: 22, forecast: 1.2, stockouts: '0 → 0', locations: '2 → 2', overstocks: '2 → 1', understocks: '6 → 4', status: 'unapproved', currentUnits: 22, currentUnitsInTransit: 4, warehouseAllocateLine: '60 → 52', warehouseSellLine: '70 → 62', packMultiple: 10, skuCount: 5, isVirtualPack: true },
     // Unconstrained replen — baseline non-pack path
@@ -4223,6 +4223,11 @@ function productHasTransferSplit(p) {
   return p?.replenTransfers != null && p?.rebalTransfers != null
 }
 
+/** Aggregated rows where pen+modal disambiguates which portion is editable. */
+function productHasTransfersModalEdit(p) {
+  return productHasMixedFulfilment(p) || productHasTransferSplit(p)
+}
+
 function productIsNonPackReplenEditable(p) {
   return productIsReplenOnly(p) && !productHasPackConstraint(p)
 }
@@ -4322,6 +4327,11 @@ function ProductsDrilldown({
   const [productPackCountOverrides, setProductPackCountOverrides] = useState({})
   const [editingTransfersProductId, setEditingTransfersProductId] = useState(null)
   const [editingTransfersValue, setEditingTransfersValue] = useState('')
+  const [transfersModalProductId, setTransfersModalProductId] = useState(null)
+  const [editingTransfersLooseValue, setEditingTransfersLooseValue] = useState('')
+  const [transfersPopoverCoords, setTransfersPopoverCoords] = useState({ left: 0, top: 0 })
+  const transfersEditPenRefs = useRef({})
+  const transfersPopoverRef = useRef(null)
   const [selectedProductIds, setSelectedProductIds] = useState(new Set())
   const [statusFilters, setStatusFilters] = useState([])
   const [filtersDropdownOpen, setFiltersDropdownOpen] = useState(false)
@@ -4336,7 +4346,6 @@ function ProductsDrilldown({
   )
   const [columnSettingsOpen, setColumnSettingsOpen] = useState(false)
   const [columnSettingsSearch, setColumnSettingsSearch] = useState('')
-  const [hoveredTransferProductId, setHoveredTransferProductId] = useState(null)
   const [replenTransferOverrides, setReplenTransferOverrides] = useState({})
   const productsColumnSettingsRef = useRef(null)
 
@@ -4354,21 +4363,35 @@ function ProductsDrilldown({
     return Number(p.replenTransfers) || 0
   }
 
+  const getEffectivePackTransfers = (p) => {
+    if (Object.prototype.hasOwnProperty.call(productPackTransfersOverrides, p.id)) {
+      return Number(productPackTransfersOverrides[p.id]) || 0
+    }
+    return Number(p.packTransfers) || 0
+  }
+
+  const getEffectiveLooseTransfers = (p) => {
+    if (Object.prototype.hasOwnProperty.call(productLooseTransfersOverrides, p.id)) {
+      return Number(productLooseTransfersOverrides[p.id]) || 0
+    }
+    if (p.looseTransfers != null) return Number(p.looseTransfers) || 0
+    // Non-pack mixed replen+rebal: replen portion is the editable "loose" value
+    if (productHasTransferSplit(p) && !productHasMixedFulfilment(p)) {
+      return getEffectiveReplenTransfers(p) ?? 0
+    }
+    return 0
+  }
+
   const getEffectiveTransfers = (p) => {
+    // Pack + loose (+ optional rebal) — prefer mixed fulfilment so loose overrides apply
+    if (productHasMixedFulfilment(p)) {
+      const packU = getEffectivePackTransfers(p)
+      const looseU = getEffectiveLooseTransfers(p)
+      const rebalU = Number(p.rebalTransfers) || 0
+      return packU + looseU + rebalU
+    }
     if (productHasTransferSplit(p)) {
       return getEffectiveReplenTransfers(p) + (Number(p.rebalTransfers) || 0)
-    }
-    if (productHasMixedFulfilment(p)) {
-      if (Object.prototype.hasOwnProperty.call(productTransfersOverrides, p.id)) {
-        return Number(productTransfersOverrides[p.id]) || 0
-      }
-      const packU = Object.prototype.hasOwnProperty.call(productPackTransfersOverrides, p.id)
-        ? Number(productPackTransfersOverrides[p.id]) || 0
-        : Number(p.packTransfers) || 0
-      const looseU = Object.prototype.hasOwnProperty.call(productLooseTransfersOverrides, p.id)
-        ? Number(productLooseTransfersOverrides[p.id]) || 0
-        : Number(p.looseTransfers) || 0
-      return packU + looseU
     }
     if (Object.prototype.hasOwnProperty.call(productTransfersOverrides, p.id)) {
       return Number(productTransfersOverrides[p.id]) || 0
@@ -4415,7 +4438,13 @@ function ProductsDrilldown({
       { transfers: 0, approved: 0, unapproved: 0 }
     )
     // eslint-disable-next-line react-hooks/exhaustive-deps -- helpers close over override maps
-  }, [baseProducts, productTransfersOverrides, replenTransferOverrides])
+  }, [
+    baseProducts,
+    productTransfersOverrides,
+    replenTransferOverrides,
+    productPackTransfersOverrides,
+    productLooseTransfersOverrides,
+  ])
 
   const beginTransfersEdit = (p, currentValue) => {
     setEditingTransfersProductId(p.id)
@@ -4439,6 +4468,125 @@ function ProductsDrilldown({
     setEditingTransfersProductId(null)
     setEditingTransfersValue('')
   }
+
+  const handleOpenTransfersModal = (p) => {
+    setTransfersModalProductId(p.id)
+    setEditingTransfersLooseValue(String(getEffectiveLooseTransfers(p)))
+  }
+
+  const handleCloseTransfersModal = () => {
+    setTransfersModalProductId(null)
+    setEditingTransfersLooseValue('')
+  }
+
+  const handleConfirmTransfersEdit = () => {
+    const p = baseProducts.find((row) => row.id === transfersModalProductId)
+    if (!p) {
+      handleCloseTransfersModal()
+      return
+    }
+    const raw = editingTransfersLooseValue
+    const n = Number(raw)
+    if (raw === '' || !Number.isFinite(n) || n < 0 || !Number.isInteger(n)) {
+      handleCloseTransfersModal()
+      return
+    }
+    setProductLooseTransfersOverrides((prev) => ({ ...prev, [p.id]: n }))
+    // Non-pack mixed replen+rebal still uses replen overrides for the editable portion
+    if (productHasTransferSplit(p) && !productHasMixedFulfilment(p)) {
+      setReplenTransferOverrides((prev) => ({ ...prev, [p.id]: n }))
+    }
+    handleCloseTransfersModal()
+  }
+
+  const updateTransfersPopoverPosition = useCallback(() => {
+    const el = transfersEditPenRefs.current[transfersModalProductId]
+    const pop = transfersPopoverRef.current
+    if (!el || transfersModalProductId == null) return
+    const rect = el.getBoundingClientRect()
+    const gap = 8
+    const pad = 12
+    const vw = window.innerWidth
+    const vh = window.innerHeight
+    const pw = pop?.offsetWidth || 360
+    const ph = pop?.offsetHeight || 280
+
+    // Prefer left of pen (cell sits on the right; popover is wider than the cell)
+    let left = rect.left - gap - pw
+    let top = rect.top + rect.height / 2 - ph / 2
+
+    if (left < pad) {
+      // Flip to right of pen if left would clip
+      left = rect.right + gap
+      if (left + pw > vw - pad) {
+        // Flip below / above
+        left = Math.max(pad, Math.min(rect.right - pw, vw - pad - pw))
+        top = rect.bottom + gap
+        if (top + ph > vh - pad) {
+          top = rect.top - gap - ph
+        }
+      } else {
+        top = Math.max(pad, Math.min(top, vh - pad - ph))
+      }
+    } else {
+      top = Math.max(pad, Math.min(top, vh - pad - ph))
+    }
+
+    left = Math.max(pad, Math.min(left, vw - pad - pw))
+    top = Math.max(pad, Math.min(top, vh - pad - ph))
+    setTransfersPopoverCoords({ left, top })
+  }, [transfersModalProductId])
+
+  useLayoutEffect(() => {
+    if (transfersModalProductId == null) return
+    updateTransfersPopoverPosition()
+    const id = requestAnimationFrame(() => updateTransfersPopoverPosition())
+
+    const pop = transfersPopoverRef.current
+    const ro = pop ? new ResizeObserver(() => updateTransfersPopoverPosition()) : null
+    if (pop && ro) ro.observe(pop)
+
+    const onScrollOrResize = () => updateTransfersPopoverPosition()
+    window.addEventListener('scroll', onScrollOrResize, true)
+    window.addEventListener('resize', onScrollOrResize)
+
+    const scrollParents = []
+    let node = transfersEditPenRefs.current[transfersModalProductId]?.parentElement
+    while (node) {
+      const st = getComputedStyle(node)
+      if (/(auto|scroll|overlay)/.test(st.overflowY) || /(auto|scroll|overlay)/.test(st.overflowX)) {
+        node.addEventListener('scroll', onScrollOrResize, { passive: true })
+        scrollParents.push(node)
+      }
+      node = node.parentElement
+    }
+
+    return () => {
+      cancelAnimationFrame(id)
+      ro?.disconnect()
+      window.removeEventListener('scroll', onScrollOrResize, true)
+      window.removeEventListener('resize', onScrollOrResize)
+      scrollParents.forEach((n) => n.removeEventListener('scroll', onScrollOrResize))
+    }
+  }, [transfersModalProductId, updateTransfersPopoverPosition, editingTransfersLooseValue])
+
+  useEffect(() => {
+    if (transfersModalProductId == null) return
+    const onKey = (e) => {
+      if (e.key === 'Escape') handleCloseTransfersModal()
+    }
+    const onPointerDown = (e) => {
+      if (e.target.closest('[data-transfers-edit-popover]')) return
+      if (e.target.closest('[data-transfers-edit]')) return
+      handleCloseTransfersModal()
+    }
+    window.addEventListener('keydown', onKey)
+    document.addEventListener('mousedown', onPointerDown)
+    return () => {
+      window.removeEventListener('keydown', onKey)
+      document.removeEventListener('mousedown', onPointerDown)
+    }
+  }, [transfersModalProductId])
 
   const products = (() => {
     let list = baseProducts
@@ -4495,9 +4643,13 @@ function ProductsDrilldown({
     selectedProductIds.forEach((id) => {
       const p = baseProducts.find((row) => row.id === id)
       const hasReplenSplit = productHasTransferSplit(p)
+      const hasMixed = productHasMixedFulfilment(p)
       const hasReplenOverride = Object.prototype.hasOwnProperty.call(replenTransferOverrides, id)
       const hasTransfersOverride = Object.prototype.hasOwnProperty.call(productTransfersOverrides, id)
-      if (hasReplenSplit || hasReplenOverride || hasTransfersOverride) eligibleIds.push(id)
+      const hasLooseOverride = Object.prototype.hasOwnProperty.call(productLooseTransfersOverrides, id)
+      if (hasReplenSplit || hasMixed || hasReplenOverride || hasTransfersOverride || hasLooseOverride) {
+        eligibleIds.push(id)
+      }
     })
 
     if (eligibleIds.length > 0) {
@@ -4509,6 +4661,13 @@ function ProductsDrilldown({
         return next
       })
       setProductTransfersOverrides((prev) => {
+        const next = { ...prev }
+        eligibleIds.forEach((id) => {
+          delete next[id]
+        })
+        return next
+      })
+      setProductLooseTransfersOverrides((prev) => {
         const next = { ...prev }
         eligibleIds.forEach((id) => {
           delete next[id]
@@ -5126,15 +5285,23 @@ function ProductsDrilldown({
       case 2: {
         const effectiveTransfers = getEffectiveTransfers(p)
         const hasTransferSplit = productHasTransferSplit(p)
+        const hasMixedFulfilment = productHasMixedFulfilment(p)
         const hasPack = productHasPackConstraint(p)
         const isReplenOnly = productIsReplenOnly(p)
-        // Pack rows (single- and multi-SKU) are display-only; only non-pack replen is inline-editable
         const isInlineEditable = productIsNonPackReplenEditable(p)
+        const hasModalEdit = productHasTransfersModalEdit(p)
         const packCount = getReplenPackCount(p)
-        const effectiveReplen = hasTransferSplit ? getEffectiveReplenTransfers(p) : null
+        const looseUnits = getEffectiveLooseTransfers(p)
+        const rebalUnits = Number(p.rebalTransfers) || 0
         const isEditingThis = editingTransfersProductId === p.id
+        // Pack + loose + rebal: summary units = loose + rebal (not pack contents)
+        const showPackLooseRebalSummary =
+          hasMixedFulfilment && rebalUnits > 0 && packCount > 0
         const showPackPrimary =
-          hasPack && (isReplenOnly || hasTransferSplit) && packCount > 0
+          hasPack &&
+          (isReplenOnly || hasTransferSplit) &&
+          packCount > 0 &&
+          !showPackLooseRebalSummary
 
         const transfersCellContent = isInlineEditable ? (
           <div className="flex flex-col items-end gap-0.5">
@@ -5163,6 +5330,13 @@ function ProductsDrilldown({
               className="w-16 h-7 px-2 rounded-[4px] border border-[#e9eaeb] text-[12px] text-[#0a0a0a] text-right"
             />
           </div>
+        ) : showPackLooseRebalSummary ? (
+          <div className="flex flex-col items-end gap-0.5">
+            <PackCountDisplay count={packCount} />
+            <span className="text-[12px] text-[#4b535c]">
+              {looseUnits + rebalUnits} units
+            </span>
+          </div>
         ) : showPackPrimary ? (
           <div className="flex flex-col items-end gap-0.5">
             <PackCountDisplay count={packCount} />
@@ -5174,55 +5348,38 @@ function ProductsDrilldown({
           </div>
         )
 
-        if (!hasTransferSplit) {
-          return (
-            <td key={logicalIdx} className={`${pin}py-3 px-4 text-right align-top`}>
-              {transfersCellContent}
-            </td>
-          )
-        }
-
         return (
           <td
             key={logicalIdx}
-            className={`${pin}py-3 px-4 text-right align-top relative`}
-            onMouseEnter={() => setHoveredTransferProductId(p.id)}
-            onMouseLeave={() => setHoveredTransferProductId(null)}
+            className={`${pin}group/transfers py-3 px-4 text-right align-top`}
           >
-            {transfersCellContent}
-            {hoveredTransferProductId === p.id && (
-              <div
-                className="absolute bottom-full mb-1 left-0 z-50 bg-white border border-[#e5e7eb] rounded-[6px] shadow-md p-3 min-w-[200px]"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <div className="text-[12px] font-medium text-[#0a0a0a] mb-2">Transfer split</div>
-                <div className="flex items-center justify-between gap-4 mb-2">
-                  <span className="text-[12px] text-[#4b535c]">Rebalancing</span>
-                  <span className="text-[12px] text-[#0a0a0a] font-medium">{p.rebalTransfers}</span>
-                </div>
-                <div className="flex items-center justify-between gap-4">
-                  <span className="text-[12px] text-[#4b535c]">Replenishment</span>
-                  {hasPack ? (
-                    <span className="text-[12px] text-[#0a0a0a] font-medium">{effectiveReplen}</span>
-                  ) : (
-                    <input
-                      type="number"
-                      min="0"
-                      value={effectiveReplen ?? 0}
-                      onChange={(e) => {
-                        const next = e.target.value === '' ? '' : Number(e.target.value)
-                        setReplenTransferOverrides((prev) => ({ ...prev, [p.id]: next }))
-                      }}
-                      onClick={(e) => e.stopPropagation()}
-                      className="w-16 h-7 px-2 rounded-[4px] border border-[#e9eaeb] text-[12px] text-[#0a0a0a] text-right"
-                    />
-                  )}
-                </div>
-                <p className="text-[11px] text-[#4b535c] italic mt-2">
-                  Rebalancing quantity is set by the solver and cannot be edited at this level.
-                </p>
-              </div>
-            )}
+            <div className="inline-flex w-full items-center justify-end gap-1.5">
+              {transfersCellContent}
+              {hasModalEdit && (
+                <button
+                  type="button"
+                  ref={(el) => {
+                    if (el) transfersEditPenRefs.current[p.id] = el
+                    else delete transfersEditPenRefs.current[p.id]
+                  }}
+                  data-transfers-edit
+                  aria-label={`Edit replenishment units for ${p.name}`}
+                  aria-expanded={transfersModalProductId === p.id}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    if (transfersModalProductId === p.id) handleCloseTransfersModal()
+                    else handleOpenTransfersModal(p)
+                  }}
+                  className={`shrink-0 rounded p-0.5 text-[#6A7282] transition-opacity duration-150 hover:text-[#101828] focus-visible:opacity-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0267FF] ${
+                    transfersModalProductId === p.id
+                      ? 'opacity-100'
+                      : 'opacity-0 group-hover/transfers:opacity-100'
+                  }`}
+                >
+                  <Pencil size={14} strokeWidth={2} aria-hidden />
+                </button>
+              )}
+            </div>
           </td>
         )
       }
@@ -5681,6 +5838,7 @@ function ProductsDrilldown({
                 className="group border-b border-[#E9EAEB] bg-white hover:bg-[#f9fafb] cursor-pointer"
                 onClick={(e) => {
                   if (e.target.closest('[data-status-dropdown]')) return
+                  if (e.target.closest('[data-transfers-edit]')) return
                   setSelectedProduct(p)
                 }}
                 role="button"
@@ -5689,6 +5847,7 @@ function ProductsDrilldown({
                   if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault()
                     if (e.target.closest('[data-status-dropdown]')) return
+                    if (e.target.closest('[data-transfers-edit]')) return
                     setSelectedProduct(p)
                   }
                 }}
@@ -5841,6 +6000,128 @@ function ProductsDrilldown({
         </div>
         )
       })()}
+      {transfersModalProductId != null &&
+        (() => {
+          const modalProduct = baseProducts.find((row) => row.id === transfersModalProductId)
+          if (!modalProduct) return null
+          const packMultiple = Number(modalProduct.packMultiple) || 0
+          const packUnits = getEffectivePackTransfers(modalProduct)
+          const packCount = packMultiple > 0 ? packUnits / packMultiple : 0
+          const rebalUnits = Number(modalProduct.rebalTransfers) || 0
+          const showPacks = productHasMixedFulfilment(modalProduct) && packUnits > 0
+          const showRebal = rebalUnits > 0
+          const looseNum = Number(editingTransfersLooseValue)
+          const canStepDown = Number.isFinite(looseNum) && looseNum > 0
+          const bodyCopy =
+            'This updates the replenishment quantity. Rebalancing and pack units can be changed on the Transfer drilldown.'
+
+          return createPortal(
+            <div
+              ref={transfersPopoverRef}
+              data-transfers-edit-popover
+              role="dialog"
+              aria-modal="false"
+              aria-labelledby="edit-replenishment-units-title"
+              className="fixed z-[10000] flex w-[360px] flex-col overflow-hidden rounded-[8px] border border-[#e5e7eb] bg-white shadow-[0_8px_24px_rgba(15,23,42,0.12)]"
+              style={{ left: transfersPopoverCoords.left, top: transfersPopoverCoords.top }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex shrink-0 items-start justify-between gap-3 border-b border-[#eaeaea] px-4 py-3">
+                <h2
+                  id="edit-replenishment-units-title"
+                  className="text-[14px] font-semibold leading-snug text-[#0a0a0a]"
+                >
+                  Edit replenishment units
+                </h2>
+                <button
+                  type="button"
+                  onClick={handleCloseTransfersModal}
+                  className="flex size-7 shrink-0 items-center justify-center rounded-[4px] text-[#6b7280] hover:bg-[#f3f4f6]"
+                  aria-label="Close"
+                >
+                  <X className="size-4" strokeWidth={2} />
+                </button>
+              </div>
+              <div className="flex flex-col gap-3 px-4 py-3">
+                <p className="text-[12px] leading-snug text-[#4b535c]">{bodyCopy}</p>
+                <div className="flex flex-col gap-2.5">
+                  {showPacks && (
+                    <div className="flex items-center justify-between gap-3 text-[12px] text-[#6b7280]">
+                      <span>Packs</span>
+                      <span className="text-right tabular-nums">
+                        {packCount} × {packMultiple} units ({packUnits} units total)
+                      </span>
+                    </div>
+                  )}
+                  {showRebal && (
+                    <div className="flex items-center justify-between gap-3 text-[12px] text-[#6b7280]">
+                      <span>Rebalancing</span>
+                      <span className="tabular-nums">{rebalUnits} units</span>
+                    </div>
+                  )}
+                  <div className="flex items-center justify-between gap-3 text-[12px] text-[#0a0a0a]">
+                    <span className="font-medium">Loose</span>
+                    <div className="flex items-center gap-2">
+                      <div className="flex overflow-hidden rounded-[4px] border border-[#e9eaeb]">
+                        <input
+                          type="number"
+                          min="0"
+                          step={1}
+                          value={editingTransfersLooseValue}
+                          onChange={(e) => setEditingTransfersLooseValue(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') handleConfirmTransfersEdit()
+                          }}
+                          className="h-8 w-14 border-0 px-2 text-right text-[12px] text-[#0a0a0a] outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                          aria-label="Loose replenishment units"
+                          autoFocus
+                        />
+                        <div className="flex flex-col border-l border-[#e9eaeb]">
+                          <button
+                            type="button"
+                            aria-label="Increase loose units"
+                            className="flex h-4 w-6 items-center justify-center text-[#6b7280] hover:bg-[#f3f4f6] hover:text-[#0a0a0a]"
+                            onClick={() => {
+                              const n = Number(editingTransfersLooseValue)
+                              const next = Number.isFinite(n) ? n + 1 : 1
+                              setEditingTransfersLooseValue(String(Math.max(0, next)))
+                            }}
+                          >
+                            <ChevronUp size={11} strokeWidth={2.5} aria-hidden />
+                          </button>
+                          <button
+                            type="button"
+                            aria-label="Decrease loose units"
+                            disabled={!canStepDown}
+                            className="flex h-4 w-6 items-center justify-center border-t border-[#e9eaeb] text-[#6b7280] hover:bg-[#f3f4f6] hover:text-[#0a0a0a] disabled:cursor-not-allowed disabled:opacity-40"
+                            onClick={() => {
+                              const n = Number(editingTransfersLooseValue)
+                              if (!Number.isFinite(n) || n <= 0) return
+                              setEditingTransfersLooseValue(String(n - 1))
+                            }}
+                          >
+                            <ChevronDown size={11} strokeWidth={2.5} aria-hidden />
+                          </button>
+                        </div>
+                      </div>
+                      <span className="text-[#4b535c]">units</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="flex shrink-0 justify-end border-t border-[#eaeaea] px-4 py-3">
+                <button
+                  type="button"
+                  onClick={handleConfirmTransfersEdit}
+                  className="h-8 rounded-[6px] bg-[#0267ff] px-3 text-[13px] font-medium text-white hover:bg-[#0256d6]"
+                >
+                  Confirm
+                </button>
+              </div>
+            </div>,
+            document.body
+          )
+        })()}
     </div>
   )
 }
