@@ -4508,25 +4508,19 @@ function ProductsDrilldown({
     const pad = 12
     const vw = window.innerWidth
     const vh = window.innerHeight
-    const pw = pop?.offsetWidth || 360
-    const ph = pop?.offsetHeight || 280
+    const pw = pop?.offsetWidth || 300
+    const ph = pop?.offsetHeight || 240
 
-    // Prefer left of pen (cell sits on the right; popover is wider than the cell)
-    let left = rect.left - gap - pw
+    // Prefer right of pen so Transfers cell stays visible. Never open left over the cell.
+    let left = rect.right + gap
     let top = rect.top + rect.height / 2 - ph / 2
 
-    if (left < pad) {
-      // Flip to right of pen if left would clip
-      left = rect.right + gap
-      if (left + pw > vw - pad) {
-        // Flip below / above
-        left = Math.max(pad, Math.min(rect.right - pw, vw - pad - pw))
-        top = rect.bottom + gap
-        if (top + ph > vh - pad) {
-          top = rect.top - gap - ph
-        }
-      } else {
-        top = Math.max(pad, Math.min(top, vh - pad - ph))
+    if (left + pw > vw - pad) {
+      // Flip below the trigger (or above if bottom would clip)
+      left = Math.max(pad, Math.min(rect.right - pw, vw - pad - pw))
+      top = rect.bottom + gap
+      if (top + ph > vh - pad) {
+        top = rect.top - gap - ph
       }
     } else {
       top = Math.max(pad, Math.min(top, vh - pad - ph))
@@ -6022,11 +6016,11 @@ function ProductsDrilldown({
               role="dialog"
               aria-modal="false"
               aria-labelledby="edit-replenishment-units-title"
-              className="fixed z-[10000] flex w-[360px] flex-col overflow-hidden rounded-[8px] border border-[#e5e7eb] bg-white shadow-[0_8px_24px_rgba(15,23,42,0.12)]"
+              className="fixed z-[10000] flex w-[300px] flex-col overflow-hidden rounded-[8px] border border-[#e5e7eb] bg-white shadow-[0_8px_24px_rgba(15,23,42,0.12)]"
               style={{ left: transfersPopoverCoords.left, top: transfersPopoverCoords.top }}
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex shrink-0 items-start justify-between gap-3 border-b border-[#eaeaea] px-4 py-3">
+              <div className="flex shrink-0 items-start justify-between gap-2 border-b border-[#eaeaea] px-3 py-2">
                 <h2
                   id="edit-replenishment-units-title"
                   className="text-[14px] font-semibold leading-snug text-[#0a0a0a]"
@@ -6036,15 +6030,15 @@ function ProductsDrilldown({
                 <button
                   type="button"
                   onClick={handleCloseTransfersModal}
-                  className="flex size-7 shrink-0 items-center justify-center rounded-[4px] text-[#6b7280] hover:bg-[#f3f4f6]"
+                  className="flex size-6 shrink-0 items-center justify-center rounded-[4px] text-[#6b7280] hover:bg-[#f3f4f6]"
                   aria-label="Close"
                 >
                   <X className="size-4" strokeWidth={2} />
                 </button>
               </div>
-              <div className="flex flex-col gap-3 px-4 py-3">
+              <div className="flex flex-col gap-2 px-3 py-2.5">
                 <p className="text-[12px] leading-snug text-[#4b535c]">{bodyCopy}</p>
-                <div className="flex flex-col gap-2.5">
+                <div className="flex flex-col gap-1.5">
                   {showPacks && (
                     <div className="flex items-center justify-between gap-3 text-[12px] text-[#6b7280]">
                       <span>Packs</span>
@@ -6109,7 +6103,7 @@ function ProductsDrilldown({
                   </div>
                 </div>
               </div>
-              <div className="flex shrink-0 justify-end border-t border-[#eaeaea] px-4 py-3">
+              <div className="flex shrink-0 justify-end border-t border-[#eaeaea] px-3 py-2">
                 <button
                   type="button"
                   onClick={handleConfirmTransfersEdit}
