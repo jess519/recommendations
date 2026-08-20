@@ -500,6 +500,61 @@ const PRODUCTS_BY_TRIP = {
     { id: 8, name: 'Sac seau m', sku: 'B200002', colour: 'Noir', movementType: ["rebalancing"], transfers: 1, transfersSub: 2, approvedTransfers: 0, unapprovedTransfers: 1, revenue: '€0.52K', recommended: 1, recommendedBadges: ['VIS'], recommendedSub: 2, confidence: 'high', coverage: 'All SKUs in target', coverageWeeks: 6.3, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 0, salesL30: 1, salesL90: 3, forecast: 0.28, stockouts: '0 → 1', locations: '1 → 2', overstocks: '1 → 0', understocks: '3 → 1', status: 'last_edited_by_user', editedByUser: 'Csabi Toth', currentUnits: 11, currentUnitsInTransit: 2, warehouseAllocateLine: '35 → 30', warehouseSellLine: '42 → 38', packMultiple: null, skuCount: 1, rrp: 210, ws: 72, season: 'AW25', event: 'Flash', firstSalesDate: '11th Jul 25', lifeToDateSales: 31, department: 'R.t.w. donna', subDepartment: 'Pant.lunghi donna', material: 'Jersey di cotone', gender: 'Donna' },
   ] }
 
+/** Per-product SKU-location confidence buckets + coverage summary (Products tab). */
+const PRODUCT_SKU_LOCATION_METRICS = {
+  1: {
+    skuConfidenceBuckets: { veryHigh: 1, high: 0, medium: 0, low: 0, veryLow: 0 },
+    skuCoverageSummary: { inTarget: 1, total: 1 },
+  },
+  2: {
+    skuConfidenceBuckets: { veryHigh: 0, high: 1, medium: 0, low: 0, veryLow: 0 },
+    skuCoverageSummary: { inTarget: 0, total: 1 },
+  },
+  3: {
+    skuConfidenceBuckets: { veryHigh: 1, high: 1, medium: 0, low: 0, veryLow: 0 },
+    skuCoverageSummary: { inTarget: 1, total: 2 },
+  },
+  4: {
+    skuConfidenceBuckets: { veryHigh: 1, high: 0, medium: 0, low: 0, veryLow: 0 },
+    skuCoverageSummary: { inTarget: 1, total: 1 },
+  },
+  5: {
+    skuConfidenceBuckets: { veryHigh: 0, high: 0, medium: 0, low: 1, veryLow: 0 },
+    skuCoverageSummary: { inTarget: 0, total: 1 },
+  },
+  6: {
+    skuConfidenceBuckets: { veryHigh: 0, high: 0, medium: 0, low: 1, veryLow: 1 },
+    skuCoverageSummary: { inTarget: 0, total: 2 },
+  },
+  7: {
+    skuConfidenceBuckets: { veryHigh: 0, high: 1, medium: 0, low: 0, veryLow: 0 },
+    skuCoverageSummary: { inTarget: 0, total: 1 },
+  },
+  8: {
+    skuConfidenceBuckets: { veryHigh: 1, high: 0, medium: 0, low: 0, veryLow: 0 },
+    skuCoverageSummary: { inTarget: 1, total: 1 },
+  },
+  9: {
+    skuConfidenceBuckets: { veryHigh: 1, high: 1, medium: 1, low: 1, veryLow: 1 },
+    skuCoverageSummary: { inTarget: 3, total: 5 },
+  },
+  10: {
+    skuConfidenceBuckets: { veryHigh: 0, high: 0, medium: 1, low: 0, veryLow: 0 },
+    skuCoverageSummary: { inTarget: 1, total: 1 },
+  },
+  11: {
+    skuConfidenceBuckets: { veryHigh: 0, high: 1, medium: 2, low: 3, veryLow: 2 },
+    skuCoverageSummary: { inTarget: 2, total: 8 },
+  },
+}
+
+Object.values(PRODUCTS_BY_TRIP).forEach((list) => {
+  list.forEach((p) => {
+    const metrics = PRODUCT_SKU_LOCATION_METRICS[p.id]
+    if (metrics) Object.assign(p, metrics)
+  })
+})
+
 // Default products when trip not in PRODUCTS_BY_TRIP
 const DEFAULT_PRODUCTS = PRODUCTS_BY_TRIP[1]
 
@@ -1368,6 +1423,84 @@ function ConfidencePill({ value }) {
       <span className={`size-2 rounded-full shrink-0 ${cfg.dotClass}`} aria-hidden />
       <span className="truncate">{cfg.label}</span>
     </span>
+  )
+}
+
+const CONFIDENCE_BUCKET_ORDER = [
+  { key: 'veryHigh', label: 'Very high', color: '#166534' },
+  { key: 'high', label: 'High', color: '#08a16a' },
+  { key: 'medium', label: 'Medium', color: '#9ca3af' },
+  { key: 'low', label: 'Low', color: '#eab308' },
+  { key: 'veryLow', label: 'Very low', color: '#f87171' },
+]
+
+function sumConfidenceBuckets(buckets) {
+  if (!buckets) return 0
+  return CONFIDENCE_BUCKET_ORDER.reduce((sum, b) => sum + (Number(buckets[b.key]) || 0), 0)
+}
+
+function lowConfidenceCount(buckets) {
+  if (!buckets) return 0
+  return (Number(buckets.low) || 0) + (Number(buckets.veryLow) || 0)
+}
+
+/** Products-tab confidence bar — proportional segments; zero buckets omitted. */
+function ConfidenceBucketBar({ buckets }) {
+  const segments = CONFIDENCE_BUCKET_ORDER.filter((b) => (Number(buckets?.[b.key]) || 0) > 0)
+  if (segments.length === 0) {
+    return (
+      <div
+        className="h-3.5 w-full max-w-[120px] rounded-full border border-[#e5e7eb] bg-[#f3f4f6]"
+        aria-hidden
+      />
+    )
+  }
+  return (
+    <div
+      className="flex h-3.5 w-full max-w-[120px] overflow-hidden rounded-full border border-[#e5e7eb]"
+      role="img"
+      aria-label="Confidence distribution"
+    >
+      {segments.map((b) => (
+        <div
+          key={b.key}
+          className="h-full min-w-0"
+          style={{
+            flexGrow: Number(buckets[b.key]) || 0,
+            backgroundColor: b.color,
+          }}
+        />
+      ))}
+    </div>
+  )
+}
+
+/** Products-tab confidence hover — all five buckets including zeros. */
+function ConfidenceBreakdownHoverCard({ buckets }) {
+  return (
+    <div className="pointer-events-none w-[min(260px,calc(100vw-1.5rem))] rounded-[8px] border border-[#E9EAEB] bg-white p-3 shadow-[0_4px_16px_rgba(0,0,0,0.1)]">
+      <div className="mb-2.5 text-[13px] font-semibold text-[#0a0a0a]">Confidence breakdown</div>
+      <div className="flex flex-col gap-2">
+        {CONFIDENCE_BUCKET_ORDER.map((b) => {
+          const count = Number(buckets?.[b.key]) || 0
+          return (
+            <div key={b.key} className="flex items-center justify-between gap-3 text-[12px]">
+              <span className="inline-flex min-w-0 items-center gap-2 text-[#4b535c]">
+                <span
+                  className="size-2 shrink-0 rounded-full"
+                  style={{ backgroundColor: b.color }}
+                  aria-hidden
+                />
+                <span>{b.label}</span>
+              </span>
+              <span className="shrink-0 tabular-nums text-[#0a0a0a]">
+                {count} SKU-location{count === 1 ? '' : 's'}
+              </span>
+            </div>
+          )
+        })}
+      </div>
+    </div>
   )
 }
 
@@ -4651,6 +4784,23 @@ function ProductsDrilldown({
     productLooseTransfersOverrides,
   ])
 
+  // Confidence + Coverage totals stay scope-wide (state metrics; greyed when filters active)
+  const productSkuLocationTotals = useMemo(() => {
+    let lowConfidence = 0
+    let totalSkuLocations = 0
+    let coverageInTarget = 0
+    let coverageTotal = 0
+    baseProducts.forEach((p) => {
+      lowConfidence += lowConfidenceCount(p.skuConfidenceBuckets)
+      totalSkuLocations += sumConfidenceBuckets(p.skuConfidenceBuckets)
+      coverageInTarget += Number(p.skuCoverageSummary?.inTarget) || 0
+      coverageTotal += Number(p.skuCoverageSummary?.total) || 0
+    })
+    const coveragePct =
+      coverageTotal > 0 ? Math.round((100 * coverageInTarget) / coverageTotal) : 0
+    return { lowConfidence, totalSkuLocations, coveragePct }
+  }, [baseProducts])
+
   const toggleProductSelection = (id) => {
     setSelectedProductIds((prev) => {
       const next = new Set(prev)
@@ -4945,14 +5095,14 @@ function ProductsDrilldown({
         return (
           <th
             key={logicalIdx}
-            className={`${productThPin(isFirst, isLast)}h-[62px] min-h-[62px] text-right px-4 align-middle font-medium text-[#00050A] min-w-[100px] box-border`}
+            className={`${productThPin(isFirst, isLast)}h-[62px] min-h-[62px] w-[140px] min-w-[140px] text-right px-4 align-middle font-medium text-[#00050A] box-border`}
             {...d}
           >
             <span className="inline-flex w-full min-w-0 items-center justify-end gap-2">
               {grip}
               <span
                 className="inline-flex items-center gap-1 cursor-help"
-                title="Based on historical forecast accuracy at the product level. Low confidence means recommendations carry more uncertainty."
+                title="How confident Autone is in the recommendation for each SKU-location. Higher confidence means less review needed."
               >
                 Confidence <IconInfo />
               </span>
@@ -5218,18 +5368,48 @@ function ProductsDrilldown({
           </th>
         )
       case 5:
-        return <th key={logicalIdx} className={`${pin}py-2 px-4 text-right`} />
-
-      case 6:
         return (
           <th
             key={logicalIdx}
-            className={`${pin}py-2 px-4 text-[12px] text-right ${stateMuted ? 'text-[#9ca3af] cursor-help' : 'text-[#4b535c]'}`}
+            className={`${pin}py-2 px-4 text-right ${stateMuted ? 'cursor-help' : ''}`}
             title={stateMutedTitle}
           >
-            —
+            <div className="flex flex-col items-end gap-0.5">
+              <span className={`text-[12px] font-medium ${statePrimary}`}>
+                {productSkuLocationTotals.lowConfidence} SKU-locations low confidence
+              </span>
+              <span className={`text-[11px] ${stateSecondary}`}>
+                of {productSkuLocationTotals.totalSkuLocations} total
+              </span>
+            </div>
           </th>
         )
+
+      case 6: {
+        const coveragePct = productSkuLocationTotals.coveragePct
+        const coverageFull = coveragePct === 100
+        return (
+          <th
+            key={logicalIdx}
+            className={`${pin}py-2 px-4 text-right ${stateMuted ? 'cursor-help' : ''}`}
+            title={stateMutedTitle}
+          >
+            <div className="flex justify-end">
+              <span
+                className={`px-1.5 py-0.5 rounded-[4px] text-[11px] font-medium ${
+                  stateMuted
+                    ? 'bg-[#f3f4f6] text-[#9ca3af]'
+                    : coverageFull
+                      ? 'bg-[#dcfce7] text-[#166534]'
+                      : 'bg-[#f3f4f6] text-[#0a0a0a]'
+                }`}
+              >
+                {coveragePct}% of SKU-locations in target
+              </span>
+            </div>
+          </th>
+        )
+      }
       case 7:
         return <th key={logicalIdx} className={`${pin}py-2 px-4 text-right`} />
       case 8:
@@ -5523,9 +5703,16 @@ function ProductsDrilldown({
       }
       case 5:
         return (
-          <td key={logicalIdx} className={`${pin}py-3 px-4 text-right align-top`}>
+          <td
+            key={logicalIdx}
+            className={`${pin}py-3 px-4 w-[140px] min-w-[140px] text-right align-top`}
+          >
             <div className="flex justify-end">
-              <ConfidencePill value={p.confidence} />
+              <TuHoverPopover
+                panel={<ConfidenceBreakdownHoverCard buckets={p.skuConfidenceBuckets} />}
+              >
+                <ConfidenceBucketBar buckets={p.skuConfidenceBuckets} />
+              </TuHoverPopover>
             </div>
           </td>
         )
