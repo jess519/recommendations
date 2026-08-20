@@ -55,10 +55,10 @@ function TripColumnDragGrip({ visualIndex, onDragStart }) {
 const TRIPS_TABLE_DEFAULT_COL_WIDTHS = [200, 200, 140, 120, 220, 160, 100, 200]
 const TRIPS_TABLE_NUM_DATA_COLS = TRIPS_TABLE_DEFAULT_COL_WIDTHS.length
 const TRIPS_COL_DND_MIME = 'application/x-autone-trip-col'
-/** Logical product table columns are 0–17 (Status = 17). 10–12 = Sales L7D / L30D / L90D. */
-const PRODUCTS_TABLE_NUM_DATA_COLS = 18
-/** Default visual order: stockouts, sales L7/L30/L90, units, warehouse, … Status last. */
-const PRODUCTS_TABLE_DEFAULT_COLUMN_ORDER = [0, 1, 2, 3, 4, 5, 6, 7, 13, 10, 11, 12, 8, 9, 14, 15, 16, 17]
+/** Logical product table columns are 0–18 (Status = 18). 10–12 = Sales L7D / L30D / L90D; 13 = Forecast. */
+const PRODUCTS_TABLE_NUM_DATA_COLS = 19
+/** Default visual order: stockouts, sales L7/L30/L90, forecast, units, warehouse, … Status last. */
+const PRODUCTS_TABLE_DEFAULT_COLUMN_ORDER = [0, 1, 2, 3, 4, 5, 6, 7, 14, 10, 11, 12, 13, 8, 9, 15, 16, 17, 18]
 const PRODUCTS_COL_DND_MIME = 'application/x-autone-products-col'
 const LOCATIONS_TABLE_NUM_DATA_COLS = 14
 const LOCATIONS_COL_DND_MIME = 'application/x-autone-locations-col'
@@ -101,7 +101,7 @@ const PRODUCTS_TAB_SUMMARY_TOTALS = {
   recommendedUnits: '18',
   stockUnits: '70',
   stockInTransit: '11 in transit & PFP',
-  warehouseAllocate: '320 → 280 to allocate',
+  warehouseAllocate: '320 → 280',
   warehouseSell: '400 → 360 to sell',
   salesL7: '138',
   salesL30: '693',
@@ -1027,6 +1027,8 @@ function buildExplorerRow(rowIndex, product, size, fromLoc, toLoc, movementType,
   const coverageWeeksBefore = Number((1 + (rowIndex * 1.3) % 5).toFixed(1))
   const coverageWeeksAfter = Number((coverageWeeksBefore + 0.5 + (rowIndex % 4) * 0.8).toFixed(1))
   const salesL7 = ((rowIndex * 2) % 15) + 1
+  const salesL30 = salesL7 * 5
+  const salesL90 = salesL7 * 12
   const transfers = options.transfers != null ? options.transfers : 1 + (rowIndex * 3) % 15
   // Usually headroom (green); every 7th row is constrained (orange by default).
   const availableToSend =
@@ -1134,7 +1136,8 @@ function buildExplorerRow(rowIndex, product, size, fromLoc, toLoc, movementType,
       date: SCHEDULE_CREATION_DATE,
     },
     salesL7,
-    salesL30: salesL7 * 5,
+    salesL30,
+    salesL90,
     currentUnits: 10 + (rowIndex * 5) % 50,
     currentUnitsInTransit: rowIndex % 6,
     stockInTransitAndPfp: rowIndex % 11,
@@ -4742,7 +4745,7 @@ function ProductsDrilldown({
               {grip}
               <span
                 className="inline-flex items-center gap-1 cursor-help"
-                title="Units available to allocate from the warehouse"
+                title="The total number of units across your warehouses in scope, before & after transfers."
               >
                 Warehouse <IconInfo />
               </span>
@@ -4806,7 +4809,12 @@ function ProductsDrilldown({
           >
             <span className="inline-flex w-full min-w-0 items-center justify-end gap-2">
               {grip}
-              Stockouts
+              <span className="flex flex-col items-end justify-center gap-0.5 leading-tight">
+                <span className="inline-flex items-center gap-1">
+                  Forecast <IconInfo />
+                </span>
+                <span className="text-[11px] font-normal text-[#4b535c]">per wk</span>
+              </span>
             </span>
           </th>
         )
@@ -4819,11 +4827,24 @@ function ProductsDrilldown({
           >
             <span className="inline-flex w-full min-w-0 items-center justify-end gap-2">
               {grip}
-              Locations
+              Stockouts
             </span>
           </th>
         )
       case 15:
+        return (
+          <th
+            key={logicalIdx}
+            className={`${productThPin(isFirst, isLast)}h-[62px] min-h-[62px] text-right px-4 align-middle font-medium text-[#00050A] min-w-[80px] box-border`}
+            {...d}
+          >
+            <span className="inline-flex w-full min-w-0 items-center justify-end gap-2">
+              {grip}
+              Locations
+            </span>
+          </th>
+        )
+      case 16:
         return (
           <th
             key={logicalIdx}
@@ -4838,7 +4859,7 @@ function ProductsDrilldown({
             </span>
           </th>
         )
-      case 16:
+      case 17:
         return (
           <th
             key={logicalIdx}
@@ -4853,7 +4874,7 @@ function ProductsDrilldown({
             </span>
           </th>
         )
-      case 17:
+      case 18:
         return (
           <th
             key={logicalIdx}
@@ -4951,29 +4972,35 @@ function ProductsDrilldown({
         )
       case 13:
         return (
-          <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
-            {productSummary.stockouts}
+          <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] text-[#4b535c] text-right`}>
+            —
           </th>
         )
       case 14:
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
-            {productSummary.locations}
+            {productSummary.stockouts}
           </th>
         )
       case 15:
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
-            {productSummary.overstocks}
+            {productSummary.locations}
           </th>
         )
       case 16:
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
-            {productSummary.understocks}
+            {productSummary.overstocks}
           </th>
         )
       case 17:
+        return (
+          <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
+            {productSummary.understocks}
+          </th>
+        )
+      case 18:
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-right min-w-[140px]`}>
             <div className="flex flex-col items-end gap-0.5 text-[12px] font-medium">
@@ -5273,28 +5300,34 @@ function ProductsDrilldown({
       case 13:
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right text-[#0a0a0a] align-top`}>
-            <div className="line-clamp-2 min-w-0 w-full text-right">{p.stockouts}</div>
+            <div className="line-clamp-2 min-w-0 w-full text-right">{p.forecast}</div>
           </td>
         )
       case 14:
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right text-[#0a0a0a] align-top`}>
-            <div className="line-clamp-2 min-w-0 w-full text-right">{p.locations}</div>
+            <div className="line-clamp-2 min-w-0 w-full text-right">{p.stockouts}</div>
           </td>
         )
       case 15:
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right text-[#0a0a0a] align-top`}>
-            <div className="line-clamp-2 min-w-0 w-full text-right">{p.overstocks}</div>
+            <div className="line-clamp-2 min-w-0 w-full text-right">{p.locations}</div>
           </td>
         )
       case 16:
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right text-[#0a0a0a] align-top`}>
-            <div className="line-clamp-2 min-w-0 w-full text-right">{p.understocks}</div>
+            <div className="line-clamp-2 min-w-0 w-full text-right">{p.overstocks}</div>
           </td>
         )
       case 17:
+        return (
+          <td key={logicalIdx} className={`${pin}py-3 px-4 text-right text-[#0a0a0a] align-top`}>
+            <div className="line-clamp-2 min-w-0 w-full text-right">{p.understocks}</div>
+          </td>
+        )
+      case 18:
         return (
           <td
             key={logicalIdx}
@@ -6392,7 +6425,9 @@ const EXPLORER_TABLE_COLUMNS = [
     minWidth: 'min-w-[160px]',
     tooltip: 'Stock on-hand at the receiving location. In transit & PFP shown as secondary context.',
   },
-  { id: 'sales', label: 'Sales', alignment: 'right', minWidth: 'min-w-[120px]', subtitle: 'L7D / L30D' },
+  { id: 'salesL7', label: 'Sales', alignment: 'right', minWidth: 'min-w-[70px]', subtitle: 'L7D' },
+  { id: 'salesL30', label: 'Sales', alignment: 'right', minWidth: 'min-w-[70px]', subtitle: 'L30D' },
+  { id: 'salesL90', label: 'Sales', alignment: 'right', minWidth: 'min-w-[70px]', subtitle: 'L90D' },
   { id: 'forecast', label: 'Forecast', alignment: 'right', minWidth: 'min-w-[100px]', subtitle: 'per wk', tooltip: null },
   {
     id: 'warehouseUnits',
@@ -6981,13 +7016,22 @@ function renderExplorerBodyCell(row, col, {
           <ProductNextEventCell nextEvent={row.nextEvent} />
         </td>
       )
-    case 'sales':
+    case 'salesL7':
       return (
         <td key={col.id} className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}>
-          <div className="flex flex-col items-end gap-0.5">
-            <span className="text-[14px] text-[#0a0a0a]">{row.salesL7}</span>
-            <span className="text-[12px] text-[#4b535c]">{row.salesL30}</span>
-          </div>
+          <span className="text-[14px] text-[#0a0a0a]">{row.salesL7 ?? '—'}</span>
+        </td>
+      )
+    case 'salesL30':
+      return (
+        <td key={col.id} className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}>
+          <span className="text-[14px] text-[#0a0a0a]">{row.salesL30 ?? '—'}</span>
+        </td>
+      )
+    case 'salesL90':
+      return (
+        <td key={col.id} className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}>
+          <span className="text-[14px] text-[#0a0a0a]">{row.salesL90 ?? '—'}</span>
         </td>
       )
     case 'forecast':
@@ -7108,13 +7152,22 @@ function renderExplorerTotalsCell(col, totals, { explorerTotalsThClass, explorer
           {totals.recommended}
         </th>
       )
-    case 'sales':
+    case 'salesL7':
       return (
         <th key={col.id} className={`${baseClass} ${col.minWidth} text-right`}>
-          <div className="flex flex-col items-end">
-            <span>{totals.salesL7}</span>
-            <span className="text-[12px] text-[#4b535c]">{totals.salesL30}</span>
-          </div>
+          {totals.salesL7}
+        </th>
+      )
+    case 'salesL30':
+      return (
+        <th key={col.id} className={`${baseClass} ${col.minWidth} text-right`}>
+          {totals.salesL30}
+        </th>
+      )
+    case 'salesL90':
+      return (
+        <th key={col.id} className={`${baseClass} ${col.minWidth} text-right`}>
+          {totals.salesL90}
         </th>
       )
     case 'stockInCirculation':
@@ -7872,6 +7925,7 @@ function ExplorerTable({
     const sumRecommended = skuRows.reduce((sum, row) => sum + parseInt(row.recommended, 10), 0)
     const sumSalesL7 = skuRows.reduce((sum, row) => sum + row.salesL7, 0)
     const sumSalesL30 = skuRows.reduce((sum, row) => sum + row.salesL30, 0)
+    const sumSalesL90 = skuRows.reduce((sum, row) => sum + (row.salesL90 ?? 0), 0)
     const sumStockBefore = skuRows.reduce((sum, row) => sum + row.stockBefore, 0)
     const sumStockAfter = skuRows.reduce((sum, row) => sum + row.stockAfter, 0)
     const sumInTransitAndPfp = skuRows.reduce((sum, row) => sum + row.stockInTransitAndPfp, 0)
@@ -7882,6 +7936,7 @@ function ExplorerTable({
       recommended: `${sumRecommended}`,
       salesL7: sumSalesL7,
       salesL30: sumSalesL30,
+      salesL90: sumSalesL90,
       stockBeforeAfter: `${sumStockBefore} → ${sumStockAfter}`,
       inTransit:
         sumInTransitAndPfp > 0 ? `${sumInTransitAndPfp} in transit & PFP` : null }
