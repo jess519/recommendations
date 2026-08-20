@@ -1427,57 +1427,51 @@ function ConfidencePill({ value }) {
 }
 
 const CONFIDENCE_BUCKET_ORDER = [
-  { key: 'veryHigh', label: 'Very high', color: '#166534' },
-  { key: 'high', label: 'High', color: '#08a16a' },
-  { key: 'medium', label: 'Medium', color: '#9ca3af' },
-  { key: 'low', label: 'Low', color: '#eab308' },
-  { key: 'veryLow', label: 'Very low', color: '#f87171' },
+  { key: 'veryHigh', label: 'Very high', color: '#166534', textColor: '#ffffff' },
+  { key: 'high', label: 'High', color: '#08a16a', textColor: '#ffffff' },
+  { key: 'medium', label: 'Medium', color: '#9ca3af', textColor: '#ffffff' },
+  { key: 'low', label: 'Low', color: '#eab308', textColor: '#0a0a0a' },
+  { key: 'veryLow', label: 'Very low', color: '#f87171', textColor: '#0a0a0a' },
 ]
 
-function sumConfidenceBuckets(buckets) {
-  if (!buckets) return 0
-  return CONFIDENCE_BUCKET_ORDER.reduce((sum, b) => sum + (Number(buckets[b.key]) || 0), 0)
+function emptyConfidenceBuckets() {
+  return { veryHigh: 0, high: 0, medium: 0, low: 0, veryLow: 0 }
 }
 
-function lowConfidenceCount(buckets) {
-  if (!buckets) return 0
-  return (Number(buckets.low) || 0) + (Number(buckets.veryLow) || 0)
+/** Most-frequent bucket; ties → worst among tied (later in CONFIDENCE_BUCKET_ORDER). */
+function pickDominantConfidenceBucket(buckets) {
+  let max = -1
+  const winners = []
+  for (const b of CONFIDENCE_BUCKET_ORDER) {
+    const n = Number(buckets?.[b.key]) || 0
+    if (n > max) {
+      max = n
+      winners.length = 0
+      winners.push(b)
+    } else if (n === max) {
+      winners.push(b)
+    }
+  }
+  if (max <= 0 || winners.length === 0) return null
+  return winners[winners.length - 1]
 }
 
-/** Products-tab confidence bar — proportional segments; zero buckets omitted. */
-function ConfidenceBucketBar({ buckets }) {
-  const segments = CONFIDENCE_BUCKET_ORDER.filter((b) => (Number(buckets?.[b.key]) || 0) > 0)
-  // Explicit width required: TuHoverPopover wraps in inline-block, so w-full + flex-grow-only
-  // children collapse to ~0px (no intrinsic width to resolve against).
-  const barStyle = { width: 108, height: 14, minHeight: 14 }
-  if (segments.length === 0) {
-    return (
-      <div
-        className="rounded-full border border-[#e5e7eb] bg-[#f3f4f6]"
-        style={barStyle}
-        aria-hidden
-      />
-    )
+function ConfidenceDominantPill({ buckets, muted = false }) {
+  const dominant = pickDominantConfidenceBucket(buckets)
+  if (!dominant) {
+    return <span className="text-[12px] text-[#9ca3af]">—</span>
   }
   return (
-    <div
-      className="flex overflow-hidden rounded-full border border-[#e5e7eb]"
-      style={barStyle}
-      role="img"
-      aria-label="Confidence distribution"
+    <span
+      className="inline-flex items-center px-2 py-1 rounded-[6px] text-[12px] font-medium"
+      style={
+        muted
+          ? { backgroundColor: '#f3f4f6', color: '#9ca3af' }
+          : { backgroundColor: dominant.color, color: dominant.textColor }
+      }
     >
-      {segments.map((b) => (
-        <div
-          key={b.key}
-          className="h-full min-w-0"
-          style={{
-            flexGrow: Number(buckets[b.key]) || 0,
-            flexBasis: 0,
-            backgroundColor: b.color,
-          }}
-        />
-      ))}
-    </div>
+      {dominant.label}
+    </span>
   )
 }
 
@@ -1507,6 +1501,17 @@ function ConfidenceBreakdownHoverCard({ buckets }) {
         })}
       </div>
     </div>
+  )
+}
+
+function ConfidenceLabelWithHover({ buckets, muted = false }) {
+  return (
+    <TuHoverPopover panel={<ConfidenceBreakdownHoverCard buckets={buckets} />}>
+      <span className="inline-flex items-center gap-1">
+        <ConfidenceDominantPill buckets={buckets} muted={muted} />
+        <IconInfo />
+      </span>
+    </TuHoverPopover>
   )
 }
 
@@ -4441,6 +4446,23 @@ function PackCountDisplay({ count, numberClassName = 'text-[14px] text-[#0a0a0a]
   )
 }
 
+/** Recommended-transfers pack count for a Products-tab row (mock / no overrides). */
+function getProductRecommendedPackCount(p) {
+  if (!productHasPackConstraint(p) || !(p.packMultiple > 0)) return 0
+  const recommendedUnits = Number(p.recommended) || 0
+  const multiPacks = getMultiSkuPacksForProduct(p)
+  if (multiPacks.length > 0) {
+    return multiPacks.reduce((sum, pack) => sum + (Number(pack.packCount) || 0), 0)
+  }
+  const packUnitsForRecommended =
+    p.packTransfers != null
+      ? Number(p.packTransfers) || 0
+      : productHasTransferSplit(p)
+        ? Number(p.replenTransfers) || 0
+        : recommendedUnits
+  return packUnitsForRecommended / p.packMultiple
+}
+
 /** Units in one pack for Explorer pack rows (single-SKU multiple or multi-SKU ratio sum). */
 function getExplorerPackUnitsPerPack(packRow) {
   if (packRow?.isSingleSkuPack && packRow.packMultiple > 0) return packRow.packMultiple
@@ -4771,6 +4793,7 @@ function ProductsDrilldown({
       (sum, p) => sum + getEffectiveTransfers(p),
       0
     )
+    const packs = baseProducts.reduce((sum, p) => sum + getReplenPackCount(p), 0)
     // Status approved/unapproved reflect the filtered table view
     const { approved, unapproved } = products.reduce(
       (acc, p) => ({
@@ -4779,7 +4802,7 @@ function ProductsDrilldown({
       }),
       { approved: 0, unapproved: 0 }
     )
-    return { transfers, approved, unapproved }
+    return { transfers, packs, approved, unapproved }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- helpers close over override maps
   }, [
     baseProducts,
@@ -4788,23 +4811,29 @@ function ProductsDrilldown({
     replenTransferOverrides,
     productPackTransfersOverrides,
     productLooseTransfersOverrides,
+    productPackCountOverrides,
   ])
+
+  const recommendedPacksTotal = useMemo(
+    () => baseProducts.reduce((sum, p) => sum + getProductRecommendedPackCount(p), 0),
+    [baseProducts]
+  )
 
   // Confidence + Coverage totals stay scope-wide (state metrics; greyed when filters active)
   const productSkuLocationTotals = useMemo(() => {
-    let lowConfidence = 0
-    let totalSkuLocations = 0
+    const aggregatedBuckets = emptyConfidenceBuckets()
     let coverageInTarget = 0
     let coverageTotal = 0
     baseProducts.forEach((p) => {
-      lowConfidence += lowConfidenceCount(p.skuConfidenceBuckets)
-      totalSkuLocations += sumConfidenceBuckets(p.skuConfidenceBuckets)
+      for (const b of CONFIDENCE_BUCKET_ORDER) {
+        aggregatedBuckets[b.key] += Number(p.skuConfidenceBuckets?.[b.key]) || 0
+      }
       coverageInTarget += Number(p.skuCoverageSummary?.inTarget) || 0
       coverageTotal += Number(p.skuCoverageSummary?.total) || 0
     })
     const coveragePct =
       coverageTotal > 0 ? Math.round((100 * coverageInTarget) / coverageTotal) : 0
-    return { lowConfidence, totalSkuLocations, coveragePct }
+    return { aggregatedBuckets, coveragePct }
   }, [baseProducts])
 
   const toggleProductSelection = (id) => {
@@ -5357,8 +5386,15 @@ function ProductsDrilldown({
         return <th key={logicalIdx} className={`${pin}py-2 px-4`} />
       case 2:
         return (
-          <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
-            {transferApprovalTotals.transfers} units
+          <th key={logicalIdx} className={`${pin}py-2 px-4 text-right`}>
+            <div className="flex flex-col items-end gap-0.5">
+              <span className="text-[12px] font-medium text-[#0a0a0a]">
+                {transferApprovalTotals.transfers} units
+              </span>
+              <span className="text-[11px] text-[#4b535c]">
+                {formatPackLabel(transferApprovalTotals.packs)}
+              </span>
+            </div>
           </th>
         )
       case 3:
@@ -5369,8 +5405,15 @@ function ProductsDrilldown({
         )
       case 4:
         return (
-          <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
-            {productSummary.recommendedUnits} units
+          <th key={logicalIdx} className={`${pin}py-2 px-4 text-right`}>
+            <div className="flex flex-col items-end gap-0.5">
+              <span className="text-[12px] font-medium text-[#0a0a0a]">
+                {productSummary.recommendedUnits} units
+              </span>
+              <span className="text-[11px] text-[#4b535c]">
+                {formatPackLabel(recommendedPacksTotal)}
+              </span>
+            </div>
           </th>
         )
       case 5:
@@ -5380,20 +5423,17 @@ function ProductsDrilldown({
             className={`${pin}py-2 px-4 text-right ${stateMuted ? 'cursor-help' : ''}`}
             title={stateMutedTitle}
           >
-            <div className="flex flex-col items-end gap-0.5">
-              <span className={`text-[12px] font-medium ${statePrimary}`}>
-                {productSkuLocationTotals.lowConfidence} low
-              </span>
-              <span className={`text-[11px] ${stateSecondary}`}>
-                {productSkuLocationTotals.totalSkuLocations} SKU-locations
-              </span>
+            <div className="flex justify-end">
+              <ConfidenceLabelWithHover
+                buckets={productSkuLocationTotals.aggregatedBuckets}
+                muted={stateMuted}
+              />
             </div>
           </th>
         )
 
       case 6: {
         const coveragePct = productSkuLocationTotals.coveragePct
-        const coverageFull = coveragePct === 100
         return (
           <th
             key={logicalIdx}
@@ -5405,12 +5445,10 @@ function ProductsDrilldown({
                 className={`px-1.5 py-0.5 rounded-[4px] text-[11px] font-medium ${
                   stateMuted
                     ? 'bg-[#f3f4f6] text-[#9ca3af]'
-                    : coverageFull
-                      ? 'bg-[#dcfce7] text-[#166534]'
-                      : 'bg-[#f3f4f6] text-[#0a0a0a]'
+                    : 'bg-[#dcfce7] text-[#166534]'
                 }`}
               >
-                {coveragePct}% of SKU-locations in target
+                {coveragePct}% of SKUs in target
               </span>
             </div>
           </th>
@@ -5536,23 +5574,14 @@ function ProductsDrilldown({
       case 2: {
         const effectiveTransfers = getEffectiveTransfers(p)
         const hasTransferSplit = productHasTransferSplit(p)
-        const hasMixedFulfilment = productHasMixedFulfilment(p)
         const hasPack = productHasPackConstraint(p)
         const isReplenOnly = productIsReplenOnly(p)
         const isInlineEditable = productIsNonPackReplenEditable(p)
         const hasModalEdit = productHasTransfersModalEdit(p)
         const packCount = getReplenPackCount(p)
-        const looseUnits = getEffectiveLooseTransfers(p)
-        const rebalUnits = Number(p.rebalTransfers) || 0
         const isEditingThis = editingTransfersProductId === p.id
-        // Pack + loose + rebal: summary units = loose + rebal (not pack contents)
-        const showPackLooseRebalSummary =
-          hasMixedFulfilment && rebalUnits > 0 && packCount > 0
-        const showPackPrimary =
-          hasPack &&
-          (isReplenOnly || hasTransferSplit) &&
-          packCount > 0 &&
-          !showPackLooseRebalSummary
+        const showPackLayout =
+          hasPack && packCount > 0 && (isReplenOnly || hasTransferSplit)
 
         const transfersCellContent = isInlineEditable ? (
           <div className="flex flex-col items-end gap-0.5">
@@ -5581,17 +5610,10 @@ function ProductsDrilldown({
               className="w-16 h-7 px-2 rounded-[4px] border border-[#e9eaeb] text-[12px] text-[#0a0a0a] text-right"
             />
           </div>
-        ) : showPackLooseRebalSummary ? (
+        ) : showPackLayout ? (
           <div className="flex flex-col items-end gap-0.5">
-            <PackCountDisplay count={packCount} />
-            <span className="text-[12px] text-[#4b535c]">
-              {looseUnits + rebalUnits} units
-            </span>
-          </div>
-        ) : showPackPrimary ? (
-          <div className="flex flex-col items-end gap-0.5">
-            <PackCountDisplay count={packCount} />
-            <span className="text-[12px] text-[#4b535c]">{effectiveTransfers} units</span>
+            <span className="text-[14px] text-[#0a0a0a]">{effectiveTransfers}</span>
+            <span className="text-[12px] text-[#4b535c]">{formatPackLabel(packCount)}</span>
           </div>
         ) : (
           <div className="flex flex-col items-end gap-0.5">
@@ -5655,22 +5677,16 @@ function ProductsDrilldown({
       case 4: {
         const hasPack = productHasPackConstraint(p)
         const recommendedUnits = Number(p.recommended) || 0
-        const multiPacks = getMultiSkuPacksForProduct(p)
-        const packUnitsForRecommended =
-          hasPack && p.packMultiple > 0
-            ? p.packTransfers != null
-              ? Number(p.packTransfers) || 0
-              : productHasTransferSplit(p)
-                ? Number(p.replenTransfers) || 0
-                : recommendedUnits
-            : 0
-        const recommendedPackCount =
-          multiPacks.length > 0
-            ? multiPacks.reduce((sum, pack) => sum + (Number(pack.packCount) || 0), 0)
-            : hasPack && p.packMultiple > 0
-              ? packUnitsForRecommended / p.packMultiple
-              : 0
+        const recommendedPackCount = getProductRecommendedPackCount(p)
         const showPackRecommended = hasPack && recommendedPackCount > 0
+        const reasonBadges = p.recommendedBadges?.map((b) => (
+          <span
+            key={b}
+            className="inline-flex items-center px-2 py-0.5 rounded-[4px] bg-[#f8f8f8] text-[11px] font-medium text-[#0267ff]"
+          >
+            {b === 'VIS' ? 'VS' : b}
+          </span>
+        ))
 
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right align-top`}>
@@ -5678,29 +5694,17 @@ function ProductsDrilldown({
               {showPackRecommended ? (
                 <>
                   <span className="inline-flex flex-wrap items-center justify-end gap-1">
-                    <PackCountDisplay count={recommendedPackCount} />
-                    {p.recommendedBadges?.map((b) => (
-                      <span
-                        key={b}
-                        className="inline-flex items-center px-2 py-0.5 rounded-[4px] bg-[#f8f8f8] text-[11px] font-medium text-[#0267ff]"
-                      >
-                        {b === 'VIS' ? 'VS' : b}
-                      </span>
-                    ))}
+                    <span className="text-[14px] text-[#0a0a0a]">{recommendedUnits}</span>
+                    {reasonBadges}
                   </span>
-                  <span className="text-[12px] text-[#4b535c]">{recommendedUnits} units</span>
+                  <span className="text-[12px] text-[#4b535c]">
+                    {formatPackLabel(recommendedPackCount)}
+                  </span>
                 </>
               ) : (
-                <span className="text-[#0a0a0a]">
-                  {p.recommended}
-                  {p.recommendedBadges?.map((b) => (
-                    <span
-                      key={b}
-                      className="ml-1 inline-flex items-center px-2 py-0.5 rounded-[4px] bg-[#f8f8f8] text-[11px] font-medium text-[#0267ff]"
-                    >
-                      {b === 'VIS' ? 'VS' : b}
-                    </span>
-                  ))}
+                <span className="inline-flex flex-wrap items-center justify-end gap-1 text-[#0a0a0a]">
+                  <span>{p.recommended}</span>
+                  {reasonBadges}
                 </span>
               )}
             </div>
@@ -5714,11 +5718,7 @@ function ProductsDrilldown({
             className={`${pin}py-3 px-4 w-[140px] min-w-[140px] text-right align-top`}
           >
             <div className="flex justify-end">
-              <TuHoverPopover
-                panel={<ConfidenceBreakdownHoverCard buckets={p.skuConfidenceBuckets} />}
-              >
-                <ConfidenceBucketBar buckets={p.skuConfidenceBuckets} />
-              </TuHoverPopover>
+              <ConfidenceLabelWithHover buckets={p.skuConfidenceBuckets} />
             </div>
           </td>
         )
