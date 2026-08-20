@@ -57,10 +57,14 @@ const TRIPS_TABLE_NUM_DATA_COLS = TRIPS_TABLE_DEFAULT_COL_WIDTHS.length
 const TRIPS_COL_DND_MIME = 'application/x-autone-trip-col'
 /** Logical product table columns are 0–18 (Status = 18). 10–12 = Sales L7D / L30D / L90D; 13 = Forecast. */
 const PRODUCTS_TABLE_NUM_DATA_COLS = 19
-/** Default visual order: stockouts, sales L7/L30/L90, forecast, units, warehouse, … Status last. */
-const PRODUCTS_TABLE_DEFAULT_COLUMN_ORDER = [0, 1, 2, 3, 4, 5, 6, 7, 14, 10, 11, 12, 13, 8, 9, 15, 16, 17, 18]
-/** Default visible logical columns for Products (hidden: Next event, Warehouse, Locations, Overstocks, Understocks). */
-const PRODUCTS_DEFAULT_VISIBLE_LOGICAL_IDS = [0, 1, 2, 3, 4, 5, 6, 8, 10, 11, 12, 13, 14, 18]
+/** Default visual order: CX preferred visible set first (Status last), then hidden columns. */
+const PRODUCTS_TABLE_DEFAULT_COLUMN_ORDER = [
+  0, 1, 2, 4, 5, 3, 6, 14, 10, 11, 12, 13, 8, 18, 7, 9, 15, 16, 17,
+]
+/** Default visible logical columns — order matches PRODUCTS_TABLE_DEFAULT_COLUMN_ORDER prefix. */
+const PRODUCTS_DEFAULT_VISIBLE_LOGICAL_IDS = [
+  0, 1, 2, 4, 5, 3, 6, 14, 10, 11, 12, 13, 8, 18,
+]
 /** Product + Status are always visible in the column picker. */
 const PRODUCTS_LOCKED_LOGICAL_IDS = [0, 18]
 /** Picker labels by logical index (match header wording; list order is 0…18). */
@@ -4586,12 +4590,25 @@ function ProductsDrilldown({
 
   const toggleProductColumnVisibility = (logicalIdx) => {
     if (PRODUCTS_LOCKED_LOGICAL_IDS.includes(logicalIdx)) return
+    const willShow = !productVisibleColumns.has(logicalIdx)
     setProductVisibleColumns((prev) => {
       const next = new Set(prev)
-      if (next.has(logicalIdx)) next.delete(logicalIdx)
-      else next.add(logicalIdx)
+      if (willShow) next.add(logicalIdx)
+      else next.delete(logicalIdx)
       return next
     })
+    // Newly shown columns append before Status (end of visible set).
+    if (willShow) {
+      setProductColumnOrder((order) => {
+        const without = order.filter((id) => id !== logicalIdx)
+        const statusPos = without.indexOf(18)
+        if (statusPos >= 0) {
+          without.splice(statusPos, 0, logicalIdx)
+          return without
+        }
+        return [...without, logicalIdx]
+      })
+    }
   }
 
   if (selectedProduct) {
@@ -6604,19 +6621,22 @@ const EXPLORER_TABLE_COLUMNS = [
   { id: 'status', label: 'Status', alignment: 'right', minWidth: 'min-w-[150px]' },
 ]
 
-/** CX prototype — ordered subset; Confidence sits after Recommended (differs from full order) */
+/** CX prototype — reduced default aligned with Products preferred set (+ From/To). No Stockouts column on Explorer. */
 const EXPLORER_REDUCED_COLUMN_IDS = [
   'productDetails',
   'fromLocation',
   'toLocation',
   'movementType',
   'transfers',
-  'revenue',
   'recommended',
   'confidence',
+  'revenue',
   'coverage',
-  'stockInCirculation',
+  'salesL7',
+  'salesL30',
+  'salesL90',
   'forecast',
+  'stockInCirculation',
   'status',
 ]
 
