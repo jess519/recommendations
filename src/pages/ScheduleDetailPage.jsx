@@ -55,9 +55,9 @@ function TripColumnDragGrip({ visualIndex, onDragStart }) {
 const TRIPS_TABLE_DEFAULT_COL_WIDTHS = [200, 200, 140, 120, 220, 160, 100, 200]
 const TRIPS_TABLE_NUM_DATA_COLS = TRIPS_TABLE_DEFAULT_COL_WIDTHS.length
 const TRIPS_COL_DND_MIME = 'application/x-autone-trip-col'
-/** Logical product table columns are 0–17 (Status = 17). 11 = L90D sales; Depth removed. */
+/** Logical product table columns are 0–17 (Status = 17). 10–12 = Sales L7D / L30D / L90D. */
 const PRODUCTS_TABLE_NUM_DATA_COLS = 18
-/** Default visual order: stockouts, sales, L90D, forecast, units, warehouse, … Status last. */
+/** Default visual order: stockouts, sales L7/L30/L90, units, warehouse, … Status last. */
 const PRODUCTS_TABLE_DEFAULT_COLUMN_ORDER = [0, 1, 2, 3, 4, 5, 6, 7, 13, 10, 11, 12, 8, 9, 14, 15, 16, 17]
 const PRODUCTS_COL_DND_MIME = 'application/x-autone-products-col'
 const LOCATIONS_TABLE_NUM_DATA_COLS = 14
@@ -99,15 +99,13 @@ const PRODUCTS_TAB_SUMMARY_TOTALS = {
   transfersTrips: '5 trips',
   revenue: '€6.9K',
   recommendedUnits: '18',
-  recommendedTrips: '5 trips',
   stockUnits: '70',
   stockInTransit: '11 in transit & PFP',
   warehouseAllocate: '320 → 280 to allocate',
   warehouseSell: '400 → 360 to sell',
-  salesL7: '138 L7D',
-  salesL30: '693 L30D',
-  salesL90: '1840 L90D',
-  forecast: '5.58',
+  salesL7: '138',
+  salesL30: '693',
+  salesL90: '1840',
   stockouts: '1 → 2',
   locations: '11 → 10',
   overstocks: '21 → 5',
@@ -4744,7 +4742,7 @@ function ProductsDrilldown({
               {grip}
               <span
                 className="inline-flex items-center gap-1 cursor-help"
-                title="Units reserved to sell at this location and units available to allocate to stores"
+                title="Units available to allocate from the warehouse"
               >
                 Warehouse <IconInfo />
               </span>
@@ -4762,7 +4760,7 @@ function ProductsDrilldown({
               {grip}
               <span className="flex flex-col items-end justify-center gap-0.5 leading-tight">
                 Sales
-                <span className="text-[11px] font-normal text-[#4b535c]">L7D / L30D</span>
+                <span className="text-[11px] font-normal text-[#4b535c]">L7D</span>
               </span>
             </span>
           </th>
@@ -4771,12 +4769,15 @@ function ProductsDrilldown({
         return (
           <th
             key={logicalIdx}
-            className={`${productThPin(isFirst, isLast)}h-[62px] min-h-[62px] text-right px-4 align-middle font-medium text-[#00050A] min-w-[80px] box-border`}
+            className={`${productThPin(isFirst, isLast)}h-[62px] min-h-[62px] text-right px-4 align-middle font-medium text-[#00050A] min-w-[70px] box-border`}
             {...d}
           >
             <span className="inline-flex w-full min-w-0 items-center justify-end gap-2">
               {grip}
-              L90D sales
+              <span className="flex flex-col items-end justify-center gap-0.5 leading-tight">
+                Sales
+                <span className="text-[11px] font-normal text-[#4b535c]">L30D</span>
+              </span>
             </span>
           </th>
         )
@@ -4784,16 +4785,14 @@ function ProductsDrilldown({
         return (
           <th
             key={logicalIdx}
-            className={`${productThPin(isFirst, isLast)}h-[62px] min-h-[62px] text-right px-4 align-middle font-medium text-[#00050A] min-w-[80px] box-border`}
+            className={`${productThPin(isFirst, isLast)}h-[62px] min-h-[62px] text-right px-4 align-middle font-medium text-[#00050A] min-w-[70px] box-border`}
             {...d}
           >
             <span className="inline-flex w-full min-w-0 items-center justify-end gap-2">
               {grip}
               <span className="flex flex-col items-end justify-center gap-0.5 leading-tight">
-                <span className="inline-flex items-center gap-1">
-                  Forecast <IconInfo />
-                </span>
-                <span className="text-[11px] font-normal text-[#4b535c]">per wk</span>
+                Sales
+                <span className="text-[11px] font-normal text-[#4b535c]">L90D</span>
               </span>
             </span>
           </th>
@@ -4900,10 +4899,7 @@ function ProductsDrilldown({
       case 4:
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
-            <div className="flex flex-col items-end">
-              <span>{productSummary.recommendedUnits}</span>
-              <span className="text-[12px] text-[#4b535c]">{productSummary.recommendedTrips}</span>
-            </div>
+            {productSummary.recommendedUnits} units
           </th>
         )
       case 5:
@@ -4932,31 +4928,25 @@ function ProductsDrilldown({
       case 9:
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
-            <div className="flex flex-col items-end">
-              <span>{productSummary.warehouseAllocate}</span>
-              <span className="text-[12px] text-[#4b535c]">{productSummary.warehouseSell}</span>
-            </div>
+            {productSummary.warehouseAllocate}
           </th>
         )
       case 10:
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
-            <div className="flex flex-col items-end">
-              <span>{productSummary.salesL7}</span>
-              <span className="text-[12px] text-[#4b535c]">{productSummary.salesL30}</span>
-            </div>
+            {productSummary.salesL7}
           </th>
         )
       case 11:
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
-            {productSummary.salesL90}
+            {productSummary.salesL30}
           </th>
         )
       case 12:
         return (
           <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
-            {productSummary.forecast}
+            {productSummary.salesL90}
           </th>
         )
       case 13:
@@ -5186,20 +5176,17 @@ function ProductsDrilldown({
                   <span className="text-[12px] text-[#4b535c]">{recommendedUnits} units</span>
                 </>
               ) : (
-                <>
-                  <span className="text-[#0a0a0a]">
-                    {p.recommended}
-                    {p.recommendedBadges?.map((b) => (
-                      <span
-                        key={b}
-                        className="ml-1 inline-flex items-center px-2 py-0.5 rounded-[4px] bg-[#f8f8f8] text-[11px] font-medium text-[#0267ff]"
-                      >
-                        {b === 'VIS' ? 'VS' : b}
-                      </span>
-                    ))}
-                  </span>
-                  <span className="text-[12px] text-[#4b535c]">{p.recommendedSub}</span>
-                </>
+                <span className="text-[#0a0a0a]">
+                  {p.recommended}
+                  {p.recommendedBadges?.map((b) => (
+                    <span
+                      key={b}
+                      className="ml-1 inline-flex items-center px-2 py-0.5 rounded-[4px] bg-[#f8f8f8] text-[11px] font-medium text-[#0267ff]"
+                    >
+                      {b === 'VIS' ? 'VS' : b}
+                    </span>
+                  ))}
+                </span>
               )}
             </div>
           </td>
@@ -5260,31 +5247,27 @@ function ProductsDrilldown({
       case 9:
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right align-top`}>
-            <div className="flex flex-col items-end line-clamp-2 min-w-0">
-              <span className="text-[#0a0a0a]">{p.warehouseAllocateLine ?? '—'}</span>
-              <span className="text-[12px] text-[#4b535c]">{p.warehouseSellLine ?? '—'}</span>
+            <div className="line-clamp-2 min-w-0 w-full text-right text-[#0a0a0a]">
+              {p.warehouseAllocateLine ?? '—'}
             </div>
           </td>
         )
       case 10:
         return (
-          <td key={logicalIdx} className={`${pin}py-3 px-4 text-right align-top`}>
-            <div className="flex flex-col items-end line-clamp-2 min-w-0">
-              <span className="text-[#0a0a0a]">{p.salesL7}</span>
-              <span className="text-[12px] text-[#4b535c]">{p.salesL30}</span>
-            </div>
+          <td key={logicalIdx} className={`${pin}py-3 px-4 text-right text-[#0a0a0a] align-top`}>
+            <div className="line-clamp-2 min-w-0 w-full text-right">{p.salesL7 ?? '—'}</div>
           </td>
         )
       case 11:
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right text-[#0a0a0a] align-top`}>
-            <div className="line-clamp-2 min-w-0 w-full text-right">{p.salesL90 ?? '—'}</div>
+            <div className="line-clamp-2 min-w-0 w-full text-right">{p.salesL30 ?? '—'}</div>
           </td>
         )
       case 12:
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right text-[#0a0a0a] align-top`}>
-            <div className="line-clamp-2 min-w-0 w-full text-right">{p.forecast}</div>
+            <div className="line-clamp-2 min-w-0 w-full text-right">{p.salesL90 ?? '—'}</div>
           </td>
         )
       case 13:
