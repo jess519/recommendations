@@ -4443,6 +4443,23 @@ function PackCountDisplay({ count, numberClassName = 'text-[14px] text-[#0a0a0a]
   )
 }
 
+/** Recommended-transfers pack count for a Products-tab row (mock / no overrides). */
+function getProductRecommendedPackCount(p) {
+  if (!productHasPackConstraint(p) || !(p.packMultiple > 0)) return 0
+  const recommendedUnits = Number(p.recommended) || 0
+  const multiPacks = getMultiSkuPacksForProduct(p)
+  if (multiPacks.length > 0) {
+    return multiPacks.reduce((sum, pack) => sum + (Number(pack.packCount) || 0), 0)
+  }
+  const packUnitsForRecommended =
+    p.packTransfers != null
+      ? Number(p.packTransfers) || 0
+      : productHasTransferSplit(p)
+        ? Number(p.replenTransfers) || 0
+        : recommendedUnits
+  return packUnitsForRecommended / p.packMultiple
+}
+
 /** Units in one pack for Explorer pack rows (single-SKU multiple or multi-SKU ratio sum). */
 function getExplorerPackUnitsPerPack(packRow) {
   if (packRow?.isSingleSkuPack && packRow.packMultiple > 0) return packRow.packMultiple
@@ -5545,6 +5562,8 @@ function ProductsDrilldown({
         const isInlineEditable = productIsNonPackReplenEditable(p)
         const hasModalEdit = productHasTransfersModalEdit(p)
         const isEditingThis = editingTransfersProductId === p.id
+        const packCount = getReplenPackCount(p)
+        const showPackCount = packCount > 0
 
         const transfersCellContent = isInlineEditable ? (
           <div className="flex flex-col items-end gap-0.5">
@@ -5576,6 +5595,9 @@ function ProductsDrilldown({
         ) : (
           <div className="flex flex-col items-end gap-0.5">
             <span className="text-[14px] text-[#0a0a0a]">{effectiveTransfers}</span>
+            {showPackCount && (
+              <span className="text-[12px] text-[#4b535c]">{packCount}</span>
+            )}
           </div>
         )
 
@@ -5633,6 +5655,9 @@ function ProductsDrilldown({
         )
       }
       case 4: {
+        const recommendedUnits = Number(p.recommended) || 0
+        const recommendedPackCount = getProductRecommendedPackCount(p)
+        const showPackCount = recommendedPackCount > 0
         const reasonBadges = p.recommendedBadges?.map((b) => (
           <span
             key={b}
@@ -5644,11 +5669,14 @@ function ProductsDrilldown({
 
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right align-top`}>
-            <div className="flex flex-col items-end gap-1 line-clamp-2 min-w-0">
+            <div className="flex flex-col items-end gap-0.5 line-clamp-2 min-w-0">
               <span className="inline-flex flex-wrap items-center justify-end gap-1 text-[#0a0a0a]">
-                <span className="text-[14px]">{Number(p.recommended) || 0}</span>
+                <span className="text-[14px]">{recommendedUnits}</span>
                 {reasonBadges}
               </span>
+              {showPackCount && (
+                <span className="text-[12px] text-[#4b535c]">{recommendedPackCount}</span>
+              )}
             </div>
           </td>
         )
