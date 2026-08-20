@@ -59,6 +59,32 @@ const TRIPS_COL_DND_MIME = 'application/x-autone-trip-col'
 const PRODUCTS_TABLE_NUM_DATA_COLS = 19
 /** Default visual order: stockouts, sales L7/L30/L90, forecast, units, warehouse, … Status last. */
 const PRODUCTS_TABLE_DEFAULT_COLUMN_ORDER = [0, 1, 2, 3, 4, 5, 6, 7, 14, 10, 11, 12, 13, 8, 9, 15, 16, 17, 18]
+/** Default visible logical columns for Products (hidden: Next event, Warehouse, Locations, Overstocks, Understocks). */
+const PRODUCTS_DEFAULT_VISIBLE_LOGICAL_IDS = [0, 1, 2, 3, 4, 5, 6, 8, 10, 11, 12, 13, 14, 18]
+/** Product + Status are always visible in the column picker. */
+const PRODUCTS_LOCKED_LOGICAL_IDS = [0, 18]
+/** Picker labels by logical index (match header wording; list order is 0…18). */
+const PRODUCTS_COLUMN_PICKER_LABELS = [
+  'Product',
+  'Movement',
+  'Transfers',
+  'Revenue increase',
+  'Recommended transfers',
+  'Confidence',
+  'Coverage',
+  'Next event',
+  'Units (to)',
+  'Warehouse',
+  'Sales L7D',
+  'Sales L30D',
+  'Sales L90D',
+  'Forecast per wk',
+  'Stockouts',
+  'Locations',
+  'Overstocks',
+  'Understocks',
+  'Status',
+]
 const PRODUCTS_COL_DND_MIME = 'application/x-autone-products-col'
 const LOCATIONS_TABLE_NUM_DATA_COLS = 14
 const LOCATIONS_COL_DND_MIME = 'application/x-autone-locations-col'
@@ -4299,8 +4325,14 @@ function ProductsDrilldown({
   const [productColumnOrder, setProductColumnOrder] = useState(
     () => [...PRODUCTS_TABLE_DEFAULT_COLUMN_ORDER]
   )
+  const [productVisibleColumns, setProductVisibleColumns] = useState(
+    () => new Set(PRODUCTS_DEFAULT_VISIBLE_LOGICAL_IDS)
+  )
+  const [columnSettingsOpen, setColumnSettingsOpen] = useState(false)
+  const [columnSettingsSearch, setColumnSettingsSearch] = useState('')
   const [hoveredTransferProductId, setHoveredTransferProductId] = useState(null)
   const [replenTransferOverrides, setReplenTransferOverrides] = useState({})
+  const productsColumnSettingsRef = useRef(null)
 
   useEffect(() => {
     onDrawerFiltersActiveChange?.(statusFilters.length > 0)
@@ -4519,8 +4551,13 @@ function ProductsDrilldown({
     const raw = e.dataTransfer.getData(PRODUCTS_COL_DND_MIME) || e.dataTransfer.getData('text/plain')
     const from = parseInt(raw, 10)
     if (Number.isNaN(from)) return
-    setProductColumnOrder((order) => moveTripTableColumnOrder(order, from, targetVisualIndex))
-  }, [])
+    setProductColumnOrder((order) => {
+      const visible = order.filter((id) => productVisibleColumns.has(id))
+      const nextVisible = moveTripTableColumnOrder(visible, from, targetVisualIndex)
+      let i = 0
+      return order.map((id) => (productVisibleColumns.has(id) ? nextVisible[i++] : id))
+    })
+  }, [productVisibleColumns])
 
   useEffect(() => {
     const expected = PRODUCTS_TABLE_NUM_DATA_COLS
@@ -4532,6 +4569,30 @@ function ProductsDrilldown({
       setProductColumnOrder([...PRODUCTS_TABLE_DEFAULT_COLUMN_ORDER])
     }
   }, [productColumnOrder])
+
+  useEffect(() => {
+    if (!columnSettingsOpen) return undefined
+    const onKeyDown = (e) => {
+      if (e.key === 'Escape') setColumnSettingsOpen(false)
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [columnSettingsOpen])
+
+  const visibleProductColumnOrder = useMemo(
+    () => productColumnOrder.filter((id) => productVisibleColumns.has(id)),
+    [productColumnOrder, productVisibleColumns]
+  )
+
+  const toggleProductColumnVisibility = (logicalIdx) => {
+    if (PRODUCTS_LOCKED_LOGICAL_IDS.includes(logicalIdx)) return
+    setProductVisibleColumns((prev) => {
+      const next = new Set(prev)
+      if (next.has(logicalIdx)) next.delete(logicalIdx)
+      else next.add(logicalIdx)
+      return next
+    })
+  }
 
   if (selectedProduct) {
     return (
@@ -4555,7 +4616,7 @@ function ProductsDrilldown({
   const breadcrumbTo = trip.to.length > 12 ? `${trip.to.slice(0, 10)}...` : trip.to
   const productSummary = PRODUCTS_TAB_SUMMARY_TOTALS
 
-  const productColLast = productColumnOrder.length - 1
+  const productColLast = visibleProductColumnOrder.length - 1
   const productThPin = (isFirst, isLast) => {
     const L = isFirst
       ? 'sticky left-14 z-20 border-r border-[#e5e7eb] shadow-[4px_0_8px_rgba(0,0,0,0.04)] bg-white '
@@ -5395,13 +5456,75 @@ function ProductsDrilldown({
               <IconSearch className="size-4" />
             </span>
           </div>
-          <button
-            type="button"
-            className="h-10 w-10 flex items-center justify-center rounded-[4px] border border-[#e9eaeb] bg-white text-[#22272f] hover:bg-[#f3f4f6] shrink-0"
-            aria-label="Column settings"
-          >
-            <IconColumnSettings />
-          </button>
+          <div className="relative shrink-0" ref={productsColumnSettingsRef}>
+            <button
+              type="button"
+              onClick={() => setColumnSettingsOpen((o) => !o)}
+              className="h-10 w-10 flex items-center justify-center rounded-[4px] border border-[#e9eaeb] bg-white text-[#22272f] hover:bg-[#f3f4f6] shrink-0"
+              aria-label="Column settings"
+              aria-expanded={columnSettingsOpen}
+              aria-haspopup="dialog"
+            >
+              <IconColumnSettings />
+            </button>
+            {columnSettingsOpen && (
+              <>
+                <div
+                  className="fixed inset-0 z-[60]"
+                  aria-hidden
+                  onClick={() => setColumnSettingsOpen(false)}
+                />
+                <div
+                  role="dialog"
+                  aria-label="Customise columns"
+                  className="absolute left-0 top-full mt-1 z-[70] w-[280px] max-h-[min(70vh,420px)] overflow-hidden rounded-[6px] border border-[#e5e7eb] bg-white shadow-lg flex flex-col"
+                >
+                  <div className="shrink-0 border-b border-[#e5e7eb] p-2">
+                    <div className="flex items-center h-9 rounded-[4px] border border-[#e9eaeb] bg-white">
+                      <input
+                        type="text"
+                        placeholder="search..."
+                        value={columnSettingsSearch}
+                        onChange={(e) => setColumnSettingsSearch(e.target.value)}
+                        className="flex-1 min-w-0 h-full pl-3 pr-2 border-0 bg-transparent rounded-[4px] text-[13px] text-[#0a0a0a] placeholder:text-[#9ca3af] focus:outline-none focus:ring-0"
+                        aria-label="Search columns"
+                      />
+                      <span className="pr-2.5 shrink-0 text-[#9ca3af]">
+                        <IconSearch className="size-3.5" />
+                      </span>
+                    </div>
+                  </div>
+                  <div className="overflow-y-auto py-1">
+                    {PRODUCTS_COLUMN_PICKER_LABELS.map((label, logicalIdx) => {
+                      const locked = PRODUCTS_LOCKED_LOGICAL_IDS.includes(logicalIdx)
+                      const checked = productVisibleColumns.has(logicalIdx)
+                      return (
+                        <label
+                          key={logicalIdx}
+                          className={`flex items-center gap-2 px-3 py-1.5 ${
+                            locked
+                              ? 'cursor-default text-[#9ca3af]'
+                              : 'cursor-pointer hover:bg-[#f3f4f6] text-[#0a0a0a]'
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            disabled={locked}
+                            onChange={() => toggleProductColumnVisibility(logicalIdx)}
+                            className="size-4 rounded border-[#d1d5db] text-[#0267ff] disabled:cursor-not-allowed disabled:opacity-50"
+                          />
+                          <span className={`text-[13px] ${locked ? 'text-[#9ca3af]' : 'text-[#0a0a0a]'}`}>
+                            {label}
+                          </span>
+                        </label>
+                      )
+                    })}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
           <button
             type="button"
             className="h-10 w-10 flex items-center justify-center rounded-[4px] border border-[#e9eaeb] bg-white text-[#22272f] hover:bg-[#f3f4f6] shrink-0"
@@ -5514,13 +5637,13 @@ function ProductsDrilldown({
                   />
                 </label>
               </th>
-              {productColumnOrder.map((logicalIdx, visualIdx) =>
+              {visibleProductColumnOrder.map((logicalIdx, visualIdx) =>
                 renderProductsHeaderCell(logicalIdx, visualIdx)
               )}
             </tr>
             <tr className="border-b border-[#E9EAEB] bg-white">
               <th className="sticky left-0 z-30 w-14 min-w-14 max-w-14 box-border py-2 px-4 bg-white shadow-[4px_0_12px_-6px_rgba(15,23,42,0.12)]" />
-              {productColumnOrder.map((logicalIdx, visualIdx) =>
+              {visibleProductColumnOrder.map((logicalIdx, visualIdx) =>
                 renderProductsSummaryCell(logicalIdx, visualIdx)
               )}
             </tr>
@@ -5556,7 +5679,7 @@ function ProductsDrilldown({
                     onChange={() => toggleProductSelection(p.id)}
                   />
                 </td>
-                {productColumnOrder.map((logicalIdx, visualIdx) =>
+                {visibleProductColumnOrder.map((logicalIdx, visualIdx) =>
                   renderProductsBodyCell(logicalIdx, visualIdx, p)
                 )}
               </tr>
