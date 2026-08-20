@@ -915,7 +915,7 @@ const EXPLORER_PRODUCTS = [
     isVirtualPack: true },
   {
     id: 'exp-p-coin',
-    name: 'Coin-pack tote',
+    name: 'Coin-pack tote m',
     baseSku: 'C900010',
     colour: 'Noir',
     department: 'Handbags',
@@ -4300,10 +4300,12 @@ function ProductsDrilldown({
   showBackButton = true,
   onDrawerFiltersActiveChange,
   setExplorerProductNameFilters,
+  setExplorerStatusFilters,
   setActiveTab,
   selectedProduct: controlledSelectedProduct,
   onSelectedProductChange,
   setExplorerTransferOverrides,
+  onOpenExplorerUnapprovedForProduct,
 }) {
   const [localSelectedProduct, setLocalSelectedProduct] = useState(null)
   const isSelectedProductControlled = typeof onSelectedProductChange === 'function'
@@ -5424,9 +5426,16 @@ function ProductsDrilldown({
                   {p.approvedTransfers} approved
                 </span>
                 {p.unapprovedTransfers > 0 && (
-                  <span className="text-[12px] font-medium text-[#4b535c]">
+                  <button
+                    type="button"
+                    className="text-[12px] font-medium text-[#0267ff] hover:underline"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onOpenExplorerUnapprovedForProduct?.(p.name)
+                    }}
+                  >
                     {p.unapprovedTransfers} unapproved
-                  </span>
+                  </button>
                 )}
               </div>
             </div>
@@ -9024,6 +9033,14 @@ export default function ScheduleDetailPage() {
     setActiveTab('products')
   }
 
+  const handleOpenExplorerUnapprovedForProduct = (productName) => {
+    setExplorerDepartmentFilters([])
+    setExplorerConfidenceFilters([])
+    setExplorerProductNameFilters([productName])
+    setExplorerStatusFilters(['unapproved', 'needs_review', 'edited'])
+    setActiveTab('explorer')
+  }
+
   const hasActiveFilters =
     activeTab === 'products'
       ? productsDrawerFiltersActive
@@ -9328,10 +9345,12 @@ export default function ScheduleDetailPage() {
             showBackButton={false}
             onDrawerFiltersActiveChange={setProductsDrawerFiltersActive}
             setExplorerProductNameFilters={setExplorerProductNameFilters}
+            setExplorerStatusFilters={setExplorerStatusFilters}
             setActiveTab={setActiveTab}
             selectedProduct={productsTabSelectedProduct}
             onSelectedProductChange={setProductsTabSelectedProduct}
             setExplorerTransferOverrides={setExplorerTransferOverrides}
+            onOpenExplorerUnapprovedForProduct={handleOpenExplorerUnapprovedForProduct}
           />
         ) : activeTab === 'locations' ? (
           <LocationsTab
@@ -9363,8 +9382,10 @@ export default function ScheduleDetailPage() {
               onBack={() => setSelectedTrip(null)}
               onDrawerFiltersActiveChange={setProductsDrawerFiltersActive}
               setExplorerProductNameFilters={setExplorerProductNameFilters}
+              setExplorerStatusFilters={setExplorerStatusFilters}
               setActiveTab={setActiveTab}
               setExplorerTransferOverrides={setExplorerTransferOverrides}
+              onOpenExplorerUnapprovedForProduct={handleOpenExplorerUnapprovedForProduct}
             />
           ) : (
           <div className="flex flex-col gap-[15px]">
