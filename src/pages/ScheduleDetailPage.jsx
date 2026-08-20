@@ -1507,10 +1507,7 @@ function ConfidenceBreakdownHoverCard({ buckets }) {
 function ConfidenceLabelWithHover({ buckets, muted = false }) {
   return (
     <TuHoverPopover panel={<ConfidenceBreakdownHoverCard buckets={buckets} />}>
-      <span className="inline-flex items-center gap-1">
-        <ConfidenceDominantPill buckets={buckets} muted={muted} />
-        <IconInfo />
-      </span>
+      <ConfidenceDominantPill buckets={buckets} muted={muted} />
     </TuHoverPopover>
   )
 }
@@ -4446,23 +4443,6 @@ function PackCountDisplay({ count, numberClassName = 'text-[14px] text-[#0a0a0a]
   )
 }
 
-/** Recommended-transfers pack count for a Products-tab row (mock / no overrides). */
-function getProductRecommendedPackCount(p) {
-  if (!productHasPackConstraint(p) || !(p.packMultiple > 0)) return 0
-  const recommendedUnits = Number(p.recommended) || 0
-  const multiPacks = getMultiSkuPacksForProduct(p)
-  if (multiPacks.length > 0) {
-    return multiPacks.reduce((sum, pack) => sum + (Number(pack.packCount) || 0), 0)
-  }
-  const packUnitsForRecommended =
-    p.packTransfers != null
-      ? Number(p.packTransfers) || 0
-      : productHasTransferSplit(p)
-        ? Number(p.replenTransfers) || 0
-        : recommendedUnits
-  return packUnitsForRecommended / p.packMultiple
-}
-
 /** Units in one pack for Explorer pack rows (single-SKU multiple or multi-SKU ratio sum). */
 function getExplorerPackUnitsPerPack(packRow) {
   if (packRow?.isSingleSkuPack && packRow.packMultiple > 0) return packRow.packMultiple
@@ -4793,7 +4773,6 @@ function ProductsDrilldown({
       (sum, p) => sum + getEffectiveTransfers(p),
       0
     )
-    const packs = baseProducts.reduce((sum, p) => sum + getReplenPackCount(p), 0)
     // Status approved/unapproved reflect the filtered table view
     const { approved, unapproved } = products.reduce(
       (acc, p) => ({
@@ -4802,7 +4781,7 @@ function ProductsDrilldown({
       }),
       { approved: 0, unapproved: 0 }
     )
-    return { transfers, packs, approved, unapproved }
+    return { transfers, approved, unapproved }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- helpers close over override maps
   }, [
     baseProducts,
@@ -4811,13 +4790,7 @@ function ProductsDrilldown({
     replenTransferOverrides,
     productPackTransfersOverrides,
     productLooseTransfersOverrides,
-    productPackCountOverrides,
   ])
-
-  const recommendedPacksTotal = useMemo(
-    () => baseProducts.reduce((sum, p) => sum + getProductRecommendedPackCount(p), 0),
-    [baseProducts]
-  )
 
   // Confidence + Coverage totals stay scope-wide (state metrics; greyed when filters active)
   const productSkuLocationTotals = useMemo(() => {
@@ -5391,9 +5364,7 @@ function ProductsDrilldown({
               <span className="text-[12px] font-medium text-[#0a0a0a]">
                 {transferApprovalTotals.transfers} units
               </span>
-              <span className="text-[11px] text-[#4b535c]">
-                {formatPackLabel(transferApprovalTotals.packs)}
-              </span>
+              <span className="text-[11px] text-[#4b535c]">packs</span>
             </div>
           </th>
         )
@@ -5410,9 +5381,7 @@ function ProductsDrilldown({
               <span className="text-[12px] font-medium text-[#0a0a0a]">
                 {productSummary.recommendedUnits} units
               </span>
-              <span className="text-[11px] text-[#4b535c]">
-                {formatPackLabel(recommendedPacksTotal)}
-              </span>
+              <span className="text-[11px] text-[#4b535c]">packs</span>
             </div>
           </th>
         )
@@ -5573,15 +5542,9 @@ function ProductsDrilldown({
         )
       case 2: {
         const effectiveTransfers = getEffectiveTransfers(p)
-        const hasTransferSplit = productHasTransferSplit(p)
-        const hasPack = productHasPackConstraint(p)
-        const isReplenOnly = productIsReplenOnly(p)
         const isInlineEditable = productIsNonPackReplenEditable(p)
         const hasModalEdit = productHasTransfersModalEdit(p)
-        const packCount = getReplenPackCount(p)
         const isEditingThis = editingTransfersProductId === p.id
-        const showPackLayout =
-          hasPack && packCount > 0 && (isReplenOnly || hasTransferSplit)
 
         const transfersCellContent = isInlineEditable ? (
           <div className="flex flex-col items-end gap-0.5">
@@ -5609,11 +5572,6 @@ function ProductsDrilldown({
               onClick={(e) => e.stopPropagation()}
               className="w-16 h-7 px-2 rounded-[4px] border border-[#e9eaeb] text-[12px] text-[#0a0a0a] text-right"
             />
-          </div>
-        ) : showPackLayout ? (
-          <div className="flex flex-col items-end gap-0.5">
-            <span className="text-[14px] text-[#0a0a0a]">{effectiveTransfers}</span>
-            <span className="text-[12px] text-[#4b535c]">{formatPackLabel(packCount)}</span>
           </div>
         ) : (
           <div className="flex flex-col items-end gap-0.5">
@@ -5675,10 +5633,6 @@ function ProductsDrilldown({
         )
       }
       case 4: {
-        const hasPack = productHasPackConstraint(p)
-        const recommendedUnits = Number(p.recommended) || 0
-        const recommendedPackCount = getProductRecommendedPackCount(p)
-        const showPackRecommended = hasPack && recommendedPackCount > 0
         const reasonBadges = p.recommendedBadges?.map((b) => (
           <span
             key={b}
@@ -5691,22 +5645,10 @@ function ProductsDrilldown({
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right align-top`}>
             <div className="flex flex-col items-end gap-1 line-clamp-2 min-w-0">
-              {showPackRecommended ? (
-                <>
-                  <span className="inline-flex flex-wrap items-center justify-end gap-1">
-                    <span className="text-[14px] text-[#0a0a0a]">{recommendedUnits}</span>
-                    {reasonBadges}
-                  </span>
-                  <span className="text-[12px] text-[#4b535c]">
-                    {formatPackLabel(recommendedPackCount)}
-                  </span>
-                </>
-              ) : (
-                <span className="inline-flex flex-wrap items-center justify-end gap-1 text-[#0a0a0a]">
-                  <span>{p.recommended}</span>
-                  {reasonBadges}
-                </span>
-              )}
+              <span className="inline-flex flex-wrap items-center justify-end gap-1 text-[#0a0a0a]">
+                <span className="text-[14px]">{Number(p.recommended) || 0}</span>
+                {reasonBadges}
+              </span>
             </div>
           </td>
         )
