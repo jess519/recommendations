@@ -51,8 +51,8 @@ function TripColumnDragGrip({ visualIndex, onDragStart }) {
   )
 }
 
-/** Trips table data cols; 3 = Transfers, 4 = Revenue increase, 5 = Recommended transfers (long headers) */
-const TRIPS_TABLE_DEFAULT_COL_WIDTHS = [200, 200, 140, 120, 220, 160, 100, 200]
+/** Trips table data cols; 2 = Transfers, 3 = Revenue increase, 4 = Recommended transfers (long headers). Movement removed. */
+const TRIPS_TABLE_DEFAULT_COL_WIDTHS = [200, 200, 120, 220, 160, 100, 200]
 const TRIPS_TABLE_NUM_DATA_COLS = TRIPS_TABLE_DEFAULT_COL_WIDTHS.length
 const TRIPS_COL_DND_MIME = 'application/x-autone-trip-col'
 /** Logical product table columns are 0–18 (Status = 18). 10–12 = Sales L7D / L30D / L90D; 13 = Forecast. */
@@ -112,7 +112,6 @@ function moveTripTableColumnOrder(order, fromVisualIndex, toVisualIndex) {
 const TRIP_COL_RESIZE_LABELS = [
   'Resize Sending location column',
   'Resize Receiving location column',
-  'Resize Movement type column',
   'Resize Transfers column',
   'Resize Revenue increase column',
   'Resize Recommended transfers column',
@@ -143,11 +142,11 @@ const PRODUCTS_TAB_SUMMARY_TOTALS = {
 
 /** Hardcoded totals for Trips tab summary row (TRIPS_ALL, default full dataset view). */
 const TRIPS_TAB_SUMMARY_TOTALS_FULL = {
-  sendingTrips: '22 trips',
-  transfers: '2,038',
-  revenue: '€435.3K',
-  recommended: '2,151',
-  products: '257 products' }
+  sendingTrips: '25 trips',
+  transfers: '2,147',
+  revenue: '€428.9K',
+  recommended: '2,260',
+  products: '288 products' }
 
 /** Hardcoded totals for Trips tab summary row (TRIPS_OPERA subset view). */
 const TRIPS_TAB_SUMMARY_TOTALS_OPERA = {
@@ -438,6 +437,82 @@ const TRIPS_OTHER = [
     products: 4,
     movementType: ['replenishment'],
     badges: ['MDQ', 'VIS', 'REV'] },
+  // Warehouse-involved trips (Log01 roles + revenue rules)
+  {
+    id: 201,
+    from: 'Log01 entrepot logtex',
+    fromCode: 'LOG01',
+    fromLocationType: 'warehouse',
+    fromWarehouseRole: 'non-selling',
+    to: 'Opéra',
+    toCode: 'A1A',
+    toLocationType: 'store',
+    transfers: '45',
+    revenue: '€4.2K',
+    recommended: '45',
+    products: 12,
+    packCount: 4,
+    movementType: ['replenishment'],
+    badges: ['VIS', 'REV'],
+    status: 'needs_review_from_user',
+    approvedTransfers: 3,
+    unapprovedTransfers: 3 },
+  {
+    id: 202,
+    from: 'Log01 entrepot logtex',
+    fromCode: 'LOG01',
+    fromLocationType: 'warehouse',
+    fromWarehouseRole: 'non-selling',
+    to: 'Log01 entrepot logtex',
+    toCode: 'LOG01',
+    toLocationType: 'warehouse',
+    toWarehouseRole: 'selling',
+    transfers: '22',
+    revenue: '€1.8K',
+    recommended: '22',
+    products: 6,
+    movementType: ['replenishment'],
+    badges: ['REV'],
+    status: 'unapproved',
+    approvedTransfers: 0,
+    unapprovedTransfers: 5 },
+  {
+    id: 203,
+    from: 'Cannes',
+    fromCode: 'A1R',
+    fromLocationType: 'store',
+    to: 'Log01 entrepot logtex',
+    toCode: 'LOG01',
+    toLocationType: 'warehouse',
+    toWarehouseRole: 'non-selling',
+    transfers: '28',
+    revenue: '€0',
+    recommended: '28',
+    products: 8,
+    movementType: ['rebalancing'],
+    badges: ['VIS', 'REV'],
+    status: 'partially_approved',
+    approvedTransfers: 2,
+    unapprovedTransfers: 3 },
+  {
+    id: 204,
+    from: 'Log01 entrepot logtex',
+    fromCode: 'LOG01',
+    fromLocationType: 'warehouse',
+    fromWarehouseRole: 'selling',
+    to: 'Nice',
+    toCode: 'NCE06',
+    toLocationType: 'store',
+    transfers: '14',
+    revenue: '€0.8K',
+    recommended: '14',
+    products: 5,
+    movementType: ['rebalancing'],
+    badges: ['REV'],
+    status: 'last_edited_by_user',
+    editedByUser: 'Csabi Toth',
+    approvedTransfers: 2,
+    unapprovedTransfers: 2 },
 ]
 
 const TRIPS_ALL = [...TRIPS_OPERA, ...TRIPS_OTHER]
@@ -448,6 +523,23 @@ for (const t of TRIPS_ALL) {
     t.capacityUnits = Number(String(t.transfers ?? '').replace(/[^\d]/g, '')) || 0
   }
   if (t.maxCapacity == null) t.maxCapacity = 10000
+  // SKU-location approval counts for Trips Status sub-text (vary 3–8 by trip id)
+  if (t.approvedTransfers == null || t.unapprovedTransfers == null) {
+    const status = t.status || 'unapproved'
+    const total = 3 + (Number(t.id) % 6) // 3..8
+    if (status === 'approved_by_system' || status === 'approved_by_user') {
+      t.approvedTransfers = total
+      t.unapprovedTransfers = 0
+    } else if (status === 'unapproved') {
+      t.approvedTransfers = 0
+      t.unapprovedTransfers = total
+    } else {
+      // needs_review / edited / partially_approved / missing
+      const approved = Math.max(1, Math.floor(total / 2))
+      t.approvedTransfers = approved
+      t.unapprovedTransfers = total - approved
+    }
+  }
 }
 
 const VIEW_OPTIONS = [
@@ -498,7 +590,38 @@ const PRODUCTS_BY_TRIP = {
   2: [
     { id: 7, name: 'Sac zip l', sku: 'B200001', colour: 'Noir', movementType: ["rebalancing"], transfers: 2, transfersSub: 1, approvedTransfers: 2, unapprovedTransfers: 0, revenue: '€0.89K', recommended: 2, recommendedBadges: ['REV'], recommendedSub: 1, confidence: 'high', coverage: '3% below target', coverageWeeks: 4.8, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 1, salesL30: 2, salesL90: 5, forecast: 0.45, stockouts: '0 → 0', locations: '2 → 2', overstocks: '2 → 1', understocks: '5 → 3', status: 'approved_by_user', approvedByUser: 'Jess Briggs', currentUnits: 18, currentUnitsInTransit: 4, warehouseAllocateLine: '40 → 36', warehouseSellLine: '50 → 45', packMultiple: null, skuCount: 1, rrp: 460, ws: 163, season: 'P/e 2026', event: 'Main', firstSalesDate: '30th Apr 25', lifeToDateSales: 54, department: 'Maroquinerie', subDepartment: 'Porte-documents', material: 'Tissu technique enduit', gender: 'Homme' },
     { id: 8, name: 'Sac seau m', sku: 'B200002', colour: 'Noir', movementType: ["rebalancing"], transfers: 1, transfersSub: 2, approvedTransfers: 0, unapprovedTransfers: 1, revenue: '€0.52K', recommended: 1, recommendedBadges: ['VIS'], recommendedSub: 2, confidence: 'high', coverage: 'All SKUs in target', coverageWeeks: 6.3, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 0, salesL30: 1, salesL90: 3, forecast: 0.28, stockouts: '0 → 1', locations: '1 → 2', overstocks: '1 → 0', understocks: '3 → 1', status: 'last_edited_by_user', editedByUser: 'Csabi Toth', currentUnits: 11, currentUnitsInTransit: 2, warehouseAllocateLine: '35 → 30', warehouseSellLine: '42 → 38', packMultiple: null, skuCount: 1, rrp: 210, ws: 72, season: 'AW25', event: 'Flash', firstSalesDate: '11th Jul 25', lifeToDateSales: 31, department: 'R.t.w. donna', subDepartment: 'Pant.lunghi donna', material: 'Jersey di cotone', gender: 'Donna' },
-  ] }
+  ],
+  // Trip 3 — Printemps toulon → Opéra (replen-heavy)
+  3: [
+    { id: 20, name: 'Croi-sac zip l', sku: 'T3-1398810', colour: 'Noir', movementType: ["replenishment"], transfers: 8, transfersSub: 1, approvedTransfers: 8, unapprovedTransfers: 0, revenue: '€0.92K', recommended: 8, recommendedBadges: ['REV'], recommendedSub: 1, confidence: 'high', coverage: 'All SKUs in target', coverageWeeks: 6.0, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 1, salesL30: 3, salesL90: 7, forecast: 0.9, stockouts: '0 → 0', locations: '1 → 1', overstocks: '1 → 0', understocks: '2 → 1', status: 'approved_by_system', currentUnits: 10, currentUnitsInTransit: 0, warehouseAllocateLine: '40 → 36', warehouseSellLine: '50 → 45', packMultiple: null, skuCount: 1, rrp: 420, ws: 0, season: 'SS26', event: 'Drop 3', firstSalesDate: '12th Mar 25', lifeToDateSales: 22, department: 'Crossbody', subDepartment: 'Bandoulière', material: 'Nylon', gender: 'Unisexe', skuConfidenceBuckets: { veryHigh: 1, high: 0, medium: 0, low: 0, veryLow: 0 }, skuCoverageSummary: { inTarget: 1, total: 1 } },
+    { id: 21, name: 'Pre-sac seau m', sku: 'T3-101080', colour: 'Bleu', movementType: ["replenishment"], transfers: 10, transfersSub: 1, approvedTransfers: 4, unapprovedTransfers: 6, revenue: '€0.55K', recommended: 10, recommendedBadges: ['VIS'], recommendedSub: 1, confidence: 'low', coverage: '12% below target', coverageWeeks: 2.8, coverageTarget: 6, nextEvent: { name: 'UK weekly replenishment', date: '16/06/2026' }, salesL7: 2, salesL30: 4, salesL90: 9, forecast: 0.7, stockouts: '0 → 1', locations: '2 → 1', overstocks: '2 → 0', understocks: '3 → 1', status: 'needs_review_from_user', currentUnits: 6, currentUnitsInTransit: 1, warehouseAllocateLine: '30 → 25', warehouseSellLine: '40 → 34', packMultiple: 10, skuCount: 1, isVirtualPack: true, rrp: 85, ws: 0, season: 'Winter 26', event: 'Vague 2', firstSalesDate: '3rd Nov 25', lifeToDateSales: 14, department: 'Bucket bags', subDepartment: 'Seau', material: 'Laine', gender: 'Femme', skuConfidenceBuckets: { veryHigh: 0, high: 0, medium: 0, low: 1, veryLow: 0 }, skuCoverageSummary: { inTarget: 0, total: 1 } },
+    { id: 22, name: 'Mini sac band', sku: 'T3-900020', colour: 'Rouge', movementType: ["rebalancing"], transfers: 2, transfersSub: 1, approvedTransfers: 0, unapprovedTransfers: 2, revenue: '€0.28K', recommended: 2, recommendedBadges: ['REV'], recommendedSub: 1, confidence: 'high', coverage: 'All SKUs in target', coverageWeeks: 5.5, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 0, salesL30: 2, salesL90: 5, forecast: 0.4, stockouts: '0 → 0', locations: '1 → 1', overstocks: '0 → 0', understocks: '1 → 0', status: 'unapproved', currentUnits: 4, currentUnitsInTransit: 0, warehouseAllocateLine: '20 → 18', warehouseSellLine: '28 → 26', packMultiple: null, skuCount: 1, rrp: 195, ws: 48, season: 'P/e 2026', event: 'Pre', firstSalesDate: '14th Jan 26', lifeToDateSales: 8, department: 'R.t.w. donna', subDepartment: 'Accessori piccoli', material: 'Cady', gender: 'Donna', skuConfidenceBuckets: { veryHigh: 0, high: 1, medium: 0, low: 0, veryLow: 0 }, skuCoverageSummary: { inTarget: 1, total: 1 } },
+    { id: 23, name: 'Ang-sac pte main m', sku: 'T3-1252810', colour: 'Figue', movementType: ["replenishment", "rebalancing"], transfers: 6, transfersSub: 1, approvedTransfers: 3, unapprovedTransfers: 3, revenue: '€0.71K', recommended: 6, recommendedBadges: ['REV', 'VIS'], recommendedSub: 1, confidence: 'low', coverage: '8% below target', coverageWeeks: 3.2, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 1, salesL30: 3, salesL90: 8, forecast: 1.1, stockouts: '1 → 0', locations: '2 → 2', overstocks: '2 → 1', understocks: '4 → 2', status: 'partially_approved', currentUnits: 9, currentUnitsInTransit: 2, warehouseAllocateLine: '35 → 30', warehouseSellLine: '45 → 40', packMultiple: null, skuCount: 2, rrp: 890, ws: 0, season: 'Winter 26', event: 'Vague 1', firstSalesDate: '22nd Jan 26', lifeToDateSales: 19, department: 'Handbags', subDepartment: 'Sac à main', material: 'Cuir', gender: 'Femme', skuConfidenceBuckets: { veryHigh: 0, high: 0, medium: 1, low: 1, veryLow: 0 }, skuCoverageSummary: { inTarget: 1, total: 2 } },
+  ],
+  // Trip 5 — Bruxelles → Opéra (mixed)
+  5: [
+    { id: 24, name: 'Coin-pack tote m', sku: 'T5-900010', colour: 'Noir', movementType: ["replenishment"], transfers: 30, transfersSub: 2, approvedTransfers: 15, unapprovedTransfers: 15, revenue: '€0.88K', recommended: 30, recommendedBadges: ['VIS'], recommendedSub: 1, confidence: 'high', coverage: '5% below target', coverageWeeks: 4.0, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 2, salesL30: 6, salesL90: 15, forecast: 1.0, stockouts: '0 → 0', locations: '2 → 2', overstocks: '1 → 0', understocks: '3 → 2', status: 'partially_approved', currentUnits: 14, currentUnitsInTransit: 3, warehouseAllocateLine: '45 → 40', warehouseSellLine: '55 → 50', packMultiple: 10, skuCount: 5, isVirtualPack: true, rrp: 320, ws: 0, season: 'Winter 26', event: 'Vague 1', firstSalesDate: '28th Oct 25', lifeToDateSales: 60, department: 'Handbags', subDepartment: 'Sac à main', material: 'Cuir', gender: 'Femme', skuConfidenceBuckets: { veryHigh: 1, high: 1, medium: 1, low: 1, veryLow: 1 }, skuCoverageSummary: { inTarget: 2, total: 5 } },
+    { id: 25, name: 'Gémo LOT tote', sku: 'T5-900100', colour: 'Camel', movementType: ["replenishment"], transfers: 20, transfersSub: 1, approvedTransfers: 8, unapprovedTransfers: 12, revenue: '€0.64K', recommended: 20, recommendedBadges: ['VIS'], recommendedSub: 1, confidence: 'low', coverage: '10% below target', coverageWeeks: 3.1, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 1, salesL30: 4, salesL90: 11, forecast: 0.8, stockouts: '0 → 0', locations: '1 → 2', overstocks: '2 → 1', understocks: '4 → 2', status: 'unapproved', currentUnits: 8, currentUnitsInTransit: 1, warehouseAllocateLine: '38 → 32', warehouseSellLine: '48 → 42', packMultiple: 10, skuCount: 1, isVirtualPack: false, rrp: 280, ws: 0, season: 'Winter 26', event: 'Vague 1', firstSalesDate: '2nd Aug 25', lifeToDateSales: 40, department: 'Handbags', subDepartment: 'Sac à main', material: 'Cuir', gender: 'Femme', skuConfidenceBuckets: { veryHigh: 0, high: 0, medium: 0, low: 2, veryLow: 1 }, skuCoverageSummary: { inTarget: 0, total: 3 } },
+    { id: 26, name: 'Croi-sac zip s', sku: 'T5-1398811', colour: 'Noir', movementType: ["rebalancing"], transfers: 3, transfersSub: 1, approvedTransfers: 3, unapprovedTransfers: 0, revenue: '€0.41K', recommended: 3, recommendedBadges: ['REV'], recommendedSub: 1, confidence: 'high', coverage: 'All SKUs in target', coverageWeeks: 6.2, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 0, salesL30: 1, salesL90: 4, forecast: 0.35, stockouts: '0 → 0', locations: '1 → 1', overstocks: '1 → 0', understocks: '1 → 0', status: 'approved_by_user', approvedByUser: 'Jess Briggs', currentUnits: 5, currentUnitsInTransit: 0, warehouseAllocateLine: '22 → 20', warehouseSellLine: '30 → 28', packMultiple: null, skuCount: 1, rrp: 380, ws: 25, season: 'SS26', event: 'Drop 1', firstSalesDate: '8th Feb 26', lifeToDateSales: 12, department: 'Crossbody', subDepartment: 'Bandoulière', material: 'Cuir', gender: 'Homme', skuConfidenceBuckets: { veryHigh: 1, high: 0, medium: 0, low: 0, veryLow: 0 }, skuCoverageSummary: { inTarget: 1, total: 1 } },
+  ],
+  // Trip 7 — Miramas → Romans (full-dataset trip)
+  7: [
+    { id: 27, name: 'Pre-sac seau s', sku: 'T7-101081', colour: 'Bleu petrole', movementType: ["replenishment"], transfers: 40, transfersSub: 1, approvedTransfers: 40, unapprovedTransfers: 0, revenue: '€1.2K', recommended: 40, recommendedBadges: ['VIS'], recommendedSub: 1, confidence: 'high', coverage: '3% below target', coverageWeeks: 4.5, coverageTarget: 6, nextEvent: { name: 'UK weekly replenishment', date: '16/06/2026' }, salesL7: 3, salesL30: 9, salesL90: 22, forecast: 1.4, stockouts: '0 → 0', locations: '2 → 2', overstocks: '2 → 1', understocks: '5 → 3', status: 'approved_by_system', currentUnits: 20, currentUnitsInTransit: 4, warehouseAllocateLine: '70 → 60', warehouseSellLine: '85 → 75', packMultiple: 10, skuCount: 1, isVirtualPack: true, rrp: 120, ws: 8, season: 'AW25', event: 'Continuity', firstSalesDate: '19th Sep 25', lifeToDateSales: 80, department: 'Bucket bags', subDepartment: 'Foulard', material: 'Cachemire', gender: 'Femme', skuConfidenceBuckets: { veryHigh: 0, high: 2, medium: 0, low: 0, veryLow: 0 }, skuCoverageSummary: { inTarget: 1, total: 2 } },
+    { id: 28, name: 'Ang-sac pte main s', sku: 'T7-1252811', colour: 'Figue', movementType: ["replenishment", "rebalancing"], transfers: 14, transfersSub: 1, packTransfers: 10, looseTransfers: 2, replenTransfers: 12, rebalTransfers: 2, approvedTransfers: 7, unapprovedTransfers: 7, revenue: '€0.58K', recommended: 14, recommendedBadges: ['REV'], recommendedSub: 1, confidence: 'low', coverage: '20% below target', coverageWeeks: 2.0, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 0, salesL30: 2, salesL90: 6, forecast: 0.5, stockouts: '0 → 1', locations: '2 → 2', overstocks: '3 → 1', understocks: '4 → 2', status: 'last_edited_by_user', editedByUser: 'Csabi Toth', currentUnits: 7, currentUnitsInTransit: 0, warehouseAllocateLine: '40 → 34', warehouseSellLine: '50 → 44', packMultiple: 10, skuCount: 1, isVirtualPack: false, rrp: 750, ws: 12, season: 'Winter 26', event: 'Vague 2', firstSalesDate: '5th Dec 25', lifeToDateSales: 18, department: 'Handbags', subDepartment: 'Sac à main', material: 'Cuir', gender: 'Femme', skuConfidenceBuckets: { veryHigh: 0, high: 0, medium: 0, low: 1, veryLow: 1 }, skuCoverageSummary: { inTarget: 0, total: 2 } },
+    { id: 29, name: 'Mini sac band', sku: 'T7-900021', colour: 'Noir', movementType: ["rebalancing"], transfers: 5, transfersSub: 1, approvedTransfers: 5, unapprovedTransfers: 0, revenue: '€0.33K', recommended: 5, recommendedBadges: ['REV'], recommendedSub: 1, confidence: 'high', coverage: 'All SKUs in target', coverageWeeks: 6.1, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 1, salesL30: 2, salesL90: 6, forecast: 0.45, stockouts: '0 → 0', locations: '1 → 1', overstocks: '0 → 0', understocks: '1 → 0', status: 'approved_by_user', approvedByUser: 'Jess Briggs', currentUnits: 8, currentUnitsInTransit: 1, warehouseAllocateLine: '25 → 22', warehouseSellLine: '32 → 29', packMultiple: null, skuCount: 1, rrp: 195, ws: 40, season: 'P/e 2026', event: 'Pre', firstSalesDate: '14th Jan 26', lifeToDateSales: 11, department: 'R.t.w. donna', subDepartment: 'Accessori piccoli', material: 'Cady', gender: 'Donna', skuConfidenceBuckets: { veryHigh: 1, high: 0, medium: 0, low: 0, veryLow: 0 }, skuCoverageSummary: { inTarget: 1, total: 1 } },
+    { id: 30, name: 'Croi-sac zip l', sku: 'T7-1398812', colour: 'Camel', movementType: ["rebalancing"], transfers: 4, transfersSub: 1, approvedTransfers: 2, unapprovedTransfers: 2, revenue: '€0.49K', recommended: 4, recommendedBadges: ['VIS'], recommendedSub: 1, confidence: 'medium', coverage: '4% below target', coverageWeeks: 4.8, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 1, salesL30: 3, salesL90: 7, forecast: 0.6, stockouts: '0 → 0', locations: '2 → 1', overstocks: '1 → 0', understocks: '2 → 1', status: 'needs_review_from_user', currentUnits: 6, currentUnitsInTransit: 0, warehouseAllocateLine: '28 → 24', warehouseSellLine: '36 → 32', packMultiple: null, skuCount: 1, rrp: 420, ws: 0, season: 'SS26', event: 'Drop 2', firstSalesDate: '1st Apr 25', lifeToDateSales: 25, department: 'Crossbody', subDepartment: 'Bandoulière', material: 'Nylon', gender: 'Unisexe', skuConfidenceBuckets: { veryHigh: 0, high: 0, medium: 1, low: 0, veryLow: 0 }, skuCoverageSummary: { inTarget: 0, total: 1 } },
+    { id: 31, name: 'Gémo LOT tote', sku: 'T7-900101', colour: 'Noir', movementType: ["replenishment"], transfers: 25, transfersSub: 1, approvedTransfers: 10, unapprovedTransfers: 15, revenue: '€0.77K', recommended: 25, recommendedBadges: ['VIS'], recommendedSub: 1, confidence: 'low', coverage: '7% below target', coverageWeeks: 3.4, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 2, salesL30: 5, salesL90: 14, forecast: 0.95, stockouts: '0 → 0', locations: '2 → 2', overstocks: '2 → 1', understocks: '3 → 2', status: 'unapproved', currentUnits: 11, currentUnitsInTransit: 2, warehouseAllocateLine: '50 → 44', warehouseSellLine: '60 → 54', packMultiple: 10, skuCount: 1, isVirtualPack: false, rrp: 280, ws: 0, season: 'Winter 26', event: 'Vague 1', firstSalesDate: '2nd Aug 25', lifeToDateSales: 55, department: 'Handbags', subDepartment: 'Sac à main', material: 'Cuir', gender: 'Femme', skuConfidenceBuckets: { veryHigh: 0, high: 1, medium: 1, low: 2, veryLow: 1 }, skuCoverageSummary: { inTarget: 1, total: 5 } },
+  ],
+  // Trip 8 — Troyes → Grenoble (unapproved-heavy)
+  8: [
+    { id: 32, name: 'Ang-sac pte main m', sku: 'T8-1252810', colour: 'Figue', movementType: ["rebalancing"], transfers: 7, transfersSub: 1, approvedTransfers: 0, unapprovedTransfers: 7, revenue: '€1.05K', recommended: 7, recommendedBadges: ['REV', 'VIS'], recommendedSub: 1, confidence: 'high', coverage: '6% below target', coverageWeeks: 3.5, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 2, salesL30: 5, salesL90: 12, forecast: 1.3, stockouts: '1 → 0', locations: '2 → 2', overstocks: '3 → 1', understocks: '5 → 3', status: 'unapproved', currentUnits: 12, currentUnitsInTransit: 2, warehouseAllocateLine: '42 → 36', warehouseSellLine: '55 → 48', packMultiple: null, skuCount: 2, rrp: 890, ws: 0, season: 'Winter 26', event: 'Vague 1', firstSalesDate: '22nd Jan 26', lifeToDateSales: 30, department: 'Handbags', subDepartment: 'Sac à main', material: 'Cuir', gender: 'Femme', skuConfidenceBuckets: { veryHigh: 0, high: 2, medium: 0, low: 0, veryLow: 0 }, skuCoverageSummary: { inTarget: 0, total: 2 } },
+    { id: 33, name: 'Pre-sac seau m', sku: 'T8-101080', colour: 'Vert', movementType: ["replenishment"], transfers: 15, transfersSub: 1, approvedTransfers: 0, unapprovedTransfers: 15, revenue: '€0.62K', recommended: 15, recommendedBadges: ['VIS'], recommendedSub: 1, confidence: 'low', coverage: '15% below target', coverageWeeks: 2.5, coverageTarget: 6, nextEvent: { name: 'UK weekly replenishment', date: '16/06/2026' }, salesL7: 1, salesL30: 3, salesL90: 8, forecast: 0.65, stockouts: '0 → 1', locations: '1 → 1', overstocks: '1 → 0', understocks: '3 → 1', status: 'unapproved', currentUnits: 5, currentUnitsInTransit: 1, warehouseAllocateLine: '28 → 22', warehouseSellLine: '36 → 30', packMultiple: 10, skuCount: 1, isVirtualPack: true, rrp: 85, ws: 0, season: 'Winter 26', event: 'Vague 2', firstSalesDate: '3rd Nov 25', lifeToDateSales: 16, department: 'Bucket bags', subDepartment: 'Seau', material: 'Laine', gender: 'Femme', skuConfidenceBuckets: { veryHigh: 0, high: 0, medium: 0, low: 0, veryLow: 1 }, skuCoverageSummary: { inTarget: 0, total: 1 } },
+    { id: 34, name: 'Coin-pack tote m', sku: 'T8-900010', colour: 'Camel', movementType: ["replenishment"], transfers: 22, transfersSub: 1, approvedTransfers: 5, unapprovedTransfers: 17, revenue: '€0.71K', recommended: 22, recommendedBadges: ['VIS'], recommendedSub: 1, confidence: 'medium', coverage: 'All SKUs in target', coverageWeeks: 5.8, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 1, salesL30: 4, salesL90: 10, forecast: 0.85, stockouts: '0 → 0', locations: '2 → 1', overstocks: '1 → 0', understocks: '2 → 1', status: 'needs_review_from_user', currentUnits: 9, currentUnitsInTransit: 0, warehouseAllocateLine: '33 → 28', warehouseSellLine: '42 → 37', packMultiple: 10, skuCount: 3, isVirtualPack: true, rrp: 320, ws: 0, season: 'Winter 26', event: 'Vague 1', firstSalesDate: '28th Oct 25', lifeToDateSales: 44, department: 'Handbags', subDepartment: 'Sac à main', material: 'Cuir', gender: 'Femme', skuConfidenceBuckets: { veryHigh: 0, high: 1, medium: 2, low: 0, veryLow: 0 }, skuCoverageSummary: { inTarget: 3, total: 3 } },
+    { id: 35, name: 'Croi-sac zip s', sku: 'T8-1398811', colour: 'Rouge', movementType: ["rebalancing"], transfers: 2, transfersSub: 1, approvedTransfers: 0, unapprovedTransfers: 2, revenue: '€0.25K', recommended: 2, recommendedBadges: ['REV'], recommendedSub: 1, confidence: 'high', coverage: '9% below target', coverageWeeks: 3.0, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 0, salesL30: 1, salesL90: 3, forecast: 0.3, stockouts: '0 → 0', locations: '1 → 1', overstocks: '0 → 0', understocks: '2 → 1', status: 'unapproved', currentUnits: 3, currentUnitsInTransit: 0, warehouseAllocateLine: '15 → 13', warehouseSellLine: '20 → 18', packMultiple: null, skuCount: 1, rrp: 380, ws: 25, season: 'SS26', event: 'Drop 1', firstSalesDate: '8th Feb 26', lifeToDateSales: 7, department: 'Crossbody', subDepartment: 'Bandoulière', material: 'Cuir', gender: 'Homme', skuConfidenceBuckets: { veryHigh: 0, high: 1, medium: 0, low: 0, veryLow: 0 }, skuCoverageSummary: { inTarget: 0, total: 1 } },
+  ]
+}
+
+
 
 /** Per-product SKU-location confidence buckets + coverage summary (Products tab). */
 const PRODUCT_SKU_LOCATION_METRICS = {
@@ -1427,57 +1550,51 @@ function ConfidencePill({ value }) {
 }
 
 const CONFIDENCE_BUCKET_ORDER = [
-  { key: 'veryHigh', label: 'Very high', color: '#166534' },
-  { key: 'high', label: 'High', color: '#08a16a' },
-  { key: 'medium', label: 'Medium', color: '#9ca3af' },
-  { key: 'low', label: 'Low', color: '#eab308' },
-  { key: 'veryLow', label: 'Very low', color: '#f87171' },
+  { key: 'veryHigh', label: 'Very high', color: '#166534', textColor: '#ffffff' },
+  { key: 'high', label: 'High', color: '#08a16a', textColor: '#ffffff' },
+  { key: 'medium', label: 'Medium', color: '#9ca3af', textColor: '#ffffff' },
+  { key: 'low', label: 'Low', color: '#eab308', textColor: '#0a0a0a' },
+  { key: 'veryLow', label: 'Very low', color: '#f87171', textColor: '#0a0a0a' },
 ]
 
-function sumConfidenceBuckets(buckets) {
-  if (!buckets) return 0
-  return CONFIDENCE_BUCKET_ORDER.reduce((sum, b) => sum + (Number(buckets[b.key]) || 0), 0)
+function emptyConfidenceBuckets() {
+  return { veryHigh: 0, high: 0, medium: 0, low: 0, veryLow: 0 }
 }
 
-function lowConfidenceCount(buckets) {
-  if (!buckets) return 0
-  return (Number(buckets.low) || 0) + (Number(buckets.veryLow) || 0)
+/** Most-frequent bucket; ties → worst among tied (later in CONFIDENCE_BUCKET_ORDER). */
+function pickDominantConfidenceBucket(buckets) {
+  let max = -1
+  const winners = []
+  for (const b of CONFIDENCE_BUCKET_ORDER) {
+    const n = Number(buckets?.[b.key]) || 0
+    if (n > max) {
+      max = n
+      winners.length = 0
+      winners.push(b)
+    } else if (n === max) {
+      winners.push(b)
+    }
+  }
+  if (max <= 0 || winners.length === 0) return null
+  return winners[winners.length - 1]
 }
 
-/** Products-tab confidence bar — proportional segments; zero buckets omitted. */
-function ConfidenceBucketBar({ buckets }) {
-  const segments = CONFIDENCE_BUCKET_ORDER.filter((b) => (Number(buckets?.[b.key]) || 0) > 0)
-  // Explicit width required: TuHoverPopover wraps in inline-block, so w-full + flex-grow-only
-  // children collapse to ~0px (no intrinsic width to resolve against).
-  const barStyle = { width: 108, height: 14, minHeight: 14 }
-  if (segments.length === 0) {
-    return (
-      <div
-        className="rounded-full border border-[#e5e7eb] bg-[#f3f4f6]"
-        style={barStyle}
-        aria-hidden
-      />
-    )
+function ConfidenceDominantPill({ buckets, muted = false }) {
+  const dominant = pickDominantConfidenceBucket(buckets)
+  if (!dominant) {
+    return <span className="text-[12px] text-[#9ca3af]">—</span>
   }
   return (
-    <div
-      className="flex overflow-hidden rounded-full border border-[#e5e7eb]"
-      style={barStyle}
-      role="img"
-      aria-label="Confidence distribution"
+    <span
+      className="inline-flex items-center px-2 py-1 rounded-[6px] text-[12px] font-medium"
+      style={
+        muted
+          ? { backgroundColor: '#f3f4f6', color: '#9ca3af' }
+          : { backgroundColor: dominant.color, color: dominant.textColor }
+      }
     >
-      {segments.map((b) => (
-        <div
-          key={b.key}
-          className="h-full min-w-0"
-          style={{
-            flexGrow: Number(buckets[b.key]) || 0,
-            flexBasis: 0,
-            backgroundColor: b.color,
-          }}
-        />
-      ))}
-    </div>
+      {dominant.label}
+    </span>
   )
 }
 
@@ -1507,6 +1624,14 @@ function ConfidenceBreakdownHoverCard({ buckets }) {
         })}
       </div>
     </div>
+  )
+}
+
+function ConfidenceLabelWithHover({ buckets, muted = false }) {
+  return (
+    <TuHoverPopover panel={<ConfidenceBreakdownHoverCard buckets={buckets} />}>
+      <ConfidenceDominantPill buckets={buckets} muted={muted} />
+    </TuHoverPopover>
   )
 }
 
@@ -1636,6 +1761,23 @@ function MovementTypePills({ movementType }) {
         </span>
       ))}
     </div>
+  )
+}
+
+/** Warehouse role tag for Trips From/To cells; stores render no tag. */
+function getTripLocationRoleTag(locationType, warehouseRole) {
+  if (locationType !== 'warehouse') return null
+  if (warehouseRole === 'selling') return 'Selling'
+  if (warehouseRole === 'non-selling') return 'Warehouse'
+  return null
+}
+
+function TripLocationRoleTag({ label }) {
+  if (!label) return null
+  return (
+    <span className="inline-flex items-center px-2 py-0.5 rounded-[4px] bg-[#f8f8f8] text-[11px] font-medium text-[#0267ff]">
+      {label}
+    </span>
   )
 }
 
@@ -4441,6 +4583,43 @@ function PackCountDisplay({ count, numberClassName = 'text-[14px] text-[#0a0a0a]
   )
 }
 
+/** Recommended-transfers pack count for a Products-tab row (mock / no overrides). */
+function getProductRecommendedPackCount(p) {
+  if (!productHasPackConstraint(p) || !(p.packMultiple > 0)) return 0
+  const recommendedUnits = Number(p.recommended) || 0
+  const multiPacks = getMultiSkuPacksForProduct(p)
+  if (multiPacks.length > 0) {
+    return multiPacks.reduce((sum, pack) => sum + (Number(pack.packCount) || 0), 0)
+  }
+  const packUnitsForRecommended =
+    p.packTransfers != null
+      ? Number(p.packTransfers) || 0
+      : productHasTransferSplit(p)
+        ? Number(p.replenTransfers) || 0
+        : recommendedUnits
+  return packUnitsForRecommended / p.packMultiple
+}
+
+/** Derive trip-level pack count from PRODUCTS_BY_TRIP when available. */
+function deriveTripPackCount(tripId) {
+  const list = PRODUCTS_BY_TRIP[tripId]
+  if (!list?.length) return 0
+  return list.reduce((sum, p) => sum + getProductRecommendedPackCount(p), 0)
+}
+
+// Seed packCount on trips that move pack products (leave 0/undefined for non-pack trips)
+for (const t of TRIPS_ALL) {
+  if (t.packCount != null) continue
+  const derived = deriveTripPackCount(t.id)
+  if (derived > 0) t.packCount = derived
+}
+// Explicit pack seeds for Opera trips without distinct PRODUCTS_BY_TRIP (QA coverage)
+const TRIP_PACK_COUNT_OVERRIDES = { 101: 3, 102: 2 }
+for (const [id, count] of Object.entries(TRIP_PACK_COUNT_OVERRIDES)) {
+  const trip = TRIPS_ALL.find((t) => String(t.id) === id)
+  if (trip && !(trip.packCount > 0)) trip.packCount = count
+}
+
 /** Units in one pack for Explorer pack rows (single-SKU multiple or multi-SKU ratio sum). */
 function getExplorerPackUnitsPerPack(packRow) {
   if (packRow?.isSingleSkuPack && packRow.packMultiple > 0) return packRow.packMultiple
@@ -4792,19 +4971,19 @@ function ProductsDrilldown({
 
   // Confidence + Coverage totals stay scope-wide (state metrics; greyed when filters active)
   const productSkuLocationTotals = useMemo(() => {
-    let lowConfidence = 0
-    let totalSkuLocations = 0
+    const aggregatedBuckets = emptyConfidenceBuckets()
     let coverageInTarget = 0
     let coverageTotal = 0
     baseProducts.forEach((p) => {
-      lowConfidence += lowConfidenceCount(p.skuConfidenceBuckets)
-      totalSkuLocations += sumConfidenceBuckets(p.skuConfidenceBuckets)
+      for (const b of CONFIDENCE_BUCKET_ORDER) {
+        aggregatedBuckets[b.key] += Number(p.skuConfidenceBuckets?.[b.key]) || 0
+      }
       coverageInTarget += Number(p.skuCoverageSummary?.inTarget) || 0
       coverageTotal += Number(p.skuCoverageSummary?.total) || 0
     })
     const coveragePct =
       coverageTotal > 0 ? Math.round((100 * coverageInTarget) / coverageTotal) : 0
-    return { lowConfidence, totalSkuLocations, coveragePct }
+    return { aggregatedBuckets, coveragePct }
   }, [baseProducts])
 
   const toggleProductSelection = (id) => {
@@ -5357,8 +5536,13 @@ function ProductsDrilldown({
         return <th key={logicalIdx} className={`${pin}py-2 px-4`} />
       case 2:
         return (
-          <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
-            {transferApprovalTotals.transfers} units
+          <th key={logicalIdx} className={`${pin}py-2 px-4 text-right`}>
+            <div className="flex flex-col items-end gap-0.5">
+              <span className="text-[12px] font-medium text-[#0a0a0a]">
+                {transferApprovalTotals.transfers} units
+              </span>
+              <span className="text-[11px] text-[#4b535c]">packs</span>
+            </div>
           </th>
         )
       case 3:
@@ -5369,8 +5553,13 @@ function ProductsDrilldown({
         )
       case 4:
         return (
-          <th key={logicalIdx} className={`${pin}py-2 px-4 text-[12px] font-medium text-[#0a0a0a] text-right`}>
-            {productSummary.recommendedUnits} units
+          <th key={logicalIdx} className={`${pin}py-2 px-4 text-right`}>
+            <div className="flex flex-col items-end gap-0.5">
+              <span className="text-[12px] font-medium text-[#0a0a0a]">
+                {productSummary.recommendedUnits} units
+              </span>
+              <span className="text-[11px] text-[#4b535c]">packs</span>
+            </div>
           </th>
         )
       case 5:
@@ -5380,20 +5569,17 @@ function ProductsDrilldown({
             className={`${pin}py-2 px-4 text-right ${stateMuted ? 'cursor-help' : ''}`}
             title={stateMutedTitle}
           >
-            <div className="flex flex-col items-end gap-0.5">
-              <span className={`text-[12px] font-medium ${statePrimary}`}>
-                {productSkuLocationTotals.lowConfidence} low
-              </span>
-              <span className={`text-[11px] ${stateSecondary}`}>
-                {productSkuLocationTotals.totalSkuLocations} SKU-locations
-              </span>
+            <div className="flex justify-end">
+              <ConfidenceLabelWithHover
+                buckets={productSkuLocationTotals.aggregatedBuckets}
+                muted={stateMuted}
+              />
             </div>
           </th>
         )
 
       case 6: {
         const coveragePct = productSkuLocationTotals.coveragePct
-        const coverageFull = coveragePct === 100
         return (
           <th
             key={logicalIdx}
@@ -5405,12 +5591,10 @@ function ProductsDrilldown({
                 className={`px-1.5 py-0.5 rounded-[4px] text-[11px] font-medium ${
                   stateMuted
                     ? 'bg-[#f3f4f6] text-[#9ca3af]'
-                    : coverageFull
-                      ? 'bg-[#dcfce7] text-[#166534]'
-                      : 'bg-[#f3f4f6] text-[#0a0a0a]'
+                    : 'bg-[#dcfce7] text-[#166534]'
                 }`}
               >
-                {coveragePct}% of SKU-locations in target
+                {coveragePct}% of SKUs in target
               </span>
             </div>
           </th>
@@ -5535,24 +5719,11 @@ function ProductsDrilldown({
         )
       case 2: {
         const effectiveTransfers = getEffectiveTransfers(p)
-        const hasTransferSplit = productHasTransferSplit(p)
-        const hasMixedFulfilment = productHasMixedFulfilment(p)
-        const hasPack = productHasPackConstraint(p)
-        const isReplenOnly = productIsReplenOnly(p)
         const isInlineEditable = productIsNonPackReplenEditable(p)
         const hasModalEdit = productHasTransfersModalEdit(p)
-        const packCount = getReplenPackCount(p)
-        const looseUnits = getEffectiveLooseTransfers(p)
-        const rebalUnits = Number(p.rebalTransfers) || 0
         const isEditingThis = editingTransfersProductId === p.id
-        // Pack + loose + rebal: summary units = loose + rebal (not pack contents)
-        const showPackLooseRebalSummary =
-          hasMixedFulfilment && rebalUnits > 0 && packCount > 0
-        const showPackPrimary =
-          hasPack &&
-          (isReplenOnly || hasTransferSplit) &&
-          packCount > 0 &&
-          !showPackLooseRebalSummary
+        const packCount = getReplenPackCount(p)
+        const showPackCount = packCount > 0
 
         const transfersCellContent = isInlineEditable ? (
           <div className="flex flex-col items-end gap-0.5">
@@ -5581,21 +5752,12 @@ function ProductsDrilldown({
               className="w-16 h-7 px-2 rounded-[4px] border border-[#e9eaeb] text-[12px] text-[#0a0a0a] text-right"
             />
           </div>
-        ) : showPackLooseRebalSummary ? (
-          <div className="flex flex-col items-end gap-0.5">
-            <PackCountDisplay count={packCount} />
-            <span className="text-[12px] text-[#4b535c]">
-              {looseUnits + rebalUnits} units
-            </span>
-          </div>
-        ) : showPackPrimary ? (
-          <div className="flex flex-col items-end gap-0.5">
-            <PackCountDisplay count={packCount} />
-            <span className="text-[12px] text-[#4b535c]">{effectiveTransfers} units</span>
-          </div>
         ) : (
           <div className="flex flex-col items-end gap-0.5">
             <span className="text-[14px] text-[#0a0a0a]">{effectiveTransfers}</span>
+            {showPackCount && (
+              <span className="text-[12px] text-[#4b535c]">{packCount}</span>
+            )}
           </div>
         )
 
@@ -5653,55 +5815,27 @@ function ProductsDrilldown({
         )
       }
       case 4: {
-        const hasPack = productHasPackConstraint(p)
         const recommendedUnits = Number(p.recommended) || 0
-        const multiPacks = getMultiSkuPacksForProduct(p)
-        const packUnitsForRecommended =
-          hasPack && p.packMultiple > 0
-            ? p.packTransfers != null
-              ? Number(p.packTransfers) || 0
-              : productHasTransferSplit(p)
-                ? Number(p.replenTransfers) || 0
-                : recommendedUnits
-            : 0
-        const recommendedPackCount =
-          multiPacks.length > 0
-            ? multiPacks.reduce((sum, pack) => sum + (Number(pack.packCount) || 0), 0)
-            : hasPack && p.packMultiple > 0
-              ? packUnitsForRecommended / p.packMultiple
-              : 0
-        const showPackRecommended = hasPack && recommendedPackCount > 0
+        const recommendedPackCount = getProductRecommendedPackCount(p)
+        const showPackCount = recommendedPackCount > 0
+        const reasonBadges = p.recommendedBadges?.map((b) => (
+          <span
+            key={b}
+            className="inline-flex items-center px-2 py-0.5 rounded-[4px] bg-[#f8f8f8] text-[11px] font-medium text-[#0267ff]"
+          >
+            {b === 'VIS' ? 'VS' : b}
+          </span>
+        ))
 
         return (
           <td key={logicalIdx} className={`${pin}py-3 px-4 text-right align-top`}>
-            <div className="flex flex-col items-end gap-1 line-clamp-2 min-w-0">
-              {showPackRecommended ? (
-                <>
-                  <span className="inline-flex flex-wrap items-center justify-end gap-1">
-                    <PackCountDisplay count={recommendedPackCount} />
-                    {p.recommendedBadges?.map((b) => (
-                      <span
-                        key={b}
-                        className="inline-flex items-center px-2 py-0.5 rounded-[4px] bg-[#f8f8f8] text-[11px] font-medium text-[#0267ff]"
-                      >
-                        {b === 'VIS' ? 'VS' : b}
-                      </span>
-                    ))}
-                  </span>
-                  <span className="text-[12px] text-[#4b535c]">{recommendedUnits} units</span>
-                </>
-              ) : (
-                <span className="text-[#0a0a0a]">
-                  {p.recommended}
-                  {p.recommendedBadges?.map((b) => (
-                    <span
-                      key={b}
-                      className="ml-1 inline-flex items-center px-2 py-0.5 rounded-[4px] bg-[#f8f8f8] text-[11px] font-medium text-[#0267ff]"
-                    >
-                      {b === 'VIS' ? 'VS' : b}
-                    </span>
-                  ))}
-                </span>
+            <div className="flex flex-col items-end gap-0.5 line-clamp-2 min-w-0">
+              <span className="inline-flex flex-wrap items-center justify-end gap-1 text-[#0a0a0a]">
+                <span className="text-[14px]">{recommendedUnits}</span>
+                {reasonBadges}
+              </span>
+              {showPackCount && (
+                <span className="text-[12px] text-[#4b535c]">{recommendedPackCount}</span>
               )}
             </div>
           </td>
@@ -5714,11 +5848,7 @@ function ProductsDrilldown({
             className={`${pin}py-3 px-4 w-[140px] min-w-[140px] text-right align-top`}
           >
             <div className="flex justify-end">
-              <TuHoverPopover
-                panel={<ConfidenceBreakdownHoverCard buckets={p.skuConfidenceBuckets} />}
-              >
-                <ConfidenceBucketBar buckets={p.skuConfidenceBuckets} />
-              </TuHoverPopover>
+              <ConfidenceLabelWithHover buckets={p.skuConfidenceBuckets} />
             </div>
           </td>
         )
@@ -7208,6 +7338,8 @@ function filterExplorerRows(
     productNameFilters,
     confidenceFilters,
     statusFilters,
+    fromLocationFilters = [],
+    toLocationFilters = [],
     statusOverrides = {} }
 ) {
   return rows.filter((row) => {
@@ -7218,6 +7350,12 @@ function filterExplorerRows(
       return false
     }
     if (confidenceFilters.length > 0 && !confidenceFilters.includes(row.confidence)) {
+      return false
+    }
+    if (fromLocationFilters.length > 0 && !fromLocationFilters.includes(row.fromLocation)) {
+      return false
+    }
+    if (toLocationFilters.length > 0 && !toLocationFilters.includes(row.toLocation)) {
       return false
     }
     if (statusFilters.length > 0) {
@@ -8168,6 +8306,10 @@ function ExplorerTable({
   setExplorerConfidenceFilters,
   explorerStatusFilters,
   setExplorerStatusFilters,
+  explorerFromLocationFilters,
+  setExplorerFromLocationFilters,
+  explorerToLocationFilters,
+  setExplorerToLocationFilters,
   onOpenProductTransfers }) {
   const [explorerSearch, setExplorerSearch] = useState('')
   const [explorerActiveQuickFilter, setExplorerActiveQuickFilter] = useState(null)
@@ -8501,23 +8643,45 @@ function ExplorerTable({
     explorerStatusOverrides[row.id] ??
     (row.rowKind === 'packRow' ? row.packStatus ?? row.status : getRowStatus(row))
 
+  const explorerFromLocationOptions = useMemo(() => {
+    const names = new Set()
+    for (const row of data) {
+      if (row.fromLocation) names.add(row.fromLocation)
+    }
+    return [...names].sort((a, b) => a.localeCompare(b))
+  }, [data])
+
+  const explorerToLocationOptions = useMemo(() => {
+    const names = new Set()
+    for (const row of data) {
+      if (row.toLocation) names.add(row.toLocation)
+    }
+    return [...names].sort((a, b) => a.localeCompare(b))
+  }, [data])
+
   const explorerFilterCount =
     explorerDepartmentFilters.length +
     explorerProductNameFilters.length +
     explorerConfidenceFilters.length +
-    explorerStatusFilters.length
+    explorerStatusFilters.length +
+    explorerFromLocationFilters.length +
+    explorerToLocationFilters.length
 
   const hasClearableExplorerFilters =
     explorerDepartmentFilters.length > 0 ||
     explorerProductNameFilters.length > 0 ||
     explorerConfidenceFilters.length > 0 ||
-    explorerStatusFilters.length > 0
+    explorerStatusFilters.length > 0 ||
+    explorerFromLocationFilters.length > 0 ||
+    explorerToLocationFilters.length > 0
 
   const hasAnyFilter =
     explorerDepartmentFilters.length > 0 ||
     explorerProductNameFilters.length > 0 ||
     explorerConfidenceFilters.length > 0 ||
-    explorerStatusFilters.length > 0
+    explorerStatusFilters.length > 0 ||
+    explorerFromLocationFilters.length > 0 ||
+    explorerToLocationFilters.length > 0
 
   useEffect(() => {
     onDrawerFiltersActiveChange?.(hasAnyFilter)
@@ -8528,6 +8692,8 @@ function ExplorerTable({
     setExplorerProductNameFilters([])
     setExplorerConfidenceFilters([])
     setExplorerStatusFilters([])
+    setExplorerFromLocationFilters([])
+    setExplorerToLocationFilters([])
   }
 
   const filteredData = useMemo(
@@ -8537,6 +8703,8 @@ function ExplorerTable({
         productNameFilters: explorerProductNameFilters,
         confidenceFilters: explorerConfidenceFilters,
         statusFilters: explorerStatusFilters,
+        fromLocationFilters: explorerFromLocationFilters,
+        toLocationFilters: explorerToLocationFilters,
         statusOverrides: explorerStatusOverrides }),
     [
       data,
@@ -8544,6 +8712,8 @@ function ExplorerTable({
       explorerProductNameFilters,
       explorerConfidenceFilters,
       explorerStatusFilters,
+      explorerFromLocationFilters,
+      explorerToLocationFilters,
       explorerStatusOverrides,
     ]
   )
@@ -8556,6 +8726,8 @@ function ExplorerTable({
     explorerProductNameFilters,
     explorerConfidenceFilters,
     explorerStatusFilters,
+    explorerFromLocationFilters,
+    explorerToLocationFilters,
   ])
 
   const displayRows = useMemo(
@@ -8816,6 +8988,54 @@ function ExplorerTable({
                     ))}
                   </div>
 
+                  <div className="border-t border-[#e5e7eb] pt-3 mt-3">
+                    <div className="text-[12px] font-medium uppercase tracking-[0.04em] text-[#4b535c] mb-2">
+                      From location
+                    </div>
+                    {explorerFromLocationOptions.map((loc) => (
+                      <label
+                        key={`from-${loc}`}
+                        className="flex items-center gap-2 px-0 py-1.5 hover:bg-[#f3f4f6] cursor-pointer rounded-[4px]"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={explorerFromLocationFilters.includes(loc)}
+                          onChange={(e) => {
+                            setExplorerFromLocationFilters((prev) =>
+                              e.target.checked ? [...prev, loc] : prev.filter((x) => x !== loc)
+                            )
+                          }}
+                          className="size-4 rounded border-[#d1d5db] text-[#0267ff]"
+                        />
+                        <span className="text-[14px] text-[#0a0a0a]">{loc}</span>
+                      </label>
+                    ))}
+                  </div>
+
+                  <div className="border-t border-[#e5e7eb] pt-3 mt-3">
+                    <div className="text-[12px] font-medium uppercase tracking-[0.04em] text-[#4b535c] mb-2">
+                      To location
+                    </div>
+                    {explorerToLocationOptions.map((loc) => (
+                      <label
+                        key={`to-${loc}`}
+                        className="flex items-center gap-2 px-0 py-1.5 hover:bg-[#f3f4f6] cursor-pointer rounded-[4px]"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={explorerToLocationFilters.includes(loc)}
+                          onChange={(e) => {
+                            setExplorerToLocationFilters((prev) =>
+                              e.target.checked ? [...prev, loc] : prev.filter((x) => x !== loc)
+                            )
+                          }}
+                          className="size-4 rounded border-[#d1d5db] text-[#0267ff]"
+                        />
+                        <span className="text-[14px] text-[#0a0a0a]">{loc}</span>
+                      </label>
+                    ))}
+                  </div>
+
                   {explorerFilterCount > 0 && (
                     <div className="border-t border-[#e5e7eb] mt-3 pt-3">
                       <button
@@ -8918,6 +9138,38 @@ function ExplorerTable({
                 onClick={() => setExplorerStatusFilters((prev) => prev.filter((x) => x !== f))}
                 className="p-0.5 rounded-[4px] text-[#6b7280] hover:bg-[#e5e7eb] hover:text-[#374151]"
                 aria-label={`Remove filter: Status ${EXPLORER_STATUS_FILTER_LABELS[f]}`}
+              >
+                <IconClose className="size-3.5" />
+              </button>
+            </span>
+          ))}
+          {explorerFromLocationFilters.map((loc) => (
+            <span
+              key={`from-${loc}`}
+              className="inline-flex items-center gap-1.5 pl-3 pr-1.5 py-1.5 rounded-[4px] bg-[#f3f4f6] text-[#4b535c] border border-[#e5e7eb]"
+            >
+              <span>From location: {loc}</span>
+              <button
+                type="button"
+                onClick={() => setExplorerFromLocationFilters((prev) => prev.filter((x) => x !== loc))}
+                className="p-0.5 rounded-[4px] text-[#6b7280] hover:bg-[#e5e7eb] hover:text-[#374151]"
+                aria-label={`Remove filter: From location ${loc}`}
+              >
+                <IconClose className="size-3.5" />
+              </button>
+            </span>
+          ))}
+          {explorerToLocationFilters.map((loc) => (
+            <span
+              key={`to-${loc}`}
+              className="inline-flex items-center gap-1.5 pl-3 pr-1.5 py-1.5 rounded-[4px] bg-[#f3f4f6] text-[#4b535c] border border-[#e5e7eb]"
+            >
+              <span>To location: {loc}</span>
+              <button
+                type="button"
+                onClick={() => setExplorerToLocationFilters((prev) => prev.filter((x) => x !== loc))}
+                className="p-0.5 rounded-[4px] text-[#6b7280] hover:bg-[#e5e7eb] hover:text-[#374151]"
+                aria-label={`Remove filter: To location ${loc}`}
               >
                 <IconClose className="size-3.5" />
               </button>
@@ -9555,6 +9807,8 @@ export default function ScheduleDetailPage() {
   const [explorerProductNameFilters, setExplorerProductNameFilters] = useState([])
   const [explorerConfidenceFilters, setExplorerConfidenceFilters] = useState([])
   const [explorerStatusFilters, setExplorerStatusFilters] = useState([])
+  const [explorerFromLocationFilters, setExplorerFromLocationFilters] = useState([])
+  const [explorerToLocationFilters, setExplorerToLocationFilters] = useState([])
   const [productsTabSelectedProduct, setProductsTabSelectedProduct] = useState(null)
   const [tripStatusOverrides, setTripStatusOverrides] = useState({})
   const [selectedTrip, setSelectedTrip] = useState(null)
@@ -9575,7 +9829,19 @@ export default function ScheduleDetailPage() {
   const handleOpenExplorerUnapprovedForProduct = (productName) => {
     setExplorerDepartmentFilters([])
     setExplorerConfidenceFilters([])
+    setExplorerFromLocationFilters([])
+    setExplorerToLocationFilters([])
     setExplorerProductNameFilters([productName])
+    setExplorerStatusFilters(['unapproved', 'needs_review', 'edited'])
+    setActiveTab('explorer')
+  }
+
+  const handleOpenExplorerUnapprovedForTrip = (trip) => {
+    setExplorerDepartmentFilters([])
+    setExplorerProductNameFilters([])
+    setExplorerConfidenceFilters([])
+    setExplorerFromLocationFilters(trip?.from ? [trip.from] : [])
+    setExplorerToLocationFilters(trip?.to ? [trip.to] : [])
     setExplorerStatusFilters(['unapproved', 'needs_review', 'edited'])
     setActiveTab('explorer')
   }
@@ -9610,6 +9876,17 @@ export default function ScheduleDetailPage() {
     }
     return rows
   })()
+  const tripApprovalTotals = tripsRows.reduce(
+    (acc, row) => ({
+      approved: acc.approved + (Number(row.approvedTransfers) || 0),
+      unapproved: acc.unapproved + (Number(row.unapprovedTransfers) || 0),
+    }),
+    { approved: 0, unapproved: 0 }
+  )
+  const tripPacksTotal = tripsRows.reduce(
+    (sum, row) => sum + (Number(row.packCount) || 0),
+    0
+  )
   const tripSummary = viewShowsFullDataset ? TRIPS_TAB_SUMMARY_TOTALS_FULL : TRIPS_TAB_SUMMARY_TOTALS_OPERA
 
   const [tripTableColWidths, setTripTableColWidths] = useState(() => [...TRIPS_TABLE_DEFAULT_COL_WIDTHS])
@@ -9617,7 +9894,7 @@ export default function ScheduleDetailPage() {
     Array.from({ length: TRIPS_TABLE_NUM_DATA_COLS }, (_, i) => i)
   )
   /** Status (logical col 7) only pins to the right when it is the trailing column after reorder. */
-  const tripStatusColumnIsTrailing = tripColumnOrder[tripColumnOrder.length - 1] === 7
+  const tripStatusColumnIsTrailing = tripColumnOrder[tripColumnOrder.length - 1] === 6
 
   const onTripColDragStart = useCallback((visualIndex, e) => {
     e.stopPropagation()
@@ -9657,7 +9934,7 @@ export default function ScheduleDetailPage() {
     e.stopPropagation()
     const startX = e.clientX
     const startW = tripTableColWidths[colIndex]
-    const minColW = colIndex === 4 ? 160 : colIndex === 6 ? 190 : 72
+    const minColW = colIndex === 3 ? 160 : colIndex === 5 ? 190 : 72
     const onMove = (ev) => {
       const d = ev.clientX - startX
       setTripTableColWidths((prev) => {
@@ -9913,6 +10190,10 @@ export default function ScheduleDetailPage() {
             setExplorerConfidenceFilters={setExplorerConfidenceFilters}
             explorerStatusFilters={explorerStatusFilters}
             setExplorerStatusFilters={setExplorerStatusFilters}
+            explorerFromLocationFilters={explorerFromLocationFilters}
+            setExplorerFromLocationFilters={setExplorerFromLocationFilters}
+            explorerToLocationFilters={explorerToLocationFilters}
+            setExplorerToLocationFilters={setExplorerToLocationFilters}
             onOpenProductTransfers={handleOpenProductTransfersFromExplorer}
           />
         ) : selectedTrip ? (
@@ -9991,6 +10272,24 @@ export default function ScheduleDetailPage() {
                     </div>
                   </>
                 )}
+              </div>
+              <div className="flex items-center gap-2 shrink-0 ml-auto">
+                <button
+                  type="button"
+                  className="h-10 px-4 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] font-medium text-[#22272f] hover:bg-[#f3f4f6] shrink-0"
+                  aria-label="Save view"
+                >
+                  Save
+                </button>
+                <button
+                  type="button"
+                  className="h-10 px-3 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#22272f] hover:bg-[#f3f4f6] shrink-0 inline-flex items-center gap-1.5"
+                  aria-label="Default view"
+                  aria-haspopup="listbox"
+                >
+                  Default view
+                  <IconChevronDown />
+                </button>
               </div>
             </div>
 
@@ -10137,26 +10436,12 @@ export default function ScheduleDetailPage() {
                             >
                               <span className="inline-flex min-w-0 items-center gap-2">
                                 {grip}
-                                Movement
-                              </span>
-                              {resizer}
-                            </th>
-                          )
-                        case 3:
-                          return (
-                            <th
-                              key={logicalIdx}
-                              className="sticky top-0 z-20 bg-white relative h-[62px] min-h-[62px] px-3 text-left align-middle font-medium text-[#0a0a0a] box-border"
-                              {...dropProps}
-                            >
-                              <span className="inline-flex min-w-0 items-center gap-2">
-                                {grip}
                                 Transfers
                               </span>
                               {resizer}
                             </th>
                           )
-                        case 4:
+                        case 3:
                           return (
                             <th
                               key={logicalIdx}
@@ -10174,14 +10459,14 @@ export default function ScheduleDetailPage() {
                               {resizer}
                             </th>
                           )
-                        case 5:
+                        case 4:
                           return (
                             <th
                               key={logicalIdx}
-                              className="sticky top-0 z-20 bg-white relative h-[62px] min-h-[62px] whitespace-nowrap px-3 text-right align-middle font-medium text-[#0a0a0a] box-border"
+                              className="sticky top-0 z-20 bg-white relative h-[62px] min-h-[62px] whitespace-nowrap px-3 text-left align-middle font-medium text-[#0a0a0a] box-border"
                               {...dropProps}
                             >
-                              <span className="inline-flex w-full min-w-0 items-center justify-end gap-2 whitespace-nowrap">
+                              <span className="inline-flex min-w-0 max-w-full items-center gap-2 whitespace-nowrap">
                                 {grip}
                                 <span className="inline-flex items-center gap-1 whitespace-nowrap">
                                   Recommended transfers
@@ -10191,8 +10476,7 @@ export default function ScheduleDetailPage() {
                               {resizer}
                             </th>
                           )
-
-                        case 6:
+                        case 5:
                           return (
                             <th
                               key={logicalIdx}
@@ -10206,7 +10490,7 @@ export default function ScheduleDetailPage() {
                               {resizer}
                             </th>
                           )
-                        case 7:
+                        case 6:
                           return (
                             <th
                               key={logicalIdx}
@@ -10253,19 +10537,19 @@ export default function ScheduleDetailPage() {
                           return (
                             <th
                               key={logicalIdx}
-                              className="sticky top-[62px] z-20 bg-white py-2 px-3"
-                            />
-                          )
-                        case 3:
-                          return (
-                            <th
-                              key={logicalIdx}
-                              className="sticky top-[62px] z-20 bg-white py-2 px-3 text-[12px] font-medium text-[#0a0a0a]"
+                              className="sticky top-[62px] z-20 bg-white py-2 px-3 text-right"
                             >
-                              {tripSummary.transfers}
+                              <div className="flex flex-col items-end gap-0.5">
+                                <span className="text-[12px] font-medium text-[#0a0a0a]">
+                                  {tripSummary.transfers} units
+                                </span>
+                                {tripPacksTotal > 0 && (
+                                  <span className="text-[11px] text-[#4b535c]">packs</span>
+                                )}
+                              </div>
                             </th>
                           )
-                        case 4:
+                        case 3:
                           return (
                             <th
                               key={logicalIdx}
@@ -10274,17 +10558,23 @@ export default function ScheduleDetailPage() {
                               {tripSummary.revenue}
                             </th>
                           )
-                        case 5:
+                        case 4:
                           return (
                             <th
                               key={logicalIdx}
-                              className="sticky top-[62px] z-20 bg-white whitespace-nowrap py-2 px-3 text-right text-[12px] font-medium text-[#0a0a0a]"
+                              className="sticky top-[62px] z-20 bg-white whitespace-nowrap py-2 px-3 text-left"
                             >
-                              {tripSummary.recommended}
+                              <div className="flex flex-col items-start gap-0.5">
+                                <span className="text-[12px] font-medium text-[#0a0a0a]">
+                                  {tripSummary.recommended} units
+                                </span>
+                                {tripPacksTotal > 0 && (
+                                  <span className="text-[11px] text-[#4b535c]">packs</span>
+                                )}
+                              </div>
                             </th>
                           )
-
-                        case 6:
+                        case 5:
                           return (
                             <th
                               key={logicalIdx}
@@ -10293,7 +10583,7 @@ export default function ScheduleDetailPage() {
                               {tripSummary.products}
                             </th>
                           )
-                        case 7:
+                        case 6:
                           return (
                             <th
                               key={logicalIdx}
@@ -10302,7 +10592,20 @@ export default function ScheduleDetailPage() {
                                   ? 'right-0 z-30 shadow-[-4px_0_12px_-6px_rgba(15,23,42,0.12)]'
                                   : 'z-20'
                               }`}
-                            />
+                            >
+                              <div className="flex flex-col items-end gap-0.5 text-[12px] font-medium">
+                                {tripApprovalTotals.approved > 0 && (
+                                  <span className="text-[#166534]">
+                                    {tripApprovalTotals.approved} approved
+                                  </span>
+                                )}
+                                {tripApprovalTotals.unapproved > 0 && (
+                                  <span className="text-[#4b535c]">
+                                    {tripApprovalTotals.unapproved} unapproved
+                                  </span>
+                                )}
+                              </div>
+                            </th>
                           )
                         default:
                           return null
@@ -10346,8 +10649,16 @@ export default function ScheduleDetailPage() {
                             case 0:
                               return (
                                 <td key={logicalIdx} className="py-3 px-3 align-top">
-                                  <div className="flex flex-col">
-                                    <span className="text-[#0a0a0a] font-medium">{row.from}</span>
+                                  <div className="flex flex-col gap-0.5">
+                                    <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
+                                      <span className="text-[#0a0a0a] font-medium">{row.from}</span>
+                                      <TripLocationRoleTag
+                                        label={getTripLocationRoleTag(
+                                          row.fromLocationType,
+                                          row.fromWarehouseRole
+                                        )}
+                                      />
+                                    </span>
                                     <span className="text-[12px] text-[#4b535c]">{row.fromCode}</span>
                                   </div>
                                 </td>
@@ -10355,8 +10666,16 @@ export default function ScheduleDetailPage() {
                             case 1:
                               return (
                                 <td key={logicalIdx} className="py-3 px-3 align-top">
-                                  <div className="flex flex-col">
-                                    <span className="text-[#0a0a0a] font-medium">{row.to}</span>
+                                  <div className="flex flex-col gap-0.5">
+                                    <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
+                                      <span className="text-[#0a0a0a] font-medium">{row.to}</span>
+                                      <TripLocationRoleTag
+                                        label={getTripLocationRoleTag(
+                                          row.toLocationType,
+                                          row.toWarehouseRole
+                                        )}
+                                      />
+                                    </span>
                                     <span className="text-[12px] text-[#4b535c]">{row.toCode}</span>
                                   </div>
                                 </td>
@@ -10364,29 +10683,32 @@ export default function ScheduleDetailPage() {
                             case 2:
                               return (
                                 <td key={logicalIdx} className="py-3 px-3 align-top">
-                                  <MovementTypePills movementType={row.movementType} />
+                                  <div className="flex flex-col items-start gap-0.5">
+                                    <span>
+                                      <span className="text-[14px] text-[#0a0a0a]">{row.transfers}</span>
+                                      <span className="text-[12px] text-[#4b535c] ml-1">(max 200)</span>
+                                    </span>
+                                    {(Number(row.packCount) || 0) > 0 && (
+                                      <span className="text-[12px] text-[#4b535c]">{row.packCount}</span>
+                                    )}
+                                  </div>
                                 </td>
                               )
                             case 3:
-                              return (
-                                <td key={logicalIdx} className="py-3 px-3 align-top">
-                                  <span className="text-[#0a0a0a]">{row.transfers}</span>
-                                  <span className="text-[12px] text-[#4b535c] ml-1">(max 200)</span>
-                                </td>
-                              )
-                            case 4:
                               return (
                                 <td key={logicalIdx} className="py-3 pl-3 pr-8 align-top">
                                   <span className="text-[#0a0a0a]">{row.revenue}</span>
                                   <span className="text-[12px] text-[#4b535c] ml-1">(min 6903)</span>
                                 </td>
                               )
-                            case 5:
+                            case 4:
                               return (
-                                <td key={logicalIdx} className="py-3 px-3 align-top text-right">
-                                  <div className="flex flex-col gap-1 items-end">
-                                    <span className="whitespace-nowrap text-[#0a0a0a]">{row.recommended}</span>
-                                    <div className="flex flex-wrap gap-1 mt-1 justify-end">
+                                <td key={logicalIdx} className="py-3 px-3 align-top">
+                                  <div className="flex flex-col gap-0.5 items-start">
+                                    <span className="inline-flex flex-wrap items-center gap-1">
+                                      <span className="whitespace-nowrap text-[14px] text-[#0a0a0a]">
+                                        {row.recommended}
+                                      </span>
                                       {row.badges?.includes('MDQ') && (
                                         <span className="inline-flex items-center px-2 py-0.5 rounded-[4px] bg-[#f8f8f8] text-[11px] font-medium text-[#0267ff]">
                                           MDQ
@@ -10402,18 +10724,20 @@ export default function ScheduleDetailPage() {
                                           REV
                                         </span>
                                       )}
-                                    </div>
+                                    </span>
+                                    {(Number(row.packCount) || 0) > 0 && (
+                                      <span className="text-[12px] text-[#4b535c]">{row.packCount}</span>
+                                    )}
                                   </div>
                                 </td>
                               )
-
-                            case 6:
+                            case 5:
                               return (
                                 <td key={logicalIdx} className="py-3 px-3 align-top text-right">
                                   <span className="text-[#0a0a0a]">{row.products}</span>
                                 </td>
                               )
-                            case 7:
+                            case 6:
                               return (
                                 <td
                                   key={logicalIdx}
@@ -10424,7 +10748,7 @@ export default function ScheduleDetailPage() {
                                   }`}
                                   onClick={(e) => e.stopPropagation()}
                                 >
-                                  <div className="flex justify-end">
+                                  <div className="flex flex-col items-end gap-1">
                                     <StatusDropdown
                                       rowId={`trip-${row.id}`}
                                       value={rowStatus}
@@ -10434,6 +10758,25 @@ export default function ScheduleDetailPage() {
                                         setTripStatusOverrides((prev) => ({ ...prev, [row.id]: statusId }))
                                       }
                                     />
+                                    <div className="flex flex-col items-end gap-0.5">
+                                      {(row.approvedTransfers ?? 0) > 0 && (
+                                        <span className="text-[12px] font-medium text-[#166534]">
+                                          {row.approvedTransfers} approved
+                                        </span>
+                                      )}
+                                      {(row.unapprovedTransfers ?? 0) > 0 && (
+                                        <button
+                                          type="button"
+                                          className="text-[12px] font-medium text-[#4b535c] hover:underline"
+                                          onClick={(e) => {
+                                            e.stopPropagation()
+                                            handleOpenExplorerUnapprovedForTrip(row)
+                                          }}
+                                        >
+                                          {row.unapprovedTransfers} unapproved
+                                        </button>
+                                      )}
+                                    </div>
                                   </div>
                                 </td>
                               )
