@@ -5428,7 +5428,7 @@ function ProductsDrilldown({
                 {p.unapprovedTransfers > 0 && (
                   <button
                     type="button"
-                    className="text-[12px] font-medium text-[#0267ff] hover:underline"
+                    className="text-[12px] font-medium text-[#4b535c] hover:underline"
                     onClick={(e) => {
                       e.stopPropagation()
                       onOpenExplorerUnapprovedForProduct?.(p.name)
