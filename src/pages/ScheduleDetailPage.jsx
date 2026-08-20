@@ -1447,17 +1447,22 @@ function lowConfidenceCount(buckets) {
 /** Products-tab confidence bar — proportional segments; zero buckets omitted. */
 function ConfidenceBucketBar({ buckets }) {
   const segments = CONFIDENCE_BUCKET_ORDER.filter((b) => (Number(buckets?.[b.key]) || 0) > 0)
+  // Explicit width required: TuHoverPopover wraps in inline-block, so w-full + flex-grow-only
+  // children collapse to ~0px (no intrinsic width to resolve against).
+  const barStyle = { width: 108, height: 14, minHeight: 14 }
   if (segments.length === 0) {
     return (
       <div
-        className="h-3.5 w-full max-w-[120px] rounded-full border border-[#e5e7eb] bg-[#f3f4f6]"
+        className="rounded-full border border-[#e5e7eb] bg-[#f3f4f6]"
+        style={barStyle}
         aria-hidden
       />
     )
   }
   return (
     <div
-      className="flex h-3.5 w-full max-w-[120px] overflow-hidden rounded-full border border-[#e5e7eb]"
+      className="flex overflow-hidden rounded-full border border-[#e5e7eb]"
+      style={barStyle}
       role="img"
       aria-label="Confidence distribution"
     >
@@ -1467,6 +1472,7 @@ function ConfidenceBucketBar({ buckets }) {
           className="h-full min-w-0"
           style={{
             flexGrow: Number(buckets[b.key]) || 0,
+            flexBasis: 0,
             backgroundColor: b.color,
           }}
         />
@@ -5376,10 +5382,10 @@ function ProductsDrilldown({
           >
             <div className="flex flex-col items-end gap-0.5">
               <span className={`text-[12px] font-medium ${statePrimary}`}>
-                {productSkuLocationTotals.lowConfidence} SKU-locations low confidence
+                {productSkuLocationTotals.lowConfidence} low
               </span>
               <span className={`text-[11px] ${stateSecondary}`}>
-                of {productSkuLocationTotals.totalSkuLocations} total
+                {productSkuLocationTotals.totalSkuLocations} SKUs
               </span>
             </div>
           </th>
