@@ -4507,6 +4507,26 @@ function getProductRecommendedPackCount(p) {
   return packUnitsForRecommended / p.packMultiple
 }
 
+/** Derive trip-level pack count from PRODUCTS_BY_TRIP when available. */
+function deriveTripPackCount(tripId) {
+  const list = PRODUCTS_BY_TRIP[tripId]
+  if (!list?.length) return 0
+  return list.reduce((sum, p) => sum + getProductRecommendedPackCount(p), 0)
+}
+
+// Seed packCount on trips that move pack products (leave 0/undefined for non-pack trips)
+for (const t of TRIPS_ALL) {
+  if (t.packCount != null) continue
+  const derived = deriveTripPackCount(t.id)
+  if (derived > 0) t.packCount = derived
+}
+// Explicit pack seeds for Opera trips without distinct PRODUCTS_BY_TRIP (QA coverage)
+const TRIP_PACK_COUNT_OVERRIDES = { 101: 3, 102: 2 }
+for (const [id, count] of Object.entries(TRIP_PACK_COUNT_OVERRIDES)) {
+  const trip = TRIPS_ALL.find((t) => String(t.id) === id)
+  if (trip && !(trip.packCount > 0)) trip.packCount = count
+}
+
 /** Units in one pack for Explorer pack rows (single-SKU multiple or multi-SKU ratio sum). */
 function getExplorerPackUnitsPerPack(packRow) {
   if (packRow?.isSingleSkuPack && packRow.packMultiple > 0) return packRow.packMultiple
@@ -9634,6 +9654,10 @@ export default function ScheduleDetailPage() {
     }),
     { approved: 0, unapproved: 0 }
   )
+  const tripPacksTotal = tripsRows.reduce(
+    (sum, row) => sum + (Number(row.packCount) || 0),
+    0
+  )
   const tripSummary = viewShowsFullDataset ? TRIPS_TAB_SUMMARY_TOTALS_FULL : TRIPS_TAB_SUMMARY_TOTALS_OPERA
 
   const [tripTableColWidths, setTripTableColWidths] = useState(() => [...TRIPS_TABLE_DEFAULT_COL_WIDTHS])
@@ -10016,6 +10040,24 @@ export default function ScheduleDetailPage() {
                   </>
                 )}
               </div>
+              <div className="flex items-center gap-2 shrink-0 ml-auto">
+                <button
+                  type="button"
+                  className="h-10 px-4 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] font-medium text-[#22272f] hover:bg-[#f3f4f6] shrink-0"
+                  aria-label="Save view"
+                >
+                  Save
+                </button>
+                <button
+                  type="button"
+                  className="h-10 px-3 rounded-[4px] border border-[#e9eaeb] bg-white text-[14px] text-[#22272f] hover:bg-[#f3f4f6] shrink-0 inline-flex items-center gap-1.5"
+                  aria-label="Default view"
+                  aria-haspopup="listbox"
+                >
+                  Default view
+                  <IconChevronDown />
+                </button>
+              </div>
             </div>
 
             {(() => {
@@ -10262,9 +10304,16 @@ export default function ScheduleDetailPage() {
                           return (
                             <th
                               key={logicalIdx}
-                              className="sticky top-[62px] z-20 bg-white py-2 px-3 text-[12px] font-medium text-[#0a0a0a]"
+                              className="sticky top-[62px] z-20 bg-white py-2 px-3 text-right"
                             >
-                              {tripSummary.transfers}
+                              <div className="flex flex-col items-end gap-0.5">
+                                <span className="text-[12px] font-medium text-[#0a0a0a]">
+                                  {tripSummary.transfers} units
+                                </span>
+                                {tripPacksTotal > 0 && (
+                                  <span className="text-[11px] text-[#4b535c]">packs</span>
+                                )}
+                              </div>
                             </th>
                           )
                         case 3:
@@ -10280,9 +10329,16 @@ export default function ScheduleDetailPage() {
                           return (
                             <th
                               key={logicalIdx}
-                              className="sticky top-[62px] z-20 bg-white whitespace-nowrap py-2 px-3 text-right text-[12px] font-medium text-[#0a0a0a]"
+                              className="sticky top-[62px] z-20 bg-white whitespace-nowrap py-2 px-3 text-right"
                             >
-                              {tripSummary.recommended}
+                              <div className="flex flex-col items-end gap-0.5">
+                                <span className="text-[12px] font-medium text-[#0a0a0a]">
+                                  {tripSummary.recommended} units
+                                </span>
+                                {tripPacksTotal > 0 && (
+                                  <span className="text-[11px] text-[#4b535c]">packs</span>
+                                )}
+                              </div>
                             </th>
                           )
                         case 5:
@@ -10378,8 +10434,15 @@ export default function ScheduleDetailPage() {
                             case 2:
                               return (
                                 <td key={logicalIdx} className="py-3 px-3 align-top">
-                                  <span className="text-[#0a0a0a]">{row.transfers}</span>
-                                  <span className="text-[12px] text-[#4b535c] ml-1">(max 200)</span>
+                                  <div className="flex flex-col items-start gap-0.5">
+                                    <span>
+                                      <span className="text-[14px] text-[#0a0a0a]">{row.transfers}</span>
+                                      <span className="text-[12px] text-[#4b535c] ml-1">(max 200)</span>
+                                    </span>
+                                    {(Number(row.packCount) || 0) > 0 && (
+                                      <span className="text-[12px] text-[#4b535c]">{row.packCount}</span>
+                                    )}
+                                  </div>
                                 </td>
                               )
                             case 3:
@@ -10392,9 +10455,11 @@ export default function ScheduleDetailPage() {
                             case 4:
                               return (
                                 <td key={logicalIdx} className="py-3 px-3 align-top text-right">
-                                  <div className="flex flex-col gap-1 items-end">
-                                    <span className="whitespace-nowrap text-[#0a0a0a]">{row.recommended}</span>
-                                    <div className="flex flex-wrap gap-1 mt-1 justify-end">
+                                  <div className="flex flex-col gap-0.5 items-end">
+                                    <span className="inline-flex flex-wrap items-center justify-end gap-1">
+                                      <span className="whitespace-nowrap text-[14px] text-[#0a0a0a]">
+                                        {row.recommended}
+                                      </span>
                                       {row.badges?.includes('MDQ') && (
                                         <span className="inline-flex items-center px-2 py-0.5 rounded-[4px] bg-[#f8f8f8] text-[11px] font-medium text-[#0267ff]">
                                           MDQ
@@ -10410,7 +10475,10 @@ export default function ScheduleDetailPage() {
                                           REV
                                         </span>
                                       )}
-                                    </div>
+                                    </span>
+                                    {(Number(row.packCount) || 0) > 0 && (
+                                      <span className="text-[12px] text-[#4b535c]">{row.packCount}</span>
+                                    )}
                                   </div>
                                 </td>
                               )
