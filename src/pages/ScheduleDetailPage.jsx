@@ -4473,27 +4473,6 @@ function ProductsDrilldown({
     return 0
   }
 
-  const transferApprovalTotals = useMemo(() => {
-    return baseProducts.reduce(
-      (acc, p) => {
-        const units = getEffectiveTransfers(p)
-        return {
-          transfers: acc.transfers + units,
-          approved: acc.approved + (p.approvedTransfers ?? 0),
-          unapproved: acc.unapproved + (p.unapprovedTransfers ?? 0),
-        }
-      },
-      { transfers: 0, approved: 0, unapproved: 0 }
-    )
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- helpers close over override maps
-  }, [
-    baseProducts,
-    productTransfersOverrides,
-    replenTransferOverrides,
-    productPackTransfersOverrides,
-    productLooseTransfersOverrides,
-  ])
-
   const beginTransfersEdit = (p, currentValue) => {
     setEditingTransfersProductId(p.id)
     setEditingTransfersValue(String(currentValue ?? 0))
@@ -4647,6 +4626,30 @@ function ProductsDrilldown({
     return list
   })()
 
+  const transferApprovalTotals = useMemo(() => {
+    // Transfers units stay scope-wide (movement totals recompute is a separate BE brief item)
+    const transfers = baseProducts.reduce(
+      (sum, p) => sum + getEffectiveTransfers(p),
+      0
+    )
+    // Status approved/unapproved reflect the filtered table view
+    const { approved, unapproved } = products.reduce(
+      (acc, p) => ({
+        approved: acc.approved + (p.approvedTransfers ?? 0),
+        unapproved: acc.unapproved + (p.unapprovedTransfers ?? 0),
+      }),
+      { approved: 0, unapproved: 0 }
+    )
+    return { transfers, approved, unapproved }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- helpers close over override maps
+  }, [
+    baseProducts,
+    products,
+    productTransfersOverrides,
+    replenTransferOverrides,
+    productPackTransfersOverrides,
+    productLooseTransfersOverrides,
+  ])
 
   const toggleProductSelection = (id) => {
     setSelectedProductIds((prev) => {
