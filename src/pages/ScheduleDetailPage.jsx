@@ -10463,10 +10463,10 @@ export default function ScheduleDetailPage() {
                           return (
                             <th
                               key={logicalIdx}
-                              className="sticky top-0 z-20 bg-white relative h-[62px] min-h-[62px] whitespace-nowrap px-3 text-right align-middle font-medium text-[#0a0a0a] box-border"
+                              className="sticky top-0 z-20 bg-white relative h-[62px] min-h-[62px] whitespace-nowrap px-3 text-left align-middle font-medium text-[#0a0a0a] box-border"
                               {...dropProps}
                             >
-                              <span className="inline-flex w-full min-w-0 items-center justify-end gap-2 whitespace-nowrap">
+                              <span className="inline-flex min-w-0 max-w-full items-center gap-2 whitespace-nowrap">
                                 {grip}
                                 <span className="inline-flex items-center gap-1 whitespace-nowrap">
                                   Recommended transfers
@@ -10562,9 +10562,9 @@ export default function ScheduleDetailPage() {
                           return (
                             <th
                               key={logicalIdx}
-                              className="sticky top-[62px] z-20 bg-white whitespace-nowrap py-2 px-3 text-right"
+                              className="sticky top-[62px] z-20 bg-white whitespace-nowrap py-2 px-3 text-left"
                             >
-                              <div className="flex flex-col items-end gap-0.5">
+                              <div className="flex flex-col items-start gap-0.5">
                                 <span className="text-[12px] font-medium text-[#0a0a0a]">
                                   {tripSummary.recommended} units
                                 </span>
@@ -10649,8 +10649,8 @@ export default function ScheduleDetailPage() {
                             case 0:
                               return (
                                 <td key={logicalIdx} className="py-3 px-3 align-top">
-                                  <div className="flex flex-col">
-                                    <span className="inline-flex flex-wrap items-center gap-1.5">
+                                  <div className="flex flex-col gap-0.5">
+                                    <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
                                       <span className="text-[#0a0a0a] font-medium">{row.from}</span>
                                       <TripLocationRoleTag
                                         label={getTripLocationRoleTag(
@@ -10666,8 +10666,8 @@ export default function ScheduleDetailPage() {
                             case 1:
                               return (
                                 <td key={logicalIdx} className="py-3 px-3 align-top">
-                                  <div className="flex flex-col">
-                                    <span className="inline-flex flex-wrap items-center gap-1.5">
+                                  <div className="flex flex-col gap-0.5">
+                                    <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
                                       <span className="text-[#0a0a0a] font-medium">{row.to}</span>
                                       <TripLocationRoleTag
                                         label={getTripLocationRoleTag(
@@ -10703,9 +10703,9 @@ export default function ScheduleDetailPage() {
                               )
                             case 4:
                               return (
-                                <td key={logicalIdx} className="py-3 px-3 align-top text-right">
-                                  <div className="flex flex-col gap-0.5 items-end">
-                                    <span className="inline-flex flex-wrap items-center justify-end gap-1">
+                                <td key={logicalIdx} className="py-3 px-3 align-top">
+                                  <div className="flex flex-col gap-0.5 items-start">
+                                    <span className="inline-flex flex-wrap items-center gap-1">
                                       <span className="whitespace-nowrap text-[14px] text-[#0a0a0a]">
                                         {row.recommended}
                                       </span>
