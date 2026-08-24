@@ -3064,8 +3064,9 @@ function StockAnalysisDrilldown({
   setExplorerTransferOverrides,
 }) {
   const [selectedTransferDetail, setSelectedTransferDetail] = useState(null)
-  const [approvedLocations, setApprovedLocations] = useState({})
+  const [locationStatusOverrides, setLocationStatusOverrides] = useState({})
   const [selectedLocationIds, setSelectedLocationIds] = useState(new Set())
+  const [bulkChangeStatusOpen, setBulkChangeStatusOpen] = useState(false)
   // Pack/loose box arrays per location: { [locId]: { pack?: number[], loose?: number[] } }
   const [locationReplenOverrides, setLocationReplenOverrides] = useState({})
   const [tuBoxOverrides, setTuBoxOverrides] = useState({})
@@ -3104,7 +3105,18 @@ function StockAnalysisDrilldown({
     setEditingTuBoxKey(null)
     setPackInputError(false)
     setActiveTransferCell(null)
+    setLocationStatusOverrides({})
+    setBulkChangeStatusOpen(false)
   }, [product.id])
+
+  useEffect(() => {
+    if (!bulkChangeStatusOpen) return
+    const onKeyDown = (e) => {
+      if (e.key === 'Escape') setBulkChangeStatusOpen(false)
+    }
+    document.addEventListener('keydown', onKeyDown)
+    return () => document.removeEventListener('keydown', onKeyDown)
+  }, [bulkChangeStatusOpen])
 
   const toggleTransferCellReveal = (cellKey) => {
     setActiveTransferCell((prev) => (prev === cellKey ? null : cellKey))
@@ -3395,24 +3407,29 @@ function StockAnalysisDrilldown({
     setSelectedLocationIds(allSelected ? new Set() : new Set(allIds))
   }
 
-  const clearLocationSelection = () => setSelectedLocationIds(new Set())
+  const clearLocationSelection = () => {
+    setSelectedLocationIds(new Set())
+    setBulkChangeStatusOpen(false)
+  }
 
-  const handleApproveSelectedLocations = () => {
+  const handleBulkStatusChangeLocations = (statusId) => {
     if (!selectedLocationIds.size) return
-    setApprovedLocations((prev) => {
+    setLocationStatusOverrides((prev) => {
       const next = { ...prev }
       selectedLocationIds.forEach((id) => {
         // Log01 selection is visual-only in the prototype
         if (id === log01SelectionId) return
-        next[id] = true
+        next[id] = statusId
       })
       return next
     })
+    setBulkChangeStatusOpen(false)
     setSelectedLocationIds(new Set())
   }
 
   const handleExcludeSelectedLocations = () => {
     setSelectedLocationIds(new Set())
+    setBulkChangeStatusOpen(false)
   }
   const breadcrumbTo = trip.to.length > 12 ? `${trip.to.slice(0, 10)}...` : trip.to
   const productLabel = product.name.length > 16 ? `${product.name.slice(0, 14)}...` : product.name
@@ -3889,7 +3906,7 @@ function StockAnalysisDrilldown({
               const packEditKey = packCountEditKey(loc.id)
               const isEditingPack = editingTuBoxKey === packEditKey
               return (
-                <tr key={loc.id} className="border-b border-[#E9EAEB] bg-white hover:bg-white">
+                <tr key={loc.id} className="border-b border-[#E9EAEB] bg-white hover:bg-white" data-location-status={locationStatusOverrides[loc.id] ?? getRowStatus(loc)}>
                   <td className="w-10 max-w-[40px] py-3 px-2" />
                   <td className="py-3 px-4" onClick={(e) => e.stopPropagation()}>
                     <input
@@ -4216,7 +4233,11 @@ function StockAnalysisDrilldown({
           </thead>
           <tbody>
             {filteredLocations.map((loc) => (
-              <tr key={loc.id} className="border-b border-[#E9EAEB] bg-white hover:bg-white">
+              <tr
+                key={loc.id}
+                className="border-b border-[#E9EAEB] bg-white hover:bg-white"
+                data-location-status={locationStatusOverrides[loc.id] ?? getRowStatus(loc)}
+              >
                 <td className="w-10 max-w-[40px] py-3 px-2" />
                 <td className="py-3 px-4" onClick={(e) => e.stopPropagation()}>
                   <input
@@ -4497,13 +4518,40 @@ function StockAnalysisDrilldown({
           <span className="text-[14px] font-medium text-white">
             {selectedLocationIds.size} selected
           </span>
-          <button
-            type="button"
-            onClick={handleApproveSelectedLocations}
-            className="px-4 py-2 rounded-[4px] text-[14px] font-medium text-white hover:bg-white/10"
-          >
-            Approve all
-          </button>
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setBulkChangeStatusOpen((o) => !o)}
+              className="px-4 py-2 rounded-[4px] text-[14px] font-medium text-white hover:bg-white/10"
+            >
+              Change status
+            </button>
+            {bulkChangeStatusOpen && (
+              <>
+                <div
+                  className="fixed inset-0 z-[60]"
+                  aria-hidden
+                  onClick={() => setBulkChangeStatusOpen(false)}
+                />
+                <div
+                  className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 z-[70] min-w-[180px] rounded-[6px] border border-[#e5e7eb] bg-white py-1 shadow-lg"
+                  style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}
+                >
+                  {STATUS_DROPDOWN_OPTIONS.map((o) => (
+                    <button
+                      key={o.id}
+                      type="button"
+                      onClick={() => handleBulkStatusChangeLocations(o.id)}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-left text-[13px] font-medium text-[#0a0a0a] hover:bg-[#f3f4f6]"
+                    >
+                      <span className={`size-2 rounded-full shrink-0 ${o.dotClass}`} aria-hidden />
+                      <span>{o.dropdownLabel}</span>
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
           <button
             type="button"
             onClick={handleExcludeSelectedLocations}
