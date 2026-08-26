@@ -63,7 +63,7 @@ const PRODUCTS_TABLE_DEFAULT_COLUMN_ORDER = [
 ]
 /** Default visible logical columns — order matches PRODUCTS_TABLE_DEFAULT_COLUMN_ORDER prefix. */
 const PRODUCTS_DEFAULT_VISIBLE_LOGICAL_IDS = [
-  0, 1, 8, 10, 11, 12, 13, 2, 4, 5, 3, 6, 14, 18,
+  0, 1, 8, 10, 13, 2, 4, 5, 3, 6, 14, 18,
 ]
 /** Product + Status are always visible in the column picker. */
 const PRODUCTS_LOCKED_LOGICAL_IDS = [0, 18]
@@ -1610,18 +1610,16 @@ function ConfidenceBreakdownHoverCard({ buckets }) {
       <div className="flex flex-col gap-2">
         {CONFIDENCE_BUCKET_ORDER.map((b) => {
           const count = Number(buckets?.[b.key]) || 0
+          const unitWord = count === 1 ? 'unit' : 'units'
           return (
-            <div key={b.key} className="flex items-center justify-between gap-3 text-[12px]">
-              <span className="inline-flex min-w-0 items-center gap-2 text-[#4b535c]">
-                <span
-                  className="size-2 shrink-0 rounded-full"
-                  style={{ backgroundColor: b.color }}
-                  aria-hidden
-                />
-                <span>{b.label}</span>
-              </span>
-              <span className="shrink-0 tabular-nums text-[#0a0a0a]">
-                {count} SKU-location{count === 1 ? '' : 's'}
+            <div key={b.key} className="flex items-center gap-2 text-[12px]">
+              <span
+                className="size-2 shrink-0 rounded-full"
+                style={{ backgroundColor: b.color }}
+                aria-hidden
+              />
+              <span className="min-w-0 tabular-nums text-[#0a0a0a]">
+                {count} {unitWord} {b.label.toLowerCase()} confidence
               </span>
             </div>
           )
@@ -7359,8 +7357,6 @@ const EXPLORER_REDUCED_COLUMN_IDS = [
   'movementType',
   'stockInCirculation',
   'salesL7',
-  'salesL30',
-  'salesL90',
   'forecast',
   'transfers',
   'recommended',
