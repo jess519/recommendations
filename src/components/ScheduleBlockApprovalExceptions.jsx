@@ -1,253 +1,76 @@
-import { Fragment, useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { IconClose, IconChevronDown, IconChevronDownSelect, IconSearch } from './icons'
 
-const ADVANCED_CONDITION_OPTIONS = [
-  'Equal to',
-  'Greater than',
-  'Lower than',
-  'Greater than or equal to',
-  'Lower than or equal to',
+const ENUM_OPERATORS = [
+  { value: 'is', label: 'is', multi: false },
+  { value: 'is not', label: 'is not', multi: false },
+  { value: 'is one of', label: 'is one of', multi: true },
+  { value: 'is not one of', label: 'is not one of', multi: true },
 ]
 
-const APPLY_AT_DISPLAY_LABELS = {
-  trip: 'Trip',
-  product: 'Product',
-  sending_location: 'Sending location',
-  receiving_location: 'Receiving location',
-}
+const GENERIC_MOCK_OPTIONS = ['Option A', 'Option B', 'Option C', 'Option D']
 
-/** Maps applyAt select values to FILTERS_BY_LEVEL keys */
-const APPLY_AT_TO_FILTERS_LEVEL = {
-  trip: 'Trip',
-  product: 'Product',
-  sending_location: 'Sending location',
-  receiving_location: 'Receiving location',
-}
-
-const FILTERS_BY_LEVEL = {
-  Trip: {
-    product: [
-      { id: 'class', label: 'Class', options: ['Accessories', 'Bags', 'Shoes', 'Ready-to-wear', 'Leather goods'] },
-      { id: 'department', label: 'Department', options: ['Accessories Men', 'Accessories Women'] },
-      { id: 'gender', label: 'Gender', options: ['Men', 'Women', 'Unisex'] },
-      { id: 'product', label: 'Product', options: ['A1252810', 'A12528YY', 'A13314YY', 'B2045100', 'C3091522'] },
-      { id: 'season', label: 'Season', options: ['Fw16', 'Fw18', 'Fw19', 'Ss20', 'Fw24', 'Ss25'] },
-      {
-        id: 'style',
-        label: 'Style',
-        options: [
-          'Angel Pouch Denim Monogram',
-          'Angel Pouch Grained Leather',
-          'Angel Pouch Wings Cow Burnish',
-          'Angel Pouch Wrinkled Patent',
-          'Angel Tote Denim Monogram',
-          'Angel Tote Monogram',
-          'Angel Tote Voltaire',
-          'Angel Tote Wings Cow Burnish',
-          'Angel Tote Wrinkled Patent',
-        ],
-      },
-      { id: 'subDepartment', label: 'Sub-department', options: ['Leather Good', 'Other Acc', 'Perfume Cosmet', 'Shoes'] },
-      {
-        id: 'events',
-        label: 'Events',
-        options: ['25w Carry Over', 'Fw24 Access Out', 'Fw24 Carry Out', 'Fw24 Stc Out', 'Fw25 Drop 1a', 'Fw25 Drop 2a', 'Fw25 Drop 3a', 'Fw25 Drop 4a'],
-      },
-      { id: 'articles', label: 'Articles', options: ['ART-001', 'ART-002', 'ART-003', 'ART-004', 'ART-005'] },
-      { id: 'brand', label: 'Brand', options: ['Brand A', 'Brand B', 'Brand C'] },
-    ],
-    geographic: [
-      { id: 'location', label: 'Location', options: ['Opéra', 'Cannes', 'G.I cap 3000', 'Printemps toulon', 'Marais'] },
-      { id: 'region', label: 'Region', options: ['Europe', 'North America', 'Asia Pacific'] },
-      { id: 'locationType', label: 'Location type', options: ['Boutique', 'Outlet', 'Department store', 'E-commerce'] },
-      { id: 'countries', label: 'Countries', options: ['France', 'Italy', 'UK', 'Germany', 'Spain'] },
-    ],
-    advanced: [{ id: 'transferUnits', label: 'Transfer units' }],
-  },
-  Product: {
-    product: [
-      { id: 'class', label: 'Class', options: ['Accessories', 'Bags', 'Shoes', 'Ready-to-wear', 'Leather goods'] },
-      { id: 'department', label: 'Department', options: ['Accessories Men', 'Accessories Women'] },
-      { id: 'gender', label: 'Gender', options: ['Men', 'Women', 'Unisex'] },
-      { id: 'product', label: 'Product', options: ['A1252810', 'A12528YY', 'A13314YY', 'B2045100', 'C3091522'] },
-      { id: 'season', label: 'Season', options: ['Fw16', 'Fw18', 'Fw19', 'Ss20', 'Fw24', 'Ss25'] },
-      {
-        id: 'style',
-        label: 'Style',
-        options: [
-          'Angel Pouch Denim Monogram',
-          'Angel Pouch Grained Leather',
-          'Angel Pouch Wings Cow Burnish',
-          'Angel Pouch Wrinkled Patent',
-          'Angel Tote Denim Monogram',
-          'Angel Tote Monogram',
-          'Angel Tote Voltaire',
-          'Angel Tote Wings Cow Burnish',
-          'Angel Tote Wrinkled Patent',
-        ],
-      },
-      { id: 'subDepartment', label: 'Sub-department', options: ['Leather Good', 'Other Acc', 'Perfume Cosmet', 'Shoes'] },
-      {
-        id: 'events',
-        label: 'Events',
-        options: ['25w Carry Over', 'Fw24 Access Out', 'Fw24 Carry Out', 'Fw24 Stc Out', 'Fw25 Drop 1a', 'Fw25 Drop 2a', 'Fw25 Drop 3a', 'Fw25 Drop 4a'],
-      },
-      { id: 'size', label: 'Size', options: ['XS', 'S', 'M', 'L', 'XL'] },
-      { id: 'articles', label: 'Articles', options: ['ART-001', 'ART-002', 'ART-003', 'ART-004', 'ART-005'] },
-      { id: 'brand', label: 'Brand', options: ['Brand A', 'Brand B', 'Brand C'] },
-      { id: 'manufacturer', label: 'Manufacturer', options: ['Manufacturer A', 'Manufacturer B', 'Manufacturer C'] },
-      { id: 'collectionTypes', label: 'Collection types', options: ['Permanent', 'Seasonal', 'Limited edition', 'Capsule'] },
-    ],
-    geographic: [
-      { id: 'location', label: 'Location', options: ['Opéra', 'Cannes', 'G.I cap 3000', 'Printemps toulon', 'Marais'] },
-      { id: 'region', label: 'Region', options: ['Europe', 'North America', 'Asia Pacific'] },
-      { id: 'locationType', label: 'Location type', options: ['Boutique', 'Outlet', 'Department store', 'E-commerce'] },
-      { id: 'countries', label: 'Countries', options: ['France', 'Italy', 'UK', 'Germany', 'Spain'] },
-    ],
-    advanced: [
-      { id: 'currentUnits', label: 'Current units' },
-      { id: 'forecast', label: 'Forecast' },
-      { id: 'transferUnits', label: 'Transfer units' },
-      { id: 'currentWarehouse', label: 'Current warehouse' },
-      { id: 'last7DaysSales', label: 'Last 7 days sales' },
-      { id: 'last30DaysSales', label: 'Last 30 days sales' },
-      { id: 'understocksBefore', label: 'Understocks before' },
-      { id: 'understocksAfter', label: 'Understocks after' },
-      { id: 'overstocksBefore', label: 'Overstocks before' },
-      { id: 'overstocksAfter', label: 'Overstocks after' },
-      { id: 'salesUplift', label: 'Sales uplift' },
+/** Product group fields — active in commit 1. Labels are customer-facing and must match exactly. */
+const PRODUCT_FIELDS = [
+  { id: 'class', label: 'Class', options: ['Accessories', 'Bags', 'Shoes', 'Ready-to-wear', 'Leather goods'] },
+  { id: 'department', label: 'Department', options: ['Menswear', 'Womenswear', 'Kids'] },
+  { id: 'gender', label: 'Gender', options: ['Men', 'Women', 'Unisex'] },
+  { id: 'product', label: 'Product', options: ['A1252810', 'A12528YY', 'A13314YY', 'B2045100', 'C3091522'] },
+  { id: 'season', label: 'Season', options: ['SS26', 'AW25', 'Carryover'] },
+  {
+    id: 'style',
+    label: 'Style',
+    options: [
+      'Angel Pouch Denim Monogram',
+      'Angel Pouch Grained Leather',
+      'Angel Tote Monogram',
+      'Angel Tote Voltaire',
     ],
   },
-  'Sending location': {
-    product: [
-      { id: 'class', label: 'Class', options: ['Accessories', 'Bags', 'Shoes', 'Ready-to-wear', 'Leather goods'] },
-      { id: 'department', label: 'Department', options: ['Accessories Men', 'Accessories Women'] },
-      { id: 'gender', label: 'Gender', options: ['Men', 'Women', 'Unisex'] },
-      { id: 'product', label: 'Product', options: ['A1252810', 'A12528YY', 'A13314YY', 'B2045100', 'C3091522'] },
-      { id: 'season', label: 'Season', options: ['Fw16', 'Fw18', 'Fw19', 'Ss20', 'Fw24', 'Ss25'] },
-      {
-        id: 'style',
-        label: 'Style',
-        options: [
-          'Angel Pouch Denim Monogram',
-          'Angel Pouch Grained Leather',
-          'Angel Pouch Wings Cow Burnish',
-          'Angel Pouch Wrinkled Patent',
-          'Angel Tote Denim Monogram',
-          'Angel Tote Monogram',
-          'Angel Tote Voltaire',
-          'Angel Tote Wings Cow Burnish',
-          'Angel Tote Wrinkled Patent',
-        ],
-      },
-      { id: 'subDepartment', label: 'Sub-department', options: ['Leather Good', 'Other Acc', 'Perfume Cosmet', 'Shoes'] },
-      {
-        id: 'events',
-        label: 'Events',
-        options: ['25w Carry Over', 'Fw24 Access Out', 'Fw24 Carry Out', 'Fw24 Stc Out', 'Fw25 Drop 1a', 'Fw25 Drop 2a', 'Fw25 Drop 3a', 'Fw25 Drop 4a'],
-      },
-      { id: 'articles', label: 'Articles', options: ['ART-001', 'ART-002', 'ART-003', 'ART-004', 'ART-005'] },
-      { id: 'brand', label: 'Brand', options: ['Brand A', 'Brand B', 'Brand C'] },
-      { id: 'collectionTypes', label: 'Collection types', options: ['Permanent', 'Seasonal', 'Limited edition', 'Capsule'] },
-    ],
-    geographic: [
-      { id: 'location', label: 'Location', options: ['Opéra', 'Cannes', 'G.I cap 3000', 'Printemps toulon', 'Marais'] },
-      { id: 'region', label: 'Region', options: ['Europe', 'North America', 'Asia Pacific'] },
-      { id: 'locationType', label: 'Location type', options: ['Boutique', 'Outlet', 'Department store', 'E-commerce'] },
-      { id: 'countries', label: 'Countries', options: ['France', 'Italy', 'UK', 'Germany', 'Spain'] },
-    ],
-    advanced: [
-      { id: 'currentUnits', label: 'Current units' },
-      { id: 'forecast', label: 'Forecast' },
-      { id: 'transferUnits', label: 'Transfer units' },
-      { id: 'last7DaysSales', label: 'Last 7 days sales' },
-      { id: 'last30DaysSales', label: 'Last 30 days sales' },
-      { id: 'understocksBefore', label: 'Understocks before' },
-      { id: 'understocksAfter', label: 'Understocks after' },
-      { id: 'overstocksBefore', label: 'Overstocks before' },
-      { id: 'overstocksAfter', label: 'Overstocks after' },
-      { id: 'salesUplift', label: 'Sales uplift' },
-    ],
+  { id: 'subDepartment', label: 'Sub-department', options: ['Leather Good', 'Other Acc', 'Perfume Cosmet', 'Shoes'] },
+  {
+    id: 'events',
+    label: 'Events',
+    options: ['25w Carry Over', 'Fw24 Access Out', 'Fw25 Drop 1a', 'Fw25 Drop 2a'],
   },
-  'Receiving location': {
-    product: [
-      { id: 'class', label: 'Class', options: ['Accessories', 'Bags', 'Shoes', 'Ready-to-wear', 'Leather goods'] },
-      { id: 'department', label: 'Department', options: ['Accessories Men', 'Accessories Women'] },
-      { id: 'gender', label: 'Gender', options: ['Men', 'Women', 'Unisex'] },
-      { id: 'product', label: 'Product', options: ['A1252810', 'A12528YY', 'A13314YY', 'B2045100', 'C3091522'] },
-      { id: 'season', label: 'Season', options: ['Fw16', 'Fw18', 'Fw19', 'Ss20', 'Fw24', 'Ss25'] },
-      {
-        id: 'style',
-        label: 'Style',
-        options: [
-          'Angel Pouch Denim Monogram',
-          'Angel Pouch Grained Leather',
-          'Angel Pouch Wings Cow Burnish',
-          'Angel Pouch Wrinkled Patent',
-          'Angel Tote Denim Monogram',
-          'Angel Tote Monogram',
-          'Angel Tote Voltaire',
-          'Angel Tote Wings Cow Burnish',
-          'Angel Tote Wrinkled Patent',
-        ],
-      },
-      { id: 'subDepartment', label: 'Sub-department', options: ['Leather Good', 'Other Acc', 'Perfume Cosmet', 'Shoes'] },
-      {
-        id: 'events',
-        label: 'Events',
-        options: ['25w Carry Over', 'Fw24 Access Out', 'Fw24 Carry Out', 'Fw24 Stc Out', 'Fw25 Drop 1a', 'Fw25 Drop 2a', 'Fw25 Drop 3a', 'Fw25 Drop 4a'],
-      },
-      { id: 'articles', label: 'Articles', options: ['ART-001', 'ART-002', 'ART-003', 'ART-004', 'ART-005'] },
-      { id: 'brand', label: 'Brand', options: ['Brand A', 'Brand B', 'Brand C'] },
-      { id: 'collectionTypes', label: 'Collection types', options: ['Permanent', 'Seasonal', 'Limited edition', 'Capsule'] },
-    ],
-    geographic: [
-      { id: 'location', label: 'Location', options: ['Opéra', 'Cannes', 'G.I cap 3000', 'Printemps toulon', 'Marais'] },
-      { id: 'region', label: 'Region', options: ['Europe', 'North America', 'Asia Pacific'] },
-      { id: 'locationType', label: 'Location type', options: ['Boutique', 'Outlet', 'Department store', 'E-commerce'] },
-      { id: 'countries', label: 'Countries', options: ['France', 'Italy', 'UK', 'Germany', 'Spain'] },
-    ],
-    advanced: [
-      { id: 'currentUnits', label: 'Current units' },
-      { id: 'forecast', label: 'Forecast' },
-      { id: 'transferUnits', label: 'Transfer units' },
-      { id: 'currentWarehouse', label: 'Current warehouse' },
-      { id: 'last7DaysSales', label: 'Last 7 days sales' },
-      { id: 'last30DaysSales', label: 'Last 30 days sales' },
-      { id: 'understocksBefore', label: 'Understocks before' },
-      { id: 'understocksAfter', label: 'Understocks after' },
-      { id: 'overstocksBefore', label: 'Overstocks before' },
-      { id: 'overstocksAfter', label: 'Overstocks after' },
-      { id: 'salesUplift', label: 'Sales uplift' },
-    ],
-  },
-}
+  { id: 'size', label: 'Size', options: ['XS', 'S', 'M', 'L', 'XL'] },
+  { id: 'articles', label: 'Articles', options: ['ART-001', 'ART-002', 'ART-003', 'ART-004', 'ART-005'] },
+  { id: 'brand', label: 'Brand', options: ['Brand A', 'Brand B', 'Brand C'] },
+  { id: 'manufacturer', label: 'Manufacturer', options: GENERIC_MOCK_OPTIONS },
+  { id: 'collectionTypes', label: 'Collection types', options: ['Permanent', 'Seasonal', 'Limited edition', 'Capsule'] },
+]
 
+/**
+ * Field picker groups. Commit 1: only PRODUCT fields are selectable;
+ * other groups render as disabled placeholders for commit 2.
+ */
+const FIELD_GROUPS = [
+  { id: 'product', label: 'PRODUCT', enabled: true, fields: PRODUCT_FIELDS },
+  { id: 'sending_location', label: 'SENDING LOCATION', enabled: false, fields: [] },
+  { id: 'receiving_location', label: 'RECEIVING LOCATION', enabled: false, fields: [] },
+  { id: 'product_data', label: 'PRODUCT DATA', enabled: false, fields: [] },
+  { id: 'recommendation', label: 'RECOMMENDATION', enabled: false, fields: [] },
+]
 
-function getExceptionLevelFilterDef(applyAt, filterId) {
-  const cfg = getFiltersConfigForApplyAt(applyAt)
-  if (!cfg || !filterId) return null
-  return [...cfg.product, ...cfg.geographic, ...cfg.advanced].find((f) => f.id === filterId) ?? null
-}
-
-function getFiltersConfigForApplyAt(applyAt) {
-  const levelKey = APPLY_AT_TO_FILTERS_LEVEL[applyAt]
-  return levelKey ? FILTERS_BY_LEVEL[levelKey] : null
-}
-
-function classifyFilterSelection(cfg, filterId) {
-  if (!cfg || !filterId) return null
-  const p = cfg.product.find((f) => f.id === filterId)
-  if (p) return { kind: 'scope', def: p }
-  const g = cfg.geographic.find((f) => f.id === filterId)
-  if (g) return { kind: 'scope', def: g }
-  const a = cfg.advanced.find((f) => f.id === filterId)
-  if (a) return { kind: 'advanced', def: a }
+function getFieldDef(fieldId) {
+  if (!fieldId) return null
+  for (const group of FIELD_GROUPS) {
+    const found = group.fields.find((f) => f.id === fieldId)
+    if (found) return found
+  }
   return null
 }
 
-/** Closed-row summary for scope value trigger; selected text uses text-[#0a0a0a], placeholder uses muted italic. */
-function getScopeValuesTriggerDisplay(values) {
+function getOperatorDef(operator) {
+  return ENUM_OPERATORS.find((o) => o.value === operator) ?? null
+}
+
+function isMultiOperator(operator) {
+  return Boolean(getOperatorDef(operator)?.multi)
+}
+
+/** Closed-row summary for multi-select value trigger. */
+function getValuesTriggerDisplay(values) {
   const v = Array.isArray(values) ? values : []
   if (v.length === 0) return { text: 'Click to select...', isPlaceholder: true }
   if (v.length === 1) return { text: v[0], isPlaceholder: false }
@@ -255,50 +78,18 @@ function getScopeValuesTriggerDisplay(values) {
   return { text: `${v.length} values selected`, isPlaceholder: false }
 }
 
-function getConditionFilterSelectValue(cond, cfg) {
-  if (!cfg) return ''
-  if (cond.filterType === 'scope' && cond.scopeCategory) return cond.scopeCategory
-  if (cond.filterType === 'advanced' && cond.advancedColumn) {
-    const m = cfg.advanced.find((a) => a.label === cond.advancedColumn)
-    return m?.id ?? ''
+/** Collapsed header readback for a single row (same pattern as before: field + operator + values). */
+function buildExceptionRowSummaryPart(row) {
+  const field = getFieldDef(row.fieldId)
+  if (!field || !row.operator) return null
+  const vals = Array.isArray(row.values) ? row.values.filter(Boolean) : []
+  if (vals.length === 0) return null
+  if (isMultiOperator(row.operator)) {
+    if (vals.length === 1) return `${field.label} ${row.operator} ${vals[0]}`
+    if (vals.length <= 3) return `${field.label} ${row.operator} ${vals.join(', ')}`
+    return `${field.label} ${row.operator} ${vals.length} values`
   }
-  return ''
-}
-
-function scopeCategoryLabelForTitle(applyAt, scopeCategoryId) {
-  if (!scopeCategoryId) return ''
-  const def = getExceptionLevelFilterDef(applyAt, scopeCategoryId)
-  return def?.label ?? scopeCategoryId
-}
-
-function applyAtLabelForExceptionTitle(applyAtKey) {
-  if (!applyAtKey) return ''
-  return APPLY_AT_DISPLAY_LABELS[applyAtKey] ?? applyAtKey
-}
-
-/** Single condition summary for exception header (per-condition Apply at level). */
-function buildExceptionConditionSummaryPart(cond) {
-  const level = applyAtLabelForExceptionTitle(cond.applyAt)
-  if (!level) return null
-
-  if (cond.filterType === 'advanced') {
-    if (!cond.advancedColumn || !cond.advancedCondition || cond.advancedValue === undefined || cond.advancedValue === '') {
-      return null
-    }
-    return `${level} ${cond.advancedColumn} ${cond.advancedCondition.toLowerCase()} ${cond.advancedValue}`
-  }
-
-  if (cond.filterType === 'scope' && cond.scopeCategory) {
-    const vals = Array.isArray(cond.scopeValues) ? cond.scopeValues : []
-    if (vals.length === 0) return null
-    const cat = scopeCategoryLabelForTitle(cond.applyAt, cond.scopeCategory)
-    if (!cat) return null
-    if (vals.length === 1) return `${level} ${cat} is ${vals[0]}`
-    if (vals.length <= 3) return `${level} ${cat} in ${vals.join(', ')}`
-    return `${level} ${cat}: ${vals.length} values`
-  }
-
-  return null
+  return `${field.label} ${row.operator} ${vals[0]}`
 }
 
 function truncateExceptionTitleDisplay(str, maxLen = 100) {
@@ -307,31 +98,34 @@ function truncateExceptionTitleDisplay(str, maxLen = 100) {
   return str.slice(0, Math.max(0, maxLen - ellipsis.length)) + ellipsis
 }
 
-function createEmptyExceptionCondition(id) {
+function createEmptyExceptionRow(id) {
   return {
     id,
-    applyAt: '',
-    filterType: '',
-    scopeCategory: '',
-    scopeValues: [],
-    advancedColumn: '',
-    advancedCondition: '',
-    advancedValue: '',
+    fieldId: '',
+    operator: '',
+    values: [],
   }
 }
 
+function createEmptyException(id, rowId) {
+  return {
+    id,
+    expanded: true,
+    rows: [createEmptyExceptionRow(rowId)],
+  }
+}
+
+/** Schedule / ad-hoc creation loads with zero exceptions. */
 export function createDefaultScheduleExceptions() {
-  return [
-    {
-      id: 'exc-1',
-      expanded: true,
-      conditions: [createEmptyExceptionCondition('cond-1')],
-    },
-  ]
+  return []
 }
 
 function nextId(prefix) {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
+}
+
+function isNewShapeException(exc) {
+  return Array.isArray(exc?.rows)
 }
 
 export function ScheduleBlockApprovalExceptions({ block, onUpdate }) {
@@ -342,17 +136,17 @@ export function ScheduleBlockApprovalExceptions({ block, onUpdate }) {
     setScopePopoverSearch('')
   }, [openPopover])
 
+  // Migrate legacy applyAt/conditions shape → empty list (wipe mock data).
   useEffect(() => {
     const raw = block.exceptions ?? []
-    if (raw.length > 0 && !raw[0]?.conditions) {
-      onUpdate({ exceptions: createDefaultScheduleExceptions() })
+    if (raw.length > 0 && !isNewShapeException(raw[0])) {
+      onUpdate({ exceptions: [] })
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
+  const rawExceptions = Array.isArray(block.exceptions) ? block.exceptions : []
   const exceptions =
-    Array.isArray(block.exceptions) && block.exceptions[0]?.conditions
-      ? block.exceptions
-      : createDefaultScheduleExceptions()
+    rawExceptions.length > 0 && !isNewShapeException(rawExceptions[0]) ? [] : rawExceptions
 
   const exceptionsRef = useRef(exceptions)
   exceptionsRef.current = exceptions
@@ -377,144 +171,78 @@ export function ScheduleBlockApprovalExceptions({ block, onUpdate }) {
 
   const addException = () => {
     const excId = nextId('exc')
-    const condId = nextId('cond')
+    const rowId = nextId('row')
     setExceptions((prev) => {
       const withExpandedFalse = prev.map((e) => ({ ...e, expanded: false }))
-      return [
-        ...withExpandedFalse,
-        {
-          id: excId,
-          expanded: true,
-          conditions: [createEmptyExceptionCondition(condId)],
-        },
-      ]
+      return [...withExpandedFalse, createEmptyException(excId, rowId)]
     })
   }
 
-  const addConditionToException = (exceptionId) => {
-    const newId = nextId('cond')
+  const addRowToException = (exceptionId) => {
+    const newId = nextId('row')
     setExceptions((prev) =>
       prev.map((e) =>
-        e.id === exceptionId ? { ...e, conditions: [...e.conditions, createEmptyExceptionCondition(newId)] } : e
+        e.id === exceptionId ? { ...e, rows: [...e.rows, createEmptyExceptionRow(newId)] } : e
       )
     )
   }
 
-  const removeConditionFromException = (exceptionId, conditionId) => {
-    const freshId = nextId('cond')
+  const removeRowFromException = (exceptionId, rowId) => {
+    const freshId = nextId('row')
     setExceptions((prev) =>
       prev.map((e) => {
         if (e.id !== exceptionId) return e
-        const filtered = e.conditions.filter((c) => c.id !== conditionId)
+        const filtered = e.rows.filter((r) => r.id !== rowId)
         if (filtered.length === 0) {
-          return { ...e, conditions: [createEmptyExceptionCondition(freshId)] }
+          return { ...e, rows: [createEmptyExceptionRow(freshId)] }
         }
-        return { ...e, conditions: filtered }
+        return { ...e, rows: filtered }
       })
     )
   }
 
-  const updateConditionField = (exceptionId, conditionId, field, value) => {
+  const patchRow = (exceptionId, rowId, partial) => {
     setExceptions((prev) =>
       prev.map((e) =>
         e.id === exceptionId
           ? {
               ...e,
-              conditions: e.conditions.map((c) => (c.id === conditionId ? { ...c, [field]: value } : c)),
+              rows: e.rows.map((r) => (r.id === rowId ? { ...r, ...partial } : r)),
             }
           : e
       )
     )
   }
 
-  const patchCondition = (exceptionId, conditionId, partial) => {
-    setExceptions((prev) =>
-      prev.map((e) =>
-        e.id === exceptionId
-          ? {
-              ...e,
-              conditions: e.conditions.map((c) => (c.id === conditionId ? { ...c, ...partial } : c)),
-            }
-          : e
-      )
-    )
-  }
-
-  const onConditionFilterSelectChange = (exceptionId, condition, filtersCfg, filterId) => {
-    if (!filtersCfg) return
-    if (!filterId) {
-      patchCondition(exceptionId, condition.id, {
-        filterType: '',
-        scopeCategory: '',
-        scopeValues: [],
-        advancedColumn: '',
-        advancedCondition: '',
-        advancedValue: '',
-      })
-      setOpenPopover(null)
-      return
-    }
-    const cls = classifyFilterSelection(filtersCfg, filterId)
-    if (!cls) return
-    if (cls.kind === 'scope') {
-      patchCondition(exceptionId, condition.id, {
-        filterType: 'scope',
-        scopeCategory: filterId,
-        scopeValues: [],
-        advancedColumn: '',
-        advancedCondition: '',
-        advancedValue: '',
-      })
-    } else {
-      patchCondition(exceptionId, condition.id, {
-        filterType: 'advanced',
-        scopeCategory: '',
-        scopeValues: [],
-        advancedColumn: cls.def.label,
-        advancedCondition: '',
-        advancedValue: '',
-      })
-    }
+  const onFieldSelectChange = (exceptionId, rowId, fieldId) => {
+    patchRow(exceptionId, rowId, {
+      fieldId,
+      operator: '',
+      values: [],
+    })
     setOpenPopover(null)
   }
 
-  const resetConditionFilters = (exceptionId, conditionId) => {
-    setExceptions((prev) =>
-      prev.map((e) =>
-        e.id === exceptionId
-          ? {
-              ...e,
-              conditions: e.conditions.map((c) =>
-                c.id === conditionId
-                  ? {
-                      ...c,
-                      filterType: '',
-                      scopeCategory: '',
-                      scopeValues: [],
-                      advancedColumn: '',
-                      advancedCondition: '',
-                      advancedValue: '',
-                    }
-                  : c
-              ),
-            }
-          : e
-      )
-    )
+  const onOperatorSelectChange = (exceptionId, rowId, operator) => {
+    patchRow(exceptionId, rowId, {
+      operator,
+      values: [],
+    })
+    setOpenPopover(null)
   }
 
-  const clearAllConditionsForException = (exceptionId) => {
-    const freshId = nextId('cond')
+  const clearAllRowsForException = (exceptionId) => {
+    const freshId = nextId('row')
     setOpenPopover(null)
     setExceptions((prev) =>
-      prev.map((e) => (e.id === exceptionId ? { ...e, conditions: [createEmptyExceptionCondition(freshId)] } : e))
+      prev.map((e) => (e.id === exceptionId ? { ...e, rows: [createEmptyExceptionRow(freshId)] } : e))
     )
   }
 
   const getExceptionDisplayName = (exc, excIdx) => {
     const n = excIdx + 1
     const prefix = `Exception ${n}`
-    const parts = (exc.conditions || []).map(buildExceptionConditionSummaryPart).filter(Boolean)
+    const parts = (exc.rows || []).map(buildExceptionRowSummaryPart).filter(Boolean)
     if (parts.length === 0) return prefix
     return `${prefix}: ${parts.join(' and ')}`
   }
@@ -523,304 +251,276 @@ export function ScheduleBlockApprovalExceptions({ block, onUpdate }) {
 
   return (
     <div className="flex flex-col gap-4">
-{exceptions.map((exc, excIdx) => {
-  const exceptionTitleFull = getExceptionDisplayName(exc, excIdx)
-  const exceptionTitleDisplay = truncateExceptionTitleDisplay(exceptionTitleFull)
-  return (
-  <div key={exc.id} className="border border-[#e5e7eb] rounded-[4px] bg-white overflow-visible">
-    <div className="flex items-center min-w-0">
-      <button
-        type="button"
-        onClick={() => toggleExceptionAccordion(exc.id)}
-        className="flex-1 flex items-center justify-between gap-2 min-w-0 px-4 py-3 text-left hover:bg-[#f8f8f8] transition-colors"
-      >
-        <span
-          className="text-[14px] font-medium text-[#0a0a0a] truncate min-w-0 text-left"
-          title={exceptionTitleFull}
-        >
-          {exceptionTitleDisplay}
-        </span>
-        <IconChevronDown
-          className={`size-5 text-[#4b535c] transition-transform shrink-0 ${
-            exc.expanded ? 'rotate-180' : ''
-          }`}
-        />
-      </button>
-      <button
-        type="button"
-        onClick={() => removeException(exc.id)}
-        className="h-10 w-10 flex items-center justify-center text-[#4b535c] hover:bg-[#e5e7eb] shrink-0"
-        aria-label="Delete exception"
-      >
-        <IconClose className="size-4" />
-      </button>
-    </div>
-    {exc.expanded && (
-      <div className="px-4 pb-4 pt-0 flex flex-col border-t border-[#e5e7eb]">
-        <div className="flex flex-col w-full mt-4">
-          {(exc.conditions || []).map((cond, condIdx) => {
-            const filtersCfg = cond.applyAt ? getFiltersConfigForApplyAt(cond.applyAt) : null
-            const filterSelectValue = filtersCfg ? getConditionFilterSelectValue(cond, filtersCfg) : ''
-            const scopeDef =
-              filtersCfg && cond.filterType === 'scope' && cond.scopeCategory
-                ? [...filtersCfg.product, ...filtersCfg.geographic].find((f) => f.id === cond.scopeCategory)
-                : null
-            const scopeOptions = scopeDef?.options ?? []
-            const popoverId = `${exc.id}__${cond.id}`
-            const popoverOpen = openPopover === popoverId
-            const searchQ = (scopePopoverSearch || '').trim().toLowerCase()
-            const filteredScopeOptions = scopeOptions.filter(
-              (name) => !searchQ || name.toLowerCase().includes(searchQ)
-            )
-            const selectedScopeVals = Array.isArray(cond.scopeValues) ? cond.scopeValues : []
-            const allScopeSelected =
-              scopeOptions.length > 0 &&
-              selectedScopeVals.length === scopeOptions.length &&
-              scopeOptions.every((o) => selectedScopeVals.includes(o))
-            const scopeTrigger = getScopeValuesTriggerDisplay(cond.scopeValues)
+      {exceptions.map((exc, excIdx) => {
+        const exceptionTitleFull = getExceptionDisplayName(exc, excIdx)
+        const exceptionTitleDisplay = truncateExceptionTitleDisplay(exceptionTitleFull)
+        return (
+          <div key={exc.id} className="border border-[#e5e7eb] rounded-[4px] bg-white overflow-visible">
+            <div className="flex items-center min-w-0">
+              <button
+                type="button"
+                onClick={() => toggleExceptionAccordion(exc.id)}
+                className="flex-1 flex items-center justify-between gap-2 min-w-0 px-4 py-3 text-left hover:bg-[#f8f8f8] transition-colors"
+              >
+                <span
+                  className="text-[14px] font-medium text-[#0a0a0a] truncate min-w-0 text-left"
+                  title={exceptionTitleFull}
+                >
+                  {exceptionTitleDisplay}
+                </span>
+                <IconChevronDown
+                  className={`size-5 text-[#4b535c] transition-transform shrink-0 ${
+                    exc.expanded ? 'rotate-180' : ''
+                  }`}
+                />
+              </button>
+              <button
+                type="button"
+                onClick={() => removeException(exc.id)}
+                className="h-10 w-10 flex items-center justify-center text-[#4b535c] hover:bg-[#e5e7eb] shrink-0"
+                aria-label="Delete exception"
+              >
+                <IconClose className="size-4" />
+              </button>
+            </div>
+            {exc.expanded && (
+              <div className="px-4 pb-4 pt-0 flex flex-col border-t border-[#e5e7eb]">
+                <div className="flex flex-col w-full mt-4">
+                  {(exc.rows || []).map((row, rowIdx) => {
+                    const fieldDef = getFieldDef(row.fieldId)
+                    const fieldPicked = Boolean(row.fieldId)
+                    const operatorPicked = Boolean(row.operator)
+                    const multi = isMultiOperator(row.operator)
+                    const options = fieldDef?.options ?? []
+                    const selectedVals = Array.isArray(row.values) ? row.values : []
+                    const singleValue = selectedVals[0] ?? ''
+                    const popoverId = `${exc.id}__${row.id}`
+                    const popoverOpen = openPopover === popoverId
+                    const searchQ = (scopePopoverSearch || '').trim().toLowerCase()
+                    const filteredOptions = options.filter(
+                      (name) => !searchQ || name.toLowerCase().includes(searchQ)
+                    )
+                    const allSelected =
+                      options.length > 0 &&
+                      selectedVals.length === options.length &&
+                      options.every((o) => selectedVals.includes(o))
+                    const valuesTrigger = getValuesTriggerDisplay(selectedVals)
 
-            return (
-              <div key={cond.id} className="w-full">
-                {condIdx > 0 && (
-                  <div className="flex justify-center py-1">
-                    <span className="text-[11px] font-medium text-[#9ca3af] uppercase tracking-wider">
-                      AND
-                    </span>
-                  </div>
-                )}
-                <div className="rounded-[4px] border border-[#e5e7eb] bg-[#fafafa] px-3 py-2">
-                  <div
-                    className={`flex min-w-0 items-center gap-2 ${
-                      cond.filterType === 'advanced' ? 'flex-nowrap' : 'flex-wrap'
-                    }`}
-                  >
-                    <span className="text-[12px] text-[#4b535c] shrink-0">Apply at</span>
-                    <div className="relative shrink-0">
-                      <select
-                        value={cond.applyAt ?? ''}
-                        onChange={(e) => {
-                          const value = e.target.value
-                          updateConditionField(exc.id, cond.id, 'applyAt', value)
-                          resetConditionFilters(exc.id, cond.id)
-                          setOpenPopover(null)
-                        }}
-                        className="h-9 w-[170px] py-0 pl-3 pr-9 rounded-[4px] border border-[#e9eaeb] bg-white text-[13px] text-[#0a0a0a] appearance-none"
-                      >
-                        <option value="" disabled>
-                          Select level...
-                        </option>
-                        <option value="trip">Trip</option>
-                        <option value="product">Product</option>
-                        <option value="sending_location">Sending location</option>
-                        <option value="receiving_location">Receiving location</option>
-                      </select>
-                      <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
-                        <IconChevronDownSelect />
-                      </span>
-                    </div>
-                    {!cond.applyAt && (
-                      <span className="text-[13px] text-[#9ca3af] italic flex-1 min-w-[140px]">
-                        Select a level first
-                      </span>
-                    )}
-                    {cond.applyAt && filtersCfg && (
-                      <>
-                        <span className="text-[12px] text-[#4b535c] shrink-0">Filter</span>
-                        <div className="relative shrink-0">
-                          <select
-                            value={filterSelectValue}
-                            onChange={(e) =>
-                              onConditionFilterSelectChange(exc.id, cond, filtersCfg, e.target.value)
-                            }
-                            className="h-9 w-[180px] py-0 pl-3 pr-9 rounded-[4px] border border-[#e9eaeb] bg-white text-[13px] text-[#0a0a0a] appearance-none"
-                          >
-                            <option value="">Select filter...</option>
-                            <optgroup label="Product">
-                              {filtersCfg.product.map((f) => (
-                                <option key={f.id} value={f.id}>
-                                  {f.label}
-                                </option>
-                              ))}
-                            </optgroup>
-                            <optgroup label="Geographic">
-                              {filtersCfg.geographic.map((f) => (
-                                <option key={f.id} value={f.id}>
-                                  {f.label}
-                                </option>
-                              ))}
-                            </optgroup>
-                            <optgroup label="Advanced">
-                              {filtersCfg.advanced.map((f) => (
-                                <option key={f.id} value={f.id}>
-                                  {f.label}
-                                </option>
-                              ))}
-                            </optgroup>
-                          </select>
-                          <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
-                            <IconChevronDownSelect />
-                          </span>
-                        </div>
-                        {cond.filterType === 'scope' && cond.scopeCategory && scopeDef && (
-                          <div className="relative flex-1 min-w-[120px] max-w-[280px]">
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setOpenPopover((prev) => (prev === popoverId ? null : popoverId))
-                              }
-                              className={`w-full min-h-9 px-2 rounded-[4px] border border-[#e9eaeb] bg-white text-left text-[13px] hover:bg-[#f9fafb] truncate ${
-                                scopeTrigger.isPlaceholder
-                                  ? 'text-[#9ca3af] italic'
-                                  : 'text-[#0a0a0a]'
-                              }`}
-                            >
-                              {scopeTrigger.text}
-                            </button>
-                            {popoverOpen && (
-                              <>
-                                <div
-                                  className="fixed inset-0 z-[19]"
-                                  aria-hidden
-                                  onClick={() => setOpenPopover(null)}
-                                />
-                                <div
-                                  className="absolute left-0 top-full z-20 mt-1 w-[280px] rounded-[4px] border border-[#e5e7eb] bg-white p-3 shadow-lg"
-                                  onClick={(e) => e.stopPropagation()}
-                                  role="presentation"
-                                >
-                                  <div className="flex items-start justify-between gap-2 mb-2">
-                                    <span className="text-[13px] font-semibold text-[#0a0a0a] leading-tight">
-                                      {scopeDef.label}
-                                    </span>
-                                    <button
-                                      type="button"
-                                      onClick={() =>
-                                        allScopeSelected
-                                          ? updateConditionField(exc.id, cond.id, 'scopeValues', [])
-                                          : updateConditionField(
-                                              exc.id,
-                                              cond.id,
-                                              'scopeValues',
-                                              [...scopeOptions]
-                                            )
-                                      }
-                                      className="text-[12px] text-[#0267ff] hover:underline shrink-0"
-                                    >
-                                      {allScopeSelected ? 'Deselect all' : 'Select all'}
-                                    </button>
-                                  </div>
-                                  <div className="relative mb-2">
-                                    <IconSearch className="absolute left-2.5 top-1/2 -translate-y-1/2 size-4 text-[#9ca3af] pointer-events-none" />
-                                    <input
-                                      type="text"
-                                      placeholder="Search"
-                                      value={scopePopoverSearch}
-                                      onChange={(e) => setScopePopoverSearch(e.target.value)}
-                                      className="w-full h-8 pl-9 pr-2 rounded-[4px] border border-[#e5e7eb] bg-white text-[13px] text-[#0a0a0a] placeholder:text-[#9ca3af]"
-                                    />
-                                  </div>
-                                  <div className="flex flex-col max-h-[200px] overflow-y-auto min-h-0 -mx-1">
-                                    {filteredScopeOptions.map((name) => (
-                                      <label
-                                        key={name}
-                                        className="flex items-center gap-2 py-1.5 px-2 rounded text-[13px] text-[#0a0a0a] cursor-pointer hover:bg-[#f3f4f6]"
-                                      >
-                                        <input
-                                          type="checkbox"
-                                          checked={selectedScopeVals.includes(name)}
-                                          onChange={() => {
-                                            const arr = [...selectedScopeVals]
-                                            const next = arr.includes(name)
-                                              ? arr.filter((v) => v !== name)
-                                              : [...arr, name]
-                                            updateConditionField(exc.id, cond.id, 'scopeValues', next)
-                                          }}
-                                          className="size-4 shrink-0 rounded border-[#d1d5db] text-[#0267ff] focus:ring-[#0267ff]"
-                                        />
-                                        <span className="min-w-0 break-words">{name}</span>
-                                      </label>
-                                    ))}
-                                  </div>
-                                </div>
-                              </>
-                            )}
-                          </div>
-                        )}
-                        {cond.filterType === 'advanced' && (
-                          <>
-                            <div className="relative shrink-0">
+                    return (
+                      <div key={row.id} className="w-full">
+                        {rowIdx > 0 && (
+                          <div className="flex justify-center py-1">
+                            <div className="relative">
                               <select
-                                value={cond.advancedCondition ?? ''}
-                                onChange={(e) =>
-                                  updateConditionField(
-                                    exc.id,
-                                    cond.id,
-                                    'advancedCondition',
-                                    e.target.value
-                                  )
-                                }
-                                className="h-9 w-[150px] min-w-0 max-w-[150px] truncate py-0 pl-3 pr-9 rounded-[4px] border border-[#e9eaeb] bg-white text-[13px] text-[#0a0a0a] appearance-none"
+                                value="and"
+                                onChange={() => {}}
+                                aria-label="Row connector"
+                                className="h-7 appearance-none rounded-[4px] border border-[#e9eaeb] bg-white py-0 pl-2 pr-7 text-[11px] font-medium uppercase tracking-wider text-[#9ca3af]"
                               >
-                                <option value="">Select condition</option>
-                                {ADVANCED_CONDITION_OPTIONS.map((o) => (
-                                  <option key={o} value={o}>
-                                    {o}
-                                  </option>
-                                ))}
+                                <option value="and">And</option>
                               </select>
-                              <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#4b535c] pointer-events-none">
+                              <span className="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 text-[#9ca3af]">
                                 <IconChevronDownSelect />
                               </span>
                             </div>
-                            <input
-                              type="text"
-                              value={cond.advancedValue ?? ''}
-                              onChange={(e) =>
-                                updateConditionField(exc.id, cond.id, 'advancedValue', e.target.value)
-                              }
-                              placeholder="Value"
-                              className="h-9 min-w-0 flex-1 rounded-[4px] border border-[#e9eaeb] bg-white px-3 text-[13px] text-[#0a0a0a] placeholder:text-[#9ca3af]"
-                            />
-                          </>
+                          </div>
                         )}
-                      </>
-                    )}
-                    <button
-                      type="button"
-                      className="shrink-0 h-8 w-8 flex items-center justify-center rounded-[4px] text-[#4b535c] hover:bg-[#e5e7eb] hover:text-[#0a0a0a] ml-auto"
-                      aria-label="Remove condition"
-                      onClick={() => {
-                        removeConditionFromException(exc.id, cond.id)
-                        setOpenPopover((prev) => (prev === popoverId ? null : prev))
-                      }}
-                    >
-                      <IconClose className="size-4" />
-                    </button>
-                  </div>
+                        <div className="rounded-[4px] border border-[#e5e7eb] bg-[#fafafa] px-3 py-2">
+                          <div className="flex min-w-0 flex-wrap items-center gap-2">
+                            <div className="relative shrink-0">
+                              <select
+                                value={row.fieldId || ''}
+                                onChange={(e) => onFieldSelectChange(exc.id, row.id, e.target.value)}
+                                className="h-9 w-[200px] appearance-none rounded-[4px] border border-[#e9eaeb] bg-white py-0 pl-3 pr-9 text-[13px] text-[#0a0a0a]"
+                              >
+                                <option value="">Select filter…</option>
+                                {FIELD_GROUPS.map((group) =>
+                                  group.enabled ? (
+                                    <optgroup key={group.id} label={group.label}>
+                                      {group.fields.map((f) => (
+                                        <option key={f.id} value={f.id}>
+                                          {f.label}
+                                        </option>
+                                      ))}
+                                    </optgroup>
+                                  ) : (
+                                    <optgroup key={group.id} label={group.label} disabled>
+                                      <option disabled value="">
+                                        Coming in next commit
+                                      </option>
+                                    </optgroup>
+                                  )
+                                )}
+                              </select>
+                              <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[#4b535c]">
+                                <IconChevronDownSelect />
+                              </span>
+                            </div>
+
+                            <div className="relative shrink-0">
+                              <select
+                                value={row.operator || ''}
+                                disabled={!fieldPicked}
+                                onChange={(e) => onOperatorSelectChange(exc.id, row.id, e.target.value)}
+                                className="h-9 w-[150px] appearance-none rounded-[4px] border border-[#e9eaeb] bg-white py-0 pl-3 pr-9 text-[13px] text-[#0a0a0a] disabled:cursor-not-allowed disabled:bg-[#f3f4f6] disabled:text-[#9ca3af]"
+                              >
+                                <option value="">Select condition</option>
+                                {ENUM_OPERATORS.map((op) => (
+                                  <option key={op.value} value={op.value}>
+                                    {op.label}
+                                  </option>
+                                ))}
+                              </select>
+                              <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[#4b535c]">
+                                <IconChevronDownSelect />
+                              </span>
+                            </div>
+
+                            {!fieldPicked || !operatorPicked ? (
+                              <div
+                                className="h-9 min-w-[120px] flex-1 max-w-[280px] rounded-[4px] border border-[#e9eaeb] bg-[#f3f4f6] px-3 text-[13px] italic text-[#9ca3af] flex items-center cursor-not-allowed"
+                                aria-disabled
+                              >
+                                Select value…
+                              </div>
+                            ) : multi ? (
+                              <div className="relative flex-1 min-w-[120px] max-w-[280px]">
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setOpenPopover((prev) => (prev === popoverId ? null : popoverId))
+                                  }
+                                  className={`w-full min-h-9 px-2 rounded-[4px] border border-[#e9eaeb] bg-white text-left text-[13px] hover:bg-[#f9fafb] truncate ${
+                                    valuesTrigger.isPlaceholder
+                                      ? 'text-[#9ca3af] italic'
+                                      : 'text-[#0a0a0a]'
+                                  }`}
+                                >
+                                  {valuesTrigger.text}
+                                </button>
+                                {popoverOpen && (
+                                  <>
+                                    <div
+                                      className="fixed inset-0 z-[19]"
+                                      aria-hidden
+                                      onClick={() => setOpenPopover(null)}
+                                    />
+                                    <div
+                                      className="absolute left-0 top-full z-20 mt-1 w-[280px] rounded-[4px] border border-[#e5e7eb] bg-white p-3 shadow-lg"
+                                      onClick={(e) => e.stopPropagation()}
+                                      role="presentation"
+                                    >
+                                      <div className="mb-2 flex items-start justify-between gap-2">
+                                        <span className="text-[13px] font-semibold leading-tight text-[#0a0a0a]">
+                                          {fieldDef?.label}
+                                        </span>
+                                        <button
+                                          type="button"
+                                          onClick={() =>
+                                            patchRow(exc.id, row.id, {
+                                              values: allSelected ? [] : [...options],
+                                            })
+                                          }
+                                          className="shrink-0 text-[12px] text-[#0267ff] hover:underline"
+                                        >
+                                          {allSelected ? 'Deselect all' : 'Select all'}
+                                        </button>
+                                      </div>
+                                      <div className="relative mb-2">
+                                        <IconSearch className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-[#9ca3af]" />
+                                        <input
+                                          type="text"
+                                          placeholder="Search"
+                                          value={scopePopoverSearch}
+                                          onChange={(e) => setScopePopoverSearch(e.target.value)}
+                                          className="h-8 w-full rounded-[4px] border border-[#e5e7eb] bg-white pl-9 pr-2 text-[13px] text-[#0a0a0a] placeholder:text-[#9ca3af]"
+                                        />
+                                      </div>
+                                      <div className="-mx-1 flex max-h-[200px] min-h-0 flex-col overflow-y-auto">
+                                        {filteredOptions.map((name) => (
+                                          <label
+                                            key={name}
+                                            className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-[13px] text-[#0a0a0a] hover:bg-[#f3f4f6]"
+                                          >
+                                            <input
+                                              type="checkbox"
+                                              checked={selectedVals.includes(name)}
+                                              onChange={() => {
+                                                const next = selectedVals.includes(name)
+                                                  ? selectedVals.filter((v) => v !== name)
+                                                  : [...selectedVals, name]
+                                                patchRow(exc.id, row.id, { values: next })
+                                              }}
+                                              className="size-4 shrink-0 rounded border-[#d1d5db] text-[#0267ff] focus:ring-[#0267ff]"
+                                            />
+                                            <span className="min-w-0 break-words">{name}</span>
+                                          </label>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  </>
+                                )}
+                              </div>
+                            ) : (
+                              <div className="relative flex-1 min-w-[120px] max-w-[280px]">
+                                <select
+                                  value={singleValue}
+                                  onChange={(e) =>
+                                    patchRow(exc.id, row.id, {
+                                      values: e.target.value ? [e.target.value] : [],
+                                    })
+                                  }
+                                  className="h-9 w-full appearance-none rounded-[4px] border border-[#e9eaeb] bg-white py-0 pl-3 pr-9 text-[13px] text-[#0a0a0a]"
+                                >
+                                  <option value="">Select value…</option>
+                                  {options.map((name) => (
+                                    <option key={name} value={name}>
+                                      {name}
+                                    </option>
+                                  ))}
+                                </select>
+                                <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[#4b535c]">
+                                  <IconChevronDownSelect />
+                                </span>
+                              </div>
+                            )}
+
+                            <button
+                              type="button"
+                              className="ml-auto flex h-8 w-8 shrink-0 items-center justify-center rounded-[4px] text-[#4b535c] hover:bg-[#e5e7eb] hover:text-[#0a0a0a]"
+                              aria-label="Remove row"
+                              onClick={() => {
+                                removeRowFromException(exc.id, row.id)
+                                setOpenPopover((prev) => (prev === popoverId ? null : prev))
+                              }}
+                            >
+                              <IconClose className="size-4" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
                 </div>
+                <button
+                  type="button"
+                  onClick={() => addRowToException(exc.id)}
+                  className="mt-2 self-start text-[13px] font-medium text-[#0267FF] hover:underline"
+                >
+                  + Add row
+                </button>
+                <button
+                  type="button"
+                  onClick={() => clearAllRowsForException(exc.id)}
+                  className="mt-1 self-start text-[13px] font-medium text-[#4b535c] hover:text-[#0a0a0a] hover:underline"
+                >
+                  Clear all
+                </button>
               </div>
-            )
-          })}
-        </div>
-        <button
-          type="button"
-          onClick={() => addConditionToException(exc.id)}
-          className="self-start text-[13px] font-medium text-[#0267FF] hover:underline mt-2"
-        >
-          + Add condition
-        </button>
-        <button
-          type="button"
-          onClick={() => clearAllConditionsForException(exc.id)}
-          className="self-start text-[13px] font-medium text-[#4b535c] hover:text-[#0a0a0a] hover:underline mt-1"
-        >
-          Clear filters
-        </button>
-      </div>
-    )}
-  </div>
-  )
-})}
+            )}
+          </div>
+        )
+      })}
       <button
         type="button"
         onClick={addException}
