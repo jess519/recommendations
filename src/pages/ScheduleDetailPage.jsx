@@ -3,6 +3,12 @@ import { createPortal } from 'react-dom'
 import { Plus, Copy, Pencil, X, ChevronUp, ChevronDown } from 'lucide-react'
 import { ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts'
 import { IconSearch, IconChevronDown, IconChevronRight, IconShare, IconDocument, IconClose, IconArrowLeft, IconGears, IconTruckTu, IconPackageTu, IconRebalancing, IconReplenishment, IconCalendarNote, IconTrendUp, IconFilterFunnel, IconColumnSettings, IconSortOrder, IconWarning, IconLightbulb } from '../components/icons'
+import {
+  CONFIDENCE_BUCKET_ORDER,
+  emptyConfidenceBuckets,
+  ConfidenceBucketBar,
+  ConfidenceBreakdownHoverCard,
+} from '../components/ConfidenceDistribution'
 function IconInfo() {
   return (
     <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="shrink-0 text-[#9ca3af]" aria-hidden>
@@ -1231,6 +1237,67 @@ const STATUS_CYCLE = [
 const CONFIDENCE_CYCLE = ['high', 'high', 'high', 'low']
 const BADGE_CYCLE = [['REV'], ['VIS'], ['REV', 'VIS'], ['REV'], ['VIS']]
 
+/** Seed Explorer confidence buckets so sum === transfer units (high/med/low/unknown mix). */
+function buildExplorerConfidenceBuckets(rowIndex, totalUnits) {
+  const total = Math.max(0, Number(totalUnits) || 0)
+  if (total === 0) return emptyConfidenceBuckets()
+
+  switch (rowIndex % 8) {
+    case 0:
+      // 100% unknown
+      return { high: 0, medium: 0, low: 0, unknown: total }
+    case 1: {
+      // Unknown largest
+      const unknown = Math.min(total, Math.max(1, Math.ceil(total * 0.55)))
+      const rem = total - unknown
+      const high = Math.floor(rem / 2)
+      return { high, medium: 0, low: rem - high, unknown }
+    }
+    case 2: {
+      // Four-segment mix with a small unknown
+      if (total === 1) return { high: 0, medium: 0, low: 0, unknown: 1 }
+      if (total === 2) return { high: 1, medium: 0, low: 0, unknown: 1 }
+      if (total === 3) return { high: 1, medium: 1, low: 0, unknown: 1 }
+      const unknown = 1
+      const rem = total - unknown
+      const high = Math.max(1, Math.floor(rem / 3))
+      const medium = Math.max(1, Math.floor((rem - high) / 2))
+      const low = rem - high - medium
+      return { high, medium, low, unknown }
+    }
+    case 3: {
+      // Three-segment RAG, no unknown
+      if (total < 3) return { high: total, medium: 0, low: 0, unknown: 0 }
+      const high = Math.max(1, Math.floor(total / 3))
+      const medium = Math.max(1, Math.floor((total - high) / 2))
+      const low = total - high - medium
+      return { high, medium, low, unknown: 0 }
+    }
+    case 4:
+      return { high: total, medium: 0, low: 0, unknown: 0 }
+    case 5:
+      return { high: 0, medium: 0, low: total, unknown: 0 }
+    case 6:
+      if (total === 1) return { high: 0, medium: 0, low: 0, unknown: 1 }
+      return { high: total - 1, medium: 0, low: 0, unknown: 1 }
+    default: {
+      const high = Math.ceil(total / 2)
+      return { high, medium: total - high, low: 0, unknown: 0 }
+    }
+  }
+}
+
+function sumConfidenceBuckets(bucketList) {
+  const out = emptyConfidenceBuckets()
+  for (const buckets of bucketList) {
+    if (!buckets) continue
+    for (const b of CONFIDENCE_BUCKET_ORDER) {
+      out[b.key] += Number(buckets[b.key]) || 0
+    }
+  }
+  return out
+}
+
 function buildExplorerRow(rowIndex, product, size, fromLoc, toLoc, movementType, options = {}) {
   const coverageWeeksBefore = Number((1 + (rowIndex * 1.3) % 5).toFixed(1))
   const coverageWeeksAfter = Number((coverageWeeksBefore + 0.5 + (rowIndex % 4) * 0.8).toFixed(1))
@@ -1337,6 +1404,7 @@ function buildExplorerRow(rowIndex, product, size, fromLoc, toLoc, movementType,
     recommendedBadges: BADGE_CYCLE[rowIndex % BADGE_CYCLE.length],
     recommendedSub: rowIndex % 3 === 0 ? '2' : undefined,
     confidence: CONFIDENCE_CYCLE[rowIndex % CONFIDENCE_CYCLE.length],
+    confidenceBuckets: buildExplorerConfidenceBuckets(rowIndex, alignedTransfers),
     coverageWeeksBefore,
     coverageWeeksAfter,
     nextEvent: {
@@ -1549,96 +1617,7 @@ function ConfidencePill({ value }) {
   )
 }
 
-/** Products-tab confidence — RAG + Unknown (thresholds are DS-owned). */
-const CONFIDENCE_BUCKET_ORDER = [
-  { key: 'high', label: 'High', color: '#22c55e' },
-  { key: 'medium', label: 'Medium', color: '#f59e0b' },
-  { key: 'low', label: 'Low', color: '#f87171' },
-  // Reuse muted/inactive grey already used for stale + filter-greyed state metrics
-  { key: 'unknown', label: 'Unknown', color: '#9ca3af' },
-]
-
-function emptyConfidenceBuckets() {
-  return { high: 0, medium: 0, low: 0, unknown: 0 }
-}
-
-/** Products-tab confidence bar — proportional segments; zero buckets omitted. */
-function ConfidenceBucketBar({ buckets, muted = false }) {
-  const segments = CONFIDENCE_BUCKET_ORDER.filter((b) => (Number(buckets?.[b.key]) || 0) > 0)
-  // Explicit width required: TuHoverPopover wraps in inline-block, so w-full + flex-grow-only
-  // children collapse to ~0px (no intrinsic width to resolve against).
-  const barStyle = {
-    width: 108,
-    height: 14,
-    minHeight: 14,
-    ...(muted ? { opacity: 0.45, filter: 'grayscale(1)' } : null),
-  }
-  if (segments.length === 0) {
-    return (
-      <div
-        className="rounded-full border border-[#e5e7eb] bg-[#f3f4f6]"
-        style={barStyle}
-        aria-hidden
-      />
-    )
-  }
-  return (
-    <div
-      className="flex overflow-hidden rounded-full border border-[#e5e7eb]"
-      style={barStyle}
-      role="img"
-      aria-label="Confidence distribution"
-    >
-      {segments.map((b) => (
-        <div
-          key={b.key}
-          className="h-full min-w-0"
-          style={{
-            flexGrow: Number(buckets[b.key]) || 0,
-            flexBasis: 0,
-            backgroundColor: b.color,
-          }}
-        />
-      ))}
-    </div>
-  )
-}
-
-/** Products-tab confidence hover — high/med/low always; Unknown only when count > 0. */
-function ConfidenceBreakdownHoverCard({ buckets }) {
-  const unknownCount = Number(buckets?.unknown) || 0
-  const showUnknown = unknownCount > 0
-  return (
-    <div className="pointer-events-none w-[min(280px,calc(100vw-1.5rem))] rounded-[8px] border border-[#E9EAEB] bg-white p-3 shadow-[0_4px_16px_rgba(0,0,0,0.1)]">
-      <div className="mb-2.5 text-[13px] font-semibold text-[#0a0a0a]">Confidence breakdown</div>
-      <div className="flex flex-col gap-2">
-        {CONFIDENCE_BUCKET_ORDER.map((b) => {
-          const count = Number(buckets?.[b.key]) || 0
-          if (b.key === 'unknown' && count <= 0) return null
-          const unitWord = count === 1 ? 'unit' : 'units'
-          return (
-            <div key={b.key} className="flex items-center gap-2 text-[12px]">
-              <span
-                className="size-2 shrink-0 rounded-full"
-                style={{ backgroundColor: b.color }}
-                aria-hidden
-              />
-              <span className="min-w-0 tabular-nums text-[#0a0a0a]">
-                {count} {unitWord} {b.label.toLowerCase()} confidence
-              </span>
-            </div>
-          )
-        })}
-      </div>
-      {showUnknown && (
-        <p className="mt-2.5 text-[11px] leading-snug text-[#9ca3af]">
-          Unknown: units added above the recommendation — beyond the solver&apos;s modelled range.
-        </p>
-      )}
-    </div>
-  )
-}
-
+/** Products / Explorer confidence cell — bar + TuHoverPopover breakdown. */
 function ConfidenceLabelWithHover({ buckets, muted = false }) {
   return (
     <TuHoverPopover panel={<ConfidenceBreakdownHoverCard buckets={buckets} />}>
@@ -7522,6 +7501,9 @@ function buildExplorerDisplayRows(filteredSkuRows, allSkuRows, expandedPackGroup
         packRecommended: meta?.packRecommended,
         packRecommendedBadges: meta?.packRecommendedBadges,
         packConfidence: meta?.packConfidence,
+        packConfidenceBuckets: sumConfidenceBuckets(
+          (allSkuRows.filter((r) => r.packGroupId === packGroupId) ?? []).map((m) => m.confidenceBuckets)
+        ),
         packCoverageWeeksBefore: meta?.packCoverageWeeksBefore,
         packCoverageWeeksAfter: meta?.packCoverageWeeksAfter,
         packCoverageTarget: meta?.packCoverageTarget,
@@ -7567,6 +7549,7 @@ function buildExplorerDisplayRows(filteredSkuRows, allSkuRows, expandedPackGroup
         packRecommended: row.recommended,
         packRecommendedBadges: row.recommendedBadges,
         packConfidence: row.confidence,
+        packConfidenceBuckets: row.confidenceBuckets ?? emptyConfidenceBuckets(),
         packCoverageWeeksBefore: row.coverageWeeksBefore,
         packCoverageWeeksAfter: row.coverageWeeksAfter,
         packCoverageTarget: row.coverageTarget,
@@ -7883,7 +7866,9 @@ function renderExplorerBodyCell(row, col, {
       return (
         <td key={col.id} className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}>
           <div className="flex justify-end">
-            <ConfidencePill value={row.confidence} />
+            <ConfidenceLabelWithHover
+              buckets={row.confidenceBuckets ?? emptyConfidenceBuckets()}
+            />
           </div>
         </td>
       )
@@ -8233,7 +8218,9 @@ function renderExplorerPackRowCell(packRow, col, {
       return (
         <td key={col.id} className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}>
           <div className="flex justify-end">
-            <ConfidencePill value={packRow.packConfidence} />
+            <ConfidenceLabelWithHover
+              buckets={packRow.packConfidenceBuckets ?? emptyConfidenceBuckets()}
+            />
           </div>
         </td>
       )
