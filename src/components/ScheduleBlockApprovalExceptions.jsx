@@ -40,14 +40,65 @@ const PRODUCT_FIELDS = [
   { id: 'collectionTypes', label: 'Collection types', options: ['Permanent', 'Seasonal', 'Limited edition', 'Capsule'] },
 ]
 
+/** Shared location enum options — used by both Sending and Receiving (independent field ids). */
+const LOCATION_FIELD_DEFS = [
+  {
+    key: 'location',
+    label: 'Location',
+    options: ['Paris Nord', 'Milan Duomo', 'Berlin Mitte', 'London Oxford St', 'Madrid Sol'],
+  },
+  {
+    key: 'locationBudgetLevels',
+    label: 'Location budget levels',
+    options: ['Tier 1', 'Tier 2', 'Tier 3'],
+  },
+  {
+    key: 'territories',
+    label: 'Territories',
+    options: ['Iberia', 'DACH', 'Benelux', 'Nordics', 'UK & Ireland'],
+  },
+  {
+    key: 'locationType',
+    label: 'Location type',
+    options: ['Warehouse', 'Store', 'Outlet'],
+  },
+  {
+    key: 'regions',
+    label: 'Regions',
+    options: ['North EU', 'South EU', 'Central EU', 'UK'],
+  },
+  {
+    key: 'countries',
+    label: 'Countries',
+    options: ['France', 'Italy', 'Germany', 'Spain', 'UK', 'Netherlands'],
+  },
+  {
+    key: 'cities',
+    label: 'Cities',
+    options: ['Paris', 'Milan', 'Berlin', 'Madrid', 'London', 'Amsterdam'],
+  },
+]
+
+/** Prefix field ids so Sending vs Receiving rows never collide in the picker or lookups. */
+function makeLocationFields(prefix) {
+  return LOCATION_FIELD_DEFS.map((f) => ({
+    id: `${prefix}__${f.key}`,
+    label: f.label,
+    options: f.options,
+  }))
+}
+
+const SENDING_LOCATION_FIELDS = makeLocationFields('sending')
+const RECEIVING_LOCATION_FIELDS = makeLocationFields('receiving')
+
 /**
- * Field picker groups. Commit 1: only PRODUCT fields are selectable;
- * other groups render as disabled placeholders for commit 2.
+ * Field picker groups. Product + Sending/Receiving location active;
+ * Product data and Recommendation remain disabled placeholders.
  */
 const FIELD_GROUPS = [
   { id: 'product', label: 'PRODUCT', enabled: true, fields: PRODUCT_FIELDS },
-  { id: 'sending_location', label: 'SENDING LOCATION', enabled: false, fields: [] },
-  { id: 'receiving_location', label: 'RECEIVING LOCATION', enabled: false, fields: [] },
+  { id: 'sending_location', label: 'SENDING LOCATION', enabled: true, fields: SENDING_LOCATION_FIELDS },
+  { id: 'receiving_location', label: 'RECEIVING LOCATION', enabled: true, fields: RECEIVING_LOCATION_FIELDS },
   { id: 'product_data', label: 'PRODUCT DATA', enabled: false, fields: [] },
   { id: 'recommendation', label: 'RECOMMENDATION', enabled: false, fields: [] },
 ]
