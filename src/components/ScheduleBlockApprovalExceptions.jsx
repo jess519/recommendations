@@ -1,13 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { IconClose, IconChevronDown, IconChevronDownSelect, IconSearch } from './icons'
 
-const ENUM_OPERATORS = [
-  { value: 'is', label: 'is', multi: false },
-  { value: 'is not', label: 'is not', multi: false },
-  { value: 'is one of', label: 'is one of', multi: true },
-  { value: 'is not one of', label: 'is not one of', multi: true },
-]
-
 const NUMERIC_OPERATORS = [
   'Equal to',
   'Greater than',
@@ -26,13 +19,22 @@ const GENERIC_MOCK_OPTIONS = ['Option A', 'Option B', 'Option C', 'Option D']
 const INLINE_SELECT =
   'h-8 max-w-full appearance-none rounded-[4px] border border-[#e9eaeb] bg-white py-0 pl-2.5 pr-7 text-[13px] text-[#0a0a0a] disabled:cursor-not-allowed disabled:bg-[#f3f4f6] disabled:text-[#9ca3af]'
 
+const modeToggleButtonClass = (active) =>
+  active
+    ? 'h-7 rounded-[4px] px-3 text-[13px] font-medium bg-[#1d4ed8] text-white'
+    : 'h-7 rounded-[4px] px-3 text-[13px] font-medium bg-white text-[#0a0a0a] border border-[#E9EAEB]'
+
 /** Product attribute fields (no Size). Size is added only for SKU-based granularities. */
 const PRODUCT_ATTRIBUTE_FIELDS = [
   { id: 'class', label: 'Class', options: ['Accessories', 'Bags', 'Shoes', 'Ready-to-wear', 'Leather goods'] },
-  { id: 'department', label: 'Department', options: ['Menswear', 'Womenswear', 'Kids'] },
+  {
+    id: 'department',
+    label: 'Department',
+    options: ['Menswear', 'Womenswear', 'Kids', 'Home', 'Beauty'],
+  },
   { id: 'gender', label: 'Gender', options: ['Men', 'Women', 'Unisex'] },
   { id: 'product', label: 'Product', options: ['A1252810', 'A12528YY', 'A13314YY', 'B2045100', 'C3091522'] },
-  { id: 'season', label: 'Season', options: ['SS26', 'AW25', 'Carryover'] },
+  { id: 'season', label: 'Season', options: ['SS26', 'AW25', 'Carryover', 'SS25', 'AW24'] },
   {
     id: 'style',
     label: 'Style',
@@ -50,7 +52,7 @@ const PRODUCT_ATTRIBUTE_FIELDS = [
     options: ['25w Carry Over', 'Fw24 Access Out', 'Fw25 Drop 1a', 'Fw25 Drop 2a'],
   },
   { id: 'articles', label: 'Articles', options: ['ART-001', 'ART-002', 'ART-003', 'ART-004', 'ART-005'] },
-  { id: 'brand', label: 'Brand', options: ['Brand A', 'Brand B', 'Brand C'] },
+  { id: 'brand', label: 'Brand', options: ['Brand A', 'Brand B', 'Brand C', 'Brand D'] },
   { id: 'manufacturer', label: 'Manufacturer', options: GENERIC_MOCK_OPTIONS },
   { id: 'collectionTypes', label: 'Collection types', options: ['Permanent', 'Seasonal', 'Limited edition', 'Capsule'] },
 ]
@@ -173,33 +175,21 @@ function getCriteriaDef(criteriaId) {
   return CRITERIA_DEFS.find((c) => c.id === criteriaId) ?? null
 }
 
-function getOperatorDef(operator) {
-  return ENUM_OPERATORS.find((o) => o.value === operator) ?? null
+function formatFilterValuesList(values) {
+  const v = Array.isArray(values) ? values.filter(Boolean) : []
+  if (v.length === 0) return ''
+  if (v.length <= 2) return v.join(', ')
+  return `${v[0]}, ${v[1]} +${v.length - 2} more`
 }
 
-function isMultiOperator(operator) {
-  return Boolean(getOperatorDef(operator)?.multi)
-}
-
-function getValuesTriggerDisplay(values) {
-  const v = Array.isArray(values) ? values : []
-  if (v.length === 0) return { text: 'Click to select...', isPlaceholder: true }
-  if (v.length === 1) return { text: v[0], isPlaceholder: false }
-  if (v.length === 2) return { text: `${v[0]}, ${v[1]}`, isPlaceholder: false }
-  return { text: `${v.length} values selected`, isPlaceholder: false }
-}
-
+/** Closed-row / sentence readback for a filter (Include/Exclude multi-select). */
 function buildFilterSummaryPart(granularityId, filter) {
   const field = getFilterFieldDef(granularityId, filter.category, filter.fieldId)
-  if (!field || !filter.operator) return null
+  if (!field) return null
   const vals = Array.isArray(filter.values) ? filter.values.filter(Boolean) : []
   if (vals.length === 0) return null
-  if (isMultiOperator(filter.operator)) {
-    if (vals.length === 1) return `${field.label} ${filter.operator} ${vals[0]}`
-    if (vals.length <= 3) return `${field.label} ${filter.operator} ${vals.join(', ')}`
-    return `${field.label} ${filter.operator} ${vals.length} values`
-  }
-  return `${field.label} ${filter.operator} ${vals[0]}`
+  const modeLabel = filter.mode === 'exclude' ? 'Exclude' : 'Include'
+  return `${field.label}: ${modeLabel} ${formatFilterValuesList(vals)}`
 }
 
 function buildCriteriaSummaryPart(crit) {
@@ -217,7 +207,7 @@ function truncateExceptionTitleDisplay(str, maxLen = 100) {
 }
 
 function createEmptyFilter(id, category) {
-  return { id, category, fieldId: '', operator: '', values: [] }
+  return { id, category, fieldId: '', mode: 'include', values: [] }
 }
 
 function createEmptyCriteria() {
@@ -567,36 +557,42 @@ export function ScheduleBlockApprovalExceptions({ block, onUpdate }) {
                           filter.fieldId
                         )
                         const fieldPicked = Boolean(filter.fieldId)
-                        const operatorPicked = Boolean(filter.operator)
-                        const multi = isMultiOperator(filter.operator)
                         const options = fieldDef?.options ?? []
                         const selectedVals = Array.isArray(filter.values) ? filter.values : []
-                        const singleValue = selectedVals[0] ?? ''
+                        const mode = filter.mode === 'exclude' ? 'exclude' : 'include'
+                        const modeLabel = mode === 'exclude' ? 'Exclude' : 'Include'
                         const popoverId = `${exc.id}__${filter.id}`
                         const popoverOpen = openPopover === popoverId
                         const searchQ = (scopePopoverSearch || '').trim().toLowerCase()
                         const filteredOptions = options.filter(
                           (name) => !searchQ || name.toLowerCase().includes(searchQ)
                         )
-                        const allSelected =
-                          options.length > 0 &&
-                          selectedVals.length === options.length &&
-                          options.every((o) => selectedVals.includes(o))
-                        const valuesTrigger = getValuesTriggerDisplay(selectedVals)
+                        const allVisibleSelected =
+                          filteredOptions.length > 0 &&
+                          filteredOptions.every((o) => selectedVals.includes(o))
+                        const valuesSummary = formatFilterValuesList(selectedVals)
+                        const affordanceIsPlaceholder = selectedVals.length === 0
+                        const affordanceText = affordanceIsPlaceholder
+                          ? `${modeLabel}: Select values…`
+                          : `${modeLabel} ${valuesSummary}`
 
                         return (
-                          <span key={filter.id} className="inline-flex flex-wrap items-center gap-x-1.5 gap-y-2">
+                          <span
+                            key={filter.id}
+                            className="inline-flex flex-wrap items-center gap-x-1.5 gap-y-2"
+                          >
                             {filterIdx > 0 && <span>and</span>}
                             <span className="relative inline-flex">
                               <select
                                 value={filter.fieldId || ''}
-                                onChange={(e) =>
+                                onChange={(e) => {
+                                  setOpenPopover(null)
                                   patchFilter(exc.id, filter.id, {
                                     fieldId: e.target.value,
-                                    operator: '',
+                                    mode: 'include',
                                     values: [],
                                   })
-                                }
+                                }}
                                 className={`${INLINE_SELECT} min-w-[140px]`}
                               >
                                 <option value="">Select field…</option>
@@ -608,36 +604,8 @@ export function ScheduleBlockApprovalExceptions({ block, onUpdate }) {
                               </select>
                               <InlineSelectChevron />
                             </span>
-                            <span className="relative inline-flex">
-                              <select
-                                value={filter.operator || ''}
-                                disabled={!fieldPicked}
-                                onChange={(e) =>
-                                  patchFilter(exc.id, filter.id, {
-                                    operator: e.target.value,
-                                    values: [],
-                                  })
-                                }
-                                className={`${INLINE_SELECT} min-w-[120px]`}
-                              >
-                                <option value="">Select condition…</option>
-                                {ENUM_OPERATORS.map((op) => (
-                                  <option key={op.value} value={op.value}>
-                                    {op.label}
-                                  </option>
-                                ))}
-                              </select>
-                              <InlineSelectChevron />
-                            </span>
-                            {!fieldPicked || !operatorPicked ? (
-                              <span
-                                className="inline-flex h-8 min-w-[100px] cursor-not-allowed items-center rounded-[4px] border border-[#e9eaeb] bg-[#f3f4f6] px-2.5 text-[13px] italic text-[#9ca3af]"
-                                aria-disabled
-                              >
-                                Select value…
-                              </span>
-                            ) : multi ? (
-                              <span className="relative inline-flex min-w-[120px] max-w-[240px]">
+                            {fieldPicked && (
+                              <span className="relative inline-flex max-w-[320px]">
                                 <button
                                   type="button"
                                   onClick={() =>
@@ -645,14 +613,15 @@ export function ScheduleBlockApprovalExceptions({ block, onUpdate }) {
                                       prev === popoverId ? null : popoverId
                                     )
                                   }
-                                  className={`h-8 w-full truncate rounded-[4px] border border-[#e9eaeb] bg-white px-2.5 text-left text-[13px] hover:bg-[#f9fafb] ${
-                                    valuesTrigger.isPlaceholder
+                                  className={`flex h-8 max-w-full items-center gap-1 truncate rounded-[4px] border border-[#e9eaeb] bg-white py-0 pl-2.5 pr-7 text-left text-[13px] hover:bg-[#f9fafb] ${
+                                    affordanceIsPlaceholder
                                       ? 'italic text-[#9ca3af]'
                                       : 'text-[#0a0a0a]'
                                   }`}
                                 >
-                                  {valuesTrigger.text}
+                                  <span className="min-w-0 truncate">{affordanceText}</span>
                                 </button>
+                                <InlineSelectChevron />
                                 {popoverOpen && (
                                   <>
                                     <div
@@ -661,28 +630,32 @@ export function ScheduleBlockApprovalExceptions({ block, onUpdate }) {
                                       onClick={() => setOpenPopover(null)}
                                     />
                                     <div
-                                      className="absolute left-0 top-full z-20 mt-1 w-[280px] rounded-[4px] border border-[#e5e7eb] bg-white p-3 shadow-lg"
+                                      className="absolute left-0 top-full z-20 mt-1 w-[300px] overflow-hidden rounded-[4px] border border-[#EAEAEA] bg-white shadow-[0px_8px_25px_0px_rgba(0,0,0,0.12)]"
                                       onClick={(e) => e.stopPropagation()}
                                       role="presentation"
                                     >
-                                      <div className="mb-2 flex items-start justify-between gap-2">
-                                        <span className="text-[13px] font-semibold leading-tight text-[#0a0a0a]">
-                                          {fieldDef?.label}
-                                        </span>
+                                      <div className="flex items-center gap-2 border-b border-[#e5e7eb] px-3 py-2.5">
                                         <button
                                           type="button"
                                           onClick={() =>
-                                            patchFilter(exc.id, filter.id, {
-                                              values: allSelected ? [] : [...options],
-                                            })
+                                            patchFilter(exc.id, filter.id, { mode: 'include' })
                                           }
-                                          className="shrink-0 text-[12px] text-[#0267ff] hover:underline"
+                                          className={modeToggleButtonClass(mode === 'include')}
                                         >
-                                          {allSelected ? 'Deselect all' : 'Select all'}
+                                          Include
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() =>
+                                            patchFilter(exc.id, filter.id, { mode: 'exclude' })
+                                          }
+                                          className={modeToggleButtonClass(mode === 'exclude')}
+                                        >
+                                          Exclude
                                         </button>
                                       </div>
-                                      <div className="relative mb-2">
-                                        <IconSearch className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-[#9ca3af]" />
+                                      <div className="relative border-b border-[#e5e7eb] px-3 py-2">
+                                        <IconSearch className="pointer-events-none absolute left-5 top-1/2 size-4 -translate-y-1/2 text-[#9ca3af]" />
                                         <input
                                           type="text"
                                           placeholder="Search"
@@ -691,11 +664,11 @@ export function ScheduleBlockApprovalExceptions({ block, onUpdate }) {
                                           className="h-8 w-full rounded-[4px] border border-[#e5e7eb] bg-white pl-9 pr-2 text-[13px] text-[#0a0a0a] placeholder:text-[#9ca3af]"
                                         />
                                       </div>
-                                      <div className="-mx-1 flex max-h-[200px] min-h-0 flex-col overflow-y-auto">
+                                      <div className="flex max-h-[220px] min-h-0 flex-col overflow-y-auto">
                                         {filteredOptions.map((name) => (
                                           <label
                                             key={name}
-                                            className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-[13px] text-[#0a0a0a] hover:bg-[#f3f4f6]"
+                                            className="flex cursor-pointer items-center gap-3 px-4 py-2.5 text-[13px] text-[#0a0a0a] hover:bg-[#f8f8f8]"
                                           >
                                             <input
                                               type="checkbox"
@@ -711,30 +684,40 @@ export function ScheduleBlockApprovalExceptions({ block, onUpdate }) {
                                             <span className="min-w-0 break-words">{name}</span>
                                           </label>
                                         ))}
+                                        {filteredOptions.length === 0 && (
+                                          <p className="px-4 py-3 text-[13px] text-[#9ca3af]">
+                                            No matches
+                                          </p>
+                                        )}
+                                      </div>
+                                      <div className="border-t border-[#e5e7eb] px-3 py-2">
+                                        <button
+                                          type="button"
+                                          disabled={filteredOptions.length === 0}
+                                          onClick={() => {
+                                            if (allVisibleSelected) {
+                                              const visible = new Set(filteredOptions)
+                                              patchFilter(exc.id, filter.id, {
+                                                values: selectedVals.filter((v) => !visible.has(v)),
+                                              })
+                                            } else {
+                                              const merged = [...selectedVals]
+                                              filteredOptions.forEach((opt) => {
+                                                if (!merged.includes(opt)) merged.push(opt)
+                                              })
+                                              patchFilter(exc.id, filter.id, { values: merged })
+                                            }
+                                          }}
+                                          className="text-[13px] font-medium text-[#0267ff] hover:underline disabled:cursor-not-allowed disabled:text-[#9ca3af] disabled:no-underline"
+                                        >
+                                          {allVisibleSelected
+                                            ? `Deselect all ${filteredOptions.length} options`
+                                            : `Select all ${filteredOptions.length} options`}
+                                        </button>
                                       </div>
                                     </div>
                                   </>
                                 )}
-                              </span>
-                            ) : (
-                              <span className="relative inline-flex">
-                                <select
-                                  value={singleValue}
-                                  onChange={(e) =>
-                                    patchFilter(exc.id, filter.id, {
-                                      values: e.target.value ? [e.target.value] : [],
-                                    })
-                                  }
-                                  className={`${INLINE_SELECT} min-w-[120px]`}
-                                >
-                                  <option value="">Select value…</option>
-                                  {options.map((name) => (
-                                    <option key={name} value={name}>
-                                      {name}
-                                    </option>
-                                  ))}
-                                </select>
-                                <InlineSelectChevron />
                               </span>
                             )}
                             <button
