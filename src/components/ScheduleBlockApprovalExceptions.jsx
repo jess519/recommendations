@@ -69,6 +69,7 @@ const LOCATION_FIELD_DEFS = [
       'Berlin Mitte',
       'London Oxford St',
       'Madrid Sol',
+      'Marseille',
       'Marseille store',
     ],
   },
@@ -115,8 +116,8 @@ function makeLocationFields(prefix) {
 const SENDING_LOCATION_FIELDS = makeLocationFields('sending')
 const RECEIVING_LOCATION_FIELDS = makeLocationFields('receiving')
 
-/** Row-level granularities only. Order: lowest → highest. */
-const GRANULARITIES = [
+/** Row-level granularities. Order: lowest → highest. */
+const ROW_LEVEL_GRANULARITIES = [
   { id: 'sku-sending-location', label: 'SKU-sending location' },
   { id: 'sku-receiving-location', label: 'SKU-receiving location' },
   { id: 'sku', label: 'SKU' },
@@ -124,6 +125,31 @@ const GRANULARITIES = [
   { id: 'product-receiving-location', label: 'Product-receiving location' },
   { id: 'product', label: 'Product' },
 ]
+
+/** Aggregated granularities — sum Recommended transfer units across matching SKU-trips. */
+const AGGREGATED_GRANULARITIES = [
+  { id: 'sending-location', label: 'Sending location' },
+  { id: 'receiving-location', label: 'Receiving location' },
+]
+
+const GRANULARITY_GROUPS = [
+  { id: 'per-sku-trip', label: 'Per SKU-trip', granularities: ROW_LEVEL_GRANULARITIES },
+  {
+    id: 'total-across-locations',
+    label: 'Total across locations',
+    granularities: AGGREGATED_GRANULARITIES,
+  },
+]
+
+const ALL_GRANULARITIES = [...ROW_LEVEL_GRANULARITIES, ...AGGREGATED_GRANULARITIES]
+
+function isAggregatedGranularity(granularityId) {
+  return granularityId === 'sending-location' || granularityId === 'receiving-location'
+}
+
+function getGranularityLabel(granularityId) {
+  return ALL_GRANULARITIES.find((g) => g.id === granularityId)?.label
+}
 
 const FILTER_CATEGORY_META = {
   product: { id: 'product', buttonLabel: '+ Add product filter' },
@@ -133,6 +159,8 @@ const FILTER_CATEGORY_META = {
 
 function getAvailableFilterCategories(granularityId) {
   if (!granularityId) return []
+  if (granularityId === 'sending-location') return [FILTER_CATEGORY_META.sending]
+  if (granularityId === 'receiving-location') return [FILTER_CATEGORY_META.receiving]
   const cats = [FILTER_CATEGORY_META.product]
   if (granularityId.includes('sending-location')) cats.push(FILTER_CATEGORY_META.sending)
   if (granularityId.includes('receiving-location')) cats.push(FILTER_CATEGORY_META.receiving)
@@ -170,6 +198,13 @@ const CRITERIA_DEFS = [
     hasUnit: true,
   },
 ]
+
+function getCriteriaOptionsForGranularity(granularityId) {
+  if (isAggregatedGranularity(granularityId)) {
+    return CRITERIA_DEFS.filter((c) => c.id === 'recommended-transfer-units')
+  }
+  return CRITERIA_DEFS
+}
 
 function getCriteriaDef(criteriaId) {
   return CRITERIA_DEFS.find((c) => c.id === criteriaId) ?? null
@@ -248,6 +283,72 @@ function InlineSelectChevron() {
   return (
     <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[#4b535c]">
       <IconChevronDownSelect />
+    </span>
+  )
+}
+
+function GranularityPicker({ value, onChange }) {
+  const [open, setOpen] = useState(false)
+  const selectedLabel = getGranularityLabel(value)
+
+  return (
+    <span className="relative inline-flex">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className={`${INLINE_SELECT} inline-flex min-w-[180px] items-center pr-7 text-left ${
+          selectedLabel ? 'text-[#0a0a0a]' : 'text-[#9ca3af]'
+        }`}
+        aria-expanded={open}
+        aria-haspopup="listbox"
+      >
+        <span className="min-w-0 truncate">{selectedLabel || 'Select granularity…'}</span>
+      </button>
+      <InlineSelectChevron />
+      {open && (
+        <>
+          <div
+            className="fixed inset-0 z-[19]"
+            aria-hidden
+            onClick={() => setOpen(false)}
+          />
+          <div
+            className="absolute left-0 top-full z-20 mt-1 min-w-[260px] overflow-hidden rounded-[4px] border border-[#EAEAEA] bg-white py-2 shadow-[0px_8px_25px_0px_rgba(0,0,0,0.12)]"
+            role="listbox"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {GRANULARITY_GROUPS.map((group, groupIdx) => (
+              <div
+                key={group.id}
+                className={groupIdx > 0 ? 'mt-2 border-t border-[#e5e7eb] pt-2' : ''}
+              >
+                <div className="mb-1 px-3 text-[12px] font-medium tracking-[0.04em] text-[#4b535c]">
+                  {group.label}
+                </div>
+                {group.granularities.map((g) => (
+                  <button
+                    key={g.id}
+                    type="button"
+                    role="option"
+                    aria-selected={value === g.id}
+                    onClick={() => {
+                      onChange(g.id)
+                      setOpen(false)
+                    }}
+                    className={`flex w-full px-3 py-1.5 pl-5 text-left text-[13px] hover:bg-[#f3f4f6] ${
+                      value === g.id
+                        ? 'bg-[#eff6ff] font-medium text-[#1d4ed8]'
+                        : 'text-[#0a0a0a]'
+                    }`}
+                  >
+                    {g.label}
+                  </button>
+                ))}
+              </div>
+            ))}
+          </div>
+        </>
+      )}
     </span>
   )
 }
@@ -362,7 +463,7 @@ export function ScheduleBlockApprovalExceptions({ block, onUpdate }) {
   const getExceptionDisplayName = (exc, excIdx) => {
     const n = excIdx + 1
     const prefix = `Exception ${n}`
-    const granLabel = GRANULARITIES.find((g) => g.id === exc.granularity)?.label
+    const granLabel = getGranularityLabel(exc.granularity)
     const filterParts = (exc.filters || [])
       .map((f) => buildFilterSummaryPart(exc.granularity, f))
       .filter(Boolean)
@@ -431,22 +532,12 @@ export function ScheduleBlockApprovalExceptions({ block, onUpdate }) {
                 {/* Base sentence */}
                 <p className="flex flex-wrap items-center gap-x-1.5 gap-y-2 text-[14px] leading-8 text-[#0a0a0a]">
                   <span>For each</span>
-                  <span className="relative inline-flex">
-                    <select
-                      value={exc.granularity || ''}
-                      onChange={(e) => onGranularityChange(exc.id, e.target.value)}
-                      className={`${INLINE_SELECT} min-w-[160px]`}
-                    >
-                      <option value="">Select granularity…</option>
-                      {GRANULARITIES.map((g) => (
-                        <option key={g.id} value={g.id}>
-                          {g.label}
-                        </option>
-                      ))}
-                    </select>
-                    <InlineSelectChevron />
-                  </span>
+                  <GranularityPicker
+                    value={exc.granularity || ''}
+                    onChange={(next) => onGranularityChange(exc.id, next)}
+                  />
                   <span>, flag as unapproved when</span>
+                  {isAggregatedGranularity(exc.granularity) && <span>total</span>}
                   <span className="relative inline-flex">
                     <select
                       value={criteria.criteriaId || ''}
@@ -464,7 +555,7 @@ export function ScheduleBlockApprovalExceptions({ block, onUpdate }) {
                       className={`${INLINE_SELECT} min-w-[200px]`}
                     >
                       <option value="">Select criteria…</option>
-                      {CRITERIA_DEFS.map((c) => (
+                      {getCriteriaOptionsForGranularity(exc.granularity).map((c) => (
                         <option key={c.id} value={c.id}>
                           {c.label}
                         </option>
