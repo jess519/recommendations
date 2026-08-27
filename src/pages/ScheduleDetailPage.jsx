@@ -3,6 +3,12 @@ import { createPortal } from 'react-dom'
 import { Plus, Copy, Pencil, X, ChevronUp, ChevronDown } from 'lucide-react'
 import { ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts'
 import { IconSearch, IconChevronDown, IconChevronRight, IconShare, IconDocument, IconClose, IconArrowLeft, IconGears, IconTruckTu, IconPackageTu, IconRebalancing, IconReplenishment, IconCalendarNote, IconTrendUp, IconFilterFunnel, IconColumnSettings, IconSortOrder, IconWarning, IconLightbulb } from '../components/icons'
+import {
+  CONFIDENCE_BUCKET_ORDER,
+  emptyConfidenceBuckets,
+  ConfidenceBucketBar,
+  ConfidenceBreakdownHoverCard,
+} from '../components/ConfidenceDistribution'
 function IconInfo() {
   return (
     <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="shrink-0 text-[#9ca3af]" aria-hidden>
@@ -63,7 +69,7 @@ const PRODUCTS_TABLE_DEFAULT_COLUMN_ORDER = [
 ]
 /** Default visible logical columns — order matches PRODUCTS_TABLE_DEFAULT_COLUMN_ORDER prefix. */
 const PRODUCTS_DEFAULT_VISIBLE_LOGICAL_IDS = [
-  0, 1, 8, 10, 11, 12, 13, 2, 4, 5, 3, 6, 14, 18,
+  0, 1, 8, 10, 13, 2, 4, 5, 3, 6, 14, 18,
 ]
 /** Product + Status are always visible in the column picker. */
 const PRODUCTS_LOCKED_LOGICAL_IDS = [0, 18]
@@ -593,31 +599,31 @@ const PRODUCTS_BY_TRIP = {
   ],
   // Trip 3 — Printemps toulon → Opéra (replen-heavy)
   3: [
-    { id: 20, name: 'Croi-sac zip l', sku: 'T3-1398810', colour: 'Noir', movementType: ["replenishment"], transfers: 8, transfersSub: 1, approvedTransfers: 8, unapprovedTransfers: 0, revenue: '€0.92K', recommended: 8, recommendedBadges: ['REV'], recommendedSub: 1, confidence: 'high', coverage: 'All SKUs in target', coverageWeeks: 6.0, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 1, salesL30: 3, salesL90: 7, forecast: 0.9, stockouts: '0 → 0', locations: '1 → 1', overstocks: '1 → 0', understocks: '2 → 1', status: 'approved_by_system', currentUnits: 10, currentUnitsInTransit: 0, warehouseAllocateLine: '40 → 36', warehouseSellLine: '50 → 45', packMultiple: null, skuCount: 1, rrp: 420, ws: 0, season: 'SS26', event: 'Drop 3', firstSalesDate: '12th Mar 25', lifeToDateSales: 22, department: 'Crossbody', subDepartment: 'Bandoulière', material: 'Nylon', gender: 'Unisexe', skuConfidenceBuckets: { veryHigh: 1, high: 0, medium: 0, low: 0, veryLow: 0 }, skuCoverageSummary: { inTarget: 1, total: 1 } },
-    { id: 21, name: 'Pre-sac seau m', sku: 'T3-101080', colour: 'Bleu', movementType: ["replenishment"], transfers: 10, transfersSub: 1, approvedTransfers: 4, unapprovedTransfers: 6, revenue: '€0.55K', recommended: 10, recommendedBadges: ['VIS'], recommendedSub: 1, confidence: 'low', coverage: '12% below target', coverageWeeks: 2.8, coverageTarget: 6, nextEvent: { name: 'UK weekly replenishment', date: '16/06/2026' }, salesL7: 2, salesL30: 4, salesL90: 9, forecast: 0.7, stockouts: '0 → 1', locations: '2 → 1', overstocks: '2 → 0', understocks: '3 → 1', status: 'needs_review_from_user', currentUnits: 6, currentUnitsInTransit: 1, warehouseAllocateLine: '30 → 25', warehouseSellLine: '40 → 34', packMultiple: 10, skuCount: 1, isVirtualPack: true, rrp: 85, ws: 0, season: 'Winter 26', event: 'Vague 2', firstSalesDate: '3rd Nov 25', lifeToDateSales: 14, department: 'Bucket bags', subDepartment: 'Seau', material: 'Laine', gender: 'Femme', skuConfidenceBuckets: { veryHigh: 0, high: 0, medium: 0, low: 1, veryLow: 0 }, skuCoverageSummary: { inTarget: 0, total: 1 } },
-    { id: 22, name: 'Mini sac band', sku: 'T3-900020', colour: 'Rouge', movementType: ["rebalancing"], transfers: 2, transfersSub: 1, approvedTransfers: 0, unapprovedTransfers: 2, revenue: '€0.28K', recommended: 2, recommendedBadges: ['REV'], recommendedSub: 1, confidence: 'high', coverage: 'All SKUs in target', coverageWeeks: 5.5, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 0, salesL30: 2, salesL90: 5, forecast: 0.4, stockouts: '0 → 0', locations: '1 → 1', overstocks: '0 → 0', understocks: '1 → 0', status: 'unapproved', currentUnits: 4, currentUnitsInTransit: 0, warehouseAllocateLine: '20 → 18', warehouseSellLine: '28 → 26', packMultiple: null, skuCount: 1, rrp: 195, ws: 48, season: 'P/e 2026', event: 'Pre', firstSalesDate: '14th Jan 26', lifeToDateSales: 8, department: 'R.t.w. donna', subDepartment: 'Accessori piccoli', material: 'Cady', gender: 'Donna', skuConfidenceBuckets: { veryHigh: 0, high: 1, medium: 0, low: 0, veryLow: 0 }, skuCoverageSummary: { inTarget: 1, total: 1 } },
-    { id: 23, name: 'Ang-sac pte main m', sku: 'T3-1252810', colour: 'Figue', movementType: ["replenishment", "rebalancing"], transfers: 6, transfersSub: 1, approvedTransfers: 3, unapprovedTransfers: 3, revenue: '€0.71K', recommended: 6, recommendedBadges: ['REV', 'VIS'], recommendedSub: 1, confidence: 'low', coverage: '8% below target', coverageWeeks: 3.2, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 1, salesL30: 3, salesL90: 8, forecast: 1.1, stockouts: '1 → 0', locations: '2 → 2', overstocks: '2 → 1', understocks: '4 → 2', status: 'partially_approved', currentUnits: 9, currentUnitsInTransit: 2, warehouseAllocateLine: '35 → 30', warehouseSellLine: '45 → 40', packMultiple: null, skuCount: 2, rrp: 890, ws: 0, season: 'Winter 26', event: 'Vague 1', firstSalesDate: '22nd Jan 26', lifeToDateSales: 19, department: 'Handbags', subDepartment: 'Sac à main', material: 'Cuir', gender: 'Femme', skuConfidenceBuckets: { veryHigh: 0, high: 0, medium: 1, low: 1, veryLow: 0 }, skuCoverageSummary: { inTarget: 1, total: 2 } },
+    { id: 20, name: 'Croi-sac zip l', sku: 'T3-1398810', colour: 'Noir', movementType: ["replenishment"], transfers: 8, transfersSub: 1, approvedTransfers: 8, unapprovedTransfers: 0, revenue: '€0.92K', recommended: 8, recommendedBadges: ['REV'], recommendedSub: 1, confidence: 'high', coverage: 'All SKUs in target', coverageWeeks: 6.0, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 1, salesL30: 3, salesL90: 7, forecast: 0.9, stockouts: '0 → 0', locations: '1 → 1', overstocks: '1 → 0', understocks: '2 → 1', status: 'approved_by_system', currentUnits: 10, currentUnitsInTransit: 0, warehouseAllocateLine: '40 → 36', warehouseSellLine: '50 → 45', packMultiple: null, skuCount: 1, rrp: 420, ws: 0, season: 'SS26', event: 'Drop 3', firstSalesDate: '12th Mar 25', lifeToDateSales: 22, department: 'Crossbody', subDepartment: 'Bandoulière', material: 'Nylon', gender: 'Unisexe', skuConfidenceBuckets: { high: 1, medium: 0, low: 0, unknown: 0 }, skuCoverageSummary: { inTarget: 1, total: 1 } },
+    { id: 21, name: 'Pre-sac seau m', sku: 'T3-101080', colour: 'Bleu', movementType: ["replenishment"], transfers: 10, transfersSub: 1, approvedTransfers: 4, unapprovedTransfers: 6, revenue: '€0.55K', recommended: 10, recommendedBadges: ['VIS'], recommendedSub: 1, confidence: 'low', coverage: '12% below target', coverageWeeks: 2.8, coverageTarget: 6, nextEvent: { name: 'UK weekly replenishment', date: '16/06/2026' }, salesL7: 2, salesL30: 4, salesL90: 9, forecast: 0.7, stockouts: '0 → 1', locations: '2 → 1', overstocks: '2 → 0', understocks: '3 → 1', status: 'needs_review_from_user', currentUnits: 6, currentUnitsInTransit: 1, warehouseAllocateLine: '30 → 25', warehouseSellLine: '40 → 34', packMultiple: 10, skuCount: 1, isVirtualPack: true, rrp: 85, ws: 0, season: 'Winter 26', event: 'Vague 2', firstSalesDate: '3rd Nov 25', lifeToDateSales: 14, department: 'Bucket bags', subDepartment: 'Seau', material: 'Laine', gender: 'Femme', skuConfidenceBuckets: { high: 0, medium: 0, low: 1, unknown: 0 }, skuCoverageSummary: { inTarget: 0, total: 1 } },
+    { id: 22, name: 'Mini sac band', sku: 'T3-900020', colour: 'Rouge', movementType: ["rebalancing"], transfers: 2, transfersSub: 1, approvedTransfers: 0, unapprovedTransfers: 2, revenue: '€0.28K', recommended: 2, recommendedBadges: ['REV'], recommendedSub: 1, confidence: 'high', coverage: 'All SKUs in target', coverageWeeks: 5.5, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 0, salesL30: 2, salesL90: 5, forecast: 0.4, stockouts: '0 → 0', locations: '1 → 1', overstocks: '0 → 0', understocks: '1 → 0', status: 'unapproved', currentUnits: 4, currentUnitsInTransit: 0, warehouseAllocateLine: '20 → 18', warehouseSellLine: '28 → 26', packMultiple: null, skuCount: 1, rrp: 195, ws: 48, season: 'P/e 2026', event: 'Pre', firstSalesDate: '14th Jan 26', lifeToDateSales: 8, department: 'R.t.w. donna', subDepartment: 'Accessori piccoli', material: 'Cady', gender: 'Donna', skuConfidenceBuckets: { high: 1, medium: 0, low: 0, unknown: 0 }, skuCoverageSummary: { inTarget: 1, total: 1 } },
+    { id: 23, name: 'Ang-sac pte main m', sku: 'T3-1252810', colour: 'Figue', movementType: ["replenishment", "rebalancing"], transfers: 6, transfersSub: 1, approvedTransfers: 3, unapprovedTransfers: 3, revenue: '€0.71K', recommended: 6, recommendedBadges: ['REV', 'VIS'], recommendedSub: 1, confidence: 'low', coverage: '8% below target', coverageWeeks: 3.2, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 1, salesL30: 3, salesL90: 8, forecast: 1.1, stockouts: '1 → 0', locations: '2 → 2', overstocks: '2 → 1', understocks: '4 → 2', status: 'partially_approved', currentUnits: 9, currentUnitsInTransit: 2, warehouseAllocateLine: '35 → 30', warehouseSellLine: '45 → 40', packMultiple: null, skuCount: 2, rrp: 890, ws: 0, season: 'Winter 26', event: 'Vague 1', firstSalesDate: '22nd Jan 26', lifeToDateSales: 19, department: 'Handbags', subDepartment: 'Sac à main', material: 'Cuir', gender: 'Femme', skuConfidenceBuckets: { high: 0, medium: 1, low: 0, unknown: 1 }, skuCoverageSummary: { inTarget: 1, total: 2 } },
   ],
   // Trip 5 — Bruxelles → Opéra (mixed)
   5: [
-    { id: 24, name: 'Coin-pack tote m', sku: 'T5-900010', colour: 'Noir', movementType: ["replenishment"], transfers: 30, transfersSub: 2, approvedTransfers: 15, unapprovedTransfers: 15, revenue: '€0.88K', recommended: 30, recommendedBadges: ['VIS'], recommendedSub: 1, confidence: 'high', coverage: '5% below target', coverageWeeks: 4.0, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 2, salesL30: 6, salesL90: 15, forecast: 1.0, stockouts: '0 → 0', locations: '2 → 2', overstocks: '1 → 0', understocks: '3 → 2', status: 'partially_approved', currentUnits: 14, currentUnitsInTransit: 3, warehouseAllocateLine: '45 → 40', warehouseSellLine: '55 → 50', packMultiple: 10, skuCount: 5, isVirtualPack: true, rrp: 320, ws: 0, season: 'Winter 26', event: 'Vague 1', firstSalesDate: '28th Oct 25', lifeToDateSales: 60, department: 'Handbags', subDepartment: 'Sac à main', material: 'Cuir', gender: 'Femme', skuConfidenceBuckets: { veryHigh: 1, high: 1, medium: 1, low: 1, veryLow: 1 }, skuCoverageSummary: { inTarget: 2, total: 5 } },
-    { id: 25, name: 'Gémo LOT tote', sku: 'T5-900100', colour: 'Camel', movementType: ["replenishment"], transfers: 20, transfersSub: 1, approvedTransfers: 8, unapprovedTransfers: 12, revenue: '€0.64K', recommended: 20, recommendedBadges: ['VIS'], recommendedSub: 1, confidence: 'low', coverage: '10% below target', coverageWeeks: 3.1, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 1, salesL30: 4, salesL90: 11, forecast: 0.8, stockouts: '0 → 0', locations: '1 → 2', overstocks: '2 → 1', understocks: '4 → 2', status: 'unapproved', currentUnits: 8, currentUnitsInTransit: 1, warehouseAllocateLine: '38 → 32', warehouseSellLine: '48 → 42', packMultiple: 10, skuCount: 1, isVirtualPack: false, rrp: 280, ws: 0, season: 'Winter 26', event: 'Vague 1', firstSalesDate: '2nd Aug 25', lifeToDateSales: 40, department: 'Handbags', subDepartment: 'Sac à main', material: 'Cuir', gender: 'Femme', skuConfidenceBuckets: { veryHigh: 0, high: 0, medium: 0, low: 2, veryLow: 1 }, skuCoverageSummary: { inTarget: 0, total: 3 } },
-    { id: 26, name: 'Croi-sac zip s', sku: 'T5-1398811', colour: 'Noir', movementType: ["rebalancing"], transfers: 3, transfersSub: 1, approvedTransfers: 3, unapprovedTransfers: 0, revenue: '€0.41K', recommended: 3, recommendedBadges: ['REV'], recommendedSub: 1, confidence: 'high', coverage: 'All SKUs in target', coverageWeeks: 6.2, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 0, salesL30: 1, salesL90: 4, forecast: 0.35, stockouts: '0 → 0', locations: '1 → 1', overstocks: '1 → 0', understocks: '1 → 0', status: 'approved_by_user', approvedByUser: 'Jess Briggs', currentUnits: 5, currentUnitsInTransit: 0, warehouseAllocateLine: '22 → 20', warehouseSellLine: '30 → 28', packMultiple: null, skuCount: 1, rrp: 380, ws: 25, season: 'SS26', event: 'Drop 1', firstSalesDate: '8th Feb 26', lifeToDateSales: 12, department: 'Crossbody', subDepartment: 'Bandoulière', material: 'Cuir', gender: 'Homme', skuConfidenceBuckets: { veryHigh: 1, high: 0, medium: 0, low: 0, veryLow: 0 }, skuCoverageSummary: { inTarget: 1, total: 1 } },
+    { id: 24, name: 'Coin-pack tote m', sku: 'T5-900010', colour: 'Noir', movementType: ["replenishment"], transfers: 30, transfersSub: 2, approvedTransfers: 15, unapprovedTransfers: 15, revenue: '€0.88K', recommended: 30, recommendedBadges: ['VIS'], recommendedSub: 1, confidence: 'high', coverage: '5% below target', coverageWeeks: 4.0, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 2, salesL30: 6, salesL90: 15, forecast: 1.0, stockouts: '0 → 0', locations: '2 → 2', overstocks: '1 → 0', understocks: '3 → 2', status: 'partially_approved', currentUnits: 14, currentUnitsInTransit: 3, warehouseAllocateLine: '45 → 40', warehouseSellLine: '55 → 50', packMultiple: 10, skuCount: 5, isVirtualPack: true, rrp: 320, ws: 0, season: 'Winter 26', event: 'Vague 1', firstSalesDate: '28th Oct 25', lifeToDateSales: 60, department: 'Handbags', subDepartment: 'Sac à main', material: 'Cuir', gender: 'Femme', skuConfidenceBuckets: { high: 1, medium: 1, low: 1, unknown: 2 }, skuCoverageSummary: { inTarget: 2, total: 5 } },
+    { id: 25, name: 'Gémo LOT tote', sku: 'T5-900100', colour: 'Camel', movementType: ["replenishment"], transfers: 20, transfersSub: 1, approvedTransfers: 8, unapprovedTransfers: 12, revenue: '€0.64K', recommended: 20, recommendedBadges: ['VIS'], recommendedSub: 1, confidence: 'low', coverage: '10% below target', coverageWeeks: 3.1, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 1, salesL30: 4, salesL90: 11, forecast: 0.8, stockouts: '0 → 0', locations: '1 → 2', overstocks: '2 → 1', understocks: '4 → 2', status: 'unapproved', currentUnits: 8, currentUnitsInTransit: 1, warehouseAllocateLine: '38 → 32', warehouseSellLine: '48 → 42', packMultiple: 10, skuCount: 1, isVirtualPack: false, rrp: 280, ws: 0, season: 'Winter 26', event: 'Vague 1', firstSalesDate: '2nd Aug 25', lifeToDateSales: 40, department: 'Handbags', subDepartment: 'Sac à main', material: 'Cuir', gender: 'Femme', skuConfidenceBuckets: { high: 0, medium: 0, low: 3, unknown: 0 }, skuCoverageSummary: { inTarget: 0, total: 3 } },
+    { id: 26, name: 'Croi-sac zip s', sku: 'T5-1398811', colour: 'Noir', movementType: ["rebalancing"], transfers: 3, transfersSub: 1, approvedTransfers: 3, unapprovedTransfers: 0, revenue: '€0.41K', recommended: 3, recommendedBadges: ['REV'], recommendedSub: 1, confidence: 'high', coverage: 'All SKUs in target', coverageWeeks: 6.2, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 0, salesL30: 1, salesL90: 4, forecast: 0.35, stockouts: '0 → 0', locations: '1 → 1', overstocks: '1 → 0', understocks: '1 → 0', status: 'approved_by_user', approvedByUser: 'Jess Briggs', currentUnits: 5, currentUnitsInTransit: 0, warehouseAllocateLine: '22 → 20', warehouseSellLine: '30 → 28', packMultiple: null, skuCount: 1, rrp: 380, ws: 25, season: 'SS26', event: 'Drop 1', firstSalesDate: '8th Feb 26', lifeToDateSales: 12, department: 'Crossbody', subDepartment: 'Bandoulière', material: 'Cuir', gender: 'Homme', skuConfidenceBuckets: { high: 1, medium: 0, low: 0, unknown: 0 }, skuCoverageSummary: { inTarget: 1, total: 1 } },
   ],
   // Trip 7 — Miramas → Romans (full-dataset trip)
   7: [
-    { id: 27, name: 'Pre-sac seau s', sku: 'T7-101081', colour: 'Bleu petrole', movementType: ["replenishment"], transfers: 40, transfersSub: 1, approvedTransfers: 40, unapprovedTransfers: 0, revenue: '€1.2K', recommended: 40, recommendedBadges: ['VIS'], recommendedSub: 1, confidence: 'high', coverage: '3% below target', coverageWeeks: 4.5, coverageTarget: 6, nextEvent: { name: 'UK weekly replenishment', date: '16/06/2026' }, salesL7: 3, salesL30: 9, salesL90: 22, forecast: 1.4, stockouts: '0 → 0', locations: '2 → 2', overstocks: '2 → 1', understocks: '5 → 3', status: 'approved_by_system', currentUnits: 20, currentUnitsInTransit: 4, warehouseAllocateLine: '70 → 60', warehouseSellLine: '85 → 75', packMultiple: 10, skuCount: 1, isVirtualPack: true, rrp: 120, ws: 8, season: 'AW25', event: 'Continuity', firstSalesDate: '19th Sep 25', lifeToDateSales: 80, department: 'Bucket bags', subDepartment: 'Foulard', material: 'Cachemire', gender: 'Femme', skuConfidenceBuckets: { veryHigh: 0, high: 2, medium: 0, low: 0, veryLow: 0 }, skuCoverageSummary: { inTarget: 1, total: 2 } },
-    { id: 28, name: 'Ang-sac pte main s', sku: 'T7-1252811', colour: 'Figue', movementType: ["replenishment", "rebalancing"], transfers: 14, transfersSub: 1, packTransfers: 10, looseTransfers: 2, replenTransfers: 12, rebalTransfers: 2, approvedTransfers: 7, unapprovedTransfers: 7, revenue: '€0.58K', recommended: 14, recommendedBadges: ['REV'], recommendedSub: 1, confidence: 'low', coverage: '20% below target', coverageWeeks: 2.0, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 0, salesL30: 2, salesL90: 6, forecast: 0.5, stockouts: '0 → 1', locations: '2 → 2', overstocks: '3 → 1', understocks: '4 → 2', status: 'last_edited_by_user', editedByUser: 'Csabi Toth', currentUnits: 7, currentUnitsInTransit: 0, warehouseAllocateLine: '40 → 34', warehouseSellLine: '50 → 44', packMultiple: 10, skuCount: 1, isVirtualPack: false, rrp: 750, ws: 12, season: 'Winter 26', event: 'Vague 2', firstSalesDate: '5th Dec 25', lifeToDateSales: 18, department: 'Handbags', subDepartment: 'Sac à main', material: 'Cuir', gender: 'Femme', skuConfidenceBuckets: { veryHigh: 0, high: 0, medium: 0, low: 1, veryLow: 1 }, skuCoverageSummary: { inTarget: 0, total: 2 } },
-    { id: 29, name: 'Mini sac band', sku: 'T7-900021', colour: 'Noir', movementType: ["rebalancing"], transfers: 5, transfersSub: 1, approvedTransfers: 5, unapprovedTransfers: 0, revenue: '€0.33K', recommended: 5, recommendedBadges: ['REV'], recommendedSub: 1, confidence: 'high', coverage: 'All SKUs in target', coverageWeeks: 6.1, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 1, salesL30: 2, salesL90: 6, forecast: 0.45, stockouts: '0 → 0', locations: '1 → 1', overstocks: '0 → 0', understocks: '1 → 0', status: 'approved_by_user', approvedByUser: 'Jess Briggs', currentUnits: 8, currentUnitsInTransit: 1, warehouseAllocateLine: '25 → 22', warehouseSellLine: '32 → 29', packMultiple: null, skuCount: 1, rrp: 195, ws: 40, season: 'P/e 2026', event: 'Pre', firstSalesDate: '14th Jan 26', lifeToDateSales: 11, department: 'R.t.w. donna', subDepartment: 'Accessori piccoli', material: 'Cady', gender: 'Donna', skuConfidenceBuckets: { veryHigh: 1, high: 0, medium: 0, low: 0, veryLow: 0 }, skuCoverageSummary: { inTarget: 1, total: 1 } },
-    { id: 30, name: 'Croi-sac zip l', sku: 'T7-1398812', colour: 'Camel', movementType: ["rebalancing"], transfers: 4, transfersSub: 1, approvedTransfers: 2, unapprovedTransfers: 2, revenue: '€0.49K', recommended: 4, recommendedBadges: ['VIS'], recommendedSub: 1, confidence: 'medium', coverage: '4% below target', coverageWeeks: 4.8, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 1, salesL30: 3, salesL90: 7, forecast: 0.6, stockouts: '0 → 0', locations: '2 → 1', overstocks: '1 → 0', understocks: '2 → 1', status: 'needs_review_from_user', currentUnits: 6, currentUnitsInTransit: 0, warehouseAllocateLine: '28 → 24', warehouseSellLine: '36 → 32', packMultiple: null, skuCount: 1, rrp: 420, ws: 0, season: 'SS26', event: 'Drop 2', firstSalesDate: '1st Apr 25', lifeToDateSales: 25, department: 'Crossbody', subDepartment: 'Bandoulière', material: 'Nylon', gender: 'Unisexe', skuConfidenceBuckets: { veryHigh: 0, high: 0, medium: 1, low: 0, veryLow: 0 }, skuCoverageSummary: { inTarget: 0, total: 1 } },
-    { id: 31, name: 'Gémo LOT tote', sku: 'T7-900101', colour: 'Noir', movementType: ["replenishment"], transfers: 25, transfersSub: 1, approvedTransfers: 10, unapprovedTransfers: 15, revenue: '€0.77K', recommended: 25, recommendedBadges: ['VIS'], recommendedSub: 1, confidence: 'low', coverage: '7% below target', coverageWeeks: 3.4, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 2, salesL30: 5, salesL90: 14, forecast: 0.95, stockouts: '0 → 0', locations: '2 → 2', overstocks: '2 → 1', understocks: '3 → 2', status: 'unapproved', currentUnits: 11, currentUnitsInTransit: 2, warehouseAllocateLine: '50 → 44', warehouseSellLine: '60 → 54', packMultiple: 10, skuCount: 1, isVirtualPack: false, rrp: 280, ws: 0, season: 'Winter 26', event: 'Vague 1', firstSalesDate: '2nd Aug 25', lifeToDateSales: 55, department: 'Handbags', subDepartment: 'Sac à main', material: 'Cuir', gender: 'Femme', skuConfidenceBuckets: { veryHigh: 0, high: 1, medium: 1, low: 2, veryLow: 1 }, skuCoverageSummary: { inTarget: 1, total: 5 } },
+    { id: 27, name: 'Pre-sac seau s', sku: 'T7-101081', colour: 'Bleu petrole', movementType: ["replenishment"], transfers: 40, transfersSub: 1, approvedTransfers: 40, unapprovedTransfers: 0, revenue: '€1.2K', recommended: 40, recommendedBadges: ['VIS'], recommendedSub: 1, confidence: 'high', coverage: '3% below target', coverageWeeks: 4.5, coverageTarget: 6, nextEvent: { name: 'UK weekly replenishment', date: '16/06/2026' }, salesL7: 3, salesL30: 9, salesL90: 22, forecast: 1.4, stockouts: '0 → 0', locations: '2 → 2', overstocks: '2 → 1', understocks: '5 → 3', status: 'approved_by_system', currentUnits: 20, currentUnitsInTransit: 4, warehouseAllocateLine: '70 → 60', warehouseSellLine: '85 → 75', packMultiple: 10, skuCount: 1, isVirtualPack: true, rrp: 120, ws: 8, season: 'AW25', event: 'Continuity', firstSalesDate: '19th Sep 25', lifeToDateSales: 80, department: 'Bucket bags', subDepartment: 'Foulard', material: 'Cachemire', gender: 'Femme', skuConfidenceBuckets: { high: 2, medium: 0, low: 0, unknown: 0 }, skuCoverageSummary: { inTarget: 1, total: 2 } },
+    { id: 28, name: 'Ang-sac pte main s', sku: 'T7-1252811', colour: 'Figue', movementType: ["replenishment", "rebalancing"], transfers: 14, transfersSub: 1, packTransfers: 10, looseTransfers: 2, replenTransfers: 12, rebalTransfers: 2, approvedTransfers: 7, unapprovedTransfers: 7, revenue: '€0.58K', recommended: 14, recommendedBadges: ['REV'], recommendedSub: 1, confidence: 'low', coverage: '20% below target', coverageWeeks: 2.0, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 0, salesL30: 2, salesL90: 6, forecast: 0.5, stockouts: '0 → 1', locations: '2 → 2', overstocks: '3 → 1', understocks: '4 → 2', status: 'last_edited_by_user', editedByUser: 'Csabi Toth', currentUnits: 7, currentUnitsInTransit: 0, warehouseAllocateLine: '40 → 34', warehouseSellLine: '50 → 44', packMultiple: 10, skuCount: 1, isVirtualPack: false, rrp: 750, ws: 12, season: 'Winter 26', event: 'Vague 2', firstSalesDate: '5th Dec 25', lifeToDateSales: 18, department: 'Handbags', subDepartment: 'Sac à main', material: 'Cuir', gender: 'Femme', skuConfidenceBuckets: { high: 0, medium: 0, low: 2, unknown: 0 }, skuCoverageSummary: { inTarget: 0, total: 2 } },
+    { id: 29, name: 'Mini sac band', sku: 'T7-900021', colour: 'Noir', movementType: ["rebalancing"], transfers: 5, transfersSub: 1, approvedTransfers: 5, unapprovedTransfers: 0, revenue: '€0.33K', recommended: 5, recommendedBadges: ['REV'], recommendedSub: 1, confidence: 'high', coverage: 'All SKUs in target', coverageWeeks: 6.1, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 1, salesL30: 2, salesL90: 6, forecast: 0.45, stockouts: '0 → 0', locations: '1 → 1', overstocks: '0 → 0', understocks: '1 → 0', status: 'approved_by_user', approvedByUser: 'Jess Briggs', currentUnits: 8, currentUnitsInTransit: 1, warehouseAllocateLine: '25 → 22', warehouseSellLine: '32 → 29', packMultiple: null, skuCount: 1, rrp: 195, ws: 40, season: 'P/e 2026', event: 'Pre', firstSalesDate: '14th Jan 26', lifeToDateSales: 11, department: 'R.t.w. donna', subDepartment: 'Accessori piccoli', material: 'Cady', gender: 'Donna', skuConfidenceBuckets: { high: 1, medium: 0, low: 0, unknown: 0 }, skuCoverageSummary: { inTarget: 1, total: 1 } },
+    { id: 30, name: 'Croi-sac zip l', sku: 'T7-1398812', colour: 'Camel', movementType: ["rebalancing"], transfers: 4, transfersSub: 1, approvedTransfers: 2, unapprovedTransfers: 2, revenue: '€0.49K', recommended: 4, recommendedBadges: ['VIS'], recommendedSub: 1, confidence: 'medium', coverage: '4% below target', coverageWeeks: 4.8, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 1, salesL30: 3, salesL90: 7, forecast: 0.6, stockouts: '0 → 0', locations: '2 → 1', overstocks: '1 → 0', understocks: '2 → 1', status: 'needs_review_from_user', currentUnits: 6, currentUnitsInTransit: 0, warehouseAllocateLine: '28 → 24', warehouseSellLine: '36 → 32', packMultiple: null, skuCount: 1, rrp: 420, ws: 0, season: 'SS26', event: 'Drop 2', firstSalesDate: '1st Apr 25', lifeToDateSales: 25, department: 'Crossbody', subDepartment: 'Bandoulière', material: 'Nylon', gender: 'Unisexe', skuConfidenceBuckets: { high: 0, medium: 1, low: 0, unknown: 0 }, skuCoverageSummary: { inTarget: 0, total: 1 } },
+    { id: 31, name: 'Gémo LOT tote', sku: 'T7-900101', colour: 'Noir', movementType: ["replenishment"], transfers: 25, transfersSub: 1, approvedTransfers: 10, unapprovedTransfers: 15, revenue: '€0.77K', recommended: 25, recommendedBadges: ['VIS'], recommendedSub: 1, confidence: 'low', coverage: '7% below target', coverageWeeks: 3.4, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 2, salesL30: 5, salesL90: 14, forecast: 0.95, stockouts: '0 → 0', locations: '2 → 2', overstocks: '2 → 1', understocks: '3 → 2', status: 'unapproved', currentUnits: 11, currentUnitsInTransit: 2, warehouseAllocateLine: '50 → 44', warehouseSellLine: '60 → 54', packMultiple: 10, skuCount: 1, isVirtualPack: false, rrp: 280, ws: 0, season: 'Winter 26', event: 'Vague 1', firstSalesDate: '2nd Aug 25', lifeToDateSales: 55, department: 'Handbags', subDepartment: 'Sac à main', material: 'Cuir', gender: 'Femme', skuConfidenceBuckets: { high: 1, medium: 1, low: 1, unknown: 2 }, skuCoverageSummary: { inTarget: 1, total: 5 } },
   ],
   // Trip 8 — Troyes → Grenoble (unapproved-heavy)
   8: [
-    { id: 32, name: 'Ang-sac pte main m', sku: 'T8-1252810', colour: 'Figue', movementType: ["rebalancing"], transfers: 7, transfersSub: 1, approvedTransfers: 0, unapprovedTransfers: 7, revenue: '€1.05K', recommended: 7, recommendedBadges: ['REV', 'VIS'], recommendedSub: 1, confidence: 'high', coverage: '6% below target', coverageWeeks: 3.5, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 2, salesL30: 5, salesL90: 12, forecast: 1.3, stockouts: '1 → 0', locations: '2 → 2', overstocks: '3 → 1', understocks: '5 → 3', status: 'unapproved', currentUnits: 12, currentUnitsInTransit: 2, warehouseAllocateLine: '42 → 36', warehouseSellLine: '55 → 48', packMultiple: null, skuCount: 2, rrp: 890, ws: 0, season: 'Winter 26', event: 'Vague 1', firstSalesDate: '22nd Jan 26', lifeToDateSales: 30, department: 'Handbags', subDepartment: 'Sac à main', material: 'Cuir', gender: 'Femme', skuConfidenceBuckets: { veryHigh: 0, high: 2, medium: 0, low: 0, veryLow: 0 }, skuCoverageSummary: { inTarget: 0, total: 2 } },
-    { id: 33, name: 'Pre-sac seau m', sku: 'T8-101080', colour: 'Vert', movementType: ["replenishment"], transfers: 15, transfersSub: 1, approvedTransfers: 0, unapprovedTransfers: 15, revenue: '€0.62K', recommended: 15, recommendedBadges: ['VIS'], recommendedSub: 1, confidence: 'low', coverage: '15% below target', coverageWeeks: 2.5, coverageTarget: 6, nextEvent: { name: 'UK weekly replenishment', date: '16/06/2026' }, salesL7: 1, salesL30: 3, salesL90: 8, forecast: 0.65, stockouts: '0 → 1', locations: '1 → 1', overstocks: '1 → 0', understocks: '3 → 1', status: 'unapproved', currentUnits: 5, currentUnitsInTransit: 1, warehouseAllocateLine: '28 → 22', warehouseSellLine: '36 → 30', packMultiple: 10, skuCount: 1, isVirtualPack: true, rrp: 85, ws: 0, season: 'Winter 26', event: 'Vague 2', firstSalesDate: '3rd Nov 25', lifeToDateSales: 16, department: 'Bucket bags', subDepartment: 'Seau', material: 'Laine', gender: 'Femme', skuConfidenceBuckets: { veryHigh: 0, high: 0, medium: 0, low: 0, veryLow: 1 }, skuCoverageSummary: { inTarget: 0, total: 1 } },
-    { id: 34, name: 'Coin-pack tote m', sku: 'T8-900010', colour: 'Camel', movementType: ["replenishment"], transfers: 22, transfersSub: 1, approvedTransfers: 5, unapprovedTransfers: 17, revenue: '€0.71K', recommended: 22, recommendedBadges: ['VIS'], recommendedSub: 1, confidence: 'medium', coverage: 'All SKUs in target', coverageWeeks: 5.8, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 1, salesL30: 4, salesL90: 10, forecast: 0.85, stockouts: '0 → 0', locations: '2 → 1', overstocks: '1 → 0', understocks: '2 → 1', status: 'needs_review_from_user', currentUnits: 9, currentUnitsInTransit: 0, warehouseAllocateLine: '33 → 28', warehouseSellLine: '42 → 37', packMultiple: 10, skuCount: 3, isVirtualPack: true, rrp: 320, ws: 0, season: 'Winter 26', event: 'Vague 1', firstSalesDate: '28th Oct 25', lifeToDateSales: 44, department: 'Handbags', subDepartment: 'Sac à main', material: 'Cuir', gender: 'Femme', skuConfidenceBuckets: { veryHigh: 0, high: 1, medium: 2, low: 0, veryLow: 0 }, skuCoverageSummary: { inTarget: 3, total: 3 } },
-    { id: 35, name: 'Croi-sac zip s', sku: 'T8-1398811', colour: 'Rouge', movementType: ["rebalancing"], transfers: 2, transfersSub: 1, approvedTransfers: 0, unapprovedTransfers: 2, revenue: '€0.25K', recommended: 2, recommendedBadges: ['REV'], recommendedSub: 1, confidence: 'high', coverage: '9% below target', coverageWeeks: 3.0, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 0, salesL30: 1, salesL90: 3, forecast: 0.3, stockouts: '0 → 0', locations: '1 → 1', overstocks: '0 → 0', understocks: '2 → 1', status: 'unapproved', currentUnits: 3, currentUnitsInTransit: 0, warehouseAllocateLine: '15 → 13', warehouseSellLine: '20 → 18', packMultiple: null, skuCount: 1, rrp: 380, ws: 25, season: 'SS26', event: 'Drop 1', firstSalesDate: '8th Feb 26', lifeToDateSales: 7, department: 'Crossbody', subDepartment: 'Bandoulière', material: 'Cuir', gender: 'Homme', skuConfidenceBuckets: { veryHigh: 0, high: 1, medium: 0, low: 0, veryLow: 0 }, skuCoverageSummary: { inTarget: 0, total: 1 } },
+    { id: 32, name: 'Ang-sac pte main m', sku: 'T8-1252810', colour: 'Figue', movementType: ["rebalancing"], transfers: 7, transfersSub: 1, approvedTransfers: 0, unapprovedTransfers: 7, revenue: '€1.05K', recommended: 7, recommendedBadges: ['REV', 'VIS'], recommendedSub: 1, confidence: 'high', coverage: '6% below target', coverageWeeks: 3.5, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 2, salesL30: 5, salesL90: 12, forecast: 1.3, stockouts: '1 → 0', locations: '2 → 2', overstocks: '3 → 1', understocks: '5 → 3', status: 'unapproved', currentUnits: 12, currentUnitsInTransit: 2, warehouseAllocateLine: '42 → 36', warehouseSellLine: '55 → 48', packMultiple: null, skuCount: 2, rrp: 890, ws: 0, season: 'Winter 26', event: 'Vague 1', firstSalesDate: '22nd Jan 26', lifeToDateSales: 30, department: 'Handbags', subDepartment: 'Sac à main', material: 'Cuir', gender: 'Femme', skuConfidenceBuckets: { high: 2, medium: 0, low: 0, unknown: 0 }, skuCoverageSummary: { inTarget: 0, total: 2 } },
+    { id: 33, name: 'Pre-sac seau m', sku: 'T8-101080', colour: 'Vert', movementType: ["replenishment"], transfers: 15, transfersSub: 1, approvedTransfers: 0, unapprovedTransfers: 15, revenue: '€0.62K', recommended: 15, recommendedBadges: ['VIS'], recommendedSub: 1, confidence: 'low', coverage: '15% below target', coverageWeeks: 2.5, coverageTarget: 6, nextEvent: { name: 'UK weekly replenishment', date: '16/06/2026' }, salesL7: 1, salesL30: 3, salesL90: 8, forecast: 0.65, stockouts: '0 → 1', locations: '1 → 1', overstocks: '1 → 0', understocks: '3 → 1', status: 'unapproved', currentUnits: 5, currentUnitsInTransit: 1, warehouseAllocateLine: '28 → 22', warehouseSellLine: '36 → 30', packMultiple: 10, skuCount: 1, isVirtualPack: true, rrp: 85, ws: 0, season: 'Winter 26', event: 'Vague 2', firstSalesDate: '3rd Nov 25', lifeToDateSales: 16, department: 'Bucket bags', subDepartment: 'Seau', material: 'Laine', gender: 'Femme', skuConfidenceBuckets: { high: 0, medium: 0, low: 1, unknown: 0 }, skuCoverageSummary: { inTarget: 0, total: 1 } },
+    { id: 34, name: 'Coin-pack tote m', sku: 'T8-900010', colour: 'Camel', movementType: ["replenishment"], transfers: 22, transfersSub: 1, approvedTransfers: 5, unapprovedTransfers: 17, revenue: '€0.71K', recommended: 22, recommendedBadges: ['VIS'], recommendedSub: 1, confidence: 'medium', coverage: 'All SKUs in target', coverageWeeks: 5.8, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 1, salesL30: 4, salesL90: 10, forecast: 0.85, stockouts: '0 → 0', locations: '2 → 1', overstocks: '1 → 0', understocks: '2 → 1', status: 'needs_review_from_user', currentUnits: 9, currentUnitsInTransit: 0, warehouseAllocateLine: '33 → 28', warehouseSellLine: '42 → 37', packMultiple: 10, skuCount: 3, isVirtualPack: true, rrp: 320, ws: 0, season: 'Winter 26', event: 'Vague 1', firstSalesDate: '28th Oct 25', lifeToDateSales: 44, department: 'Handbags', subDepartment: 'Sac à main', material: 'Cuir', gender: 'Femme', skuConfidenceBuckets: { high: 1, medium: 2, low: 0, unknown: 0 }, skuCoverageSummary: { inTarget: 3, total: 3 } },
+    { id: 35, name: 'Croi-sac zip s', sku: 'T8-1398811', colour: 'Rouge', movementType: ["rebalancing"], transfers: 2, transfersSub: 1, approvedTransfers: 0, unapprovedTransfers: 2, revenue: '€0.25K', recommended: 2, recommendedBadges: ['REV'], recommendedSub: 1, confidence: 'high', coverage: '9% below target', coverageWeeks: 3.0, coverageTarget: 6, nextEvent: { name: 'Europe monthly', date: '09/06/2026' }, salesL7: 0, salesL30: 1, salesL90: 3, forecast: 0.3, stockouts: '0 → 0', locations: '1 → 1', overstocks: '0 → 0', understocks: '2 → 1', status: 'unapproved', currentUnits: 3, currentUnitsInTransit: 0, warehouseAllocateLine: '15 → 13', warehouseSellLine: '20 → 18', packMultiple: null, skuCount: 1, rrp: 380, ws: 25, season: 'SS26', event: 'Drop 1', firstSalesDate: '8th Feb 26', lifeToDateSales: 7, department: 'Crossbody', subDepartment: 'Bandoulière', material: 'Cuir', gender: 'Homme', skuConfidenceBuckets: { high: 1, medium: 0, low: 0, unknown: 0 }, skuCoverageSummary: { inTarget: 0, total: 1 } },
   ]
 }
 
@@ -626,47 +632,47 @@ const PRODUCTS_BY_TRIP = {
 /** Per-product SKU-location confidence buckets + coverage summary (Products tab). */
 const PRODUCT_SKU_LOCATION_METRICS = {
   1: {
-    skuConfidenceBuckets: { veryHigh: 1, high: 0, medium: 0, low: 0, veryLow: 0 },
+    skuConfidenceBuckets: { high: 1, medium: 0, low: 0, unknown: 0 },
     skuCoverageSummary: { inTarget: 1, total: 1 },
   },
   2: {
-    skuConfidenceBuckets: { veryHigh: 0, high: 1, medium: 0, low: 0, veryLow: 0 },
+    skuConfidenceBuckets: { high: 0, medium: 1, low: 0, unknown: 0 },
     skuCoverageSummary: { inTarget: 0, total: 1 },
   },
   3: {
-    skuConfidenceBuckets: { veryHigh: 1, high: 1, medium: 0, low: 0, veryLow: 0 },
+    skuConfidenceBuckets: { high: 1, medium: 0, low: 0, unknown: 1 },
     skuCoverageSummary: { inTarget: 1, total: 2 },
   },
   4: {
-    skuConfidenceBuckets: { veryHigh: 1, high: 0, medium: 0, low: 0, veryLow: 0 },
+    skuConfidenceBuckets: { high: 1, medium: 0, low: 0, unknown: 0 },
     skuCoverageSummary: { inTarget: 1, total: 1 },
   },
   5: {
-    skuConfidenceBuckets: { veryHigh: 0, high: 0, medium: 0, low: 1, veryLow: 0 },
+    skuConfidenceBuckets: { high: 0, medium: 0, low: 1, unknown: 0 },
     skuCoverageSummary: { inTarget: 0, total: 1 },
   },
   6: {
-    skuConfidenceBuckets: { veryHigh: 0, high: 0, medium: 0, low: 1, veryLow: 1 },
+    skuConfidenceBuckets: { high: 1, medium: 0, low: 0, unknown: 1 },
     skuCoverageSummary: { inTarget: 0, total: 2 },
   },
   7: {
-    skuConfidenceBuckets: { veryHigh: 0, high: 1, medium: 0, low: 0, veryLow: 0 },
+    skuConfidenceBuckets: { high: 1, medium: 0, low: 0, unknown: 0 },
     skuCoverageSummary: { inTarget: 0, total: 1 },
   },
   8: {
-    skuConfidenceBuckets: { veryHigh: 1, high: 0, medium: 0, low: 0, veryLow: 0 },
+    skuConfidenceBuckets: { high: 1, medium: 0, low: 0, unknown: 0 },
     skuCoverageSummary: { inTarget: 1, total: 1 },
   },
   9: {
-    skuConfidenceBuckets: { veryHigh: 1, high: 1, medium: 1, low: 1, veryLow: 1 },
+    skuConfidenceBuckets: { high: 2, medium: 2, low: 1, unknown: 0 },
     skuCoverageSummary: { inTarget: 3, total: 5 },
   },
   10: {
-    skuConfidenceBuckets: { veryHigh: 0, high: 0, medium: 1, low: 0, veryLow: 0 },
+    skuConfidenceBuckets: { high: 0, medium: 1, low: 0, unknown: 0 },
     skuCoverageSummary: { inTarget: 1, total: 1 },
   },
   11: {
-    skuConfidenceBuckets: { veryHigh: 0, high: 1, medium: 2, low: 3, veryLow: 2 },
+    skuConfidenceBuckets: { high: 1, medium: 1, low: 1, unknown: 5 },
     skuCoverageSummary: { inTarget: 2, total: 8 },
   },
 }
@@ -1231,6 +1237,67 @@ const STATUS_CYCLE = [
 const CONFIDENCE_CYCLE = ['high', 'high', 'high', 'low']
 const BADGE_CYCLE = [['REV'], ['VIS'], ['REV', 'VIS'], ['REV'], ['VIS']]
 
+/** Seed Explorer confidence buckets so sum === transfer units (high/med/low/unknown mix). */
+function buildExplorerConfidenceBuckets(rowIndex, totalUnits) {
+  const total = Math.max(0, Number(totalUnits) || 0)
+  if (total === 0) return emptyConfidenceBuckets()
+
+  switch (rowIndex % 8) {
+    case 0:
+      // 100% unknown
+      return { high: 0, medium: 0, low: 0, unknown: total }
+    case 1: {
+      // Unknown largest
+      const unknown = Math.min(total, Math.max(1, Math.ceil(total * 0.55)))
+      const rem = total - unknown
+      const high = Math.floor(rem / 2)
+      return { high, medium: 0, low: rem - high, unknown }
+    }
+    case 2: {
+      // Four-segment mix with a small unknown
+      if (total === 1) return { high: 0, medium: 0, low: 0, unknown: 1 }
+      if (total === 2) return { high: 1, medium: 0, low: 0, unknown: 1 }
+      if (total === 3) return { high: 1, medium: 1, low: 0, unknown: 1 }
+      const unknown = 1
+      const rem = total - unknown
+      const high = Math.max(1, Math.floor(rem / 3))
+      const medium = Math.max(1, Math.floor((rem - high) / 2))
+      const low = rem - high - medium
+      return { high, medium, low, unknown }
+    }
+    case 3: {
+      // Three-segment RAG, no unknown
+      if (total < 3) return { high: total, medium: 0, low: 0, unknown: 0 }
+      const high = Math.max(1, Math.floor(total / 3))
+      const medium = Math.max(1, Math.floor((total - high) / 2))
+      const low = total - high - medium
+      return { high, medium, low, unknown: 0 }
+    }
+    case 4:
+      return { high: total, medium: 0, low: 0, unknown: 0 }
+    case 5:
+      return { high: 0, medium: 0, low: total, unknown: 0 }
+    case 6:
+      if (total === 1) return { high: 0, medium: 0, low: 0, unknown: 1 }
+      return { high: total - 1, medium: 0, low: 0, unknown: 1 }
+    default: {
+      const high = Math.ceil(total / 2)
+      return { high, medium: total - high, low: 0, unknown: 0 }
+    }
+  }
+}
+
+function sumConfidenceBuckets(bucketList) {
+  const out = emptyConfidenceBuckets()
+  for (const buckets of bucketList) {
+    if (!buckets) continue
+    for (const b of CONFIDENCE_BUCKET_ORDER) {
+      out[b.key] += Number(buckets[b.key]) || 0
+    }
+  }
+  return out
+}
+
 function buildExplorerRow(rowIndex, product, size, fromLoc, toLoc, movementType, options = {}) {
   const coverageWeeksBefore = Number((1 + (rowIndex * 1.3) % 5).toFixed(1))
   const coverageWeeksAfter = Number((coverageWeeksBefore + 0.5 + (rowIndex % 4) * 0.8).toFixed(1))
@@ -1337,6 +1404,7 @@ function buildExplorerRow(rowIndex, product, size, fromLoc, toLoc, movementType,
     recommendedBadges: BADGE_CYCLE[rowIndex % BADGE_CYCLE.length],
     recommendedSub: rowIndex % 3 === 0 ? '2' : undefined,
     confidence: CONFIDENCE_CYCLE[rowIndex % CONFIDENCE_CYCLE.length],
+    confidenceBuckets: buildExplorerConfidenceBuckets(rowIndex, alignedTransfers),
     coverageWeeksBefore,
     coverageWeeksAfter,
     nextEvent: {
@@ -1549,88 +1617,11 @@ function ConfidencePill({ value }) {
   )
 }
 
-const CONFIDENCE_BUCKET_ORDER = [
-  { key: 'veryHigh', label: 'Very high', color: '#166534', textColor: '#ffffff' },
-  { key: 'high', label: 'High', color: '#08a16a', textColor: '#ffffff' },
-  { key: 'medium', label: 'Medium', color: '#9ca3af', textColor: '#ffffff' },
-  { key: 'low', label: 'Low', color: '#eab308', textColor: '#0a0a0a' },
-  { key: 'veryLow', label: 'Very low', color: '#f87171', textColor: '#0a0a0a' },
-]
-
-function emptyConfidenceBuckets() {
-  return { veryHigh: 0, high: 0, medium: 0, low: 0, veryLow: 0 }
-}
-
-/** Most-frequent bucket; ties → worst among tied (later in CONFIDENCE_BUCKET_ORDER). */
-function pickDominantConfidenceBucket(buckets) {
-  let max = -1
-  const winners = []
-  for (const b of CONFIDENCE_BUCKET_ORDER) {
-    const n = Number(buckets?.[b.key]) || 0
-    if (n > max) {
-      max = n
-      winners.length = 0
-      winners.push(b)
-    } else if (n === max) {
-      winners.push(b)
-    }
-  }
-  if (max <= 0 || winners.length === 0) return null
-  return winners[winners.length - 1]
-}
-
-function ConfidenceDominantPill({ buckets, muted = false }) {
-  const dominant = pickDominantConfidenceBucket(buckets)
-  if (!dominant) {
-    return <span className="text-[12px] text-[#9ca3af]">—</span>
-  }
-  return (
-    <span
-      className="inline-flex items-center px-2 py-1 rounded-[6px] text-[12px] font-medium"
-      style={
-        muted
-          ? { backgroundColor: '#f3f4f6', color: '#9ca3af' }
-          : { backgroundColor: dominant.color, color: dominant.textColor }
-      }
-    >
-      {dominant.label}
-    </span>
-  )
-}
-
-/** Products-tab confidence hover — all five buckets including zeros. */
-function ConfidenceBreakdownHoverCard({ buckets }) {
-  return (
-    <div className="pointer-events-none w-[min(260px,calc(100vw-1.5rem))] rounded-[8px] border border-[#E9EAEB] bg-white p-3 shadow-[0_4px_16px_rgba(0,0,0,0.1)]">
-      <div className="mb-2.5 text-[13px] font-semibold text-[#0a0a0a]">Confidence breakdown</div>
-      <div className="flex flex-col gap-2">
-        {CONFIDENCE_BUCKET_ORDER.map((b) => {
-          const count = Number(buckets?.[b.key]) || 0
-          return (
-            <div key={b.key} className="flex items-center justify-between gap-3 text-[12px]">
-              <span className="inline-flex min-w-0 items-center gap-2 text-[#4b535c]">
-                <span
-                  className="size-2 shrink-0 rounded-full"
-                  style={{ backgroundColor: b.color }}
-                  aria-hidden
-                />
-                <span>{b.label}</span>
-              </span>
-              <span className="shrink-0 tabular-nums text-[#0a0a0a]">
-                {count} SKU-location{count === 1 ? '' : 's'}
-              </span>
-            </div>
-          )
-        })}
-      </div>
-    </div>
-  )
-}
-
+/** Products / Explorer confidence cell — bar + TuHoverPopover breakdown. */
 function ConfidenceLabelWithHover({ buckets, muted = false }) {
   return (
     <TuHoverPopover panel={<ConfidenceBreakdownHoverCard buckets={buckets} />}>
-      <ConfidenceDominantPill buckets={buckets} muted={muted} />
+      <ConfidenceBucketBar buckets={buckets} muted={muted} />
     </TuHoverPopover>
   )
 }
@@ -7355,8 +7346,6 @@ const EXPLORER_REDUCED_COLUMN_IDS = [
   'movementType',
   'stockInCirculation',
   'salesL7',
-  'salesL30',
-  'salesL90',
   'forecast',
   'transfers',
   'recommended',
@@ -7512,6 +7501,9 @@ function buildExplorerDisplayRows(filteredSkuRows, allSkuRows, expandedPackGroup
         packRecommended: meta?.packRecommended,
         packRecommendedBadges: meta?.packRecommendedBadges,
         packConfidence: meta?.packConfidence,
+        packConfidenceBuckets: sumConfidenceBuckets(
+          (allSkuRows.filter((r) => r.packGroupId === packGroupId) ?? []).map((m) => m.confidenceBuckets)
+        ),
         packCoverageWeeksBefore: meta?.packCoverageWeeksBefore,
         packCoverageWeeksAfter: meta?.packCoverageWeeksAfter,
         packCoverageTarget: meta?.packCoverageTarget,
@@ -7557,6 +7549,7 @@ function buildExplorerDisplayRows(filteredSkuRows, allSkuRows, expandedPackGroup
         packRecommended: row.recommended,
         packRecommendedBadges: row.recommendedBadges,
         packConfidence: row.confidence,
+        packConfidenceBuckets: row.confidenceBuckets ?? emptyConfidenceBuckets(),
         packCoverageWeeksBefore: row.coverageWeeksBefore,
         packCoverageWeeksAfter: row.coverageWeeksAfter,
         packCoverageTarget: row.coverageTarget,
@@ -7873,7 +7866,9 @@ function renderExplorerBodyCell(row, col, {
       return (
         <td key={col.id} className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}>
           <div className="flex justify-end">
-            <ConfidencePill value={row.confidence} />
+            <ConfidenceLabelWithHover
+              buckets={row.confidenceBuckets ?? emptyConfidenceBuckets()}
+            />
           </div>
         </td>
       )
@@ -8223,7 +8218,9 @@ function renderExplorerPackRowCell(packRow, col, {
       return (
         <td key={col.id} className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}>
           <div className="flex justify-end">
-            <ConfidencePill value={packRow.packConfidence} />
+            <ConfidenceLabelWithHover
+              buckets={packRow.packConfidenceBuckets ?? emptyConfidenceBuckets()}
+            />
           </div>
         </td>
       )
