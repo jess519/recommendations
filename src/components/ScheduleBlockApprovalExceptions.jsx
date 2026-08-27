@@ -619,7 +619,9 @@ export function ScheduleBlockApprovalExceptions({ block, onUpdate }) {
                 {granularityPicked && orderedFilters.length === 0 && (
                   <div className="mt-3 flex flex-col gap-2">
                     <p className="text-[13px] text-[#4b535c]">
-                      Apply only to specific products or locations?
+                      {isAggregatedGranularity(exc.granularity)
+                        ? 'Apply only to specific locations?'
+                        : 'Apply only to specific products or locations?'}
                     </p>
                     <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                       {remainingCats.map((cat) => (
