@@ -1088,7 +1088,7 @@ function createDefaultScheduleBlock(id) {
     skipEvery: '',
     skipEveryUnit: 'weeks',
     notifyUsers: '',
-    approvalMode: 'auto-approve',
+    approvalMode: 'manual-review',
     exceptions: createDefaultScheduleExceptions(),
   }
 }
@@ -1437,28 +1437,6 @@ function ScheduleDetailsBlock({ block, onUpdate }) {
           <div className="flex flex-col gap-3">
             <label
               className={`flex cursor-pointer items-start gap-3 rounded-[10px] border bg-white p-4 hover:border-[#1d4ed8]/40 has-[:checked]:border-[#1d4ed8] ${
-                block.approvalMode === 'auto-approve' ? 'border-[#1d4ed8]' : 'border-[#e5e7eb]'
-              }`}
-            >
-              <input
-                type="radio"
-                name={`approvalMode-${block.id}`}
-                value="auto-approve"
-                checked={block.approvalMode === 'auto-approve'}
-                onChange={() => onUpdate({ approvalMode: 'auto-approve' })}
-                className="mt-1 size-4 shrink-0 border-[#e5e7eb] text-[#1d4ed8] focus:ring-[#1d4ed8]"
-              />
-              <div className="flex min-w-0 flex-col gap-1">
-                <span className="text-[14px] font-medium text-[#0a0a0a]">Auto-approve recommendations</span>
-                <span className="text-[12px] font-normal text-[#4b535c]">
-                  Recommendations are auto-approved by default. Define exceptions below to flag specific recommendations
-                  for manual review.
-                </span>
-              </div>
-            </label>
-
-            <label
-              className={`flex cursor-pointer items-start gap-3 rounded-[10px] border bg-white p-4 hover:border-[#1d4ed8]/40 has-[:checked]:border-[#1d4ed8] ${
                 block.approvalMode === 'manual-review' ? 'border-[#1d4ed8]' : 'border-[#e5e7eb]'
               }`}
             >
@@ -1473,20 +1451,66 @@ function ScheduleDetailsBlock({ block, onUpdate }) {
               <div className="flex min-w-0 flex-col gap-1">
                 <span className="text-[14px] font-medium text-[#0a0a0a]">Manual review required</span>
                 <span className="text-[12px] font-normal text-[#4b535c]">
-                  No recommendations auto-submit. Every recommendation requires user review before the submission
-                  deadline.
+                  All recommendations require your approval before submission.
+                </span>
+              </div>
+            </label>
+
+            <label
+              className={`flex cursor-pointer items-start gap-3 rounded-[10px] border bg-white p-4 hover:border-[#1d4ed8]/40 has-[:checked]:border-[#1d4ed8] ${
+                block.approvalMode === 'auto-approve-all' ? 'border-[#1d4ed8]' : 'border-[#e5e7eb]'
+              }`}
+            >
+              <input
+                type="radio"
+                name={`approvalMode-${block.id}`}
+                value="auto-approve-all"
+                checked={block.approvalMode === 'auto-approve-all'}
+                onChange={() => onUpdate({ approvalMode: 'auto-approve-all' })}
+                className="mt-1 size-4 shrink-0 border-[#e5e7eb] text-[#1d4ed8] focus:ring-[#1d4ed8]"
+              />
+              <div className="flex min-w-0 flex-col gap-1">
+                <span className="text-[14px] font-medium text-[#0a0a0a]">Auto-approve all</span>
+                <span className="text-[12px] font-normal text-[#4b535c]">
+                  All recommendations are auto-approved. Unapprove individual rows in the batch as needed.
+                </span>
+              </div>
+            </label>
+
+            <label
+              className={`flex cursor-pointer items-start gap-3 rounded-[10px] border bg-white p-4 hover:border-[#1d4ed8]/40 has-[:checked]:border-[#1d4ed8] ${
+                block.approvalMode === 'auto-approve-with-exceptions'
+                  ? 'border-[#1d4ed8]'
+                  : 'border-[#e5e7eb]'
+              }`}
+            >
+              <input
+                type="radio"
+                name={`approvalMode-${block.id}`}
+                value="auto-approve-with-exceptions"
+                checked={block.approvalMode === 'auto-approve-with-exceptions'}
+                onChange={() => onUpdate({ approvalMode: 'auto-approve-with-exceptions' })}
+                className="mt-1 size-4 shrink-0 border-[#e5e7eb] text-[#1d4ed8] focus:ring-[#1d4ed8]"
+              />
+              <div className="flex min-w-0 flex-col gap-1">
+                <span className="text-[14px] font-medium text-[#0a0a0a]">Auto-approve with exceptions</span>
+                <span className="text-[12px] font-normal text-[#4b535c]">
+                  All recommendations are auto-approved except those matching your exception rules.
                 </span>
               </div>
             </label>
           </div>
 
-          {block.approvalMode === 'auto-approve' && (
+          {block.approvalMode === 'auto-approve-with-exceptions' && (
             <div className="mt-4">
               <h4 className="mb-2 text-[13px] font-medium uppercase tracking-[0.04em] text-[#0a0a0a]">Exceptions</h4>
               <p className="mb-3 text-[12px] text-[#4b535c]">
                 Recommendations matching these conditions will be flagged for manual review instead of auto-approved.
               </p>
-              <ScheduleBlockApprovalExceptions block={block} onUpdate={onUpdate} />
+              <ScheduleBlockApprovalExceptions
+                block={{ ...block, approvalMode: 'auto-approve' }}
+                onUpdate={onUpdate}
+              />
             </div>
           )}
         </section>
@@ -2257,7 +2281,7 @@ export default function OptimiserPage({ onAddJob, openAddJob, resetToUpcoming, o
   const [adhocCoverageMode, setAdhocCoverageMode] = useState('parameter-coverage')
   const [adhocTargetCoverageValue, setAdhocTargetCoverageValue] = useState('')
   const [adhocTargetCoverageUnit, setAdhocTargetCoverageUnit] = useState('Weeks')
-  const [adhocApprovalMode, setAdhocApprovalMode] = useState('auto-approve')
+  const [adhocApprovalMode, setAdhocApprovalMode] = useState('manual-review')
   const [adhocExceptions, setAdhocExceptions] = useState(() => createDefaultScheduleExceptions())
   const [locationScopeOption, setLocationScopeOption] = useState('all')
   const [warehouseInclude, setWarehouseInclude] = useState([])
@@ -2586,28 +2610,6 @@ export default function OptimiserPage({ onAddJob, openAddJob, resetToUpcoming, o
               <div className="flex flex-col gap-3">
                 <label
                   className={`flex cursor-pointer items-start gap-3 rounded-[10px] border bg-white p-4 hover:border-[#1d4ed8]/40 has-[:checked]:border-[#1d4ed8] ${
-                    adhocApprovalMode === 'auto-approve' ? 'border-[#1d4ed8]' : 'border-[#e5e7eb]'
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="adhocApprovalMode"
-                    value="auto-approve"
-                    checked={adhocApprovalMode === 'auto-approve'}
-                    onChange={() => setAdhocApprovalMode('auto-approve')}
-                    className="mt-1 size-4 shrink-0 border-[#e5e7eb] text-[#1d4ed8] focus:ring-[#1d4ed8]"
-                  />
-                  <div className="flex min-w-0 flex-col gap-1">
-                    <span className="text-[14px] font-medium text-[#0a0a0a]">Auto-approve recommendations</span>
-                    <span className="text-[12px] font-normal text-[#4b535c]">
-                      Recommendations are auto-approved by default. Define exceptions below to flag specific
-                      recommendations for manual review.
-                    </span>
-                  </div>
-                </label>
-
-                <label
-                  className={`flex cursor-pointer items-start gap-3 rounded-[10px] border bg-white p-4 hover:border-[#1d4ed8]/40 has-[:checked]:border-[#1d4ed8] ${
                     adhocApprovalMode === 'manual-review' ? 'border-[#1d4ed8]' : 'border-[#e5e7eb]'
                   }`}
                 >
@@ -2622,14 +2624,57 @@ export default function OptimiserPage({ onAddJob, openAddJob, resetToUpcoming, o
                   <div className="flex min-w-0 flex-col gap-1">
                     <span className="text-[14px] font-medium text-[#0a0a0a]">Manual review required</span>
                     <span className="text-[12px] font-normal text-[#4b535c]">
-                      No recommendations auto-submit. Every recommendation requires user review before the
-                      submission deadline.
+                      All recommendations require your approval before submission.
+                    </span>
+                  </div>
+                </label>
+
+                <label
+                  className={`flex cursor-pointer items-start gap-3 rounded-[10px] border bg-white p-4 hover:border-[#1d4ed8]/40 has-[:checked]:border-[#1d4ed8] ${
+                    adhocApprovalMode === 'auto-approve-all' ? 'border-[#1d4ed8]' : 'border-[#e5e7eb]'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="adhocApprovalMode"
+                    value="auto-approve-all"
+                    checked={adhocApprovalMode === 'auto-approve-all'}
+                    onChange={() => setAdhocApprovalMode('auto-approve-all')}
+                    className="mt-1 size-4 shrink-0 border-[#e5e7eb] text-[#1d4ed8] focus:ring-[#1d4ed8]"
+                  />
+                  <div className="flex min-w-0 flex-col gap-1">
+                    <span className="text-[14px] font-medium text-[#0a0a0a]">Auto-approve all</span>
+                    <span className="text-[12px] font-normal text-[#4b535c]">
+                      All recommendations are auto-approved. Unapprove individual rows in the batch as needed.
+                    </span>
+                  </div>
+                </label>
+
+                <label
+                  className={`flex cursor-pointer items-start gap-3 rounded-[10px] border bg-white p-4 hover:border-[#1d4ed8]/40 has-[:checked]:border-[#1d4ed8] ${
+                    adhocApprovalMode === 'auto-approve-with-exceptions'
+                      ? 'border-[#1d4ed8]'
+                      : 'border-[#e5e7eb]'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="adhocApprovalMode"
+                    value="auto-approve-with-exceptions"
+                    checked={adhocApprovalMode === 'auto-approve-with-exceptions'}
+                    onChange={() => setAdhocApprovalMode('auto-approve-with-exceptions')}
+                    className="mt-1 size-4 shrink-0 border-[#e5e7eb] text-[#1d4ed8] focus:ring-[#1d4ed8]"
+                  />
+                  <div className="flex min-w-0 flex-col gap-1">
+                    <span className="text-[14px] font-medium text-[#0a0a0a]">Auto-approve with exceptions</span>
+                    <span className="text-[12px] font-normal text-[#4b535c]">
+                      All recommendations are auto-approved except those matching your exception rules.
                     </span>
                   </div>
                 </label>
               </div>
 
-              {adhocApprovalMode === 'auto-approve' && (
+              {adhocApprovalMode === 'auto-approve-with-exceptions' && (
                 <div className="mt-4">
                   <h4 className="mb-2 text-[13px] font-medium uppercase tracking-[0.04em] text-[#0a0a0a]">Exceptions</h4>
                   <p className="mb-3 text-[12px] text-[#4b535c]">
@@ -2637,7 +2682,7 @@ export default function OptimiserPage({ onAddJob, openAddJob, resetToUpcoming, o
                     auto-approved.
                   </p>
                   <ScheduleBlockApprovalExceptions
-                    block={{ id: 'adhoc', approvalMode: adhocApprovalMode, exceptions: adhocExceptions }}
+                    block={{ id: 'adhoc', approvalMode: 'auto-approve', exceptions: adhocExceptions }}
                     onUpdate={(updates) => {
                       if (updates.exceptions !== undefined) setAdhocExceptions(updates.exceptions)
                     }}
