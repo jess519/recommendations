@@ -23,6 +23,9 @@ const COVERAGE_UNITS = [
 
 const GENERIC_MOCK_OPTIONS = ['Option A', 'Option B', 'Option C', 'Option D']
 
+const INLINE_SELECT =
+  'h-8 max-w-full appearance-none rounded-[4px] border border-[#e9eaeb] bg-white py-0 pl-2.5 pr-7 text-[13px] text-[#0a0a0a] disabled:cursor-not-allowed disabled:bg-[#f3f4f6] disabled:text-[#9ca3af]'
+
 /** Product attribute fields (no Size). Size is added only for SKU-based granularities. */
 const PRODUCT_ATTRIBUTE_FIELDS = [
   { id: 'class', label: 'Class', options: ['Accessories', 'Bags', 'Shoes', 'Ready-to-wear', 'Leather goods'] },
@@ -110,7 +113,7 @@ function makeLocationFields(prefix) {
 const SENDING_LOCATION_FIELDS = makeLocationFields('sending')
 const RECEIVING_LOCATION_FIELDS = makeLocationFields('receiving')
 
-/** Row-level granularities only (commit 2). Order: lowest → highest. */
+/** Row-level granularities only. Order: lowest → highest. */
 const GRANULARITIES = [
   { id: 'sku-sending-location', label: 'SKU-sending location' },
   { id: 'sku-receiving-location', label: 'SKU-receiving location' },
@@ -120,35 +123,34 @@ const GRANULARITIES = [
   { id: 'product', label: 'Product' },
 ]
 
-/**
- * Filter field groups available for each granularity.
- * SKU-based includes Size; product-based does not.
- */
-function getFilterFieldGroups(granularityId) {
+const FILTER_CATEGORY_META = {
+  product: { id: 'product', buttonLabel: '+ Add product filter' },
+  sending: { id: 'sending', buttonLabel: '+ Add sending location filter' },
+  receiving: { id: 'receiving', buttonLabel: '+ Add receiving location filter' },
+}
+
+function getAvailableFilterCategories(granularityId) {
   if (!granularityId) return []
-  const isSku = granularityId.startsWith('sku')
-  const productFields = isSku
-    ? [...PRODUCT_ATTRIBUTE_FIELDS, SIZE_FIELD]
-    : PRODUCT_ATTRIBUTE_FIELDS
-
-  const groups = [{ id: 'product', label: 'Product', fields: productFields }]
-
-  if (granularityId.includes('sending-location')) {
-    groups.push({ id: 'sending', label: 'Sending location', fields: SENDING_LOCATION_FIELDS })
-  }
-  if (granularityId.includes('receiving-location')) {
-    groups.push({ id: 'receiving', label: 'Receiving location', fields: RECEIVING_LOCATION_FIELDS })
-  }
-  return groups
+  const cats = [FILTER_CATEGORY_META.product]
+  if (granularityId.includes('sending-location')) cats.push(FILTER_CATEGORY_META.sending)
+  if (granularityId.includes('receiving-location')) cats.push(FILTER_CATEGORY_META.receiving)
+  return cats
 }
 
-function getAllFilterFields(granularityId) {
-  return getFilterFieldGroups(granularityId).flatMap((g) => g.fields)
+function getFieldsForCategory(granularityId, category) {
+  if (category === 'product') {
+    return granularityId?.startsWith('sku')
+      ? [...PRODUCT_ATTRIBUTE_FIELDS, SIZE_FIELD]
+      : PRODUCT_ATTRIBUTE_FIELDS
+  }
+  if (category === 'sending') return SENDING_LOCATION_FIELDS
+  if (category === 'receiving') return RECEIVING_LOCATION_FIELDS
+  return []
 }
 
-function getFilterFieldDef(granularityId, fieldId) {
+function getFilterFieldDef(granularityId, category, fieldId) {
   if (!fieldId) return null
-  return getAllFilterFields(granularityId).find((f) => f.id === fieldId) ?? null
+  return getFieldsForCategory(granularityId, category).find((f) => f.id === fieldId) ?? null
 }
 
 const CRITERIA_DEFS = [
@@ -188,7 +190,7 @@ function getValuesTriggerDisplay(values) {
 }
 
 function buildFilterSummaryPart(granularityId, filter) {
-  const field = getFilterFieldDef(granularityId, filter.fieldId)
+  const field = getFilterFieldDef(granularityId, filter.category, filter.fieldId)
   if (!field || !filter.operator) return null
   const vals = Array.isArray(filter.values) ? filter.values.filter(Boolean) : []
   if (vals.length === 0) return null
@@ -201,6 +203,7 @@ function buildFilterSummaryPart(granularityId, filter) {
 }
 
 function buildCriteriaSummaryPart(crit) {
+  if (!crit) return null
   const def = getCriteriaDef(crit.criteriaId)
   if (!def || !crit.operator || crit.value === undefined || crit.value === '') return null
   const unit = def.hasUnit && crit.unit ? ` ${crit.unit}` : ''
@@ -213,53 +216,49 @@ function truncateExceptionTitleDisplay(str, maxLen = 100) {
   return str.slice(0, Math.max(0, maxLen - ellipsis.length)) + ellipsis
 }
 
-function createEmptyFilter(id) {
-  return { id, fieldId: '', operator: '', values: [] }
+function createEmptyFilter(id, category) {
+  return { id, category, fieldId: '', operator: '', values: [] }
 }
 
-function createEmptyCriteria(id) {
-  return { id, criteriaId: '', operator: '', value: '', unit: 'weeks' }
+function createEmptyCriteria() {
+  return { criteriaId: '', operator: '', value: '', unit: 'weeks' }
 }
 
-function createEmptyException(id, criteriaId) {
+function createEmptyException(id) {
   return {
     id,
     expanded: true,
     granularity: '',
     filters: [],
-    criteria: [createEmptyCriteria(criteriaId)],
+    criteria: createEmptyCriteria(),
   }
 }
 
 export function createDefaultScheduleExceptions() {
-  return [createEmptyException('exc-1', 'crit-1')]
+  return [createEmptyException('exc-1')]
 }
 
 function nextId(prefix) {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
 }
 
-function isGranularityShape(exc) {
-  return exc != null && typeof exc === 'object' && 'granularity' in exc && Array.isArray(exc.filters)
+/** Sentence-model shape: criteria is a single object (not an array). */
+function isSentenceShape(exc) {
+  return (
+    exc != null &&
+    typeof exc === 'object' &&
+    'granularity' in exc &&
+    Array.isArray(exc.filters) &&
+    exc.criteria != null &&
+    !Array.isArray(exc.criteria)
+  )
 }
 
-function AndConnector() {
+function InlineSelectChevron() {
   return (
-    <div className="flex justify-center py-1">
-      <div className="relative">
-        <select
-          value="and"
-          onChange={() => {}}
-          aria-label="Row connector"
-          className="h-7 appearance-none rounded-[4px] border border-[#e9eaeb] bg-white py-0 pl-2 pr-7 text-[11px] font-medium uppercase tracking-wider text-[#9ca3af]"
-        >
-          <option value="and">And</option>
-        </select>
-        <span className="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 text-[#9ca3af]">
-          <IconChevronDownSelect />
-        </span>
-      </div>
-    </div>
+    <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[#4b535c]">
+      <IconChevronDownSelect />
+    </span>
   )
 }
 
@@ -271,17 +270,16 @@ export function ScheduleBlockApprovalExceptions({ block, onUpdate }) {
     setScopePopoverSearch('')
   }, [openPopover])
 
-  // Migrate empty / pre-granularity shapes → one empty exception card.
   useEffect(() => {
     const raw = block.exceptions ?? []
-    if (raw.length === 0 || !isGranularityShape(raw[0])) {
+    if (raw.length === 0 || !isSentenceShape(raw[0])) {
       onUpdate({ exceptions: createDefaultScheduleExceptions() })
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const rawExceptions = Array.isArray(block.exceptions) ? block.exceptions : []
   const exceptions =
-    rawExceptions.length > 0 && isGranularityShape(rawExceptions[0])
+    rawExceptions.length > 0 && isSentenceShape(rawExceptions[0])
       ? rawExceptions
       : createDefaultScheduleExceptions()
 
@@ -308,10 +306,9 @@ export function ScheduleBlockApprovalExceptions({ block, onUpdate }) {
 
   const addException = () => {
     const excId = nextId('exc')
-    const critId = nextId('crit')
     setExceptions((prev) => {
       const withExpandedFalse = prev.map((e) => ({ ...e, expanded: false }))
-      return [...withExpandedFalse, createEmptyException(excId, critId)]
+      return [...withExpandedFalse, createEmptyException(excId)]
     })
   }
 
@@ -324,17 +321,29 @@ export function ScheduleBlockApprovalExceptions({ block, onUpdate }) {
     patchException(exceptionId, {
       granularity,
       filters: [],
-      criteria: [createEmptyCriteria(nextId('crit'))],
+      criteria: createEmptyCriteria(),
     })
   }
 
-  const addFilter = (exceptionId) => {
-    patchException(exceptionId, {
-      filters: [
-        ...(exceptionsRef.current.find((e) => e.id === exceptionId)?.filters ?? []),
-        createEmptyFilter(nextId('filter')),
-      ],
-    })
+  const patchCriteria = (exceptionId, partial) => {
+    setExceptions((prev) =>
+      prev.map((e) =>
+        e.id === exceptionId ? { ...e, criteria: { ...e.criteria, ...partial } } : e
+      )
+    )
+  }
+
+  const addFilterCategory = (exceptionId, category) => {
+    setExceptions((prev) =>
+      prev.map((e) => {
+        if (e.id !== exceptionId) return e
+        if (e.filters.some((f) => f.category === category)) return e
+        return {
+          ...e,
+          filters: [...e.filters, createEmptyFilter(nextId('filter'), category)],
+        }
+      })
+    )
   }
 
   const removeFilter = (exceptionId, filterId) => {
@@ -345,11 +354,6 @@ export function ScheduleBlockApprovalExceptions({ block, onUpdate }) {
       })
     )
     setOpenPopover((prev) => (prev?.startsWith(`${exceptionId}__${filterId}`) ? null : prev))
-  }
-
-  const clearAllFilters = (exceptionId) => {
-    setOpenPopover(null)
-    patchException(exceptionId, { filters: [] })
   }
 
   const patchFilter = (exceptionId, filterId, partial) => {
@@ -365,42 +369,6 @@ export function ScheduleBlockApprovalExceptions({ block, onUpdate }) {
     )
   }
 
-  const addCriteria = (exceptionId) => {
-    setExceptions((prev) =>
-      prev.map((e) =>
-        e.id === exceptionId
-          ? { ...e, criteria: [...e.criteria, createEmptyCriteria(nextId('crit'))] }
-          : e
-      )
-    )
-  }
-
-  const removeCriteria = (exceptionId, criteriaRowId) => {
-    setExceptions((prev) =>
-      prev.map((e) => {
-        if (e.id !== exceptionId) return e
-        const filtered = e.criteria.filter((c) => c.id !== criteriaRowId)
-        if (filtered.length === 0) {
-          return { ...e, criteria: [createEmptyCriteria(nextId('crit'))] }
-        }
-        return { ...e, criteria: filtered }
-      })
-    )
-  }
-
-  const patchCriteria = (exceptionId, criteriaRowId, partial) => {
-    setExceptions((prev) =>
-      prev.map((e) =>
-        e.id === exceptionId
-          ? {
-              ...e,
-              criteria: e.criteria.map((c) => (c.id === criteriaRowId ? { ...c, ...partial } : c)),
-            }
-          : e
-      )
-    )
-  }
-
   const getExceptionDisplayName = (exc, excIdx) => {
     const n = excIdx + 1
     const prefix = `Exception ${n}`
@@ -408,8 +376,8 @@ export function ScheduleBlockApprovalExceptions({ block, onUpdate }) {
     const filterParts = (exc.filters || [])
       .map((f) => buildFilterSummaryPart(exc.granularity, f))
       .filter(Boolean)
-    const criteriaParts = (exc.criteria || []).map(buildCriteriaSummaryPart).filter(Boolean)
-    const parts = [...filterParts, ...criteriaParts]
+    const criteriaPart = buildCriteriaSummaryPart(exc.criteria)
+    const parts = [...filterParts, ...(criteriaPart ? [criteriaPart] : [])]
     if (!granLabel && parts.length === 0) return prefix
     if (granLabel && parts.length === 0) return `${prefix}: ${granLabel}`
     if (granLabel) return `${prefix}: ${granLabel} · ${parts.join(' and ')}`
@@ -424,7 +392,19 @@ export function ScheduleBlockApprovalExceptions({ block, onUpdate }) {
         const exceptionTitleFull = getExceptionDisplayName(exc, excIdx)
         const exceptionTitleDisplay = truncateExceptionTitleDisplay(exceptionTitleFull)
         const granularityPicked = Boolean(exc.granularity)
-        const filterGroups = getFilterFieldGroups(exc.granularity)
+        const criteria = exc.criteria ?? createEmptyCriteria()
+        const criteriaDef = getCriteriaDef(criteria.criteriaId)
+        const criteriaPicked = Boolean(criteria.criteriaId)
+        const criteriaOperatorPicked = Boolean(criteria.operator)
+        const hasUnit = Boolean(criteriaDef?.hasUnit)
+        const availableCats = getAvailableFilterCategories(exc.granularity)
+        const usedCategories = new Set((exc.filters || []).map((f) => f.category))
+        const remainingCats = availableCats.filter((c) => !usedCategories.has(c.id))
+        // Stable order for sentence: product, then location (sending/receiving)
+        const orderedFilters = [...(exc.filters || [])].sort((a, b) => {
+          const order = { product: 0, sending: 1, receiving: 1 }
+          return (order[a.category] ?? 9) - (order[b.category] ?? 9)
+        })
 
         return (
           <div key={exc.id} className="overflow-visible rounded-[4px] border border-[#e5e7eb] bg-white">
@@ -457,15 +437,15 @@ export function ScheduleBlockApprovalExceptions({ block, onUpdate }) {
             </div>
 
             {exc.expanded && (
-              <div className="flex flex-col border-t border-[#e5e7eb] px-4 pb-4 pt-0">
-                {/* Granularity */}
-                <div className="mt-4 flex flex-col gap-1.5">
-                  <label className="text-[12px] font-medium text-[#4b535c]">Granularity</label>
-                  <div className="relative w-full max-w-[320px]">
+              <div className="border-t border-[#e5e7eb] px-4 pb-4 pt-4">
+                {/* Base sentence */}
+                <p className="flex flex-wrap items-center gap-x-1.5 gap-y-2 text-[14px] leading-8 text-[#0a0a0a]">
+                  <span>For each</span>
+                  <span className="relative inline-flex">
                     <select
                       value={exc.granularity || ''}
                       onChange={(e) => onGranularityChange(exc.id, e.target.value)}
-                      className="h-9 w-full appearance-none rounded-[4px] border border-[#e9eaeb] bg-white py-0 pl-3 pr-9 text-[13px] text-[#0a0a0a]"
+                      className={`${INLINE_SELECT} min-w-[160px]`}
                     >
                       <option value="">Select granularity…</option>
                       {GRANULARITIES.map((g) => (
@@ -474,25 +454,118 @@ export function ScheduleBlockApprovalExceptions({ block, onUpdate }) {
                         </option>
                       ))}
                     </select>
-                    <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[#4b535c]">
-                      <IconChevronDownSelect />
+                    <InlineSelectChevron />
+                  </span>
+                  <span>, flag as unapproved when</span>
+                  <span className="relative inline-flex">
+                    <select
+                      value={criteria.criteriaId || ''}
+                      disabled={!granularityPicked}
+                      onChange={(e) => {
+                        const selectedCriteriaId = e.target.value
+                        const nextDef = getCriteriaDef(selectedCriteriaId)
+                        patchCriteria(exc.id, {
+                          criteriaId: selectedCriteriaId,
+                          operator: '',
+                          value: '',
+                          unit: nextDef?.hasUnit ? 'weeks' : 'weeks',
+                        })
+                      }}
+                      className={`${INLINE_SELECT} min-w-[200px]`}
+                    >
+                      <option value="">Select criteria…</option>
+                      {CRITERIA_DEFS.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.label}
+                        </option>
+                      ))}
+                    </select>
+                    <InlineSelectChevron />
+                  </span>
+                  <span>is</span>
+                  <span className="relative inline-flex">
+                    <select
+                      value={criteria.operator || ''}
+                      disabled={!criteriaPicked}
+                      onChange={(e) => patchCriteria(exc.id, { operator: e.target.value })}
+                      className={`${INLINE_SELECT} min-w-[160px]`}
+                    >
+                      <option value="">Select condition…</option>
+                      {NUMERIC_OPERATORS.map((op) => (
+                        <option key={op} value={op}>
+                          {op}
+                        </option>
+                      ))}
+                    </select>
+                    <InlineSelectChevron />
+                  </span>
+                  {!criteriaPicked || !criteriaOperatorPicked ? (
+                    <span
+                      className="inline-flex h-8 min-w-[72px] cursor-not-allowed items-center rounded-[4px] border border-[#e9eaeb] bg-[#f3f4f6] px-2.5 text-[13px] italic text-[#9ca3af]"
+                      aria-disabled
+                    >
+                      Value
                     </span>
-                  </div>
-                </div>
+                  ) : (
+                    <input
+                      type="number"
+                      value={criteria.value ?? ''}
+                      onChange={(e) => patchCriteria(exc.id, { value: e.target.value })}
+                      placeholder="Value"
+                      className="h-8 w-[88px] rounded-[4px] border border-[#e9eaeb] bg-white px-2.5 text-[13px] text-[#0a0a0a] placeholder:text-[#9ca3af] [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                    />
+                  )}
+                  {criteriaPicked && criteriaOperatorPicked && hasUnit && (
+                    <span className="relative inline-flex">
+                      <select
+                        value={criteria.unit || 'weeks'}
+                        onChange={(e) => patchCriteria(exc.id, { unit: e.target.value })}
+                        className={`${INLINE_SELECT} min-w-[88px]`}
+                      >
+                        {COVERAGE_UNITS.map((u) => (
+                          <option key={u.value} value={u.value}>
+                            {u.label}
+                          </option>
+                        ))}
+                      </select>
+                      <InlineSelectChevron />
+                    </span>
+                  )}
+                  <span>.</span>
+                </p>
 
-                {/* Filters — hidden until granularity picked */}
-                {granularityPicked && (
-                  <div className="mt-4 flex flex-col gap-2">
-                    <div className="flex items-baseline justify-between gap-2">
-                      <h4 className="text-[12px] font-medium uppercase tracking-[0.04em] text-[#0a0a0a]">
-                        Filters
-                      </h4>
-                      <span className="text-[11px] text-[#9ca3af]">Optional · joined with AND</span>
+                {/* Filters: empty affordance OR applied sentence */}
+                {granularityPicked && orderedFilters.length === 0 && (
+                  <div className="mt-3 flex flex-col gap-2">
+                    <p className="text-[13px] text-[#4b535c]">
+                      Apply only to specific products or locations?
+                    </p>
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                      {remainingCats.map((cat) => (
+                        <button
+                          key={cat.id}
+                          type="button"
+                          onClick={() => addFilterCategory(exc.id, cat.id)}
+                          className="text-[13px] font-medium text-[#0267FF] hover:underline"
+                        >
+                          {cat.buttonLabel}
+                        </button>
+                      ))}
                     </div>
+                  </div>
+                )}
 
-                    <div className="flex flex-col">
-                      {(exc.filters || []).map((filter, filterIdx) => {
-                        const fieldDef = getFilterFieldDef(exc.granularity, filter.fieldId)
+                {granularityPicked && orderedFilters.length > 0 && (
+                  <div className="mt-3 flex flex-col gap-2">
+                    <div className="flex flex-wrap items-center gap-x-1.5 gap-y-2 text-[14px] leading-8 text-[#0a0a0a]">
+                      <span>Apply only to</span>
+                      {orderedFilters.map((filter, filterIdx) => {
+                        const fields = getFieldsForCategory(exc.granularity, filter.category)
+                        const fieldDef = getFilterFieldDef(
+                          exc.granularity,
+                          filter.category,
+                          filter.fieldId
+                        )
                         const fieldPicked = Boolean(filter.fieldId)
                         const operatorPicked = Boolean(filter.operator)
                         const multi = isMultiOperator(filter.operator)
@@ -512,341 +585,187 @@ export function ScheduleBlockApprovalExceptions({ block, onUpdate }) {
                         const valuesTrigger = getValuesTriggerDisplay(selectedVals)
 
                         return (
-                          <div key={filter.id} className="w-full">
-                            {filterIdx > 0 && <AndConnector />}
-                            <div className="rounded-[4px] border border-[#e5e7eb] bg-[#fafafa] px-3 py-2">
-                              <div className="flex min-w-0 flex-wrap items-center gap-2">
-                                <div className="relative shrink-0">
-                                  <select
-                                    value={filter.fieldId || ''}
-                                    onChange={(e) =>
-                                      patchFilter(exc.id, filter.id, {
-                                        fieldId: e.target.value,
-                                        operator: '',
-                                        values: [],
-                                      })
-                                    }
-                                    className="h-9 w-[200px] appearance-none rounded-[4px] border border-[#e9eaeb] bg-white py-0 pl-3 pr-9 text-[13px] text-[#0a0a0a]"
-                                  >
-                                    <option value="">Select filter…</option>
-                                    {filterGroups.map((group) => (
-                                      <optgroup key={group.id} label={group.label}>
-                                        {group.fields.map((f) => (
-                                          <option key={f.id} value={f.id}>
-                                            {f.label}
-                                          </option>
-                                        ))}
-                                      </optgroup>
-                                    ))}
-                                  </select>
-                                  <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[#4b535c]">
-                                    <IconChevronDownSelect />
-                                  </span>
-                                </div>
-
-                                <div className="relative shrink-0">
-                                  <select
-                                    value={filter.operator || ''}
-                                    disabled={!fieldPicked}
-                                    onChange={(e) =>
-                                      patchFilter(exc.id, filter.id, {
-                                        operator: e.target.value,
-                                        values: [],
-                                      })
-                                    }
-                                    className="h-9 w-[150px] appearance-none rounded-[4px] border border-[#e9eaeb] bg-white py-0 pl-3 pr-9 text-[13px] text-[#0a0a0a] disabled:cursor-not-allowed disabled:bg-[#f3f4f6] disabled:text-[#9ca3af]"
-                                  >
-                                    <option value="">Select condition</option>
-                                    {ENUM_OPERATORS.map((op) => (
-                                      <option key={op.value} value={op.value}>
-                                        {op.label}
-                                      </option>
-                                    ))}
-                                  </select>
-                                  <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[#4b535c]">
-                                    <IconChevronDownSelect />
-                                  </span>
-                                </div>
-
-                                {!fieldPicked || !operatorPicked ? (
-                                  <div
-                                    className="flex h-9 max-w-[280px] min-w-[120px] flex-1 cursor-not-allowed items-center rounded-[4px] border border-[#e9eaeb] bg-[#f3f4f6] px-3 text-[13px] italic text-[#9ca3af]"
-                                    aria-disabled
-                                  >
-                                    Select value…
-                                  </div>
-                                ) : multi ? (
-                                  <div className="relative max-w-[280px] min-w-[120px] flex-1">
-                                    <button
-                                      type="button"
-                                      onClick={() =>
-                                        setOpenPopover((prev) =>
-                                          prev === popoverId ? null : popoverId
-                                        )
-                                      }
-                                      className={`min-h-9 w-full truncate rounded-[4px] border border-[#e9eaeb] bg-white px-2 text-left text-[13px] hover:bg-[#f9fafb] ${
-                                        valuesTrigger.isPlaceholder
-                                          ? 'italic text-[#9ca3af]'
-                                          : 'text-[#0a0a0a]'
-                                      }`}
-                                    >
-                                      {valuesTrigger.text}
-                                    </button>
-                                    {popoverOpen && (
-                                      <>
-                                        <div
-                                          className="fixed inset-0 z-[19]"
-                                          aria-hidden
-                                          onClick={() => setOpenPopover(null)}
-                                        />
-                                        <div
-                                          className="absolute left-0 top-full z-20 mt-1 w-[280px] rounded-[4px] border border-[#e5e7eb] bg-white p-3 shadow-lg"
-                                          onClick={(e) => e.stopPropagation()}
-                                          role="presentation"
-                                        >
-                                          <div className="mb-2 flex items-start justify-between gap-2">
-                                            <span className="text-[13px] font-semibold leading-tight text-[#0a0a0a]">
-                                              {fieldDef?.label}
-                                            </span>
-                                            <button
-                                              type="button"
-                                              onClick={() =>
-                                                patchFilter(exc.id, filter.id, {
-                                                  values: allSelected ? [] : [...options],
-                                                })
-                                              }
-                                              className="shrink-0 text-[12px] text-[#0267ff] hover:underline"
-                                            >
-                                              {allSelected ? 'Deselect all' : 'Select all'}
-                                            </button>
-                                          </div>
-                                          <div className="relative mb-2">
-                                            <IconSearch className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-[#9ca3af]" />
-                                            <input
-                                              type="text"
-                                              placeholder="Search"
-                                              value={scopePopoverSearch}
-                                              onChange={(e) => setScopePopoverSearch(e.target.value)}
-                                              className="h-8 w-full rounded-[4px] border border-[#e5e7eb] bg-white pl-9 pr-2 text-[13px] text-[#0a0a0a] placeholder:text-[#9ca3af]"
-                                            />
-                                          </div>
-                                          <div className="-mx-1 flex max-h-[200px] min-h-0 flex-col overflow-y-auto">
-                                            {filteredOptions.map((name) => (
-                                              <label
-                                                key={name}
-                                                className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-[13px] text-[#0a0a0a] hover:bg-[#f3f4f6]"
-                                              >
-                                                <input
-                                                  type="checkbox"
-                                                  checked={selectedVals.includes(name)}
-                                                  onChange={() => {
-                                                    const next = selectedVals.includes(name)
-                                                      ? selectedVals.filter((v) => v !== name)
-                                                      : [...selectedVals, name]
-                                                    patchFilter(exc.id, filter.id, { values: next })
-                                                  }}
-                                                  className="size-4 shrink-0 rounded border-[#d1d5db] text-[#0267ff] focus:ring-[#0267ff]"
-                                                />
-                                                <span className="min-w-0 break-words">{name}</span>
-                                              </label>
-                                            ))}
-                                          </div>
-                                        </div>
-                                      </>
-                                    )}
-                                  </div>
-                                ) : (
-                                  <div className="relative max-w-[280px] min-w-[120px] flex-1">
-                                    <select
-                                      value={singleValue}
-                                      onChange={(e) =>
-                                        patchFilter(exc.id, filter.id, {
-                                          values: e.target.value ? [e.target.value] : [],
-                                        })
-                                      }
-                                      className="h-9 w-full appearance-none rounded-[4px] border border-[#e9eaeb] bg-white py-0 pl-3 pr-9 text-[13px] text-[#0a0a0a]"
-                                    >
-                                      <option value="">Select value…</option>
-                                      {options.map((name) => (
-                                        <option key={name} value={name}>
-                                          {name}
-                                        </option>
-                                      ))}
-                                    </select>
-                                    <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[#4b535c]">
-                                      <IconChevronDownSelect />
-                                    </span>
-                                  </div>
-                                )}
-
+                          <span key={filter.id} className="inline-flex flex-wrap items-center gap-x-1.5 gap-y-2">
+                            {filterIdx > 0 && <span>and</span>}
+                            <span className="relative inline-flex">
+                              <select
+                                value={filter.fieldId || ''}
+                                onChange={(e) =>
+                                  patchFilter(exc.id, filter.id, {
+                                    fieldId: e.target.value,
+                                    operator: '',
+                                    values: [],
+                                  })
+                                }
+                                className={`${INLINE_SELECT} min-w-[140px]`}
+                              >
+                                <option value="">Select field…</option>
+                                {fields.map((f) => (
+                                  <option key={f.id} value={f.id}>
+                                    {f.label}
+                                  </option>
+                                ))}
+                              </select>
+                              <InlineSelectChevron />
+                            </span>
+                            <span className="relative inline-flex">
+                              <select
+                                value={filter.operator || ''}
+                                disabled={!fieldPicked}
+                                onChange={(e) =>
+                                  patchFilter(exc.id, filter.id, {
+                                    operator: e.target.value,
+                                    values: [],
+                                  })
+                                }
+                                className={`${INLINE_SELECT} min-w-[120px]`}
+                              >
+                                <option value="">Select condition…</option>
+                                {ENUM_OPERATORS.map((op) => (
+                                  <option key={op.value} value={op.value}>
+                                    {op.label}
+                                  </option>
+                                ))}
+                              </select>
+                              <InlineSelectChevron />
+                            </span>
+                            {!fieldPicked || !operatorPicked ? (
+                              <span
+                                className="inline-flex h-8 min-w-[100px] cursor-not-allowed items-center rounded-[4px] border border-[#e9eaeb] bg-[#f3f4f6] px-2.5 text-[13px] italic text-[#9ca3af]"
+                                aria-disabled
+                              >
+                                Select value…
+                              </span>
+                            ) : multi ? (
+                              <span className="relative inline-flex min-w-[120px] max-w-[240px]">
                                 <button
                                   type="button"
-                                  className="ml-auto flex h-8 w-8 shrink-0 items-center justify-center rounded-[4px] text-[#4b535c] hover:bg-[#e5e7eb] hover:text-[#0a0a0a]"
-                                  aria-label="Remove filter"
-                                  onClick={() => removeFilter(exc.id, filter.id)}
+                                  onClick={() =>
+                                    setOpenPopover((prev) =>
+                                      prev === popoverId ? null : popoverId
+                                    )
+                                  }
+                                  className={`h-8 w-full truncate rounded-[4px] border border-[#e9eaeb] bg-white px-2.5 text-left text-[13px] hover:bg-[#f9fafb] ${
+                                    valuesTrigger.isPlaceholder
+                                      ? 'italic text-[#9ca3af]'
+                                      : 'text-[#0a0a0a]'
+                                  }`}
                                 >
-                                  <IconClose className="size-4" />
+                                  {valuesTrigger.text}
                                 </button>
-                              </div>
-                            </div>
-                          </div>
+                                {popoverOpen && (
+                                  <>
+                                    <div
+                                      className="fixed inset-0 z-[19]"
+                                      aria-hidden
+                                      onClick={() => setOpenPopover(null)}
+                                    />
+                                    <div
+                                      className="absolute left-0 top-full z-20 mt-1 w-[280px] rounded-[4px] border border-[#e5e7eb] bg-white p-3 shadow-lg"
+                                      onClick={(e) => e.stopPropagation()}
+                                      role="presentation"
+                                    >
+                                      <div className="mb-2 flex items-start justify-between gap-2">
+                                        <span className="text-[13px] font-semibold leading-tight text-[#0a0a0a]">
+                                          {fieldDef?.label}
+                                        </span>
+                                        <button
+                                          type="button"
+                                          onClick={() =>
+                                            patchFilter(exc.id, filter.id, {
+                                              values: allSelected ? [] : [...options],
+                                            })
+                                          }
+                                          className="shrink-0 text-[12px] text-[#0267ff] hover:underline"
+                                        >
+                                          {allSelected ? 'Deselect all' : 'Select all'}
+                                        </button>
+                                      </div>
+                                      <div className="relative mb-2">
+                                        <IconSearch className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-[#9ca3af]" />
+                                        <input
+                                          type="text"
+                                          placeholder="Search"
+                                          value={scopePopoverSearch}
+                                          onChange={(e) => setScopePopoverSearch(e.target.value)}
+                                          className="h-8 w-full rounded-[4px] border border-[#e5e7eb] bg-white pl-9 pr-2 text-[13px] text-[#0a0a0a] placeholder:text-[#9ca3af]"
+                                        />
+                                      </div>
+                                      <div className="-mx-1 flex max-h-[200px] min-h-0 flex-col overflow-y-auto">
+                                        {filteredOptions.map((name) => (
+                                          <label
+                                            key={name}
+                                            className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-[13px] text-[#0a0a0a] hover:bg-[#f3f4f6]"
+                                          >
+                                            <input
+                                              type="checkbox"
+                                              checked={selectedVals.includes(name)}
+                                              onChange={() => {
+                                                const next = selectedVals.includes(name)
+                                                  ? selectedVals.filter((v) => v !== name)
+                                                  : [...selectedVals, name]
+                                                patchFilter(exc.id, filter.id, { values: next })
+                                              }}
+                                              className="size-4 shrink-0 rounded border-[#d1d5db] text-[#0267ff] focus:ring-[#0267ff]"
+                                            />
+                                            <span className="min-w-0 break-words">{name}</span>
+                                          </label>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  </>
+                                )}
+                              </span>
+                            ) : (
+                              <span className="relative inline-flex">
+                                <select
+                                  value={singleValue}
+                                  onChange={(e) =>
+                                    patchFilter(exc.id, filter.id, {
+                                      values: e.target.value ? [e.target.value] : [],
+                                    })
+                                  }
+                                  className={`${INLINE_SELECT} min-w-[120px]`}
+                                >
+                                  <option value="">Select value…</option>
+                                  {options.map((name) => (
+                                    <option key={name} value={name}>
+                                      {name}
+                                    </option>
+                                  ))}
+                                </select>
+                                <InlineSelectChevron />
+                              </span>
+                            )}
+                            <button
+                              type="button"
+                              className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-[4px] text-[#4b535c] hover:bg-[#e5e7eb] hover:text-[#0a0a0a]"
+                              aria-label="Remove filter"
+                              onClick={() => removeFilter(exc.id, filter.id)}
+                            >
+                              <IconClose className="size-3.5" />
+                            </button>
+                          </span>
                         )
                       })}
+                      <span>.</span>
                     </div>
-
-                    <button
-                      type="button"
-                      onClick={() => addFilter(exc.id)}
-                      className="mt-1 self-start text-[13px] font-medium text-[#0267FF] hover:underline"
-                    >
-                      + Add filter
-                    </button>
-                    {(exc.filters || []).length > 0 && (
-                      <button
-                        type="button"
-                        onClick={() => clearAllFilters(exc.id)}
-                        className="self-start text-[13px] font-medium text-[#4b535c] hover:text-[#0a0a0a] hover:underline"
-                      >
-                        Clear all filters
-                      </button>
+                    {remainingCats.length > 0 && (
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                        {remainingCats.map((cat) => (
+                          <button
+                            key={cat.id}
+                            type="button"
+                            onClick={() => addFilterCategory(exc.id, cat.id)}
+                            className="text-[13px] font-medium text-[#0267FF] hover:underline"
+                          >
+                            {cat.buttonLabel}
+                          </button>
+                        ))}
+                      </div>
                     )}
                   </div>
                 )}
-
-                {/* Criteria — always shown; disabled until granularity picked */}
-                <div className="mt-4 flex flex-col gap-2">
-                  <div className="flex items-baseline justify-between gap-2">
-                    <h4 className="text-[12px] font-medium uppercase tracking-[0.04em] text-[#0a0a0a]">
-                      Criteria
-                    </h4>
-                    <span className="text-[11px] text-[#9ca3af]">Required · joined with AND</span>
-                  </div>
-
-                  <div className="flex flex-col">
-                    {(exc.criteria || []).map((crit, critIdx) => {
-                      const criteriaDef = getCriteriaDef(crit.criteriaId)
-                      const criteriaPicked = Boolean(crit.criteriaId)
-                      const operatorPicked = Boolean(crit.operator)
-                      const hasUnit = Boolean(criteriaDef?.hasUnit)
-
-                      return (
-                        <div key={crit.id} className="w-full">
-                          {critIdx > 0 && <AndConnector />}
-                          <div className="rounded-[4px] border border-[#e5e7eb] bg-[#fafafa] px-3 py-2">
-                            <div className="flex min-w-0 flex-wrap items-center gap-2">
-                              <div className="relative shrink-0">
-                                <select
-                                  value={crit.criteriaId || ''}
-                                  disabled={!granularityPicked}
-                                  onChange={(e) => {
-                                    const selectedCriteriaId = e.target.value
-                                    const nextDef = getCriteriaDef(selectedCriteriaId)
-                                    patchCriteria(exc.id, crit.id, {
-                                      criteriaId: selectedCriteriaId,
-                                      operator: '',
-                                      value: '',
-                                      unit: nextDef?.hasUnit ? 'weeks' : 'weeks',
-                                    })
-                                  }}
-                                  className="h-9 w-[240px] appearance-none rounded-[4px] border border-[#e9eaeb] bg-white py-0 pl-3 pr-9 text-[13px] text-[#0a0a0a] disabled:cursor-not-allowed disabled:bg-[#f3f4f6] disabled:text-[#9ca3af]"
-                                >
-                                  <option value="">Select criteria…</option>
-                                  {CRITERIA_DEFS.map((c) => (
-                                    <option key={c.id} value={c.id}>
-                                      {c.label}
-                                    </option>
-                                  ))}
-                                </select>
-                                <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[#4b535c]">
-                                  <IconChevronDownSelect />
-                                </span>
-                              </div>
-
-                              <div className="relative shrink-0">
-                                <select
-                                  value={crit.operator || ''}
-                                  disabled={!criteriaPicked}
-                                  onChange={(e) =>
-                                    patchCriteria(exc.id, crit.id, { operator: e.target.value })
-                                  }
-                                  className="h-9 w-[180px] appearance-none rounded-[4px] border border-[#e9eaeb] bg-white py-0 pl-3 pr-9 text-[13px] text-[#0a0a0a] disabled:cursor-not-allowed disabled:bg-[#f3f4f6] disabled:text-[#9ca3af]"
-                                >
-                                  <option value="">Select condition</option>
-                                  {NUMERIC_OPERATORS.map((op) => (
-                                    <option key={op} value={op}>
-                                      {op}
-                                    </option>
-                                  ))}
-                                </select>
-                                <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[#4b535c]">
-                                  <IconChevronDownSelect />
-                                </span>
-                              </div>
-
-                              {!criteriaPicked || !operatorPicked ? (
-                                <div
-                                  className="flex h-9 max-w-[160px] min-w-[100px] flex-1 cursor-not-allowed items-center rounded-[4px] border border-[#e9eaeb] bg-[#f3f4f6] px-3 text-[13px] italic text-[#9ca3af]"
-                                  aria-disabled
-                                >
-                                  Value
-                                </div>
-                              ) : (
-                                <input
-                                  type="number"
-                                  value={crit.value ?? ''}
-                                  onChange={(e) =>
-                                    patchCriteria(exc.id, crit.id, { value: e.target.value })
-                                  }
-                                  placeholder="Value"
-                                  className="h-9 w-[100px] shrink-0 rounded-[4px] border border-[#e9eaeb] bg-white px-3 text-[13px] text-[#0a0a0a] placeholder:text-[#9ca3af] [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-                                />
-                              )}
-
-                              {criteriaPicked && operatorPicked && hasUnit && (
-                                <div className="relative shrink-0">
-                                  <select
-                                    value={crit.unit || 'weeks'}
-                                    onChange={(e) =>
-                                      patchCriteria(exc.id, crit.id, { unit: e.target.value })
-                                    }
-                                    className="h-9 w-[100px] appearance-none rounded-[4px] border border-[#e9eaeb] bg-white py-0 pl-3 pr-9 text-[13px] text-[#0a0a0a]"
-                                  >
-                                    {COVERAGE_UNITS.map((u) => (
-                                      <option key={u.value} value={u.value}>
-                                        {u.label}
-                                      </option>
-                                    ))}
-                                  </select>
-                                  <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[#4b535c]">
-                                    <IconChevronDownSelect />
-                                  </span>
-                                </div>
-                              )}
-
-                              <button
-                                type="button"
-                                className="ml-auto flex h-8 w-8 shrink-0 items-center justify-center rounded-[4px] text-[#4b535c] hover:bg-[#e5e7eb] hover:text-[#0a0a0a]"
-                                aria-label="Remove criteria"
-                                onClick={() => removeCriteria(exc.id, crit.id)}
-                              >
-                                <IconClose className="size-4" />
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => addCriteria(exc.id)}
-                    disabled={!granularityPicked}
-                    className="mt-1 self-start text-[13px] font-medium text-[#0267FF] hover:underline disabled:cursor-not-allowed disabled:text-[#9ca3af] disabled:no-underline"
-                  >
-                    + Add criteria
-                  </button>
-                </div>
               </div>
             )}
           </div>
