@@ -279,13 +279,40 @@ function ensureCriteriaArray(criteria) {
   return [createEmptyCriteria()]
 }
 
+function createEmptyRule(id = nextId('rule')) {
+  return {
+    id,
+    granularity: '',
+    filters: [],
+    criteria: [createEmptyCriteria()],
+  }
+}
+
+/** Migrate legacy flat exception OR normalize rules[]. */
+function ensureRulesArray(exc) {
+  if (Array.isArray(exc?.rules) && exc.rules.length > 0) {
+    return exc.rules.map((r) => ({
+      id: r.id || nextId('rule'),
+      granularity: r.granularity || '',
+      filters: Array.isArray(r.filters) ? r.filters : [],
+      criteria: ensureCriteriaArray(r.criteria),
+    }))
+  }
+  return [
+    {
+      id: nextId('rule'),
+      granularity: exc?.granularity || '',
+      filters: Array.isArray(exc?.filters) ? exc.filters : [],
+      criteria: ensureCriteriaArray(exc?.criteria),
+    },
+  ]
+}
+
 function createEmptyException(id) {
   return {
     id,
     expanded: true,
-    granularity: '',
-    filters: [],
-    criteria: [createEmptyCriteria()],
+    rules: [createEmptyRule()],
   }
 }
 
@@ -293,22 +320,43 @@ export function createDefaultScheduleExceptions() {
   return [createEmptyException('exc-1')]
 }
 
-/** Sentence-model shape: criteria is an array (legacy single object accepted and normalized). */
+/** Accept rules[] shape or legacy flat sentence shape. */
 function isSentenceShape(exc) {
-  return (
-    exc != null &&
-    typeof exc === 'object' &&
-    'granularity' in exc &&
-    Array.isArray(exc.filters) &&
-    exc.criteria != null
-  )
+  if (exc == null || typeof exc !== 'object') return false
+  if (Array.isArray(exc.rules)) return true
+  return 'granularity' in exc && Array.isArray(exc.filters) && exc.criteria != null
 }
 
 function normalizeException(exc) {
   return {
-    ...exc,
-    criteria: ensureCriteriaArray(exc.criteria),
+    id: exc.id,
+    expanded: exc.expanded !== false,
+    rules: ensureRulesArray(exc),
   }
+}
+
+function buildRuleSummaryParts(rule) {
+  const granLabel = getGranularityLabel(rule.granularity)
+  const filterParts = (rule.filters || [])
+    .map((f) => buildFilterSummaryPart(rule.granularity, f))
+    .filter(Boolean)
+  const criteriaParts = ensureCriteriaArray(rule.criteria)
+    .map((c) => buildCriteriaSummaryPart(c))
+    .filter(Boolean)
+  const parts = [...filterParts, ...criteriaParts]
+  return { granLabel, parts }
+}
+
+function RuleAndDivider() {
+  return (
+    <div className="relative my-4 flex items-center" aria-hidden="true">
+      <div className="h-px flex-1 bg-[#e5e7eb]" />
+      <span className="mx-3 text-[12px] font-medium uppercase tracking-[0.04em] text-[#4b535c]">
+        AND
+      </span>
+      <div className="h-px flex-1 bg-[#e5e7eb]" />
+    </div>
+  )
 }
 
 function InlineSelectChevron() {
@@ -399,8 +447,8 @@ export function ScheduleBlockApprovalExceptions({ block, onUpdate }) {
       onUpdate({ exceptions: createDefaultScheduleExceptions() })
       return
     }
-    // Migrate legacy single-object criteria → array once.
-    if (!Array.isArray(raw[0].criteria)) {
+    // Migrate legacy flat exceptions (no rules[]) → rules array once.
+    if (!Array.isArray(raw[0].rules)) {
       onUpdate({ exceptions: raw.map(normalizeException) })
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
@@ -419,6 +467,22 @@ export function ScheduleBlockApprovalExceptions({ block, onUpdate }) {
     const next = typeof updater === 'function' ? updater(current) : updater
     exceptionsRef.current = next
     onUpdate({ exceptions: next })
+  }
+
+  const mapExceptionRules = (exceptionId, mapFn) => {
+    setExceptions((prev) =>
+      prev.map((e) => {
+        if (e.id !== exceptionId) return e
+        const rules = ensureRulesArray(e)
+        return { ...e, rules: mapFn(rules) }
+      })
+    )
+  }
+
+  const updateRule = (exceptionId, ruleId, updater) => {
+    mapExceptionRules(exceptionId, (rules) =>
+      rules.map((r) => (r.id === ruleId ? updater(r) : r))
+    )
   }
 
   const toggleExceptionAccordion = (exceptionId) => {
@@ -440,104 +504,94 @@ export function ScheduleBlockApprovalExceptions({ block, onUpdate }) {
     })
   }
 
-  const patchException = (exceptionId, partial) => {
-    setExceptions((prev) => prev.map((e) => (e.id === exceptionId ? { ...e, ...partial } : e)))
+  const addRule = (exceptionId) => {
+    mapExceptionRules(exceptionId, (rules) => [...rules, createEmptyRule()])
   }
 
-  const onGranularityChange = (exceptionId, granularity) => {
+  const removeRule = (exceptionId, ruleId) => {
+    mapExceptionRules(exceptionId, (rules) => {
+      if (rules.length <= 1) return rules
+      const next = rules.filter((r) => r.id !== ruleId)
+      return next.length > 0 ? next : [createEmptyRule()]
+    })
+    setOpenPopover((prev) => (prev?.startsWith(`${exceptionId}__${ruleId}__`) ? null : prev))
+  }
+
+  const onGranularityChange = (exceptionId, ruleId, granularity) => {
     setOpenPopover(null)
-    patchException(exceptionId, {
+    updateRule(exceptionId, ruleId, (r) => ({
+      ...r,
       granularity,
       filters: [],
       criteria: [createEmptyCriteria()],
+    }))
+  }
+
+  const addCriteria = (exceptionId, ruleId) => {
+    updateRule(exceptionId, ruleId, (r) => {
+      const list = ensureCriteriaArray(r.criteria)
+      return { ...r, criteria: [...list, createEmptyCriteria()] }
     })
   }
 
-  const addCriteria = (exceptionId) => {
-    setExceptions((prev) =>
-      prev.map((e) => {
-        if (e.id !== exceptionId) return e
-        const list = ensureCriteriaArray(e.criteria)
-        return { ...e, criteria: [...list, createEmptyCriteria()] }
-      })
+  const removeCriteria = (exceptionId, ruleId, criteriaRowId) => {
+    updateRule(exceptionId, ruleId, (r) => {
+      const list = ensureCriteriaArray(r.criteria)
+      if (list.length <= 1) return r
+      const next = list.filter((c) => c.id !== criteriaRowId)
+      return { ...r, criteria: next.length > 0 ? next : [createEmptyCriteria()] }
+    })
+  }
+
+  const patchCriteria = (exceptionId, ruleId, criteriaRowId, partial) => {
+    updateRule(exceptionId, ruleId, (r) => {
+      const list = ensureCriteriaArray(r.criteria)
+      return {
+        ...r,
+        criteria: list.map((c) => (c.id === criteriaRowId ? { ...c, ...partial } : c)),
+      }
+    })
+  }
+
+  const addFilterCategory = (exceptionId, ruleId, category) => {
+    updateRule(exceptionId, ruleId, (r) => ({
+      ...r,
+      filters: [...(r.filters || []), createEmptyFilter(nextId('filter'), category)],
+    }))
+  }
+
+  const removeFilter = (exceptionId, ruleId, filterId) => {
+    updateRule(exceptionId, ruleId, (r) => ({
+      ...r,
+      filters: (r.filters || []).filter((f) => f.id !== filterId),
+    }))
+    setOpenPopover((prev) =>
+      prev === `${exceptionId}__${ruleId}__${filterId}` ? null : prev
     )
   }
 
-  const removeCriteria = (exceptionId, criteriaRowId) => {
-    setExceptions((prev) =>
-      prev.map((e) => {
-        if (e.id !== exceptionId) return e
-        const list = ensureCriteriaArray(e.criteria)
-        if (list.length <= 1) return e
-        const next = list.filter((c) => c.id !== criteriaRowId)
-        return { ...e, criteria: next.length > 0 ? next : [createEmptyCriteria()] }
-      })
-    )
-  }
-
-  const patchCriteria = (exceptionId, criteriaRowId, partial) => {
-    setExceptions((prev) =>
-      prev.map((e) => {
-        if (e.id !== exceptionId) return e
-        const list = ensureCriteriaArray(e.criteria)
-        return {
-          ...e,
-          criteria: list.map((c) => (c.id === criteriaRowId ? { ...c, ...partial } : c)),
-        }
-      })
-    )
-  }
-
-  const addFilterCategory = (exceptionId, category) => {
-    setExceptions((prev) =>
-      prev.map((e) => {
-        if (e.id !== exceptionId) return e
-        return {
-          ...e,
-          filters: [...e.filters, createEmptyFilter(nextId('filter'), category)],
-        }
-      })
-    )
-  }
-
-  const removeFilter = (exceptionId, filterId) => {
-    setExceptions((prev) =>
-      prev.map((e) => {
-        if (e.id !== exceptionId) return e
-        return { ...e, filters: e.filters.filter((f) => f.id !== filterId) }
-      })
-    )
-    setOpenPopover((prev) => (prev?.startsWith(`${exceptionId}__${filterId}`) ? null : prev))
-  }
-
-  const patchFilter = (exceptionId, filterId, partial) => {
-    setExceptions((prev) =>
-      prev.map((e) =>
-        e.id === exceptionId
-          ? {
-              ...e,
-              filters: e.filters.map((f) => (f.id === filterId ? { ...f, ...partial } : f)),
-            }
-          : e
-      )
-    )
+  const patchFilter = (exceptionId, ruleId, filterId, partial) => {
+    updateRule(exceptionId, ruleId, (r) => ({
+      ...r,
+      filters: (r.filters || []).map((f) => (f.id === filterId ? { ...f, ...partial } : f)),
+    }))
   }
 
   const getExceptionDisplayName = (exc, excIdx) => {
     const n = excIdx + 1
     const prefix = `Exception ${n}`
-    const granLabel = getGranularityLabel(exc.granularity)
-    const filterParts = (exc.filters || [])
-      .map((f) => buildFilterSummaryPart(exc.granularity, f))
-      .filter(Boolean)
-    const criteriaParts = ensureCriteriaArray(exc.criteria)
-      .map((c) => buildCriteriaSummaryPart(c))
-      .filter(Boolean)
-    const parts = [...filterParts, ...criteriaParts]
-    if (!granLabel && parts.length === 0) return prefix
-    if (granLabel && parts.length === 0) return `${prefix}: ${granLabel}`
-    if (granLabel) return `${prefix}: ${granLabel} · ${parts.join(' and ')}`
-    return `${prefix}: ${parts.join(' and ')}`
+    const rules = ensureRulesArray(exc)
+    const first = rules[0]
+    const { granLabel, parts } = buildRuleSummaryParts(first)
+    const moreCount = rules.length - 1
+    const moreSuffix = moreCount > 0 ? ` +${moreCount} more rules` : ''
+
+    let base = prefix
+    if (granLabel && parts.length === 0) base = `${prefix}: ${granLabel}`
+    else if (granLabel) base = `${prefix}: ${granLabel} · ${parts.join(' and ')}`
+    else if (parts.length > 0) base = `${prefix}: ${parts.join(' and ')}`
+
+    return `${base}${moreSuffix}`
   }
 
   if (block.approvalMode !== 'auto-approve') return null
@@ -547,12 +601,8 @@ export function ScheduleBlockApprovalExceptions({ block, onUpdate }) {
       {exceptions.map((exc, excIdx) => {
         const exceptionTitleFull = getExceptionDisplayName(exc, excIdx)
         const exceptionTitleDisplay = truncateExceptionTitleDisplay(exceptionTitleFull)
-        const granularityPicked = Boolean(exc.granularity)
-        const criteriaList = ensureCriteriaArray(exc.criteria)
-        const canRemoveCriteria = criteriaList.length > 1
-        const availableCats = getAvailableFilterCategories(exc.granularity)
-        // Filters render in the order the user added them (joined with AND in the sentence).
-        const orderedFilters = exc.filters || []
+        const rules = ensureRulesArray(exc)
+        const canRemoveRule = rules.length > 1
 
         return (
           <div key={exc.id} className="overflow-visible rounded-[4px] border border-[#e5e7eb] bg-white">
@@ -586,364 +636,415 @@ export function ScheduleBlockApprovalExceptions({ block, onUpdate }) {
 
             {exc.expanded && (
               <div className="border-t border-[#e5e7eb] px-4 pb-4 pt-4">
-                {/* Base sentence */}
-                <p className="flex flex-wrap items-center gap-x-1.5 gap-y-2 text-[14px] leading-8 text-[#0a0a0a]">
-                  <span>For each</span>
-                  <GranularityPicker
-                    value={exc.granularity || ''}
-                    onChange={(next) => onGranularityChange(exc.id, next)}
-                  />
-                  <span>, flag as unapproved when</span>
-                  {criteriaList.map((criteria, criteriaIdx) => {
-                    const criteriaDef = getCriteriaDef(criteria.criteriaId)
-                    const criteriaPicked = Boolean(criteria.criteriaId)
-                    const criteriaOperatorPicked = Boolean(criteria.operator)
-                    const hasUnit = Boolean(criteriaDef?.hasUnit)
+                {rules.map((rule, ruleIdx) => {
+                  const granularityPicked = Boolean(rule.granularity)
+                  const criteriaList = ensureCriteriaArray(rule.criteria)
+                  const canRemoveCriteria = criteriaList.length > 1
+                  const availableCats = getAvailableFilterCategories(rule.granularity)
+                  const orderedFilters = rule.filters || []
 
-                    return (
-                      <span
-                        key={criteria.id}
-                        className="inline-flex flex-wrap items-center gap-x-1.5 gap-y-2"
-                      >
-                        {criteriaIdx > 0 && <span>and</span>}
-                        {criteriaIdx === 0 && isAggregatedGranularity(exc.granularity) && (
-                          <span>total</span>
-                        )}
-                        <span className="relative inline-flex">
-                          <select
-                            value={criteria.criteriaId || ''}
-                            disabled={!granularityPicked}
-                            onChange={(e) => {
-                              const selectedCriteriaId = e.target.value
-                              const nextDef = getCriteriaDef(selectedCriteriaId)
-                              patchCriteria(exc.id, criteria.id, {
-                                criteriaId: selectedCriteriaId,
-                                operator: '',
-                                value: '',
-                                unit: nextDef?.hasUnit ? 'weeks' : 'weeks',
-                              })
-                            }}
-                            className={`${INLINE_SELECT} min-w-[200px]`}
-                          >
-                            <option value="">Select criteria…</option>
-                            {getCriteriaOptionsForGranularity(exc.granularity).map((c) => (
-                              <option key={c.id} value={c.id}>
-                                {c.label}
-                              </option>
-                            ))}
-                          </select>
-                          <InlineSelectChevron />
-                        </span>
-                        <span>is</span>
-                        <span className="relative inline-flex">
-                          <select
-                            value={criteria.operator || ''}
-                            disabled={!criteriaPicked}
-                            onChange={(e) =>
-                              patchCriteria(exc.id, criteria.id, { operator: e.target.value })
-                            }
-                            className={`${INLINE_SELECT} min-w-[160px]`}
-                          >
-                            <option value="">Select condition…</option>
-                            {NUMERIC_OPERATORS.map((op) => (
-                              <option key={op} value={op}>
-                                {op}
-                              </option>
-                            ))}
-                          </select>
-                          <InlineSelectChevron />
-                        </span>
-                        {!criteriaPicked || !criteriaOperatorPicked ? (
-                          <span
-                            className="inline-flex h-8 min-w-[72px] cursor-not-allowed items-center rounded-[4px] border border-[#e9eaeb] bg-[#f3f4f6] px-2.5 text-[13px] italic text-[#9ca3af]"
-                            aria-disabled
-                          >
-                            Value
-                          </span>
-                        ) : (
-                          <input
-                            type="number"
-                            value={criteria.value ?? ''}
-                            onChange={(e) =>
-                              patchCriteria(exc.id, criteria.id, { value: e.target.value })
-                            }
-                            placeholder="Value"
-                            className="h-8 w-[88px] rounded-[4px] border border-[#e9eaeb] bg-white px-2.5 text-[13px] text-[#0a0a0a] placeholder:text-[#9ca3af] [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-                          />
-                        )}
-                        {criteriaPicked && criteriaOperatorPicked && hasUnit && (
-                          <span className="relative inline-flex">
-                            <select
-                              value={criteria.unit || 'weeks'}
-                              onChange={(e) =>
-                                patchCriteria(exc.id, criteria.id, { unit: e.target.value })
-                              }
-                              className={`${INLINE_SELECT} min-w-[88px]`}
-                            >
-                              {COVERAGE_UNITS.map((u) => (
-                                <option key={u.value} value={u.value}>
-                                  {u.label}
-                                </option>
-                              ))}
-                            </select>
-                            <InlineSelectChevron />
-                          </span>
-                        )}
-                        {canRemoveCriteria && (
+                  return (
+                    <div key={rule.id}>
+                      {ruleIdx > 0 && <RuleAndDivider />}
+                      <div className="relative">
+                        {canRemoveRule && (
                           <button
                             type="button"
-                            className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-[4px] text-[#4b535c] hover:bg-[#e5e7eb] hover:text-[#0a0a0a]"
-                            aria-label="Remove criteria"
-                            onClick={() => removeCriteria(exc.id, criteria.id)}
+                            className="absolute -right-1 -top-1 z-10 inline-flex h-8 w-8 items-center justify-center rounded-[4px] text-[#4b535c] hover:bg-[#e5e7eb] hover:text-[#0a0a0a]"
+                            aria-label="Remove rule"
+                            onClick={() => removeRule(exc.id, rule.id)}
                           >
                             <IconClose className="size-3.5" />
                           </button>
                         )}
-                      </span>
-                    )
-                  })}
-                  <span>.</span>
-                </p>
 
-                {granularityPicked && (
-                  <div className="mt-2">
-                    <button
-                      type="button"
-                      onClick={() => addCriteria(exc.id)}
-                      className="text-[13px] font-medium text-[#0267FF] hover:underline"
-                    >
-                      + Add criteria
-                    </button>
-                  </div>
-                )}
+                        {/* Base sentence */}
+                        <p className="flex flex-wrap items-center gap-x-1.5 gap-y-2 text-[14px] leading-8 text-[#0a0a0a]">
+                          <span>For each</span>
+                          <GranularityPicker
+                            value={rule.granularity || ''}
+                            onChange={(next) => onGranularityChange(exc.id, rule.id, next)}
+                          />
+                          <span>, flag as unapproved when</span>
+                          {criteriaList.map((criteria, criteriaIdx) => {
+                            const criteriaDef = getCriteriaDef(criteria.criteriaId)
+                            const criteriaPicked = Boolean(criteria.criteriaId)
+                            const criteriaOperatorPicked = Boolean(criteria.operator)
+                            const hasUnit = Boolean(criteriaDef?.hasUnit)
 
-                {/* Filters: empty affordance OR applied sentence */}
-                {granularityPicked && orderedFilters.length === 0 && (
-                  <div className="mt-3 flex flex-col gap-2">
-                    <p className="text-[13px] text-[#4b535c]">
-                      {isAggregatedGranularity(exc.granularity)
-                        ? 'Apply only to specific locations?'
-                        : 'Apply only to specific products or locations?'}
-                    </p>
-                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                      {availableCats.map((cat) => (
-                        <button
-                          key={cat.id}
-                          type="button"
-                          onClick={() => addFilterCategory(exc.id, cat.id)}
-                          className="text-[13px] font-medium text-[#0267FF] hover:underline"
-                        >
-                          {cat.buttonLabel}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {granularityPicked && orderedFilters.length > 0 && (
-                  <div className="mt-3 flex flex-col gap-2">
-                    <div className="flex flex-wrap items-center gap-x-1.5 gap-y-2 text-[14px] leading-8 text-[#0a0a0a]">
-                      <span>Apply only to</span>
-                      {orderedFilters.map((filter, filterIdx) => {
-                        const fields = getFieldsForCategory(exc.granularity, filter.category)
-                        const fieldDef = getFilterFieldDef(
-                          exc.granularity,
-                          filter.category,
-                          filter.fieldId
-                        )
-                        const fieldPicked = Boolean(filter.fieldId)
-                        const options = fieldDef?.options ?? []
-                        const selectedVals = Array.isArray(filter.values) ? filter.values : []
-                        const mode = filter.mode === 'exclude' ? 'exclude' : 'include'
-                        const modeLabel = mode === 'exclude' ? 'Exclude' : 'Include'
-                        const popoverId = `${exc.id}__${filter.id}`
-                        const popoverOpen = openPopover === popoverId
-                        const searchQ = (scopePopoverSearch || '').trim().toLowerCase()
-                        const filteredOptions = options.filter(
-                          (name) => !searchQ || name.toLowerCase().includes(searchQ)
-                        )
-                        const allVisibleSelected =
-                          filteredOptions.length > 0 &&
-                          filteredOptions.every((o) => selectedVals.includes(o))
-                        const valuesSummary = formatFilterValuesList(selectedVals)
-                        const affordanceIsPlaceholder = selectedVals.length === 0
-                        const affordanceText = affordanceIsPlaceholder
-                          ? `${modeLabel}: Select values…`
-                          : `${modeLabel} ${valuesSummary}`
-
-                        return (
-                          <span
-                            key={filter.id}
-                            className="inline-flex flex-wrap items-center gap-x-1.5 gap-y-2"
-                          >
-                            {filterIdx > 0 && <span>and</span>}
-                            <span className="relative inline-flex">
-                              <select
-                                value={filter.fieldId || ''}
-                                onChange={(e) => {
-                                  setOpenPopover(null)
-                                  patchFilter(exc.id, filter.id, {
-                                    fieldId: e.target.value,
-                                    mode: 'include',
-                                    values: [],
-                                  })
-                                }}
-                                className={`${INLINE_SELECT} min-w-[140px]`}
+                            return (
+                              <span
+                                key={criteria.id}
+                                className="inline-flex flex-wrap items-center gap-x-1.5 gap-y-2"
                               >
-                                <option value="">Select field…</option>
-                                {fields.map((f) => (
-                                  <option key={f.id} value={f.id}>
-                                    {f.label}
-                                  </option>
-                                ))}
-                              </select>
-                              <InlineSelectChevron />
-                            </span>
-                            {fieldPicked && (
-                              <span className="relative inline-flex max-w-[320px]">
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    setOpenPopover((prev) =>
-                                      prev === popoverId ? null : popoverId
-                                    )
-                                  }
-                                  className={`flex h-8 max-w-full items-center gap-1 truncate rounded-[4px] border border-[#e9eaeb] bg-white py-0 pl-2.5 pr-7 text-left text-[13px] hover:bg-[#f9fafb] ${
-                                    affordanceIsPlaceholder
-                                      ? 'italic text-[#9ca3af]'
-                                      : 'text-[#0a0a0a]'
-                                  }`}
-                                >
-                                  <span className="min-w-0 truncate">{affordanceText}</span>
-                                </button>
-                                <InlineSelectChevron />
-                                {popoverOpen && (
-                                  <>
-                                    <div
-                                      className="fixed inset-0 z-[19]"
-                                      aria-hidden
-                                      onClick={() => setOpenPopover(null)}
-                                    />
-                                    <div
-                                      className="absolute left-0 top-full z-20 mt-1 w-[300px] overflow-hidden rounded-[4px] border border-[#EAEAEA] bg-white shadow-[0px_8px_25px_0px_rgba(0,0,0,0.12)]"
-                                      onClick={(e) => e.stopPropagation()}
-                                      role="presentation"
+                                {criteriaIdx > 0 && <span>and</span>}
+                                {criteriaIdx === 0 && isAggregatedGranularity(rule.granularity) && (
+                                  <span>total</span>
+                                )}
+                                <span className="relative inline-flex">
+                                  <select
+                                    value={criteria.criteriaId || ''}
+                                    disabled={!granularityPicked}
+                                    onChange={(e) => {
+                                      const selectedCriteriaId = e.target.value
+                                      const nextDef = getCriteriaDef(selectedCriteriaId)
+                                      patchCriteria(exc.id, rule.id, criteria.id, {
+                                        criteriaId: selectedCriteriaId,
+                                        operator: '',
+                                        value: '',
+                                        unit: nextDef?.hasUnit ? 'weeks' : 'weeks',
+                                      })
+                                    }}
+                                    className={`${INLINE_SELECT} min-w-[200px]`}
+                                  >
+                                    <option value="">Select criteria…</option>
+                                    {getCriteriaOptionsForGranularity(rule.granularity).map((c) => (
+                                      <option key={c.id} value={c.id}>
+                                        {c.label}
+                                      </option>
+                                    ))}
+                                  </select>
+                                  <InlineSelectChevron />
+                                </span>
+                                <span>is</span>
+                                <span className="relative inline-flex">
+                                  <select
+                                    value={criteria.operator || ''}
+                                    disabled={!criteriaPicked}
+                                    onChange={(e) =>
+                                      patchCriteria(exc.id, rule.id, criteria.id, {
+                                        operator: e.target.value,
+                                      })
+                                    }
+                                    className={`${INLINE_SELECT} min-w-[160px]`}
+                                  >
+                                    <option value="">Select condition…</option>
+                                    {NUMERIC_OPERATORS.map((op) => (
+                                      <option key={op} value={op}>
+                                        {op}
+                                      </option>
+                                    ))}
+                                  </select>
+                                  <InlineSelectChevron />
+                                </span>
+                                {!criteriaPicked || !criteriaOperatorPicked ? (
+                                  <span
+                                    className="inline-flex h-8 min-w-[72px] cursor-not-allowed items-center rounded-[4px] border border-[#e9eaeb] bg-[#f3f4f6] px-2.5 text-[13px] italic text-[#9ca3af]"
+                                    aria-disabled
+                                  >
+                                    Value
+                                  </span>
+                                ) : (
+                                  <input
+                                    type="number"
+                                    value={criteria.value ?? ''}
+                                    onChange={(e) =>
+                                      patchCriteria(exc.id, rule.id, criteria.id, {
+                                        value: e.target.value,
+                                      })
+                                    }
+                                    placeholder="Value"
+                                    className="h-8 w-[88px] rounded-[4px] border border-[#e9eaeb] bg-white px-2.5 text-[13px] text-[#0a0a0a] placeholder:text-[#9ca3af] [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                                  />
+                                )}
+                                {criteriaPicked && criteriaOperatorPicked && hasUnit && (
+                                  <span className="relative inline-flex">
+                                    <select
+                                      value={criteria.unit || 'weeks'}
+                                      onChange={(e) =>
+                                        patchCriteria(exc.id, rule.id, criteria.id, {
+                                          unit: e.target.value,
+                                        })
+                                      }
+                                      className={`${INLINE_SELECT} min-w-[88px]`}
                                     >
-                                      <div className="flex items-center gap-2 border-b border-[#e5e7eb] px-3 py-2.5">
-                                        <button
-                                          type="button"
-                                          onClick={() =>
-                                            patchFilter(exc.id, filter.id, { mode: 'include' })
-                                          }
-                                          className={modeToggleButtonClass(mode === 'include')}
-                                        >
-                                          Include
-                                        </button>
-                                        <button
-                                          type="button"
-                                          onClick={() =>
-                                            patchFilter(exc.id, filter.id, { mode: 'exclude' })
-                                          }
-                                          className={modeToggleButtonClass(mode === 'exclude')}
-                                        >
-                                          Exclude
-                                        </button>
-                                      </div>
-                                      <div className="relative border-b border-[#e5e7eb] px-3 py-2">
-                                        <IconSearch className="pointer-events-none absolute left-5 top-1/2 size-4 -translate-y-1/2 text-[#9ca3af]" />
-                                        <input
-                                          type="text"
-                                          placeholder="Search"
-                                          value={scopePopoverSearch}
-                                          onChange={(e) => setScopePopoverSearch(e.target.value)}
-                                          className="h-8 w-full rounded-[4px] border border-[#e5e7eb] bg-white pl-9 pr-2 text-[13px] text-[#0a0a0a] placeholder:text-[#9ca3af]"
-                                        />
-                                      </div>
-                                      <div className="flex max-h-[220px] min-h-0 flex-col overflow-y-auto">
-                                        {filteredOptions.map((name) => (
-                                          <label
-                                            key={name}
-                                            className="flex cursor-pointer items-center gap-3 px-4 py-2.5 text-[13px] text-[#0a0a0a] hover:bg-[#f8f8f8]"
-                                          >
-                                            <input
-                                              type="checkbox"
-                                              checked={selectedVals.includes(name)}
-                                              onChange={() => {
-                                                const next = selectedVals.includes(name)
-                                                  ? selectedVals.filter((v) => v !== name)
-                                                  : [...selectedVals, name]
-                                                patchFilter(exc.id, filter.id, { values: next })
-                                              }}
-                                              className="size-4 shrink-0 rounded border-[#d1d5db] text-[#0267ff] focus:ring-[#0267ff]"
-                                            />
-                                            <span className="min-w-0 break-words">{name}</span>
-                                          </label>
-                                        ))}
-                                        {filteredOptions.length === 0 && (
-                                          <p className="px-4 py-3 text-[13px] text-[#9ca3af]">
-                                            No matches
-                                          </p>
-                                        )}
-                                      </div>
-                                      <div className="border-t border-[#e5e7eb] px-3 py-2">
-                                        <button
-                                          type="button"
-                                          disabled={filteredOptions.length === 0}
-                                          onClick={() => {
-                                            if (allVisibleSelected) {
-                                              const visible = new Set(filteredOptions)
-                                              patchFilter(exc.id, filter.id, {
-                                                values: selectedVals.filter((v) => !visible.has(v)),
-                                              })
-                                            } else {
-                                              const merged = [...selectedVals]
-                                              filteredOptions.forEach((opt) => {
-                                                if (!merged.includes(opt)) merged.push(opt)
-                                              })
-                                              patchFilter(exc.id, filter.id, { values: merged })
-                                            }
-                                          }}
-                                          className="text-[13px] font-medium text-[#0267ff] hover:underline disabled:cursor-not-allowed disabled:text-[#9ca3af] disabled:no-underline"
-                                        >
-                                          {allVisibleSelected
-                                            ? `Deselect all ${filteredOptions.length} options`
-                                            : `Select all ${filteredOptions.length} options`}
-                                        </button>
-                                      </div>
-                                    </div>
-                                  </>
+                                      {COVERAGE_UNITS.map((u) => (
+                                        <option key={u.value} value={u.value}>
+                                          {u.label}
+                                        </option>
+                                      ))}
+                                    </select>
+                                    <InlineSelectChevron />
+                                  </span>
+                                )}
+                                {canRemoveCriteria && (
+                                  <button
+                                    type="button"
+                                    className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-[4px] text-[#4b535c] hover:bg-[#e5e7eb] hover:text-[#0a0a0a]"
+                                    aria-label="Remove criteria"
+                                    onClick={() => removeCriteria(exc.id, rule.id, criteria.id)}
+                                  >
+                                    <IconClose className="size-3.5" />
+                                  </button>
                                 )}
                               </span>
-                            )}
+                            )
+                          })}
+                          <span>.</span>
+                        </p>
+
+                        {granularityPicked && (
+                          <div className="mt-2">
                             <button
                               type="button"
-                              className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-[4px] text-[#4b535c] hover:bg-[#e5e7eb] hover:text-[#0a0a0a]"
-                              aria-label="Remove filter"
-                              onClick={() => removeFilter(exc.id, filter.id)}
+                              onClick={() => addCriteria(exc.id, rule.id)}
+                              className="text-[13px] font-medium text-[#0267FF] hover:underline"
                             >
-                              <IconClose className="size-3.5" />
+                              + Add criteria
                             </button>
-                          </span>
-                        )
-                      })}
-                      <span>.</span>
-                    </div>
-                    {availableCats.length > 0 && (
-                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                        {availableCats.map((cat) => (
-                          <button
-                            key={cat.id}
-                            type="button"
-                            onClick={() => addFilterCategory(exc.id, cat.id)}
-                            className="text-[13px] font-medium text-[#0267FF] hover:underline"
-                          >
-                            {cat.buttonLabel}
-                          </button>
-                        ))}
+                          </div>
+                        )}
+
+                        {granularityPicked && orderedFilters.length === 0 && (
+                          <div className="mt-3 flex flex-col gap-2">
+                            <p className="text-[13px] text-[#4b535c]">
+                              {isAggregatedGranularity(rule.granularity)
+                                ? 'Apply only to specific locations?'
+                                : 'Apply only to specific products or locations?'}
+                            </p>
+                            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                              {availableCats.map((cat) => (
+                                <button
+                                  key={cat.id}
+                                  type="button"
+                                  onClick={() => addFilterCategory(exc.id, rule.id, cat.id)}
+                                  className="text-[13px] font-medium text-[#0267FF] hover:underline"
+                                >
+                                  {cat.buttonLabel}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {granularityPicked && orderedFilters.length > 0 && (
+                          <div className="mt-3 flex flex-col gap-2">
+                            <div className="flex flex-wrap items-center gap-x-1.5 gap-y-2 text-[14px] leading-8 text-[#0a0a0a]">
+                              <span>Apply only to</span>
+                              {orderedFilters.map((filter, filterIdx) => {
+                                const fields = getFieldsForCategory(rule.granularity, filter.category)
+                                const fieldDef = getFilterFieldDef(
+                                  rule.granularity,
+                                  filter.category,
+                                  filter.fieldId
+                                )
+                                const fieldPicked = Boolean(filter.fieldId)
+                                const options = fieldDef?.options ?? []
+                                const selectedVals = Array.isArray(filter.values) ? filter.values : []
+                                const mode = filter.mode === 'exclude' ? 'exclude' : 'include'
+                                const modeLabel = mode === 'exclude' ? 'Exclude' : 'Include'
+                                const popoverId = `${exc.id}__${rule.id}__${filter.id}`
+                                const popoverOpen = openPopover === popoverId
+                                const searchQ = (scopePopoverSearch || '').trim().toLowerCase()
+                                const filteredOptions = options.filter(
+                                  (name) => !searchQ || name.toLowerCase().includes(searchQ)
+                                )
+                                const allVisibleSelected =
+                                  filteredOptions.length > 0 &&
+                                  filteredOptions.every((o) => selectedVals.includes(o))
+                                const valuesSummary = formatFilterValuesList(selectedVals)
+                                const affordanceIsPlaceholder = selectedVals.length === 0
+                                const affordanceText = affordanceIsPlaceholder
+                                  ? `${modeLabel}: Select values…`
+                                  : `${modeLabel} ${valuesSummary}`
+
+                                return (
+                                  <span
+                                    key={filter.id}
+                                    className="inline-flex flex-wrap items-center gap-x-1.5 gap-y-2"
+                                  >
+                                    {filterIdx > 0 && <span>and</span>}
+                                    <span className="relative inline-flex">
+                                      <select
+                                        value={filter.fieldId || ''}
+                                        onChange={(e) => {
+                                          setOpenPopover(null)
+                                          patchFilter(exc.id, rule.id, filter.id, {
+                                            fieldId: e.target.value,
+                                            mode: 'include',
+                                            values: [],
+                                          })
+                                        }}
+                                        className={`${INLINE_SELECT} min-w-[140px]`}
+                                      >
+                                        <option value="">Select field…</option>
+                                        {fields.map((f) => (
+                                          <option key={f.id} value={f.id}>
+                                            {f.label}
+                                          </option>
+                                        ))}
+                                      </select>
+                                      <InlineSelectChevron />
+                                    </span>
+                                    {fieldPicked && (
+                                      <span className="relative inline-flex max-w-[320px]">
+                                        <button
+                                          type="button"
+                                          onClick={() =>
+                                            setOpenPopover((prev) =>
+                                              prev === popoverId ? null : popoverId
+                                            )
+                                          }
+                                          className={`flex h-8 max-w-full items-center gap-1 truncate rounded-[4px] border border-[#e9eaeb] bg-white py-0 pl-2.5 pr-7 text-left text-[13px] hover:bg-[#f9fafb] ${
+                                            affordanceIsPlaceholder
+                                              ? 'italic text-[#9ca3af]'
+                                              : 'text-[#0a0a0a]'
+                                          }`}
+                                        >
+                                          <span className="min-w-0 truncate">{affordanceText}</span>
+                                        </button>
+                                        <InlineSelectChevron />
+                                        {popoverOpen && (
+                                          <>
+                                            <div
+                                              className="fixed inset-0 z-[19]"
+                                              aria-hidden
+                                              onClick={() => setOpenPopover(null)}
+                                            />
+                                            <div
+                                              className="absolute left-0 top-full z-20 mt-1 w-[300px] overflow-hidden rounded-[4px] border border-[#EAEAEA] bg-white shadow-[0px_8px_25px_0px_rgba(0,0,0,0.12)]"
+                                              onClick={(e) => e.stopPropagation()}
+                                              role="presentation"
+                                            >
+                                              <div className="flex items-center gap-2 border-b border-[#e5e7eb] px-3 py-2.5">
+                                                <button
+                                                  type="button"
+                                                  onClick={() =>
+                                                    patchFilter(exc.id, rule.id, filter.id, {
+                                                      mode: 'include',
+                                                    })
+                                                  }
+                                                  className={modeToggleButtonClass(mode === 'include')}
+                                                >
+                                                  Include
+                                                </button>
+                                                <button
+                                                  type="button"
+                                                  onClick={() =>
+                                                    patchFilter(exc.id, rule.id, filter.id, {
+                                                      mode: 'exclude',
+                                                    })
+                                                  }
+                                                  className={modeToggleButtonClass(mode === 'exclude')}
+                                                >
+                                                  Exclude
+                                                </button>
+                                              </div>
+                                              <div className="relative border-b border-[#e5e7eb] px-3 py-2">
+                                                <IconSearch className="pointer-events-none absolute left-5 top-1/2 size-4 -translate-y-1/2 text-[#9ca3af]" />
+                                                <input
+                                                  type="text"
+                                                  placeholder="Search"
+                                                  value={scopePopoverSearch}
+                                                  onChange={(e) => setScopePopoverSearch(e.target.value)}
+                                                  className="h-8 w-full rounded-[4px] border border-[#e5e7eb] bg-white pl-9 pr-2 text-[13px] text-[#0a0a0a] placeholder:text-[#9ca3af]"
+                                                />
+                                              </div>
+                                              <div className="flex max-h-[220px] min-h-0 flex-col overflow-y-auto">
+                                                {filteredOptions.map((name) => (
+                                                  <label
+                                                    key={name}
+                                                    className="flex cursor-pointer items-center gap-3 px-4 py-2.5 text-[13px] text-[#0a0a0a] hover:bg-[#f8f8f8]"
+                                                  >
+                                                    <input
+                                                      type="checkbox"
+                                                      checked={selectedVals.includes(name)}
+                                                      onChange={() => {
+                                                        const next = selectedVals.includes(name)
+                                                          ? selectedVals.filter((v) => v !== name)
+                                                          : [...selectedVals, name]
+                                                        patchFilter(exc.id, rule.id, filter.id, {
+                                                          values: next,
+                                                        })
+                                                      }}
+                                                      className="size-4 shrink-0 rounded border-[#d1d5db] text-[#0267ff] focus:ring-[#0267ff]"
+                                                    />
+                                                    <span className="min-w-0 break-words">{name}</span>
+                                                  </label>
+                                                ))}
+                                                {filteredOptions.length === 0 && (
+                                                  <p className="px-4 py-3 text-[13px] text-[#9ca3af]">
+                                                    No matches
+                                                  </p>
+                                                )}
+                                              </div>
+                                              <div className="border-t border-[#e5e7eb] px-3 py-2">
+                                                <button
+                                                  type="button"
+                                                  disabled={filteredOptions.length === 0}
+                                                  onClick={() => {
+                                                    if (allVisibleSelected) {
+                                                      const visible = new Set(filteredOptions)
+                                                      patchFilter(exc.id, rule.id, filter.id, {
+                                                        values: selectedVals.filter(
+                                                          (v) => !visible.has(v)
+                                                        ),
+                                                      })
+                                                    } else {
+                                                      const merged = [...selectedVals]
+                                                      filteredOptions.forEach((opt) => {
+                                                        if (!merged.includes(opt)) merged.push(opt)
+                                                      })
+                                                      patchFilter(exc.id, rule.id, filter.id, {
+                                                        values: merged,
+                                                      })
+                                                    }
+                                                  }}
+                                                  className="text-[13px] font-medium text-[#0267ff] hover:underline disabled:cursor-not-allowed disabled:text-[#9ca3af] disabled:no-underline"
+                                                >
+                                                  {allVisibleSelected
+                                                    ? `Deselect all ${filteredOptions.length} options`
+                                                    : `Select all ${filteredOptions.length} options`}
+                                                </button>
+                                              </div>
+                                            </div>
+                                          </>
+                                        )}
+                                      </span>
+                                    )}
+                                    <button
+                                      type="button"
+                                      className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-[4px] text-[#4b535c] hover:bg-[#e5e7eb] hover:text-[#0a0a0a]"
+                                      aria-label="Remove filter"
+                                      onClick={() => removeFilter(exc.id, rule.id, filter.id)}
+                                    >
+                                      <IconClose className="size-3.5" />
+                                    </button>
+                                  </span>
+                                )
+                              })}
+                              <span>.</span>
+                            </div>
+                            {availableCats.length > 0 && (
+                              <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                                {availableCats.map((cat) => (
+                                  <button
+                                    key={cat.id}
+                                    type="button"
+                                    onClick={() => addFilterCategory(exc.id, rule.id, cat.id)}
+                                    className="text-[13px] font-medium text-[#0267FF] hover:underline"
+                                  >
+                                    {cat.buttonLabel}
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
-                    )}
-                  </div>
-                )}
+                    </div>
+                  )
+                })}
+
+                <div className="mt-4">
+                  <button
+                    type="button"
+                    onClick={() => addRule(exc.id)}
+                    className="text-[13px] font-medium text-[#0267FF] hover:underline"
+                  >
+                    + Add rule
+                  </button>
+                </div>
               </div>
             )}
           </div>
