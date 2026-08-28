@@ -620,7 +620,7 @@ function CreateScheduleScopeFilterPanel({
             onModeChange={setDepartmentMode}
           />
         </div>
-        <div className="w-full self-start">
+        <div className="w-full self-start border-l-[3px] border-[#0267ff] pl-3">
           <CreateScheduleScopeMultiSelect
             label="Warehouse"
             helperText="Where products are distributed from. If none selected, we'll use your full network."
@@ -632,8 +632,6 @@ function CreateScheduleScopeFilterPanel({
             onExcludeChange={setWarehouseExclude}
             mode={warehouseMode}
             onModeChange={setWarehouseMode}
-            showBulkAdd
-            onBulkAddClick={() => openBulkPaste('Warehouse')}
           />
         </div>
 
