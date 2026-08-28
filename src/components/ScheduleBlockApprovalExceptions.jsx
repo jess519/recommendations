@@ -253,30 +253,29 @@ function createEmptyCriteria(id = nextId('crit')) {
   return { id, criteriaId: '', operator: '', value: '', unit: 'weeks' }
 }
 
-/** Normalize legacy single-object criteria into a non-empty array. */
-function ensureCriteriaArray(criteria) {
+/** Normalize criteria to a single row (legacy array → first entry). */
+function ensureCriteria(criteria) {
   if (Array.isArray(criteria)) {
-    if (criteria.length === 0) return [createEmptyCriteria()]
-    return criteria.map((c) => ({
-      id: c.id || nextId('crit'),
-      criteriaId: c.criteriaId || '',
-      operator: c.operator || '',
-      value: c.value ?? '',
-      unit: c.unit || 'weeks',
-    }))
+    const first = criteria[0]
+    if (!first) return createEmptyCriteria()
+    return {
+      id: first.id || nextId('crit'),
+      criteriaId: first.criteriaId || '',
+      operator: first.operator || '',
+      value: first.value ?? '',
+      unit: first.unit || 'weeks',
+    }
   }
   if (criteria != null && typeof criteria === 'object') {
-    return [
-      {
-        id: nextId('crit'),
-        criteriaId: criteria.criteriaId || '',
-        operator: criteria.operator || '',
-        value: criteria.value ?? '',
-        unit: criteria.unit || 'weeks',
-      },
-    ]
+    return {
+      id: criteria.id || nextId('crit'),
+      criteriaId: criteria.criteriaId || '',
+      operator: criteria.operator || '',
+      value: criteria.value ?? '',
+      unit: criteria.unit || 'weeks',
+    }
   }
-  return [createEmptyCriteria()]
+  return createEmptyCriteria()
 }
 
 function createEmptyRule(id = nextId('rule')) {
@@ -284,7 +283,7 @@ function createEmptyRule(id = nextId('rule')) {
     id,
     granularity: '',
     filters: [],
-    criteria: [createEmptyCriteria()],
+    criteria: createEmptyCriteria(),
   }
 }
 
@@ -295,7 +294,7 @@ function ensureRulesArray(exc) {
       id: r.id || nextId('rule'),
       granularity: r.granularity || '',
       filters: Array.isArray(r.filters) ? r.filters : [],
-      criteria: ensureCriteriaArray(r.criteria),
+      criteria: ensureCriteria(r.criteria),
     }))
   }
   return [
@@ -303,7 +302,7 @@ function ensureRulesArray(exc) {
       id: nextId('rule'),
       granularity: exc?.granularity || '',
       filters: Array.isArray(exc?.filters) ? exc.filters : [],
-      criteria: ensureCriteriaArray(exc?.criteria),
+      criteria: ensureCriteria(exc?.criteria),
     },
   ]
 }
@@ -340,10 +339,8 @@ function buildRuleSummaryParts(rule) {
   const filterParts = (rule.filters || [])
     .map((f) => buildFilterSummaryPart(rule.granularity, f))
     .filter(Boolean)
-  const criteriaParts = ensureCriteriaArray(rule.criteria)
-    .map((c) => buildCriteriaSummaryPart(c))
-    .filter(Boolean)
-  const parts = [...filterParts, ...criteriaParts]
+  const criteriaPart = buildCriteriaSummaryPart(ensureCriteria(rule.criteria))
+  const parts = [...filterParts, ...(criteriaPart ? [criteriaPart] : [])]
   return { granLabel, parts }
 }
 
@@ -523,34 +520,15 @@ export function ScheduleBlockApprovalExceptions({ block, onUpdate }) {
       ...r,
       granularity,
       filters: [],
-      criteria: [createEmptyCriteria()],
+      criteria: createEmptyCriteria(),
     }))
   }
 
-  const addCriteria = (exceptionId, ruleId) => {
-    updateRule(exceptionId, ruleId, (r) => {
-      const list = ensureCriteriaArray(r.criteria)
-      return { ...r, criteria: [...list, createEmptyCriteria()] }
-    })
-  }
-
-  const removeCriteria = (exceptionId, ruleId, criteriaRowId) => {
-    updateRule(exceptionId, ruleId, (r) => {
-      const list = ensureCriteriaArray(r.criteria)
-      if (list.length <= 1) return r
-      const next = list.filter((c) => c.id !== criteriaRowId)
-      return { ...r, criteria: next.length > 0 ? next : [createEmptyCriteria()] }
-    })
-  }
-
-  const patchCriteria = (exceptionId, ruleId, criteriaRowId, partial) => {
-    updateRule(exceptionId, ruleId, (r) => {
-      const list = ensureCriteriaArray(r.criteria)
-      return {
-        ...r,
-        criteria: list.map((c) => (c.id === criteriaRowId ? { ...c, ...partial } : c)),
-      }
-    })
+  const patchCriteria = (exceptionId, ruleId, partial) => {
+    updateRule(exceptionId, ruleId, (r) => ({
+      ...r,
+      criteria: { ...ensureCriteria(r.criteria), ...partial },
+    }))
   }
 
   const addFilterCategory = (exceptionId, ruleId, category) => {
@@ -638,8 +616,11 @@ export function ScheduleBlockApprovalExceptions({ block, onUpdate }) {
               <div className="border-t border-[#e5e7eb] px-4 pb-4 pt-4">
                 {rules.map((rule, ruleIdx) => {
                   const granularityPicked = Boolean(rule.granularity)
-                  const criteriaList = ensureCriteriaArray(rule.criteria)
-                  const canRemoveCriteria = criteriaList.length > 1
+                  const criteria = ensureCriteria(rule.criteria)
+                  const criteriaDef = getCriteriaDef(criteria.criteriaId)
+                  const criteriaPicked = Boolean(criteria.criteriaId)
+                  const criteriaOperatorPicked = Boolean(criteria.operator)
+                  const hasUnit = Boolean(criteriaDef?.hasUnit)
                   const availableCats = getAvailableFilterCategories(rule.granularity)
                   const orderedFilters = rule.filters || []
 
@@ -666,134 +647,89 @@ export function ScheduleBlockApprovalExceptions({ block, onUpdate }) {
                             onChange={(next) => onGranularityChange(exc.id, rule.id, next)}
                           />
                           <span>, flag as unapproved when</span>
-                          {criteriaList.map((criteria, criteriaIdx) => {
-                            const criteriaDef = getCriteriaDef(criteria.criteriaId)
-                            const criteriaPicked = Boolean(criteria.criteriaId)
-                            const criteriaOperatorPicked = Boolean(criteria.operator)
-                            const hasUnit = Boolean(criteriaDef?.hasUnit)
-
-                            return (
-                              <span
-                                key={criteria.id}
-                                className="inline-flex flex-wrap items-center gap-x-1.5 gap-y-2"
+                          {isAggregatedGranularity(rule.granularity) && <span>total</span>}
+                          <span className="relative inline-flex">
+                            <select
+                              value={criteria.criteriaId || ''}
+                              disabled={!granularityPicked}
+                              onChange={(e) => {
+                                const selectedCriteriaId = e.target.value
+                                const nextDef = getCriteriaDef(selectedCriteriaId)
+                                patchCriteria(exc.id, rule.id, {
+                                  criteriaId: selectedCriteriaId,
+                                  operator: '',
+                                  value: '',
+                                  unit: nextDef?.hasUnit ? 'weeks' : 'weeks',
+                                })
+                              }}
+                              className={`${INLINE_SELECT} min-w-[200px]`}
+                            >
+                              <option value="">Select criteria…</option>
+                              {getCriteriaOptionsForGranularity(rule.granularity).map((c) => (
+                                <option key={c.id} value={c.id}>
+                                  {c.label}
+                                </option>
+                              ))}
+                            </select>
+                            <InlineSelectChevron />
+                          </span>
+                          <span>is</span>
+                          <span className="relative inline-flex">
+                            <select
+                              value={criteria.operator || ''}
+                              disabled={!criteriaPicked}
+                              onChange={(e) =>
+                                patchCriteria(exc.id, rule.id, { operator: e.target.value })
+                              }
+                              className={`${INLINE_SELECT} min-w-[160px]`}
+                            >
+                              <option value="">Select condition…</option>
+                              {NUMERIC_OPERATORS.map((op) => (
+                                <option key={op} value={op}>
+                                  {op}
+                                </option>
+                              ))}
+                            </select>
+                            <InlineSelectChevron />
+                          </span>
+                          {!criteriaPicked || !criteriaOperatorPicked ? (
+                            <span
+                              className="inline-flex h-8 min-w-[72px] cursor-not-allowed items-center rounded-[4px] border border-[#e9eaeb] bg-[#f3f4f6] px-2.5 text-[13px] italic text-[#9ca3af]"
+                              aria-disabled
+                            >
+                              Value
+                            </span>
+                          ) : (
+                            <input
+                              type="number"
+                              value={criteria.value ?? ''}
+                              onChange={(e) =>
+                                patchCriteria(exc.id, rule.id, { value: e.target.value })
+                              }
+                              placeholder="Value"
+                              className="h-8 w-[88px] rounded-[4px] border border-[#e9eaeb] bg-white px-2.5 text-[13px] text-[#0a0a0a] placeholder:text-[#9ca3af] [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                            />
+                          )}
+                          {criteriaPicked && criteriaOperatorPicked && hasUnit && (
+                            <span className="relative inline-flex">
+                              <select
+                                value={criteria.unit || 'weeks'}
+                                onChange={(e) =>
+                                  patchCriteria(exc.id, rule.id, { unit: e.target.value })
+                                }
+                                className={`${INLINE_SELECT} min-w-[88px]`}
                               >
-                                {criteriaIdx > 0 && <span>and</span>}
-                                {criteriaIdx === 0 && isAggregatedGranularity(rule.granularity) && (
-                                  <span>total</span>
-                                )}
-                                <span className="relative inline-flex">
-                                  <select
-                                    value={criteria.criteriaId || ''}
-                                    disabled={!granularityPicked}
-                                    onChange={(e) => {
-                                      const selectedCriteriaId = e.target.value
-                                      const nextDef = getCriteriaDef(selectedCriteriaId)
-                                      patchCriteria(exc.id, rule.id, criteria.id, {
-                                        criteriaId: selectedCriteriaId,
-                                        operator: '',
-                                        value: '',
-                                        unit: nextDef?.hasUnit ? 'weeks' : 'weeks',
-                                      })
-                                    }}
-                                    className={`${INLINE_SELECT} min-w-[200px]`}
-                                  >
-                                    <option value="">Select criteria…</option>
-                                    {getCriteriaOptionsForGranularity(rule.granularity).map((c) => (
-                                      <option key={c.id} value={c.id}>
-                                        {c.label}
-                                      </option>
-                                    ))}
-                                  </select>
-                                  <InlineSelectChevron />
-                                </span>
-                                <span>is</span>
-                                <span className="relative inline-flex">
-                                  <select
-                                    value={criteria.operator || ''}
-                                    disabled={!criteriaPicked}
-                                    onChange={(e) =>
-                                      patchCriteria(exc.id, rule.id, criteria.id, {
-                                        operator: e.target.value,
-                                      })
-                                    }
-                                    className={`${INLINE_SELECT} min-w-[160px]`}
-                                  >
-                                    <option value="">Select condition…</option>
-                                    {NUMERIC_OPERATORS.map((op) => (
-                                      <option key={op} value={op}>
-                                        {op}
-                                      </option>
-                                    ))}
-                                  </select>
-                                  <InlineSelectChevron />
-                                </span>
-                                {!criteriaPicked || !criteriaOperatorPicked ? (
-                                  <span
-                                    className="inline-flex h-8 min-w-[72px] cursor-not-allowed items-center rounded-[4px] border border-[#e9eaeb] bg-[#f3f4f6] px-2.5 text-[13px] italic text-[#9ca3af]"
-                                    aria-disabled
-                                  >
-                                    Value
-                                  </span>
-                                ) : (
-                                  <input
-                                    type="number"
-                                    value={criteria.value ?? ''}
-                                    onChange={(e) =>
-                                      patchCriteria(exc.id, rule.id, criteria.id, {
-                                        value: e.target.value,
-                                      })
-                                    }
-                                    placeholder="Value"
-                                    className="h-8 w-[88px] rounded-[4px] border border-[#e9eaeb] bg-white px-2.5 text-[13px] text-[#0a0a0a] placeholder:text-[#9ca3af] [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-                                  />
-                                )}
-                                {criteriaPicked && criteriaOperatorPicked && hasUnit && (
-                                  <span className="relative inline-flex">
-                                    <select
-                                      value={criteria.unit || 'weeks'}
-                                      onChange={(e) =>
-                                        patchCriteria(exc.id, rule.id, criteria.id, {
-                                          unit: e.target.value,
-                                        })
-                                      }
-                                      className={`${INLINE_SELECT} min-w-[88px]`}
-                                    >
-                                      {COVERAGE_UNITS.map((u) => (
-                                        <option key={u.value} value={u.value}>
-                                          {u.label}
-                                        </option>
-                                      ))}
-                                    </select>
-                                    <InlineSelectChevron />
-                                  </span>
-                                )}
-                                {canRemoveCriteria && (
-                                  <button
-                                    type="button"
-                                    className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-[4px] text-[#4b535c] hover:bg-[#e5e7eb] hover:text-[#0a0a0a]"
-                                    aria-label="Remove criteria"
-                                    onClick={() => removeCriteria(exc.id, rule.id, criteria.id)}
-                                  >
-                                    <IconClose className="size-3.5" />
-                                  </button>
-                                )}
-                              </span>
-                            )
-                          })}
+                                {COVERAGE_UNITS.map((u) => (
+                                  <option key={u.value} value={u.value}>
+                                    {u.label}
+                                  </option>
+                                ))}
+                              </select>
+                              <InlineSelectChevron />
+                            </span>
+                          )}
                           <span>.</span>
                         </p>
-
-                        {granularityPicked && (
-                          <div className="mt-2">
-                            <button
-                              type="button"
-                              onClick={() => addCriteria(exc.id, rule.id)}
-                              className="text-[13px] font-medium text-[#0267FF] hover:underline"
-                            >
-                              + Add criteria
-                            </button>
-                          </div>
-                        )}
 
                         {granularityPicked && orderedFilters.length === 0 && (
                           <div className="mt-3 flex flex-col gap-2">
