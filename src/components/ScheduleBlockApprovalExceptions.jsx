@@ -245,8 +245,38 @@ function createEmptyFilter(id, category) {
   return { id, category, fieldId: '', mode: 'include', values: [] }
 }
 
-function createEmptyCriteria() {
-  return { criteriaId: '', operator: '', value: '', unit: 'weeks' }
+function nextId(prefix) {
+  return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
+}
+
+function createEmptyCriteria(id = nextId('crit')) {
+  return { id, criteriaId: '', operator: '', value: '', unit: 'weeks' }
+}
+
+/** Normalize legacy single-object criteria into a non-empty array. */
+function ensureCriteriaArray(criteria) {
+  if (Array.isArray(criteria)) {
+    if (criteria.length === 0) return [createEmptyCriteria()]
+    return criteria.map((c) => ({
+      id: c.id || nextId('crit'),
+      criteriaId: c.criteriaId || '',
+      operator: c.operator || '',
+      value: c.value ?? '',
+      unit: c.unit || 'weeks',
+    }))
+  }
+  if (criteria != null && typeof criteria === 'object') {
+    return [
+      {
+        id: nextId('crit'),
+        criteriaId: criteria.criteriaId || '',
+        operator: criteria.operator || '',
+        value: criteria.value ?? '',
+        unit: criteria.unit || 'weeks',
+      },
+    ]
+  }
+  return [createEmptyCriteria()]
 }
 
 function createEmptyException(id) {
@@ -255,7 +285,7 @@ function createEmptyException(id) {
     expanded: true,
     granularity: '',
     filters: [],
-    criteria: createEmptyCriteria(),
+    criteria: [createEmptyCriteria()],
   }
 }
 
@@ -263,20 +293,22 @@ export function createDefaultScheduleExceptions() {
   return [createEmptyException('exc-1')]
 }
 
-function nextId(prefix) {
-  return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
-}
-
-/** Sentence-model shape: criteria is a single object (not an array). */
+/** Sentence-model shape: criteria is an array (legacy single object accepted and normalized). */
 function isSentenceShape(exc) {
   return (
     exc != null &&
     typeof exc === 'object' &&
     'granularity' in exc &&
     Array.isArray(exc.filters) &&
-    exc.criteria != null &&
-    !Array.isArray(exc.criteria)
+    exc.criteria != null
   )
+}
+
+function normalizeException(exc) {
+  return {
+    ...exc,
+    criteria: ensureCriteriaArray(exc.criteria),
+  }
 }
 
 function InlineSelectChevron() {
@@ -365,13 +397,18 @@ export function ScheduleBlockApprovalExceptions({ block, onUpdate }) {
     const raw = block.exceptions ?? []
     if (raw.length === 0 || !isSentenceShape(raw[0])) {
       onUpdate({ exceptions: createDefaultScheduleExceptions() })
+      return
+    }
+    // Migrate legacy single-object criteria → array once.
+    if (!Array.isArray(raw[0].criteria)) {
+      onUpdate({ exceptions: raw.map(normalizeException) })
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const rawExceptions = Array.isArray(block.exceptions) ? block.exceptions : []
   const exceptions =
     rawExceptions.length > 0 && isSentenceShape(rawExceptions[0])
-      ? rawExceptions
+      ? rawExceptions.map(normalizeException)
       : createDefaultScheduleExceptions()
 
   const exceptionsRef = useRef(exceptions)
@@ -412,15 +449,42 @@ export function ScheduleBlockApprovalExceptions({ block, onUpdate }) {
     patchException(exceptionId, {
       granularity,
       filters: [],
-      criteria: createEmptyCriteria(),
+      criteria: [createEmptyCriteria()],
     })
   }
 
-  const patchCriteria = (exceptionId, partial) => {
+  const addCriteria = (exceptionId) => {
     setExceptions((prev) =>
-      prev.map((e) =>
-        e.id === exceptionId ? { ...e, criteria: { ...e.criteria, ...partial } } : e
-      )
+      prev.map((e) => {
+        if (e.id !== exceptionId) return e
+        const list = ensureCriteriaArray(e.criteria)
+        return { ...e, criteria: [...list, createEmptyCriteria()] }
+      })
+    )
+  }
+
+  const removeCriteria = (exceptionId, criteriaRowId) => {
+    setExceptions((prev) =>
+      prev.map((e) => {
+        if (e.id !== exceptionId) return e
+        const list = ensureCriteriaArray(e.criteria)
+        if (list.length <= 1) return e
+        const next = list.filter((c) => c.id !== criteriaRowId)
+        return { ...e, criteria: next.length > 0 ? next : [createEmptyCriteria()] }
+      })
+    )
+  }
+
+  const patchCriteria = (exceptionId, criteriaRowId, partial) => {
+    setExceptions((prev) =>
+      prev.map((e) => {
+        if (e.id !== exceptionId) return e
+        const list = ensureCriteriaArray(e.criteria)
+        return {
+          ...e,
+          criteria: list.map((c) => (c.id === criteriaRowId ? { ...c, ...partial } : c)),
+        }
+      })
     )
   }
 
@@ -466,8 +530,10 @@ export function ScheduleBlockApprovalExceptions({ block, onUpdate }) {
     const filterParts = (exc.filters || [])
       .map((f) => buildFilterSummaryPart(exc.granularity, f))
       .filter(Boolean)
-    const criteriaPart = buildCriteriaSummaryPart(exc.criteria)
-    const parts = [...filterParts, ...(criteriaPart ? [criteriaPart] : [])]
+    const criteriaParts = ensureCriteriaArray(exc.criteria)
+      .map((c) => buildCriteriaSummaryPart(c))
+      .filter(Boolean)
+    const parts = [...filterParts, ...criteriaParts]
     if (!granLabel && parts.length === 0) return prefix
     if (granLabel && parts.length === 0) return `${prefix}: ${granLabel}`
     if (granLabel) return `${prefix}: ${granLabel} · ${parts.join(' and ')}`
@@ -482,11 +548,8 @@ export function ScheduleBlockApprovalExceptions({ block, onUpdate }) {
         const exceptionTitleFull = getExceptionDisplayName(exc, excIdx)
         const exceptionTitleDisplay = truncateExceptionTitleDisplay(exceptionTitleFull)
         const granularityPicked = Boolean(exc.granularity)
-        const criteria = exc.criteria ?? createEmptyCriteria()
-        const criteriaDef = getCriteriaDef(criteria.criteriaId)
-        const criteriaPicked = Boolean(criteria.criteriaId)
-        const criteriaOperatorPicked = Boolean(criteria.operator)
-        const hasUnit = Boolean(criteriaDef?.hasUnit)
+        const criteriaList = ensureCriteriaArray(exc.criteria)
+        const canRemoveCriteria = criteriaList.length > 1
         const availableCats = getAvailableFilterCategories(exc.granularity)
         // Filters render in the order the user added them (joined with AND in the sentence).
         const orderedFilters = exc.filters || []
@@ -531,83 +594,128 @@ export function ScheduleBlockApprovalExceptions({ block, onUpdate }) {
                     onChange={(next) => onGranularityChange(exc.id, next)}
                   />
                   <span>, flag as unapproved when</span>
-                  {isAggregatedGranularity(exc.granularity) && <span>total</span>}
-                  <span className="relative inline-flex">
-                    <select
-                      value={criteria.criteriaId || ''}
-                      disabled={!granularityPicked}
-                      onChange={(e) => {
-                        const selectedCriteriaId = e.target.value
-                        const nextDef = getCriteriaDef(selectedCriteriaId)
-                        patchCriteria(exc.id, {
-                          criteriaId: selectedCriteriaId,
-                          operator: '',
-                          value: '',
-                          unit: nextDef?.hasUnit ? 'weeks' : 'weeks',
-                        })
-                      }}
-                      className={`${INLINE_SELECT} min-w-[200px]`}
-                    >
-                      <option value="">Select criteria…</option>
-                      {getCriteriaOptionsForGranularity(exc.granularity).map((c) => (
-                        <option key={c.id} value={c.id}>
-                          {c.label}
-                        </option>
-                      ))}
-                    </select>
-                    <InlineSelectChevron />
-                  </span>
-                  <span>is</span>
-                  <span className="relative inline-flex">
-                    <select
-                      value={criteria.operator || ''}
-                      disabled={!criteriaPicked}
-                      onChange={(e) => patchCriteria(exc.id, { operator: e.target.value })}
-                      className={`${INLINE_SELECT} min-w-[160px]`}
-                    >
-                      <option value="">Select condition…</option>
-                      {NUMERIC_OPERATORS.map((op) => (
-                        <option key={op} value={op}>
-                          {op}
-                        </option>
-                      ))}
-                    </select>
-                    <InlineSelectChevron />
-                  </span>
-                  {!criteriaPicked || !criteriaOperatorPicked ? (
-                    <span
-                      className="inline-flex h-8 min-w-[72px] cursor-not-allowed items-center rounded-[4px] border border-[#e9eaeb] bg-[#f3f4f6] px-2.5 text-[13px] italic text-[#9ca3af]"
-                      aria-disabled
-                    >
-                      Value
-                    </span>
-                  ) : (
-                    <input
-                      type="number"
-                      value={criteria.value ?? ''}
-                      onChange={(e) => patchCriteria(exc.id, { value: e.target.value })}
-                      placeholder="Value"
-                      className="h-8 w-[88px] rounded-[4px] border border-[#e9eaeb] bg-white px-2.5 text-[13px] text-[#0a0a0a] placeholder:text-[#9ca3af] [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-                    />
-                  )}
-                  {criteriaPicked && criteriaOperatorPicked && hasUnit && (
-                    <span className="relative inline-flex">
-                      <select
-                        value={criteria.unit || 'weeks'}
-                        onChange={(e) => patchCriteria(exc.id, { unit: e.target.value })}
-                        className={`${INLINE_SELECT} min-w-[88px]`}
+                  {criteriaList.map((criteria, criteriaIdx) => {
+                    const criteriaDef = getCriteriaDef(criteria.criteriaId)
+                    const criteriaPicked = Boolean(criteria.criteriaId)
+                    const criteriaOperatorPicked = Boolean(criteria.operator)
+                    const hasUnit = Boolean(criteriaDef?.hasUnit)
+
+                    return (
+                      <span
+                        key={criteria.id}
+                        className="inline-flex flex-wrap items-center gap-x-1.5 gap-y-2"
                       >
-                        {COVERAGE_UNITS.map((u) => (
-                          <option key={u.value} value={u.value}>
-                            {u.label}
-                          </option>
-                        ))}
-                      </select>
-                      <InlineSelectChevron />
-                    </span>
-                  )}
+                        {criteriaIdx > 0 && <span>and</span>}
+                        {criteriaIdx === 0 && isAggregatedGranularity(exc.granularity) && (
+                          <span>total</span>
+                        )}
+                        <span className="relative inline-flex">
+                          <select
+                            value={criteria.criteriaId || ''}
+                            disabled={!granularityPicked}
+                            onChange={(e) => {
+                              const selectedCriteriaId = e.target.value
+                              const nextDef = getCriteriaDef(selectedCriteriaId)
+                              patchCriteria(exc.id, criteria.id, {
+                                criteriaId: selectedCriteriaId,
+                                operator: '',
+                                value: '',
+                                unit: nextDef?.hasUnit ? 'weeks' : 'weeks',
+                              })
+                            }}
+                            className={`${INLINE_SELECT} min-w-[200px]`}
+                          >
+                            <option value="">Select criteria…</option>
+                            {getCriteriaOptionsForGranularity(exc.granularity).map((c) => (
+                              <option key={c.id} value={c.id}>
+                                {c.label}
+                              </option>
+                            ))}
+                          </select>
+                          <InlineSelectChevron />
+                        </span>
+                        <span>is</span>
+                        <span className="relative inline-flex">
+                          <select
+                            value={criteria.operator || ''}
+                            disabled={!criteriaPicked}
+                            onChange={(e) =>
+                              patchCriteria(exc.id, criteria.id, { operator: e.target.value })
+                            }
+                            className={`${INLINE_SELECT} min-w-[160px]`}
+                          >
+                            <option value="">Select condition…</option>
+                            {NUMERIC_OPERATORS.map((op) => (
+                              <option key={op} value={op}>
+                                {op}
+                              </option>
+                            ))}
+                          </select>
+                          <InlineSelectChevron />
+                        </span>
+                        {!criteriaPicked || !criteriaOperatorPicked ? (
+                          <span
+                            className="inline-flex h-8 min-w-[72px] cursor-not-allowed items-center rounded-[4px] border border-[#e9eaeb] bg-[#f3f4f6] px-2.5 text-[13px] italic text-[#9ca3af]"
+                            aria-disabled
+                          >
+                            Value
+                          </span>
+                        ) : (
+                          <input
+                            type="number"
+                            value={criteria.value ?? ''}
+                            onChange={(e) =>
+                              patchCriteria(exc.id, criteria.id, { value: e.target.value })
+                            }
+                            placeholder="Value"
+                            className="h-8 w-[88px] rounded-[4px] border border-[#e9eaeb] bg-white px-2.5 text-[13px] text-[#0a0a0a] placeholder:text-[#9ca3af] [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                          />
+                        )}
+                        {criteriaPicked && criteriaOperatorPicked && hasUnit && (
+                          <span className="relative inline-flex">
+                            <select
+                              value={criteria.unit || 'weeks'}
+                              onChange={(e) =>
+                                patchCriteria(exc.id, criteria.id, { unit: e.target.value })
+                              }
+                              className={`${INLINE_SELECT} min-w-[88px]`}
+                            >
+                              {COVERAGE_UNITS.map((u) => (
+                                <option key={u.value} value={u.value}>
+                                  {u.label}
+                                </option>
+                              ))}
+                            </select>
+                            <InlineSelectChevron />
+                          </span>
+                        )}
+                        {canRemoveCriteria && (
+                          <button
+                            type="button"
+                            className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-[4px] text-[#4b535c] hover:bg-[#e5e7eb] hover:text-[#0a0a0a]"
+                            aria-label="Remove criteria"
+                            onClick={() => removeCriteria(exc.id, criteria.id)}
+                          >
+                            <IconClose className="size-3.5" />
+                          </button>
+                        )}
+                      </span>
+                    )
+                  })}
                   <span>.</span>
                 </p>
+
+                {granularityPicked && (
+                  <div className="mt-2">
+                    <button
+                      type="button"
+                      onClick={() => addCriteria(exc.id)}
+                      className="text-[13px] font-medium text-[#0267FF] hover:underline"
+                    >
+                      + Add criteria
+                    </button>
+                  </div>
+                )}
 
                 {/* Filters: empty affordance OR applied sentence */}
                 {granularityPicked && orderedFilters.length === 0 && (
