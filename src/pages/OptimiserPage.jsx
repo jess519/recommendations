@@ -620,7 +620,7 @@ function CreateScheduleScopeFilterPanel({
             onModeChange={setDepartmentMode}
           />
         </div>
-        <div className="w-full self-start border-l-[3px] border-[#0267ff] pl-3">
+        <div className="flex w-full flex-col gap-3 self-start">
           <CreateScheduleScopeMultiSelect
             label="Warehouse"
             helperText="Where products are distributed from. If none selected, we'll use your full network."
@@ -633,6 +633,7 @@ function CreateScheduleScopeFilterPanel({
             mode={warehouseMode}
             onModeChange={setWarehouseMode}
           />
+          <div className="border-t border-[#e5e7eb]" aria-hidden="true" />
         </div>
 
         <div className="w-full self-start">
