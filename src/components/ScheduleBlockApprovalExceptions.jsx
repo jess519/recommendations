@@ -428,7 +428,6 @@ export function ScheduleBlockApprovalExceptions({ block, onUpdate }) {
     setExceptions((prev) =>
       prev.map((e) => {
         if (e.id !== exceptionId) return e
-        if (e.filters.some((f) => f.category === category)) return e
         return {
           ...e,
           filters: [...e.filters, createEmptyFilter(nextId('filter'), category)],
@@ -489,13 +488,8 @@ export function ScheduleBlockApprovalExceptions({ block, onUpdate }) {
         const criteriaOperatorPicked = Boolean(criteria.operator)
         const hasUnit = Boolean(criteriaDef?.hasUnit)
         const availableCats = getAvailableFilterCategories(exc.granularity)
-        const usedCategories = new Set((exc.filters || []).map((f) => f.category))
-        const remainingCats = availableCats.filter((c) => !usedCategories.has(c.id))
-        // Stable order for sentence: product, then location (sending/receiving)
-        const orderedFilters = [...(exc.filters || [])].sort((a, b) => {
-          const order = { product: 0, sending: 1, receiving: 1 }
-          return (order[a.category] ?? 9) - (order[b.category] ?? 9)
-        })
+        // Filters render in the order the user added them (joined with AND in the sentence).
+        const orderedFilters = exc.filters || []
 
         return (
           <div key={exc.id} className="overflow-visible rounded-[4px] border border-[#e5e7eb] bg-white">
@@ -624,7 +618,7 @@ export function ScheduleBlockApprovalExceptions({ block, onUpdate }) {
                         : 'Apply only to specific products or locations?'}
                     </p>
                     <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                      {remainingCats.map((cat) => (
+                      {availableCats.map((cat) => (
                         <button
                           key={cat.id}
                           type="button"
@@ -826,9 +820,9 @@ export function ScheduleBlockApprovalExceptions({ block, onUpdate }) {
                       })}
                       <span>.</span>
                     </div>
-                    {remainingCats.length > 0 && (
+                    {availableCats.length > 0 && (
                       <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                        {remainingCats.map((cat) => (
+                        {availableCats.map((cat) => (
                           <button
                             key={cat.id}
                             type="button"
