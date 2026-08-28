@@ -9839,8 +9839,153 @@ function SummaryPage() {
   )
 }
 
+function isApprovedRecommendationStatus(status) {
+  return status === 'approved_by_system' || status === 'approved_by_user'
+}
+
+/** Live batch approved / unapproved recommendation counts (Explorer SKU-trip rows + overrides). */
+function getBatchApprovalCounts(statusOverrides = {}) {
+  let approved = 0
+  let unapproved = 0
+  for (const row of EXPLORER_DATA) {
+    const status = statusOverrides[row.id] ?? getRowStatus(row)
+    if (isApprovedRecommendationStatus(status)) approved += 1
+    else unapproved += 1
+  }
+  return { approved, unapproved }
+}
+
+/**
+ * Submit confirmation modal — shell matches InfoHelpModal / SetInventoryGoalModal patterns.
+ * Kept in this file so SummaryPage can stay unwired but retained for later reuse.
+ */
+function SubmitRecommendationsModal({
+  open,
+  onClose,
+  approvedCount,
+  unapprovedCount,
+  onSubmitApprovedOnly,
+  onApproveAllAndSubmit,
+  onSubmitAllApproved,
+}) {
+  useEffect(() => {
+    if (!open) return
+    const onKey = (e) => {
+      if (e.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [open, onClose])
+
+  useEffect(() => {
+    if (open) document.body.style.overflow = 'hidden'
+    else document.body.style.overflow = ''
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [open])
+
+  if (!open) return null
+
+  const titleId = 'submit-recommendations-modal-title'
+  const onlyApproved = unapprovedCount === 0 && approvedCount > 0
+  const zeroApproved = approvedCount === 0 && unapprovedCount > 0
+
+  const primaryBtnClass =
+    'flex h-10 w-full items-center justify-center rounded-[4px] bg-[#0267ff] px-4 text-[14px] font-medium text-white hover:bg-[#0252cc] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-[#0267ff]'
+  const secondaryBtnClass =
+    'flex h-10 w-full items-center justify-center rounded-[4px] border border-[#E9EAEB] bg-white px-4 text-[14px] font-medium text-[#0a0a0a] hover:bg-[#f8f8f8]'
+  const tertiaryBtnClass =
+    'flex h-10 w-full items-center justify-center rounded-[4px] px-4 text-[14px] font-medium text-[#4b535c] hover:bg-[#f3f4f6] hover:text-[#0a0a0a]'
+
+  return (
+    <div
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby={titleId}
+    >
+      <button type="button" className="absolute inset-0 bg-black/45" aria-label="Close dialog" onClick={onClose} />
+      <div
+        className="relative z-[1] flex w-full max-w-[480px] flex-col overflow-hidden rounded-[6px] bg-white shadow-[0px_8px_25px_0px_rgba(0,0,0,0.1)]"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex shrink-0 items-center gap-4 border-b border-[#e9eaeb] p-4">
+          <h2 id={titleId} className="min-h-8 flex-1 text-lg font-medium leading-normal text-[#0a0a0a]">
+            Submit recommendations
+          </h2>
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex size-10 shrink-0 items-center justify-center rounded-[4px] text-[#0a0a0a] hover:bg-[#f3f4f6]"
+            aria-label="Close"
+          >
+            <IconClose className="h-4 w-4" />
+          </button>
+        </div>
+
+        <div className="px-4 py-6">
+          {onlyApproved ? (
+            <p className="text-[14px] leading-normal text-[#0a0a0a]">
+              You are about to submit{' '}
+              <span className="font-semibold">{approvedCount}</span> approved recommendations.
+            </p>
+          ) : zeroApproved ? (
+            <p className="text-[14px] leading-normal text-[#0a0a0a]">
+              You have <span className="font-semibold">0</span> approved and{' '}
+              <span className="font-semibold">{unapprovedCount}</span> unapproved recommendations. What
+              would you like to do?
+            </p>
+          ) : (
+            <p className="text-[14px] leading-normal text-[#0a0a0a]">
+              You have <span className="font-semibold">{approvedCount}</span> approved and{' '}
+              <span className="font-semibold">{unapprovedCount}</span> unapproved recommendations. What
+              would you like to submit?
+            </p>
+          )}
+        </div>
+
+        <div className="flex shrink-0 flex-col gap-2 border-t border-[#e9eaeb] bg-[#fafafa] p-4">
+          {onlyApproved ? (
+            <>
+              <button type="button" className={primaryBtnClass} onClick={onSubmitAllApproved}>
+                Submit
+              </button>
+              <button type="button" className={tertiaryBtnClass} onClick={onClose}>
+                Cancel
+              </button>
+            </>
+          ) : zeroApproved ? (
+            <>
+              <button type="button" className={primaryBtnClass} onClick={onApproveAllAndSubmit}>
+                Approve all and submit
+              </button>
+              <button type="button" className={tertiaryBtnClass} onClick={onClose}>
+                Cancel
+              </button>
+            </>
+          ) : (
+            <>
+              <button type="button" className={primaryBtnClass} onClick={onSubmitApprovedOnly}>
+                Submit approved only
+              </button>
+              <button type="button" className={secondaryBtnClass} onClick={onApproveAllAndSubmit}>
+                Approve all and submit
+              </button>
+              <button type="button" className={tertiaryBtnClass} onClick={onClose}>
+                Cancel
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function ScheduleDetailPage() {
-  const [showSummary, setShowSummary] = useState(false)
+  const [submitModalOpen, setSubmitModalOpen] = useState(false)
+  const [submitFeedback, setSubmitFeedback] = useState(null)
   const [activeTab, setActiveTab] = useState('products')
   const [viewShowsFullDataset, setViewShowsFullDataset] = useState(true)
   const [selectedView, setSelectedView] = useState('Show all recommendations')
@@ -10029,6 +10174,12 @@ export default function ScheduleDetailPage() {
 
   const [bulkChangeStatusOpen, setBulkChangeStatusOpen] = useState(false)
 
+  const batchApprovalCounts = useMemo(
+    () => getBatchApprovalCounts(explorerStatusOverrides),
+    [explorerStatusOverrides]
+  )
+  const submitDisabled =
+    batchApprovalCounts.approved === 0 && batchApprovalCounts.unapproved === 0
 
   const handleBulkStatusChange = (statusId) => {
     if (!selectedTripIds.size) return
@@ -10043,8 +10194,74 @@ export default function ScheduleDetailPage() {
     setSelectedTripIds(new Set())
   }
 
+  const approveAllExplorerRows = () => {
+    setExplorerStatusOverrides((prev) => {
+      const next = { ...prev }
+      for (const row of EXPLORER_DATA) {
+        const status = next[row.id] ?? getRowStatus(row)
+        if (!isApprovedRecommendationStatus(status)) {
+          next[row.id] = 'approved_by_user'
+        }
+      }
+      return next
+    })
+    setTripStatusOverrides((prev) => {
+      const next = { ...prev }
+      for (const row of TRIPS_ALL) {
+        const status = next[row.id] ?? getRowStatus(row)
+        if (!isApprovedRecommendationStatus(status)) {
+          next[row.id] = 'approved_by_user'
+        }
+      }
+      return next
+    })
+  }
+
+  /** Prototype final submit — previous summary CTA had no handler; close modal + show feedback. */
+  const completeBatchSubmit = (message) => {
+    setSubmitModalOpen(false)
+    setSubmitFeedback(message)
+  }
+
+  const handleSubmitApprovedOnly = () => {
+    completeBatchSubmit(
+      `Submitted ${batchApprovalCounts.approved} approved recommendation${
+        batchApprovalCounts.approved === 1 ? '' : 's'
+      }.`
+    )
+  }
+
+  const handleApproveAllAndSubmit = () => {
+    const total = batchApprovalCounts.approved + batchApprovalCounts.unapproved
+    approveAllExplorerRows()
+    completeBatchSubmit(
+      `Approved all and submitted ${total} recommendation${total === 1 ? '' : 's'}.`
+    )
+  }
+
+  const handleSubmitAllApproved = () => {
+    completeBatchSubmit(
+      `Submitted ${batchApprovalCounts.approved} approved recommendation${
+        batchApprovalCounts.approved === 1 ? '' : 's'
+      }.`
+    )
+  }
+
   return (
     <div className="pt-0 flex flex-col gap-6">
+      {submitFeedback && (
+        <div className="flex items-center justify-between gap-3 rounded-[4px] border border-[#bbf7d0] bg-[#f0fdf4] px-4 py-3 text-[14px] text-[#166534]">
+          <span>{submitFeedback}</span>
+          <button
+            type="button"
+            onClick={() => setSubmitFeedback(null)}
+            className="flex size-8 shrink-0 items-center justify-center rounded-[4px] text-[#166534] hover:bg-[#dcfce7]"
+            aria-label="Dismiss"
+          >
+            <IconClose className="size-3.5" />
+          </button>
+        </div>
+      )}
       <header className="flex flex-col gap-4">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="flex flex-col gap-2 min-w-0">
@@ -10070,47 +10287,42 @@ export default function ScheduleDetailPage() {
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            {!showSummary && (
-              <>
-                <button
-                  type="button"
-                  className="h-9 w-9 flex items-center justify-center rounded-[4px] border border-[#e5e7eb] bg-white text-[#4b535c] hover:bg-[#f3f4f6]"
-                  aria-label="Share"
-                >
-                  <IconShare />
-                </button>
-                <button
-                  type="button"
-                  className="h-9 w-9 flex items-center justify-center rounded-[4px] border border-[#e5e7eb] bg-white text-[#4b535c] hover:bg-[#f3f4f6]"
-                  aria-label="Download"
-                >
-                  <IconDocument />
-                </button>
-              </>
-            )}
-            {showSummary ? (
-              <button
-                type="button"
-                className="h-10 px-4 rounded-[4px] bg-[#0267ff] text-white text-[14px] font-medium flex items-center gap-2 hover:bg-[#0252cc]"
-              >
-                Submit recommendations
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={() => setShowSummary(true)}
-                className="h-10 px-4 rounded-[4px] bg-[#0267ff] text-white text-[14px] font-medium flex items-center gap-2 hover:bg-[#0252cc]"
-              >
-                Continue to summary
-              </button>
-            )}
+            <button
+              type="button"
+              className="h-9 w-9 flex items-center justify-center rounded-[4px] border border-[#e5e7eb] bg-white text-[#4b535c] hover:bg-[#f3f4f6]"
+              aria-label="Share"
+            >
+              <IconShare />
+            </button>
+            <button
+              type="button"
+              className="h-9 w-9 flex items-center justify-center rounded-[4px] border border-[#e5e7eb] bg-white text-[#4b535c] hover:bg-[#f3f4f6]"
+              aria-label="Download"
+            >
+              <IconDocument />
+            </button>
+            <button
+              type="button"
+              disabled={submitDisabled}
+              onClick={() => setSubmitModalOpen(true)}
+              className="h-10 px-4 rounded-[4px] bg-[#0267ff] text-white text-[14px] font-medium flex items-center gap-2 hover:bg-[#0252cc] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-[#0267ff]"
+            >
+              Submit
+            </button>
           </div>
         </div>
       </header>
 
-      {showSummary ? (
-        <SummaryPage />
-      ) : (
+      <SubmitRecommendationsModal
+        open={submitModalOpen}
+        onClose={() => setSubmitModalOpen(false)}
+        approvedCount={batchApprovalCounts.approved}
+        unapprovedCount={batchApprovalCounts.unapproved}
+        onSubmitApprovedOnly={handleSubmitApprovedOnly}
+        onApproveAllAndSubmit={handleApproveAllAndSubmit}
+        onSubmitAllApproved={handleSubmitAllApproved}
+      />
+
       <div className="flex flex-col gap-[15px]">
         <div className="flex items-center justify-between gap-4">
           <nav className="flex items-center gap-6 h-11">
@@ -10888,7 +11100,6 @@ export default function ScheduleDetailPage() {
         </div>
       )}
       </div>
-      )}
     </div>
   )
 }
