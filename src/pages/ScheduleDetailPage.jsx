@@ -7769,7 +7769,9 @@ function renderExplorerBodyCell(row, col, {
       const packsOnly = Boolean(row.isInPack) && !row.hasLooseUnits
       return (
         <td key={col.id} className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}>
-          {packsOnly ? null : (
+          {packsOnly ? (
+            <span className="text-[14px] text-[#9ca3af]">N/A</span>
+          ) : (
             <span className="text-[14px] text-[#0a0a0a]">{row.salesL7 ?? '—'}</span>
           )}
         </td>
@@ -7791,7 +7793,9 @@ function renderExplorerBodyCell(row, col, {
       const packsOnly = Boolean(row.isInPack) && !row.hasLooseUnits
       return (
         <td key={col.id} className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}>
-          {packsOnly ? null : (
+          {packsOnly ? (
+            <span className="text-[14px] text-[#9ca3af]">N/A</span>
+          ) : (
             <span className="text-[14px] text-[#0a0a0a]">{row.forecast}</span>
           )}
         </td>
