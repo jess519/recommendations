@@ -7765,12 +7765,16 @@ function renderExplorerBodyCell(row, col, {
           <ProductNextEventCell nextEvent={row.nextEvent} />
         </td>
       )
-    case 'salesL7':
+    case 'salesL7': {
+      const packsOnly = Boolean(row.isInPack) && !row.hasLooseUnits
       return (
         <td key={col.id} className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}>
-          <span className="text-[14px] text-[#0a0a0a]">{row.salesL7 ?? '—'}</span>
+          {packsOnly ? null : (
+            <span className="text-[14px] text-[#0a0a0a]">{row.salesL7 ?? '—'}</span>
+          )}
         </td>
       )
+    }
     case 'salesL30':
       return (
         <td key={col.id} className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}>
@@ -7783,12 +7787,16 @@ function renderExplorerBodyCell(row, col, {
           <span className="text-[14px] text-[#0a0a0a]">{row.salesL90 ?? '—'}</span>
         </td>
       )
-    case 'forecast':
+    case 'forecast': {
+      const packsOnly = Boolean(row.isInPack) && !row.hasLooseUnits
       return (
         <td key={col.id} className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}>
-          <span className="text-[14px] text-[#0a0a0a]">{row.forecast}</span>
+          {packsOnly ? null : (
+            <span className="text-[14px] text-[#0a0a0a]">{row.forecast}</span>
+          )}
         </td>
       )
+    }
     case 'stockInCirculation':
       return (
         <td key={col.id} className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}>
@@ -8634,9 +8642,18 @@ function ExplorerTable({
     const sumTransfers = skuRows.reduce((sum, row) => sum + getEffectiveTransfers(row), 0)
     const sumRevenueK = skuRows.reduce((sum, row) => sum + parseExplorerRevenueK(row.revenue), 0)
     const sumRecommended = skuRows.reduce((sum, row) => sum + parseInt(row.recommended, 10), 0)
-    const sumSalesL7 = skuRows.reduce((sum, row) => sum + row.salesL7, 0)
-    const sumSalesL30 = skuRows.reduce((sum, row) => sum + row.salesL30, 0)
-    const sumSalesL90 = skuRows.reduce((sum, row) => sum + (row.salesL90 ?? 0), 0)
+    const sumSalesL7 = skuRows.reduce(
+      (sum, row) => (row.isInPack && !row.hasLooseUnits ? sum : sum + row.salesL7),
+      0
+    )
+    const sumSalesL30 = skuRows.reduce(
+      (sum, row) => (row.isInPack && !row.hasLooseUnits ? sum : sum + row.salesL30),
+      0
+    )
+    const sumSalesL90 = skuRows.reduce(
+      (sum, row) => (row.isInPack && !row.hasLooseUnits ? sum : sum + (row.salesL90 ?? 0)),
+      0
+    )
     const sumStockBefore = skuRows.reduce((sum, row) => sum + row.stockBefore, 0)
     const sumStockAfter = skuRows.reduce((sum, row) => sum + row.stockAfter, 0)
     const sumInTransitAndPfp = skuRows.reduce((sum, row) => sum + row.stockInTransitAndPfp, 0)
