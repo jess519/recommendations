@@ -7473,9 +7473,17 @@ function filterExplorerRows(
 /**
  * Build Explorer display rows: flat per-SKU (or per SKU×pack) rows.
  * Pack membership is expressed via the Pack transfers column — no expandable pack parents.
+ * Default order: pack rows first, then non-pack (stable within each group).
  */
 function buildExplorerDisplayRows(filteredSkuRows) {
-  return filteredSkuRows.map((row) => ({ rowKind: 'sku', ...row }))
+  const packRows = []
+  const nonPackRows = []
+  for (const row of filteredSkuRows) {
+    const display = { rowKind: 'sku', ...row }
+    if (row.isInPack) packRows.push(display)
+    else nonPackRows.push(display)
+  }
+  return [...packRows, ...nonPackRows]
 }
 
 const EXPLORER_TABLE_COLUMN_COUNT = EXPLORER_TABLE_COLUMNS.length
@@ -7601,6 +7609,8 @@ function renderExplorerBodyCell(row, col, {
         (explorerPackQuantityOverrides?.[row.id] !== undefined &&
           explorerPackQuantityOverrides[row.id] !== row.packQuantity)
       const availableConstrained = !isOvercommitted && availableToSend <= 0
+      // Packs-only: available-to-send lives under Pack transfers only
+      const showAvailableCopy = !packsOnly
 
       return (
         <td
@@ -7631,17 +7641,18 @@ function renderExplorerBodyCell(row, col, {
                   isOvercommitted && isEditedRow ? 'border-[#DC2626]' : undefined
                 }
               />
-              {isOvercommitted ? (
-                <span className="text-[12px] text-[#B45309]">availability exceeded</span>
-              ) : (
-                <span
-                  className={`text-[12px] ${
-                    availableConstrained ? 'text-[#B45309]' : 'text-[#166534]'
-                  }`}
-                >
-                  {availableToSend} available to send
-                </span>
-              )}
+              {showAvailableCopy &&
+                (isOvercommitted ? (
+                  <span className="text-[12px] text-[#B45309]">availability exceeded</span>
+                ) : (
+                  <span
+                    className={`text-[12px] ${
+                      availableConstrained ? 'text-[#B45309]' : 'text-[#166534]'
+                    }`}
+                  >
+                    {availableToSend} available to send
+                  </span>
+                ))}
             </div>
           </TuHoverPopover>
         </td>
@@ -7657,6 +7668,12 @@ function renderExplorerBodyCell(row, col, {
         )
       }
       const packQty = getEffectivePackQuantity?.(row) ?? 0
+      const unitsPerPack = Number(row.unitsPerPack) || 0
+      const availableUnits = getAvailableToSend?.(row) ?? 0
+      const packsAvailable =
+        unitsPerPack > 0 ? Math.max(0, Math.floor(availableUnits / unitsPerPack)) : 0
+      const isOvercommitted = isLocationOvercommitted?.(row.fromLocation) ?? false
+      const availableConstrained = !isOvercommitted && packsAvailable <= 0
       return (
         <td
           key={col.id}
@@ -7668,6 +7685,17 @@ function renderExplorerBodyCell(row, col, {
               value={packQty}
               onChange={(newValue) => handlePackTransfersEdit?.(row, newValue)}
             />
+            {isOvercommitted ? (
+              <span className="text-[12px] text-[#B45309]">availability exceeded</span>
+            ) : (
+              <span
+                className={`text-[12px] ${
+                  availableConstrained ? 'text-[#B45309]' : 'text-[#166534]'
+                }`}
+              >
+                {packsAvailable} available to send
+              </span>
+            )}
           </div>
         </td>
       )
