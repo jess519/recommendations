@@ -1129,10 +1129,17 @@ const EXPLORER_PRODUCTS = [
     movementTypes: ['replenishment'],
     packMultiple: 10,
     isVirtualPack: false,
-    // Mixed fulfilment demo: same SKU×from×to×movement splits into pack + loose rows
+    // Mixed fulfilment demo: pack + loose on one SKU row (Pack transfers + Transfers)
     mixedFulfilmentByStore: {
       Opéra: { pack: 20, loose: 3 },
       'Cap 3000': { pack: 30, loose: 5 },
+    },
+    // Packs-only / loose-only stores for Explorer Pack transfers scenarios
+    packOnlyStores: {
+      'La Défense': 40,
+    },
+    looseOnlyStores: {
+      'Printemps Lille': 7,
     },
   },
 ]
@@ -1369,7 +1376,10 @@ function buildExplorerRow(rowIndex, product, size, fromLoc, toLoc, movementType,
       ? options.transfers
       : Math.max(packMultiple, Math.round(transfers / packMultiple) * packMultiple)
     : transfers
-  const stockAfter = stockBefore + alignedTransfers + (stockFromOtherStores ?? 0)
+  const looseUnitsOption = options.looseUnits != null ? Math.max(0, Number(options.looseUnits) || 0) : null
+  const totalTransfers =
+    looseUnitsOption != null ? alignedTransfers + looseUnitsOption : alignedTransfers
+  const stockAfter = stockBefore + totalTransfers + (stockFromOtherStores ?? 0)
   return {
     id: `exp-row-${rowIndex}`,
     productId: product.id,
@@ -1389,9 +1399,11 @@ function buildExplorerRow(rowIndex, product, size, fromLoc, toLoc, movementType,
     toLocation: toLoc,
     movementType,
     fulfilmentType,
-    transfers: alignedTransfers,
+    transfers: totalTransfers,
     packMultiple,
     isVirtualPack,
+    // Seeded for Pack transfers column; finalize in buildExplorerData normalize pass
+    looseUnits: looseUnitsOption ?? 0,
     availableToSend,
     visibilityBefore: rowIndex % 11 === 0 ? 2 : rowIndex % 5 === 0 ? 1 : 0,
     visibilityAfter: rowIndex % 11 === 0 ? 3 : rowIndex % 5 === 0 ? 2 : 1,
@@ -1404,7 +1416,7 @@ function buildExplorerRow(rowIndex, product, size, fromLoc, toLoc, movementType,
     recommendedBadges: BADGE_CYCLE[rowIndex % BADGE_CYCLE.length],
     recommendedSub: rowIndex % 3 === 0 ? '2' : undefined,
     confidence: CONFIDENCE_CYCLE[rowIndex % CONFIDENCE_CYCLE.length],
-    confidenceBuckets: buildExplorerConfidenceBuckets(rowIndex, alignedTransfers),
+    confidenceBuckets: buildExplorerConfidenceBuckets(rowIndex, totalTransfers),
     coverageWeeksBefore,
     coverageWeeksAfter,
     nextEvent: {
@@ -1443,7 +1455,7 @@ function buildExplorerData() {
     product.sizes.forEach((size) => {
       product.movementTypes.forEach((movementType) => {
         if (movementType === 'replenishment' && product.mixedFulfilmentByStore) {
-          // Mixed-fulfilment products: only seeded stores; pack + loose as separate rows
+          // Mixed-fulfilment products: one row per SKU×store with pack + optional loose
           const mixedByStore = product.mixedFulfilmentByStore
           const packOnlyStores = product.packOnlyStores ?? {}
           const looseOnlyStores = product.looseOnlyStores ?? {}
@@ -1454,12 +1466,7 @@ function buildExplorerData() {
                 buildExplorerRow(rowIndex++, product, size, EXPLORER_WAREHOUSE, store, 'replenishment', {
                   fulfilmentType: 'pack',
                   transfers: mixed.pack,
-                })
-              )
-              rows.push(
-                buildExplorerRow(rowIndex++, product, size, EXPLORER_WAREHOUSE, store, 'replenishment', {
-                  fulfilmentType: 'loose',
-                  transfers: mixed.loose,
+                  looseUnits: mixed.loose,
                 })
               )
               return
@@ -1469,6 +1476,7 @@ function buildExplorerData() {
                 buildExplorerRow(rowIndex++, product, size, EXPLORER_WAREHOUSE, store, 'replenishment', {
                   fulfilmentType: 'pack',
                   transfers: packOnlyStores[store],
+                  looseUnits: 0,
                 })
               )
               return
@@ -1478,6 +1486,7 @@ function buildExplorerData() {
                 buildExplorerRow(rowIndex++, product, size, EXPLORER_WAREHOUSE, store, 'replenishment', {
                   fulfilmentType: 'loose',
                   transfers: looseOnlyStores[store],
+                  looseUnits: looseOnlyStores[store],
                 })
               )
             }
@@ -1499,7 +1508,7 @@ function buildExplorerData() {
     })
   })
 
-  // Annotate multi-SKU pack members (Log01 → pack destination). Pack rows are display-only.
+  // Annotate multi-SKU pack members (Log01 → pack destination). One SKU row per pack membership.
   for (const row of rows) {
     if (row.movementType !== 'replenishment' || row.fromLocation !== EXPLORER_WAREHOUSE) continue
     const packDef = EXPLORER_MULTI_SKU_PACKS.find(
@@ -1516,6 +1525,11 @@ function buildExplorerData() {
     row.isVirtualPack = Boolean(packDef.isVirtualPack)
     row.isPackMember = true
     row.packMultiple = null
+    row.isInPack = true
+    row.packQuantity = packDef.packCount
+    row.unitsPerPack = unitsPerPack
+    row.looseUnits = 0
+    row.hasLooseUnits = false
     row.transfers = unitsPerPack * packDef.packCount
     row.stockAfter = row.stockBefore + row.transfers + (row.stockFromOtherStores ?? 0)
     // Coin pack children: end-state coverage reflects pack arrival (stock / forecast weeks)
@@ -1527,12 +1541,44 @@ function buildExplorerData() {
   }
 
   // Coin-pack: only show annotated pack-member replen rows (drop stray size×store noise)
-  return rows.filter((row) => {
+  const filtered = rows.filter((row) => {
     if (row.productId === 'exp-p-coin' && row.movementType === 'replenishment') {
       return Boolean(row.isPackMember)
     }
     return true
   })
+
+  // Normalize Pack transfers fields for every Explorer SKU row
+  for (const row of filtered) {
+    if (row.isPackMember || row.isInPack) {
+      // Multi-SKU members already normalized above
+      if (row.packQuantity != null && row.unitsPerPack != null) {
+        row.hasLooseUnits = (row.looseUnits ?? 0) > 0
+        continue
+      }
+    }
+    if (row.packMultiple != null && row.packMultiple > 0) {
+      const unitsPerPack = row.packMultiple
+      const looseUnits = Math.max(0, Number(row.looseUnits) || 0)
+      const packUnits = Math.max(0, row.transfers - looseUnits)
+      row.isInPack = true
+      row.unitsPerPack = unitsPerPack
+      row.packQuantity = unitsPerPack > 0 ? Math.round(packUnits / unitsPerPack) : 0
+      row.looseUnits = looseUnits
+      row.hasLooseUnits = looseUnits > 0
+      row.packId = row.packId ?? row.sku
+      row.packName = row.packName ?? row.productName
+      continue
+    }
+    row.isInPack = false
+    row.packQuantity = null
+    row.unitsPerPack = null
+    row.looseUnits = row.transfers
+    row.hasLooseUnits = true
+    row.packId = null
+  }
+
+  return filtered
 }
 
 function isExplorerPackRowId(rowId) {
@@ -4572,10 +4618,22 @@ function productHasPackUnitOverride(p, productTransfersOverrides = {}, replenTra
 }
 
 /** Explorer pack / pack-member row with a transfer override that differs from original. */
-function explorerRowHasPackUnitOverride(row, explorerTransferOverrides = {}) {
+function explorerRowHasPackUnitOverride(
+  row,
+  explorerTransferOverrides = {},
+  explorerPackQuantityOverrides = {}
+) {
   const isPackRow =
-    (row?.packMultiple != null && row.packMultiple > 0) || Boolean(row?.isPackMember)
+    Boolean(row?.isInPack) ||
+    (row?.packMultiple != null && row.packMultiple > 0) ||
+    Boolean(row?.isPackMember)
   if (!isPackRow) return false
+  if (
+    explorerPackQuantityOverrides?.[row.id] !== undefined &&
+    explorerPackQuantityOverrides[row.id] !== row.packQuantity
+  ) {
+    return true
+  }
   if (explorerTransferOverrides?.[row.id] === undefined) return false
   return explorerTransferOverrides[row.id] !== row.transfers
 }
@@ -7258,7 +7316,8 @@ const EXPLORER_TABLE_COLUMNS = [
   { id: 'fromLocation', label: 'From location', alignment: 'left', minWidth: 'min-w-[150px]' },
   { id: 'toLocation', label: 'To location', alignment: 'left', minWidth: 'min-w-[150px]' },
   { id: 'movementType', label: 'Movement', alignment: 'left', minWidth: 'min-w-[100px]' },
-  { id: 'transfers', label: 'Transfers', alignment: 'right', minWidth: 'min-w-[110px]' },
+  { id: 'transfers', label: 'Transfers', alignment: 'right', minWidth: 'min-w-[120px]' },
+  { id: 'packTransfers', label: 'Pack transfers', alignment: 'right', minWidth: 'min-w-[130px]' },
   {
     id: 'confidence',
     label: 'Confidence',
@@ -7348,6 +7407,7 @@ const EXPLORER_REDUCED_COLUMN_IDS = [
   'salesL7',
   'forecast',
   'transfers',
+  'packTransfers',
   'recommended',
   'confidence',
   'revenue',
@@ -7411,178 +7471,11 @@ function filterExplorerRows(
 }
 
 /**
- * Build Explorer display rows: collapsed packRow (+ optional packChild when expanded),
- * then non-pack sku rows. Pack rows are display-only — never in EXPLORER_DATA.
- * Pack content sorts to the top for the prototype.
+ * Build Explorer display rows: flat per-SKU (or per SKU×pack) rows.
+ * Pack membership is expressed via the Pack transfers column — no expandable pack parents.
  */
-function buildExplorerDisplayRows(filteredSkuRows, allSkuRows, expandedPackGroupIds = new Set()) {
-  const packTotalCounts = new Map()
-  const packMetaByGroup = new Map()
-
-  for (const row of allSkuRows) {
-    if (!row.isPackMember || !row.packGroupId) continue
-    packTotalCounts.set(row.packGroupId, (packTotalCounts.get(row.packGroupId) ?? 0) + 1)
-    if (!packMetaByGroup.has(row.packGroupId)) {
-      const packDef = findMultiSkuPackByGroupId(row.packGroupId) ?? EXPLORER_MULTI_SKU_PACK
-      packMetaByGroup.set(row.packGroupId, {
-        packGroupId: row.packGroupId,
-        packName: row.packName ?? packDef.packName,
-        packId: row.packId ?? packDef.packId,
-        packRatio: row.packRatio,
-        packCount: row.packCount,
-        packMultiple: row.packGroupMultiple ?? packDef.packMultiple,
-        isVirtualPack: row.isVirtualPack,
-        fromLocation: row.fromLocation,
-        toLocation: row.toLocation,
-        movementType: row.movementType,
-        packRevenue: packDef.packRevenue,
-        packRecommended: packDef.packRecommended,
-        packRecommendedBadges: packDef.packRecommendedBadges,
-        packConfidence: packDef.packConfidence,
-        packCoverageWeeksBefore: packDef.packCoverageWeeksBefore,
-        packCoverageWeeksAfter: packDef.packCoverageWeeksAfter,
-        packCoverageTarget: packDef.packCoverageTarget,
-        packCoverageLabel: packDef.packCoverageLabel,
-        packStorageCapacity: packDef.packStorageCapacity,
-        packStatus: packDef.packStatus,
-      })
-    }
-  }
-
-  const filteredMembersByGroup = new Map()
-  for (const row of filteredSkuRows) {
-    if (!row.isPackMember || !row.packGroupId) continue
-    if (!filteredMembersByGroup.has(row.packGroupId)) {
-      filteredMembersByGroup.set(row.packGroupId, [])
-    }
-    filteredMembersByGroup.get(row.packGroupId).push(row)
-  }
-
-  const emittedGroups = new Set()
-  const packSection = []
-  const nonPackRows = []
-  // Loose companions for mixed fulfilment: keyed by SKU×from×to×movement
-  const looseCompanionByPairKey = new Map()
-  for (const row of filteredSkuRows) {
-    if (row.isPackMember) continue
-    if ((row.fulfilmentType ?? 'loose') !== 'loose') continue
-    if (row.packMultiple != null && row.packMultiple > 0) continue
-    looseCompanionByPairKey.set(explorerMixedFulfilmentPairKey(row), row)
-  }
-  const emittedLooseCompanionIds = new Set()
-
-  for (const row of filteredSkuRows) {
-    if (emittedLooseCompanionIds.has(row.id)) continue
-
-    if (row.isPackMember && row.packGroupId) {
-      if (emittedGroups.has(row.packGroupId)) continue
-      emittedGroups.add(row.packGroupId)
-
-      const members = filteredMembersByGroup.get(row.packGroupId) ?? []
-      const meta = packMetaByGroup.get(row.packGroupId)
-      const allMemberIds = allSkuRows
-        .filter((r) => r.packGroupId === row.packGroupId)
-        .map((r) => r.id)
-      const packGroupId = row.packGroupId
-      const packRow = {
-        rowKind: 'packRow',
-        id: `pack-row-${packGroupId}`,
-        packGroupId,
-        packName: meta?.packName ?? row.packName ?? row.packId,
-        packId: meta?.packId ?? row.packId,
-        packCount: meta?.packCount ?? row.packCount,
-        packRatio: meta?.packRatio ?? row.packRatio,
-        isVirtualPack: meta?.isVirtualPack ?? row.isVirtualPack,
-        isSingleSkuPack: false,
-        fromLocation: meta?.fromLocation ?? row.fromLocation,
-        toLocation: meta?.toLocation ?? row.toLocation,
-        movementType: meta?.movementType ?? row.movementType,
-        packRevenue: meta?.packRevenue,
-        packRecommended: meta?.packRecommended,
-        packRecommendedBadges: meta?.packRecommendedBadges,
-        packConfidence: meta?.packConfidence,
-        packConfidenceBuckets: sumConfidenceBuckets(
-          (allSkuRows.filter((r) => r.packGroupId === packGroupId) ?? []).map((m) => m.confidenceBuckets)
-        ),
-        packCoverageWeeksBefore: meta?.packCoverageWeeksBefore,
-        packCoverageWeeksAfter: meta?.packCoverageWeeksAfter,
-        packCoverageTarget: meta?.packCoverageTarget,
-        packCoverageLabel: meta?.packCoverageLabel,
-        packStorageCapacity: meta?.packStorageCapacity,
-        packStatus: meta?.packStatus,
-        status: meta?.packStatus,
-        shownSkuCount: members.length,
-        totalSkuCount: packTotalCounts.get(packGroupId) ?? members.length,
-        memberIds: members.map((m) => m.id),
-        allMemberIds,
-      }
-      packSection.push(packRow)
-
-      if (expandedPackGroupIds.has(packGroupId)) {
-        for (const member of members) {
-          packSection.push({ rowKind: 'packChild', ...member })
-        }
-      }
-      continue
-    }
-
-    const isSingleSkuPack =
-      row.packMultiple != null && row.packMultiple > 0 && !row.isPackMember
-    if (isSingleSkuPack) {
-      const packGroupId = `single-${row.id}`
-      const looseTwin = looseCompanionByPairKey.get(explorerMixedFulfilmentPairKey(row))
-      const packRow = {
-        rowKind: 'packRow',
-        id: `pack-row-${packGroupId}`,
-        packGroupId,
-        packName: row.productName,
-        packId: row.sku,
-        packCount: Math.round(row.transfers / row.packMultiple),
-        packRatio: { [row.sku]: row.packMultiple },
-        packMultiple: row.packMultiple,
-        isVirtualPack: Boolean(row.isVirtualPack),
-        isSingleSkuPack: true,
-        fromLocation: row.fromLocation,
-        toLocation: row.toLocation,
-        movementType: row.movementType,
-        packRevenue: row.revenue,
-        packRecommended: row.recommended,
-        packRecommendedBadges: row.recommendedBadges,
-        packConfidence: row.confidence,
-        packConfidenceBuckets: row.confidenceBuckets ?? emptyConfidenceBuckets(),
-        packCoverageWeeksBefore: row.coverageWeeksBefore,
-        packCoverageWeeksAfter: row.coverageWeeksAfter,
-        packCoverageTarget: row.coverageTarget,
-        packCoverageLabel: row.coverageLabel,
-        packStorageCapacity: row.storageCapacity,
-        packStatus: row.status,
-        status: row.status,
-        shownSkuCount: 1,
-        totalSkuCount: 1,
-        memberIds: [row.id],
-        allMemberIds: [row.id],
-        // Mixed fulfilment: pair key for SKU-locations dedupe
-        pairedLooseRowId: looseTwin?.id ?? null,
-      }
-      packSection.push(packRow)
-      if (expandedPackGroupIds.has(packGroupId)) {
-        packSection.push({ rowKind: 'packChild', ...row, isPackMember: true })
-      }
-      if (looseTwin) {
-        packSection.push({
-          rowKind: 'sku',
-          ...looseTwin,
-          pairedPackMemberId: row.id,
-        })
-        emittedLooseCompanionIds.add(looseTwin.id)
-      }
-      continue
-    }
-
-    nonPackRows.push({ rowKind: 'sku', ...row })
-  }
-
-  return [...packSection, ...nonPackRows]
+function buildExplorerDisplayRows(filteredSkuRows) {
+  return filteredSkuRows.map((row) => ({ rowKind: 'sku', ...row }))
 }
 
 const EXPLORER_TABLE_COLUMN_COUNT = EXPLORER_TABLE_COLUMNS.length
@@ -7597,6 +7490,7 @@ function ExplorerTransfersInput({
   onFocus,
   onBlur,
   onKeyDown,
+  disabled = false,
 }) {
   return (
     <input
@@ -7604,13 +7498,14 @@ function ExplorerTransfersInput({
       min={0}
       step={step}
       value={value}
+      disabled={disabled}
       onChange={(e) => onChange(e.target.value)}
       onFocus={onFocus}
       onBlur={onBlur}
       onKeyDown={onKeyDown}
       onClick={(e) => e.stopPropagation()}
-      className={`${widthClass} h-7 px-2 rounded-[4px] border text-[14px] text-[#0a0a0a] text-right focus:outline-none ${
-        className || 'border-[#e9eaeb]'
+      className={`${widthClass} h-7 px-2 rounded-[4px] border text-[14px] text-right focus:outline-none disabled:cursor-not-allowed disabled:bg-[#f3f4f6] disabled:text-[#9ca3af] ${
+        className || 'border-[#e9eaeb] text-[#0a0a0a]'
       }`}
     />
   )
@@ -7654,19 +7549,15 @@ function renderExplorerBodyCell(row, col, {
   getEffectiveStatus,
   handleExplorerStatusChange,
   getEffectiveTransfers,
+  getEffectivePackQuantity,
   handleTransfersEdit,
+  handlePackTransfersEdit,
   onOpenProductTransfers,
   getAvailableToSend,
   isLocationOvercommitted,
   explorerTransferOverrides,
-  editingTransfersRowId,
-  editingTransfersValue,
-  packInputError,
-  beginTransfersEdit,
-  setEditingTransfersValue,
-  setPackInputError,
-  commitTransfersEdit,
-  cancelTransfersEdit }) {
+  explorerPackQuantityOverrides,
+}) {
   const alignClass = col.alignment === 'right' ? 'text-right' : ''
 
   switch (col.id) {
@@ -7695,100 +7586,21 @@ function renderExplorerBodyCell(row, col, {
         </td>
       )
     case 'transfers': {
+      const isInPack = Boolean(row.isInPack)
+      const packsOnly = isInPack && !row.hasLooseUnits
+      const unitsPerPack = Number(row.unitsPerPack) || 0
+      const packQty = getEffectivePackQuantity?.(row) ?? 0
       const effectiveTransfers = getEffectiveTransfers(row)
-
-      // Multi-SKU pack children: display-only units + pack membership label
-      if (row.isPackMember) {
-        return (
-          <td key={col.id} className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}>
-            <div className="flex flex-col items-end gap-0.5">
-              <span className="text-[14px] text-[#0a0a0a]">{effectiveTransfers}</span>
-              <span className="text-[11px] text-[#878d94]">Part of {row.packId}</span>
-            </div>
-          </td>
-        )
-      }
+      const displayTransfers = packsOnly ? packQty * unitsPerPack : effectiveTransfers
 
       const availableToSend = getAvailableToSend?.(row) ?? 0
       const isOvercommitted = isLocationOvercommitted?.(row.fromLocation) ?? false
       const isEditedRow =
-        explorerTransferOverrides?.[row.id] !== undefined &&
-        explorerTransferOverrides[row.id] !== row.transfers
+        (explorerTransferOverrides?.[row.id] !== undefined &&
+          explorerTransferOverrides[row.id] !== row.transfers) ||
+        (explorerPackQuantityOverrides?.[row.id] !== undefined &&
+          explorerPackQuantityOverrides[row.id] !== row.packQuantity)
       const availableConstrained = !isOvercommitted && availableToSend <= 0
-      const isSingleSkuPack =
-        row.packMultiple != null && row.packMultiple > 0 && !row.isPackMember
-      const isEditingThis = editingTransfersRowId === row.id
-      const packCount = isSingleSkuPack
-        ? Math.ceil(effectiveTransfers / row.packMultiple)
-        : 0
-
-      if (isSingleSkuPack) {
-        return (
-          <td
-            key={col.id}
-            className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <TuHoverPopover
-              panel={
-                <ExplorerTransfersHoverCard
-                  row={row}
-                  transferUnits={effectiveTransfers}
-                  availableToSend={Math.max(0, availableToSend)}
-                  isOvercommitted={isOvercommitted}
-                  onOpenProductTransfers={onOpenProductTransfers}
-                />
-              }
-            >
-              <div className="flex flex-col items-end gap-0.5">
-                <ExplorerTransfersInput
-                  value={isEditingThis ? editingTransfersValue : String(effectiveTransfers)}
-                  step={row.packMultiple}
-                  onFocus={() => beginTransfersEdit?.(row, effectiveTransfers)}
-                  onChange={(newValue) => {
-                    setEditingTransfersValue?.(newValue)
-                    setPackInputError?.(false)
-                  }}
-                  onBlur={() => {
-                    commitTransfersEdit?.(row)
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') e.currentTarget.blur()
-                    if (e.key === 'Escape') {
-                      cancelTransfersEdit?.()
-                      e.currentTarget.blur()
-                    }
-                  }}
-                  className={
-                    isEditingThis && packInputError
-                      ? 'border-[#E30D3C]'
-                      : isOvercommitted && isEditedRow
-                        ? 'border-[#DC2626]'
-                        : undefined
-                  }
-                />
-                {isEditingThis && packInputError && (
-                  <span className="text-[11px] text-[#E30D3C]">Multiple of {row.packMultiple}</span>
-                )}
-                {packCount > 0 && (
-                  <span className="text-[12px] text-[#4b535c]">{formatPackLabel(packCount)}</span>
-                )}
-                {isOvercommitted ? (
-                  <span className="text-[12px] text-[#B45309]">availability exceeded</span>
-                ) : (
-                  <span
-                    className={`text-[12px] ${
-                      availableConstrained ? 'text-[#B45309]' : 'text-[#166534]'
-                    }`}
-                  >
-                    {availableToSend} available to send
-                  </span>
-                )}
-              </div>
-            </TuHoverPopover>
-          </td>
-        )
-      }
 
       return (
         <td
@@ -7800,7 +7612,7 @@ function renderExplorerBodyCell(row, col, {
             panel={
               <ExplorerTransfersHoverCard
                 row={row}
-                transferUnits={effectiveTransfers}
+                transferUnits={displayTransfers}
                 availableToSend={Math.max(0, availableToSend)}
                 isOvercommitted={isOvercommitted}
                 onOpenProductTransfers={onOpenProductTransfers}
@@ -7809,8 +7621,12 @@ function renderExplorerBodyCell(row, col, {
           >
             <div className="flex flex-col items-end gap-0.5">
               <ExplorerTransfersInput
-                value={effectiveTransfers}
-                onChange={(newValue) => handleTransfersEdit(row.id, newValue)}
+                value={displayTransfers}
+                disabled={packsOnly}
+                onChange={(newValue) => {
+                  if (packsOnly) return
+                  handleTransfersEdit(row, newValue)
+                }}
                 className={
                   isOvercommitted && isEditedRow ? 'border-[#DC2626]' : undefined
                 }
@@ -7831,8 +7647,37 @@ function renderExplorerBodyCell(row, col, {
         </td>
       )
     }
+    case 'packTransfers': {
+      const isInPack = Boolean(row.isInPack)
+      if (!isInPack) {
+        return (
+          <td key={col.id} className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}>
+            <span className="text-[14px] text-[#9ca3af]">N/A</span>
+          </td>
+        )
+      }
+      const packQty = getEffectivePackQuantity?.(row) ?? 0
+      return (
+        <td
+          key={col.id}
+          className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="flex flex-col items-end gap-0.5">
+            <ExplorerTransfersInput
+              value={packQty}
+              onChange={(newValue) => handlePackTransfersEdit?.(row, newValue)}
+            />
+          </div>
+        </td>
+      )
+    }
     case 'revenue': {
-      const revenueStale = explorerRowHasPackUnitOverride(row, explorerTransferOverrides)
+      const revenueStale = explorerRowHasPackUnitOverride(
+        row,
+        explorerTransferOverrides,
+        explorerPackQuantityOverrides
+      )
       return (
         <td key={col.id} className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}>
           <span className={`text-[14px] ${revenueStale ? 'text-[#9ca3af]' : 'text-[#0a0a0a]'}`}>
@@ -7873,7 +7718,11 @@ function renderExplorerBodyCell(row, col, {
         </td>
       )
     case 'coverage': {
-      const coverageStale = explorerRowHasPackUnitOverride(row, explorerTransferOverrides)
+      const coverageStale = explorerRowHasPackUnitOverride(
+        row,
+        explorerTransferOverrides,
+        explorerPackQuantityOverrides
+      )
       return (
         <td key={col.id} className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}>
           <span className={`text-[14px] ${coverageStale ? 'text-[#9ca3af]' : 'text-[#0a0a0a]'}`}>
@@ -7936,7 +7785,11 @@ function renderExplorerBodyCell(row, col, {
         </td>
       )
     case 'storageCapacity': {
-      const storageStale = explorerRowHasPackUnitOverride(row, explorerTransferOverrides)
+      const storageStale = explorerRowHasPackUnitOverride(
+        row,
+        explorerTransferOverrides,
+        explorerPackQuantityOverrides
+      )
       return (
         <td key={col.id} className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}>
           <div className="flex justify-end">
@@ -8012,6 +7865,8 @@ function renderExplorerTotalsCell(col, totals, { explorerTotalsThClass, explorer
           {totals.transfers} units
         </th>
       )
+    case 'packTransfers':
+      return <th key={col.id} className={`${emptyClass} ${col.minWidth}`} />
     case 'revenue':
       return (
         <th key={col.id} className={`${baseClass} ${col.minWidth} text-right`}>
@@ -8363,21 +8218,9 @@ function ExplorerTable({
   const [explorerBulkChangeUnitsOpen, setExplorerBulkChangeUnitsOpen] = useState(false)
   const [explorerReducedColumns, setExplorerReducedColumns] = useState(true)
   const [explorerBulkActionError, setExplorerBulkActionError] = useState(null)
-  const [editingTransfersRowId, setEditingTransfersRowId] = useState(null)
-  const [editingTransfersValue, setEditingTransfersValue] = useState('')
-  const [packInputError, setPackInputError] = useState(false)
-  const [expandedPackGroupIds, setExpandedPackGroupIds] = useState(() => new Set())
+  const [explorerPackQuantityOverrides, setExplorerPackQuantityOverrides] = useState({})
   const explorerSelectAllRef = useRef(null)
   const explorerBulkErrorTimeoutRef = useRef(null)
-
-  const togglePackExpanded = (packGroupId) => {
-    setExpandedPackGroupIds((prev) => {
-      const next = new Set(prev)
-      if (next.has(packGroupId)) next.delete(packGroupId)
-      else next.add(packGroupId)
-      return next
-    })
-  }
 
   const dismissExplorerBulkActionError = () => {
     if (explorerBulkErrorTimeoutRef.current) {
@@ -8416,104 +8259,69 @@ function ExplorerTable({
     setExplorerStatusOverrides((prev) => ({ ...prev, [rowId]: newStatus }))
   }
 
-  const handleTransfersEdit = (rowId, newValue) => {
-    const numValue = Number.isFinite(parseInt(newValue, 10)) ? parseInt(newValue, 10) : 0
-    setExplorerTransferOverrides((prev) => ({ ...prev, [rowId]: numValue }))
-    setExplorerStatusOverrides((prev) => ({ ...prev, [rowId]: 'last_edited_by_user' }))
+  const handleTransfersEdit = (row, newValue) => {
+    const parsed = Number.isFinite(parseInt(newValue, 10)) ? parseInt(newValue, 10) : 0
+    const unitsPerPack = Number(row.unitsPerPack) || 0
+    const packQty =
+      explorerPackQuantityOverrides[row.id] !== undefined
+        ? explorerPackQuantityOverrides[row.id]
+        : (row.packQuantity ?? 0)
+    // Editable Transfers adjusts loose portion only; clamp total to at least pack units
+    const packUnits = row.isInPack && !row.hasLooseUnits ? 0 : packQty * unitsPerPack
+    const nextTotal =
+      row.isInPack && row.hasLooseUnits ? Math.max(packUnits, Math.max(0, parsed)) : Math.max(0, parsed)
+    setExplorerTransferOverrides((prev) => ({ ...prev, [row.id]: nextTotal }))
+    setExplorerStatusOverrides((prev) => ({ ...prev, [row.id]: 'last_edited_by_user' }))
   }
 
-  const beginTransfersEdit = (row, currentValue) => {
-    setEditingTransfersRowId(row.id)
-    setEditingTransfersValue(String(currentValue ?? 0))
-    setPackInputError(false)
-  }
-
-  const cancelTransfersEdit = () => {
-    setEditingTransfersRowId(null)
-    setEditingTransfersValue('')
-    setPackInputError(false)
-  }
-
-  const commitTransfersEdit = (row) => {
-    const raw = editingTransfersValue
-    if (row.packMultiple != null && row.packMultiple > 0 && !row.isPackMember) {
-      if (raw === '' || !isPackMultipleValue(raw, row.packMultiple)) {
-        setPackInputError(true)
-        return false
-      }
-    }
-    const next = Number(raw)
-    if (!Number.isFinite(next) || next < 0) {
-      cancelTransfersEdit()
-      return false
-    }
-    handleTransfersEdit(row.id, next)
-    cancelTransfersEdit()
-    return true
-  }
-
-  const handlePackRowCountEdit = (packRow, newValue) => {
+  const handlePackTransfersEdit = (row, newValue) => {
     const newPackCount = Number.isFinite(parseInt(newValue, 10))
       ? Math.max(0, parseInt(newValue, 10))
       : 0
-    const memberIds = packRow.allMemberIds?.length ? packRow.allMemberIds : packRow.memberIds
-    const transferUpdates = {}
-    const statusUpdates = {}
-    for (const memberId of memberIds) {
-      const member = data.find((r) => r.id === memberId)
-      if (!member) continue
-      const ratio =
-        packRow.packRatio?.[member.sku] ??
-        member.packRatio?.[member.sku] ??
-        (packRow.isSingleSkuPack ? packRow.packMultiple : null)
-      if (ratio == null) continue
-      transferUpdates[memberId] = newPackCount * ratio
-      statusUpdates[memberId] = 'last_edited_by_user'
+    const unitsPerPack = Number(row.unitsPerPack) || 0
+    setExplorerPackQuantityOverrides((prev) => ({ ...prev, [row.id]: newPackCount }))
+    setExplorerStatusOverrides((prev) => ({ ...prev, [row.id]: 'last_edited_by_user' }))
+    // Packs-only: derived Transfers total updates with pack quantity
+    if (row.isInPack && !row.hasLooseUnits && unitsPerPack > 0) {
+      setExplorerTransferOverrides((prev) => ({
+        ...prev,
+        [row.id]: newPackCount * unitsPerPack,
+      }))
     }
-    if (Object.keys(transferUpdates).length === 0) return
-    setExplorerTransferOverrides((prev) => ({ ...prev, ...transferUpdates }))
-    setExplorerStatusOverrides((prev) => ({ ...prev, ...statusUpdates }))
+    // Loose-units case: Pack transfers edit leaves Transfers (total) unchanged
   }
 
-  const handlePackRowStatusChange = (packRow, statusId) => {
-    const memberIds = packRow.allMemberIds?.length ? packRow.allMemberIds : packRow.memberIds ?? []
-    setExplorerStatusOverrides((prev) => {
-      const next = { ...prev, [packRow.id]: statusId }
-      for (const memberId of memberIds) {
-        next[memberId] = statusId
-      }
-      return next
-    })
+  const getEffectivePackQuantity = (row) => {
+    if (!row?.isInPack) return null
+    if (explorerPackQuantityOverrides[row.id] !== undefined) {
+      return explorerPackQuantityOverrides[row.id]
+    }
+    const unitsPerPack = Number(row.unitsPerPack) || 0
+    // Drilldown may write unit totals without a pack-qty override (packs-only)
+    if (
+      !row.hasLooseUnits &&
+      explorerTransferOverrides[row.id] !== undefined &&
+      unitsPerPack > 0
+    ) {
+      return Math.round(explorerTransferOverrides[row.id] / unitsPerPack)
+    }
+    return row.packQuantity ?? 0
   }
 
-  const getEffectiveTransfers = (row) =>
-    explorerTransferOverrides[row.id] !== undefined ? explorerTransferOverrides[row.id] : row.transfers
-
-  const getEffectivePackCountForPackRow = (packRow) => {
-    const memberId = packRow.allMemberIds?.[0] ?? packRow.memberIds?.[0]
-    const member = data.find((r) => r.id === memberId)
-    if (!member) return packRow.packCount ?? 0
-    const ratio =
-      packRow.packRatio?.[member.sku] ??
-      member.packRatio?.[member.sku] ??
-      (packRow.isSingleSkuPack ? packRow.packMultiple : null)
-    if (!ratio) return packRow.packCount ?? 0
-    return Math.round(getEffectiveTransfers(member) / ratio)
-  }
-
-  const getPackRowTotalUnits = (packRow) => {
-    const memberIds = packRow.allMemberIds?.length ? packRow.allMemberIds : packRow.memberIds
-    return memberIds.reduce((sum, id) => {
-      const member = data.find((r) => r.id === id)
-      if (!member) return sum
-      return sum + getEffectiveTransfers(member)
-    }, 0)
+  const getEffectiveTransfers = (row) => {
+    if (row?.isInPack && !row.hasLooseUnits) {
+      const packQty = getEffectivePackQuantity(row) ?? 0
+      const unitsPerPack = Number(row.unitsPerPack) || 0
+      return packQty * unitsPerPack
+    }
+    return explorerTransferOverrides[row.id] !== undefined
+      ? explorerTransferOverrides[row.id]
+      : row.transfers
   }
 
   const locationCapacityStats = useMemo(() => {
     const stats = new Map()
     for (const row of data) {
-      // Capacity is SKU-row only; pack display rows are never in source data
       const from = row.fromLocation
       const capacity = SENDING_LOCATION_CAPACITY[from]
       if (capacity === undefined) continue
@@ -8524,16 +8332,16 @@ function ExplorerTable({
         stats.set(from, entry)
       }
 
-      const effective =
-        explorerTransferOverrides[row.id] !== undefined
-          ? explorerTransferOverrides[row.id]
-          : row.transfers
+      const effective = getEffectiveTransfers(row)
       entry.sum += effective
 
-      if (
+      const transferEdited =
         explorerTransferOverrides[row.id] !== undefined &&
         explorerTransferOverrides[row.id] !== row.transfers
-      ) {
+      const packEdited =
+        explorerPackQuantityOverrides[row.id] !== undefined &&
+        explorerPackQuantityOverrides[row.id] !== row.packQuantity
+      if (transferEdited || packEdited) {
         entry.editedCount += 1
       }
     }
@@ -8542,7 +8350,7 @@ function ExplorerTable({
       entry.overBy = Math.max(0, entry.sum - entry.capacity)
     }
     return stats
-  }, [data, explorerTransferOverrides])
+  }, [data, explorerTransferOverrides, explorerPackQuantityOverrides])
 
   const getAvailableToSend = (row) => {
     const entry = locationCapacityStats.get(row.fromLocation)
@@ -8604,8 +8412,8 @@ function ExplorerTable({
     explorerSelectedRowIds.forEach((rowId) => {
       if (isExplorerPackRowId(rowId)) return
       const row = data.find((r) => r.id === rowId)
-      // Pack members are not atomic selection targets; pack row is the edit point
-      if (!row || row.isPackMember) return
+      // Packs-only rows: Transfers is derived — edit via Pack transfers instead
+      if (!row || (row.isInPack && !row.hasLooseUnits)) return
       const effectiveCurrent = getEffectiveTransfers(row)
       const newValue =
         action === 'set_zero' ? 0 : Math.max(0, effectiveCurrent + action)
@@ -8685,8 +8493,7 @@ function ExplorerTable({
   }
 
   const getEffectiveStatus = (row) =>
-    explorerStatusOverrides[row.id] ??
-    (row.rowKind === 'packRow' ? row.packStatus ?? row.status : getRowStatus(row))
+    explorerStatusOverrides[row.id] ?? getRowStatus(row)
 
   const explorerFromLocationOptions = useMemo(() => {
     const names = new Set()
@@ -8763,28 +8570,13 @@ function ExplorerTable({
     ]
   )
 
-  // Reset pack expand state when filter chips change (not on override/edit updates)
-  useEffect(() => {
-    setExpandedPackGroupIds(new Set())
-  }, [
-    explorerDepartmentFilters,
-    explorerProductNameFilters,
-    explorerConfidenceFilters,
-    explorerStatusFilters,
-    explorerFromLocationFilters,
-    explorerToLocationFilters,
-  ])
-
   const displayRows = useMemo(
-    () => buildExplorerDisplayRows(filteredData, data, expandedPackGroupIds),
-    [filteredData, data, expandedPackGroupIds]
+    () => buildExplorerDisplayRows(filteredData),
+    [filteredData]
   )
 
   const atomicSelectableIds = useMemo(
-    () =>
-      displayRows
-        .filter((r) => r.rowKind === 'packRow' || r.rowKind === 'sku')
-        .map((r) => r.id),
+    () => displayRows.map((r) => r.id),
     [displayRows]
   )
 
@@ -8809,26 +8601,9 @@ function ExplorerTable({
   }, [someExplorerRowsSelected])
 
   const totals = useMemo(() => {
-    // Metric sums: underlying filtered SKU rows (children). Display count: packs as 1 + non-pack SKUs.
-    // Mixed fulfilment: pack+loose pair counts as 1 SKU-location (skip paired loose companions).
     const skuRows = filteredData
-    const pairedLooseIds = new Set(
-      displayRows
-        .filter((r) => r.rowKind === 'packRow' && r.pairedLooseRowId)
-        .map((r) => r.pairedLooseRowId)
-    )
-    const atomicCount = displayRows.filter((r) => {
-      if (r.rowKind === 'packRow') return true
-      if (r.rowKind === 'sku') return !pairedLooseIds.has(r.id)
-      return false
-    }).length
-    const sumTransfers = skuRows.reduce((sum, row) => {
-      const transfers =
-        explorerTransferOverrides[row.id] !== undefined
-          ? explorerTransferOverrides[row.id]
-          : row.transfers
-      return sum + transfers
-    }, 0)
+    const atomicCount = displayRows.length
+    const sumTransfers = skuRows.reduce((sum, row) => sum + getEffectiveTransfers(row), 0)
     const sumRevenueK = skuRows.reduce((sum, row) => sum + parseExplorerRevenueK(row.revenue), 0)
     const sumRecommended = skuRows.reduce((sum, row) => sum + parseInt(row.recommended, 10), 0)
     const sumSalesL7 = skuRows.reduce((sum, row) => sum + row.salesL7, 0)
@@ -8848,7 +8623,7 @@ function ExplorerTable({
       stockBeforeAfter: `${sumStockBefore} → ${sumStockAfter}`,
       inTransit:
         sumInTransitAndPfp > 0 ? `${sumInTransitAndPfp} in transit & PFP` : null }
-  }, [filteredData, displayRows, explorerTransferOverrides])
+  }, [filteredData, displayRows, explorerTransferOverrides, explorerPackQuantityOverrides])
 
   const explorerThClass =
     'sticky top-0 z-20 bg-white h-[62px] min-h-[62px] px-4 text-left align-middle font-medium text-[#00050A] box-border'
@@ -9286,85 +9061,7 @@ function ExplorerTable({
             </tr>
           </thead>
           <tbody>
-            {displayRows.map((row) => {
-              if (row.rowKind === 'packRow') {
-                const isExpanded = expandedPackGroupIds.has(row.packGroupId)
-                const effectivePackCount = getEffectivePackCountForPackRow(row)
-                const totalUnits = getPackRowTotalUnits(row)
-                const packStale = packRowHasOverride(row, explorerTransferOverrides, data)
-                return (
-                  <tr
-                    key={row.id}
-                    className="group border-b border-[#E9EAEB] bg-[#f9fafb] hover:bg-[#f3f4f6]"
-                  >
-                    <td
-                      className={explorerCheckboxTdClass}
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <div className="flex items-start gap-1">
-                        {!row.isSingleSkuPack ? (
-                          <button
-                            type="button"
-                            className="flex size-6 items-center justify-center rounded-[4px] text-[#4b535c] hover:bg-[#e5e7eb]"
-                            aria-label={isExpanded ? 'Collapse pack' : 'Expand pack'}
-                            aria-expanded={isExpanded}
-                            onClick={() => togglePackExpanded(row.packGroupId)}
-                          >
-                            {/* IconChevronRight ignores className — wrap for rotate */}
-                            <span className={`inline-flex ${isExpanded ? 'rotate-90' : ''}`}>
-                              <IconChevronRight />
-                            </span>
-                          </button>
-                        ) : (
-                          <span className="inline-block size-6 shrink-0" aria-hidden />
-                        )}
-                        <input
-                          type="checkbox"
-                          className={explorerCheckboxInputClass}
-                          aria-label={`Select pack ${row.packName ?? row.packId}`}
-                          checked={explorerSelectedRowIds.has(row.id)}
-                          onChange={() => toggleExplorerRowSelection(row.id)}
-                        />
-                      </div>
-                    </td>
-                    {visibleColumns.map((col) =>
-                      renderExplorerPackRowCell(row, col, {
-                        explorerTdClass,
-                        explorerStatusTdClass,
-                        getEffectiveStatus,
-                        handlePackRowStatusChange,
-                        effectivePackCount,
-                        totalUnits,
-                        packStale,
-                        handlePackRowCountEdit,
-                        getAvailableToSend,
-                        isLocationOvercommitted,
-                      })
-                    )}
-                  </tr>
-                )
-              }
-
-              if (row.rowKind === 'packChild') {
-                return (
-                  <tr
-                    key={`pack-child-${row.id}`}
-                    className="border-b border-[#E9EAEB] bg-[#fafafa]"
-                  >
-                    <td className={explorerCheckboxTdClass} aria-hidden />
-                    {visibleColumns.map((col) =>
-                      renderExplorerPackChildCell(row, col, {
-                        explorerTdClass,
-                        explorerStatusTdClass,
-                        getEffectiveTransfers,
-                        explorerTransferOverrides,
-                      })
-                    )}
-                  </tr>
-                )
-              }
-
-              return (
+            {displayRows.map((row) => (
                 <tr
                   key={row.id}
                   className="group border-b border-[#E9EAEB] bg-white hover:bg-[#f9fafb]"
@@ -9388,38 +9085,31 @@ function ExplorerTable({
                       getEffectiveStatus,
                       handleExplorerStatusChange,
                       getEffectiveTransfers,
+                      getEffectivePackQuantity,
                       handleTransfersEdit,
+                      handlePackTransfersEdit,
                       onOpenProductTransfers,
                       getAvailableToSend,
                       isLocationOvercommitted,
                       explorerTransferOverrides,
-                      editingTransfersRowId,
-                      editingTransfersValue,
-                      packInputError,
-                      beginTransfersEdit,
-                      setEditingTransfersValue,
-                      setPackInputError,
-                      commitTransfersEdit,
-                      cancelTransfersEdit })
+                      explorerPackQuantityOverrides,
+                    })
                   )}
                 </tr>
-              )
-            })}
+            ))}
           </tbody>
         </table>
       </div>
     </div>
 
       {explorerSelectedRowIds.size > 0 && (() => {
-        let packSelected = 0
-        let nonPackSelected = 0
-        explorerSelectedRowIds.forEach((id) => {
-          if (isExplorerPackRowId(id)) packSelected += 1
-          else nonPackSelected += 1
-        })
-        const onlyPackRowsSelected = packSelected > 0 && nonPackSelected === 0
-        const hasMixedPackSelection = packSelected > 0 && nonPackSelected > 0
-        const changeUnitsDisabled = onlyPackRowsSelected
+        const packsOnlySelected =
+          explorerSelectedRowIds.size > 0 &&
+          [...explorerSelectedRowIds].every((id) => {
+            const row = data.find((r) => r.id === id)
+            return row && row.isInPack && !row.hasLooseUnits
+          })
+        const changeUnitsDisabled = packsOnlySelected
         return (
         <div
           className="fixed bottom-6 left-1/2 z-50 flex w-max max-w-[min(920px,calc(100vw-2rem))] -translate-x-1/2 flex-col gap-2 rounded-[8px] px-6 py-3"
@@ -9502,11 +9192,6 @@ function ExplorerTable({
                     className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 z-[70] min-w-[280px] rounded-[6px] border border-[#e5e7eb] bg-white py-1 shadow-lg"
                     style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}
                   >
-                    {hasMixedPackSelection && (
-                      <div className="border-b border-[#e5e7eb] px-3 py-2 text-[11px] leading-snug text-[#6b7280]">
-                        Doesn&apos;t apply to pack rows
-                      </div>
-                    )}
                     <div className="px-3 py-2 text-[12px] font-medium text-[#4b535c]">Adjust by</div>
                     {[
                       { action: 1, label: '+1' },
