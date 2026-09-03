@@ -10,7 +10,7 @@ import {
 /** Create schedule — scope filter dummy options (prototype display only) */
 const SCOPE_DEPARTMENT_OPTIONS = ['Apparel', 'Footwear', 'Accessories']
 const SCOPE_LOCATION_TYPE_OPTIONS = ['Store', 'Warehouse', 'Outlet']
-const SCOPE_WAREHOUSE_OPTIONS = ['Europe warehouse', 'US main warehouse', 'Global central warehouse', 'Supplier']
+const SCOPE_WAREHOUSE_OPTIONS = ['Europe warehouse', 'US main warehouse', 'Global central warehouse']
 const SCOPE_SEASONS_OPTIONS = ['SS24', 'AW24', 'SS25', 'AW25', 'Cruise 25', 'Pre-Fall 25']
 const SCOPE_LOCATIONS_OPTIONS = ['Paris flagship', 'London Regent St', 'NY Soho', 'Milan Duomo', 'Berlin Mitte', 'Tokyo Ginza']
 const SCOPE_PRODUCTS_OPTIONS = ['SKU-001 Wool Coat', 'SKU-002 Silk Scarf', 'SKU-003 Leather Bag', 'SKU-004 Cotton Tee', 'SKU-005 Denim Jacket']
@@ -620,7 +620,7 @@ function CreateScheduleScopeFilterPanel({
             onModeChange={setDepartmentMode}
           />
         </div>
-        <div className="w-full self-start">
+        <div className="flex w-full flex-col gap-3 self-start">
           <CreateScheduleScopeMultiSelect
             label="Warehouse"
             helperText="Where products are distributed from. If none selected, we'll use your full network."
@@ -632,9 +632,8 @@ function CreateScheduleScopeFilterPanel({
             onExcludeChange={setWarehouseExclude}
             mode={warehouseMode}
             onModeChange={setWarehouseMode}
-            showBulkAdd
-            onBulkAddClick={() => openBulkPaste('Warehouse')}
           />
+          <div className="border-t border-[#e5e7eb]" aria-hidden="true" />
         </div>
 
         <div className="w-full self-start">
