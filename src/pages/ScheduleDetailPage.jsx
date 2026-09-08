@@ -1370,6 +1370,14 @@ function buildExplorerRow(rowIndex, product, size, fromLoc, toLoc, movementType,
       : Math.max(packMultiple, Math.round(transfers / packMultiple) * packMultiple)
     : transfers
   const stockAfter = stockBefore + alignedTransfers + (stockFromOtherStores ?? 0)
+  // Pack warehouse before → after (packs sent = alignedTransfers / packMultiple)
+  const packsSent =
+    packMultiple && packMultiple > 0 ? Math.round(alignedTransfers / packMultiple) : 0
+  const warehousePacksAfter = packsSent > 0 ? 8 + (rowIndex % 12) : null
+  const warehousePackCount =
+    warehousePacksAfter != null
+      ? `${warehousePacksAfter + packsSent} → ${warehousePacksAfter}`
+      : null
   return {
     id: `exp-row-${rowIndex}`,
     productId: product.id,
@@ -1392,6 +1400,7 @@ function buildExplorerRow(rowIndex, product, size, fromLoc, toLoc, movementType,
     transfers: alignedTransfers,
     packMultiple,
     isVirtualPack,
+    warehousePackCount,
     availableToSend,
     visibilityBefore: rowIndex % 11 === 0 ? 2 : rowIndex % 5 === 0 ? 1 : 0,
     visibilityAfter: rowIndex % 11 === 0 ? 3 : rowIndex % 5 === 0 ? 2 : 1,
@@ -1517,6 +1526,9 @@ function buildExplorerData() {
     row.isPackMember = true
     row.packMultiple = null
     row.transfers = unitsPerPack * packDef.packCount
+    // Shared pack-group warehouse pack counts (before → after packs leave warehouse)
+    const packsAfter = 5 + (packDef.packCount % 7)
+    row.warehousePackCount = `${packsAfter + packDef.packCount} → ${packsAfter}`
     row.stockAfter = row.stockBefore + row.transfers + (row.stockFromOtherStores ?? 0)
     // Coin pack children: end-state coverage reflects pack arrival (stock / forecast weeks)
     if (row.productId === 'exp-p-coin') {
@@ -7291,7 +7303,8 @@ const EXPLORER_TABLE_COLUMNS = [
     label: 'Warehouse',
     alignment: 'right',
     minWidth: 'min-w-[140px]',
-    tooltip: 'Units reserved to sell at this location and units available to allocate to stores',
+    tooltip:
+      'Stock at the warehouse before → after this batch. Shown in packs for pack products, units for loose SKUs.',
   },
   {
     id: 'coverage',
@@ -7511,6 +7524,7 @@ function buildExplorerDisplayRows(filteredSkuRows, allSkuRows, expandedPackGroup
         packStorageCapacity: meta?.packStorageCapacity,
         packStatus: meta?.packStatus,
         status: meta?.packStatus,
+        warehousePackCount: row.warehousePackCount,
         shownSkuCount: members.length,
         totalSkuCount: packTotalCounts.get(packGroupId) ?? members.length,
         memberIds: members.map((m) => m.id),
@@ -7557,6 +7571,7 @@ function buildExplorerDisplayRows(filteredSkuRows, allSkuRows, expandedPackGroup
         packStorageCapacity: row.storageCapacity,
         packStatus: row.status,
         status: row.status,
+        warehousePackCount: row.warehousePackCount,
         shownSkuCount: 1,
         totalSkuCount: 1,
         memberIds: [row.id],
@@ -7659,6 +7674,7 @@ function renderExplorerBodyCell(row, col, {
   getAvailableToSend,
   isLocationOvercommitted,
   explorerTransferOverrides,
+  getUnitsViaPacks,
   editingTransfersRowId,
   editingTransfersValue,
   packInputError,
@@ -7815,6 +7831,11 @@ function renderExplorerBodyCell(row, col, {
                   isOvercommitted && isEditedRow ? 'border-[#DC2626]' : undefined
                 }
               />
+              {row.pairedPackMemberId != null && (
+                <span className="text-[12px] text-[#4b535c]">
+                  Also {getUnitsViaPacks?.(row) ?? 0} units via packs
+                </span>
+              )}
               {isOvercommitted ? (
                 <span className="text-[12px] text-[#B45309]">availability exceeded</span>
               ) : (
@@ -7948,10 +7969,9 @@ function renderExplorerBodyCell(row, col, {
     case 'warehouseUnits':
       return (
         <td key={col.id} className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}>
-          <div className="flex flex-col items-end gap-0.5">
-            <span className="text-[14px] text-[#0a0a0a]">{row.warehouseAllocateLine}</span>
-            <span className="text-[12px] text-[#4b535c]">{row.warehouseSellLine}</span>
-          </div>
+          <span className="text-[14px] text-[#0a0a0a]">
+            {row.warehouseAllocateLine} units
+          </span>
         </td>
       )
     case 'initialAllocation':
@@ -8240,6 +8260,14 @@ function renderExplorerPackRowCell(packRow, col, {
           </div>
         </td>
       )
+    case 'warehouseUnits':
+      return (
+        <td key={col.id} className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}>
+          <span className="text-[14px] text-[#0a0a0a]">
+            {packRow.warehousePackCount ?? '—'} packs
+          </span>
+        </td>
+      )
     case 'status':
       return (
         <td
@@ -8498,6 +8526,13 @@ function ExplorerTable({
 
   const getEffectiveTransfers = (row) =>
     explorerTransferOverrides[row.id] !== undefined ? explorerTransferOverrides[row.id] : row.transfers
+
+  const getUnitsViaPacks = (row) => {
+    if (row.pairedPackMemberId == null) return 0
+    const paired = data.find((r) => r.id === row.pairedPackMemberId)
+    if (!paired) return 0
+    return getEffectiveTransfers(paired)
+  }
 
   const getEffectivePackCountForPackRow = (packRow) => {
     const memberId = packRow.allMemberIds?.[0] ?? packRow.memberIds?.[0]
@@ -9403,6 +9438,7 @@ function ExplorerTable({
                       getAvailableToSend,
                       isLocationOvercommitted,
                       explorerTransferOverrides,
+                      getUnitsViaPacks,
                       editingTransfersRowId,
                       editingTransfersValue,
                       packInputError,
