@@ -7258,7 +7258,7 @@ const EXPLORER_TABLE_COLUMNS = [
   { id: 'fromLocation', label: 'From location', alignment: 'left', minWidth: 'min-w-[150px]' },
   { id: 'toLocation', label: 'To location', alignment: 'left', minWidth: 'min-w-[150px]' },
   { id: 'movementType', label: 'Movement', alignment: 'left', minWidth: 'min-w-[100px]' },
-  { id: 'transfers', label: 'Transfers', alignment: 'right', minWidth: 'min-w-[110px]' },
+  { id: 'transfers', label: 'Transfers', alignment: 'right', minWidth: 'min-w-[150px]' },
   {
     id: 'confidence',
     label: 'Confidence',
@@ -8254,6 +8254,16 @@ function renderExplorerPackRowCell(packRow, col, {
               onChange={(statusId) => handlePackRowStatusChange(packRow, statusId)}
             />
           </div>
+        </td>
+      )
+    case 'salesL7':
+    case 'salesL30':
+    case 'salesL90':
+    case 'forecast':
+    case 'stockInCirculation':
+      return (
+        <td key={col.id} className={`${explorerTdClass} ${col.minWidth} ${alignClass}`}>
+          <span className="text-[14px] text-[#9ca3af]">N/A</span>
         </td>
       )
     default:
