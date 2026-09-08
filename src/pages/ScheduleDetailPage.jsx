@@ -7833,7 +7833,7 @@ function renderExplorerBodyCell(row, col, {
               />
               {row.pairedPackMemberId != null && (
                 <span className="text-[12px] text-[#4b535c]">
-                  Also {getUnitsViaPacks?.(row) ?? 0} units via packs
+                  +{getUnitsViaPacks?.(row) ?? 0} units via packs
                 </span>
               )}
               {isOvercommitted ? (
